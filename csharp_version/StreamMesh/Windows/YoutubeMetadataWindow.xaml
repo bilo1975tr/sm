@@ -1,0 +1,103 @@
+<Window x:Class="StreamMesh.Windows.YoutubeMetadataWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="YouTube İçerik Sınıflandırma" Height="450" Width="400"
+        Background="#0f172a" Foreground="#f8fafc" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#f8fafc"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#1e293b"/>
+            <Setter Property="Foreground" Value="#f8fafc"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="0,5,0,10"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="0,5,0,10"/>
+            <Setter Property="Padding" Value="5"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#3b82f6"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2563eb"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="YouTube İçeriğini Sınıflandır" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" Foreground="#38bdf8"/>
+
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <TextBlock Text="İçerik Türü:" />
+            <ComboBox x:Name="ContentTypeCombo" SelectionChanged="ContentTypeCombo_SelectionChanged">
+                <ComboBoxItem Content="Canlı Yayın / Normal Video" IsSelected="True"/>
+                <ComboBoxItem Content="Film"/>
+                <ComboBoxItem Content="Dizi"/>
+            </ComboBox>
+        </StackPanel>
+
+        <!-- Dynamic Panels -->
+        <Grid Grid.Row="2">
+            <!-- Normal / Live TV Panel -->
+            <StackPanel x:Name="NormalPanel" Visibility="Visible">
+                <TextBlock Text="Kategori / Grup Adı (örn: Haberler, Spor):" />
+                <TextBox x:Name="NormalGroupBox" Text="YouTube Canlı/Video" />
+                
+                <TextBlock Text="Yayın Dili:" />
+                <TextBox x:Name="NormalLanguageBox" Text="Türkçe" />
+            </StackPanel>
+
+            <!-- Movie Panel -->
+            <StackPanel x:Name="MoviePanel" Visibility="Collapsed">
+                <TextBlock Text="Film Kategorisi (örn: Aksiyon, Komedi, Dram):" />
+                <TextBox x:Name="MovieGroupBox" Text="Filmler" />
+                <TextBlock Text="Film Dili:" />
+                <TextBox x:Name="MovieLanguageBox" Text="Türkçe" />
+            </StackPanel>
+
+            <!-- Series Panel -->
+            <StackPanel x:Name="SeriesPanel" Visibility="Collapsed">
+                <TextBlock Text="Dizi Adı (Grup Modeli):" />
+                <TextBox x:Name="SeriesNameBox" Text="Yeni Dizi" />
+                
+                <TextBlock Text="Playlist ise sıralı Ekleme Özelliği" Foreground="#94a3b8" Margin="0,5,0,0"/>
+                <CheckBox x:Name="AutoSeasonEpisodeCheck" Content="Bölümleri S01E01 olarak otomatik isimlendir" IsChecked="True" Foreground="#f8fafc" Margin="0,5,0,10"/>
+                
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <StackPanel Width="80" Margin="0,0,20,0">
+                        <TextBlock Text="Başlangıç Sezon:" />
+                        <TextBox x:Name="SeasonBox" Text="1" />
+                    </StackPanel>
+                    <StackPanel Width="80">
+                        <TextBlock Text="Başlangıç Bölüm:" />
+                        <TextBox x:Name="EpisodeBox" Text="1" />
+                    </StackPanel>
+                </StackPanel>
+
+                <TextBlock Text="Dizi Dili:" />
+                <TextBox x:Name="SeriesLanguageBox" Text="Türkçe" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button Content="İptal" Click="CancelBtn_Click" Background="#475569" />
+            <Button Content="Onayla" Click="ConfirmBtn_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

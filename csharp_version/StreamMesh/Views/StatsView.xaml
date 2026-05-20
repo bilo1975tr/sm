@@ -1,0 +1,92 @@
+<UserControl x:Class="StreamMesh.Views.StatsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent" Foreground="#f8fafc">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1.5*"/>
+            <RowDefinition Height="1.5*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Ağ Yönetimi ve İstatistikler" FontSize="28" FontWeight="Bold" Margin="0,0,0,20"/>
+
+        <WrapPanel Grid.Row="1" Orientation="Horizontal">
+            <!-- P2P Stats -->
+            <Border Background="#1e293b" CornerRadius="12" Padding="20" Margin="0,0,20,20" BorderBrush="#334155" BorderThickness="1" MinWidth="250">
+                <StackPanel>
+                    <TextBlock Text="🌐 P2P Mesh Ağı" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="ActivePeersText" Text="Aktif Eş: 0" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="SharedBytesText" Text="Paylaşılan: Hesaplanıyor..." FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="P2pStatusText" Text="Durum: Bekleniyor" FontSize="16" Margin="0,5" Foreground="#facc15"/>
+                </StackPanel>
+            </Border>
+
+            <!-- DB Stats -->
+            <Border Background="#1e293b" CornerRadius="12" Padding="20" Margin="0,0,20,20" BorderBrush="#334155" BorderThickness="1" MinWidth="250">
+                <StackPanel>
+                    <TextBlock Text="📂 Veritabanı" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="TotalChannelsText" Text="Toplam Kanal: 0" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="M3uChannelsText" Text="M3U: 0" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="YoutubeChannelsText" Text="YouTube: 0" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="AceChannelsText" Text="AceStream: 0" FontSize="16" Margin="0,5"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Cloud Stats -->
+            <Border Background="#1e293b" CornerRadius="12" Padding="20" Margin="0,0,20,20" BorderBrush="#334155" BorderThickness="1" MinWidth="250">
+                <StackPanel>
+                    <TextBlock Text="☁️ Bulut Senkronizasyon" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="GitHubChanCountText" Text="GitHub'dan Gelen: 0" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="GitHubLastSyncText" Text="Son Okuma: Bekleniyor" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="FirebasePushedText" Text="Firebase Havuza Gönderilen: 0" FontSize="16" Margin="0,5"/>
+                </StackPanel>
+            </Border>
+            
+            <Button Content="Verileri Yenile" Width="150" Height="40" Click="RefreshStatsBtn_Click" VerticalAlignment="Top" Style="{StaticResource PrimaryButtonStyle}" />
+        </WrapPanel>
+
+        <!-- P2P Düğümleri Tablosu -->
+        <Border Grid.Row="2" Background="#1e293b" CornerRadius="12" Padding="15" Margin="0,0,0,20" BorderBrush="#334155" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="🔗 Aktif P2P Düğümleri (Bağlantılar)" FontWeight="Bold" FontSize="16" Foreground="#38bdf8" Margin="0,0,0,10"/>
+                
+                <ListView Grid.Row="1" x:Name="PeersList" Background="Transparent" Foreground="#f8fafc" BorderThickness="0">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="IP Adresi" DisplayMemberBinding="{Binding IpAddress}" Width="140" />
+                            <GridViewColumn Header="Port" DisplayMemberBinding="{Binding Port}" Width="60" />
+                            <GridViewColumn Header="Versiyon" DisplayMemberBinding="{Binding Version}" Width="90" />
+                            <GridViewColumn Header="Kanal Sayısı" DisplayMemberBinding="{Binding ReceivedChannels}" Width="100" />
+                            <GridViewColumn Header="Durum" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Status}" Foreground="{Binding StatusColor}" FontWeight="Bold"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Son Görülme" DisplayMemberBinding="{Binding LastSeen, StringFormat='HH:mm:ss'}" Width="120" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+        </Border>
+
+        <!-- Sistem ve Ağ Konsolu -->
+        <Border Grid.Row="3" Background="#0f172a" CornerRadius="12" Padding="15" BorderBrush="#334155" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="🖥 Sistem ve Ağ Konsolu" FontWeight="Bold" FontSize="16" Foreground="#10b981" Margin="0,0,0,10"/>
+                <TextBox Grid.Row="1" x:Name="ConsoleOutput" Background="Transparent" Foreground="#10b981" BorderThickness="0" FontFamily="Consolas" FontSize="12" IsReadOnly="True" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

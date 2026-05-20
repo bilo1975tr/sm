@@ -1,0 +1,39 @@
+<Window x:Class="StreamMesh.Windows.LegalWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Kullanıcı Sözleşmesi ve Yasal Bildirim" Height="500" Width="600"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Background="#0f172a" Foreground="#f8fafc">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Text="StreamMesh Yasal Bildirim ve Gizlilik Sözleşmesi" FontSize="20" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" TextAlignment="Center"/>
+        
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="#1e293b" Padding="15">
+            <TextBlock TextWrapping="Wrap" LineHeight="22" FontSize="14" Foreground="#e2e8f0" x:Name="LegalTextBlock">
+                <Run FontWeight="Bold" Text="UYARI VE YASAL SORUMLULUK REDDİ"/>
+                <LineBreak/><LineBreak/>
+                1. Uygulamaya girilen tüm TV kanalları, filmler, diziler ve içerik listeleri (M3U/DPL/URL) TAMAMEN kullanıcıların kendi girişlerinden gerçekleşmektedir.
+                <LineBreak/><LineBreak/>
+                2. StreamMesh uygulaması, sunucularında veya kendi bünyesinde herhangi bir yayın, film veya dizi barındırmamaktadır. Uygulamamız eklenen içeriklerden DOLAYI SORUMLULUK KABUL ETMEMEKTEDİR.
+                <LineBreak/><LineBreak/>
+                3. Kullanıcıların eklediği yayınlar (P2P ağı veya yerel), yayın kaynağı tamamen kesilene ve erişilemez olana kadar listede devam edecektir. Yayınlara merkezden veya başka bir yapay müdahale ile dışarıdan silinme/çıkarılma işlemi YAPILAMAZ. Bu, sistemin P2P doğası gereğidir.
+                <LineBreak/><LineBreak/>
+                <Run FontWeight="Bold" Text="GİZLİLİK VE VERİ GÜVENLİĞİ"/>
+                <LineBreak/><LineBreak/>
+                4. Girdiğiniz şifreler, e-posta adresleri ve kullanım verileriniz GİZLİDİR. Ağda AES-256 şifrelemesi ve SHA-256 doğrulama teknikleri kullanılarak güvende tutulmaktadır ve sadece P2P ağındaki yapılandırma amacıyla kendi şifreli kasanızda muhafaza edilir. Bilgileriniz 3. şahıslara verilmeyecek ve tamamen gizli kalacaktır.
+                <LineBreak/><LineBreak/>
+                Kabul ederek bu şartları okuduğunuzu ve onayladığınızı beyan etmiş olursunuz.
+            </TextBlock>
+        </ScrollViewer>
+        
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button Content="Reddet" Width="100" Padding="10,8" Margin="0,0,10,0" Background="#ef4444" Foreground="White" BorderThickness="0" FontWeight="Bold" Cursor="Hand" Click="Decline_Click"/>
+            <Button Content="Okudum, Onaylıyorum" Width="180" Padding="10,8" Style="{DynamicResource PrimaryButtonStyle}" Click="Accept_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
