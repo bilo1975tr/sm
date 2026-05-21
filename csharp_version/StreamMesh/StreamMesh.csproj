@@ -22,6 +22,10 @@
     <PackageReference Include="Open.NAT" Version="2.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\VERSION" CopyToOutputDirectory="PreserveNewest" Link="VERSION" />
+  </ItemGroup>
+
   <Target Name="CopyLibVLCToPublish" AfterTargets="Publish">
     <ItemGroup>
       <LibVLCFiles Include="$(TargetDir)libvlc\**\*.*" />

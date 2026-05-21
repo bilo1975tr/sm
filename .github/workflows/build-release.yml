@@ -1,0 +1,75 @@
+name: Build and Release StreamMesh
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'csharp_version/**'
+      - 'VERSION'
+  workflow_dispatch: # Allows manual trigger from Actions tab
+
+permissions:
+  contents: write    # Required for creating releases
+
+jobs:
+  build_exe:
+    name: Build Windows Application
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x' # App.xaml ve csproj'dan anlaşıldığı üzere .NET 8 kullanılıyor
+          
+      - name: Read Version
+        id: version
+        shell: bash
+        run: |
+          if [ -f "VERSION" ]; then
+            VERSION=$(cat VERSION)
+          else
+            VERSION="1.0"
+          fi
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          # Versiyon içindeki boşlukları '-' ile değiştirerek dosya adına uygun hale getir
+          SAFE_VERSION=$(echo "$VERSION" | tr ' ' '-')
+          echo "SAFE_VERSION=$SAFE_VERSION" >> $GITHUB_ENV
+
+      - name: Build & Publish App
+        shell: cmd
+        run: |
+          cd csharp_version\StreamMesh
+          dotnet clean -c Release
+          dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Create ZIP Archive
+        shell: powershell
+        run: |
+          $publishPath = "csharp_version\StreamMesh\bin\Release\net8.0-windows\win-x64\publish\*"
+          $zipPath = "StreamMesh-${env:SAFE_VERSION}.zip"
+          Compress-Archive -Path $publishPath -DestinationPath $zipPath -Force
+
+      - name: Upload Artifact (For Dashboard)
+        uses: actions/upload-artifact@v4
+        with:
+          name: StreamMesh-EXE-${{ env.SAFE_VERSION }}
+          path: StreamMesh-${{ env.SAFE_VERSION }}.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          tag_name: v${{ env.SAFE_VERSION }}-${{ github.run_number }}
+          name: StreamMesh ${{ env.APP_VERSION }}
+          body: "🚀 Otomatik Yayınlanan StreamMesh Sürümü: **${{ env.APP_VERSION }}**\n\nBu sürüm GitHub Actions tarafından derlenmiş ve paylaşıma açılmıştır."
+          files: StreamMesh-${{ env.SAFE_VERSION }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
