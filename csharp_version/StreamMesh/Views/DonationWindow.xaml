@@ -1,0 +1,49 @@
+<Window x:Class="StreamMesh.Views.DonationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Topluluk Bağışı ve VIP Ayrıcalıkları" Height="550" Width="450" Background="#0f172a" 
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" FontFamily="Segoe UI" Foreground="#f8fafc">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,15" HorizontalAlignment="Center">
+            <TextBlock Text="💎 VIP Üyelik &amp; Destek" FontSize="22" FontWeight="Bold" Foreground="#38bdf8" HorizontalAlignment="Center"/>
+            <TextBlock Text="Geliştiriciyi destekleyerek reklamsız deneyim yaşayın." FontSize="13" Foreground="#94a3b8" Margin="0,5,0,0" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Content -->
+        <Border Grid.Row="1" Background="#1e293b" CornerRadius="12" Padding="15" BorderBrush="#334155" BorderThickness="1">
+            <StackPanel>
+                <TextBlock Text="USDT (Tether) Ağ: BNB Smart Chain (BEP20)" FontSize="14" FontWeight="SemiBold" Foreground="#22c55e" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                
+                <Image x:Name="QrCodeImage" Width="180" Height="180" Margin="0,0,0,15" HorizontalAlignment="Center" Stretch="Uniform" />
+                
+                <TextBlock Text="Cüzdan Adresiniz:" FontSize="13" Foreground="#cbd5e1" Margin="0,0,0,5"/>
+                <TextBox x:Name="WalletAddressBox" Text="0xbfa68d4757ceffb2492f467671f6b28c343620f2" IsReadOnly="True" Height="30" Background="#0f172a" Foreground="#cbd5e1" BorderThickness="0" Padding="5" Margin="0,0,0,5"/>
+                <Button x:Name="CopyAddressBtn" Content="Adresi Kopyala" Width="120" Height="30" Style="{StaticResource PrimaryButtonStyle}" Click="CopyAddressBtn_Click" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Minimum bağış tutarı: 0.001 USDT" FontSize="12" Foreground="#fbbf24" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Gönderim Yaptıktan Sonra TxHash (İşlem Kimliği) Girin:" FontSize="13" Foreground="#cbd5e1" Margin="0,0,0,5"/>
+                <TextBox x:Name="TxHashBox" Height="35" Background="#0f172a" Foreground="White" BorderBrush="#38bdf8" BorderThickness="1" Padding="5" ToolTip="Örn: 0x123abc..."/>
+                <Button x:Name="VerifyDonationBtn" Content="✅ Otomatik Doğrula" Height="40" Margin="0,15,0,0" Background="#22c55e" Foreground="White" FontWeight="Bold" BorderThickness="0" Click="VerifyDonationBtn_Click" Cursor="Hand">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                
+                <TextBlock x:Name="StatusText" Text="" Foreground="#fca5a5" FontSize="12" TextWrapping="Wrap" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+        
+        <!-- Currently VIP Status -->
+        <TextBlock x:Name="VipStatusText" Grid.Row="2" Text="Durum: Ücretsiz Kullanıcı (Reklamlı)" Foreground="#94a3b8" HorizontalAlignment="Center" Margin="0,15,0,0"/>
+    </Grid>
+</Window>

@@ -17,11 +17,25 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,20">
-            <TextBlock Text="Kütüphanem (Güncel)" FontSize="32" FontWeight="Bold"/>
-            <TextBlock x:Name="TotalCountText" Text="Toplam: 0 İçerik" FontSize="14" Foreground="#cbd5e1" Margin="0,5,0,0"/>
-        </StackPanel>
+        <!-- Header and Ad Space -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="Kütüphanem (Güncel)" FontSize="32" FontWeight="Bold"/>
+                <TextBlock x:Name="TotalCountText" Text="Toplam: 0 İçerik" FontSize="14" Foreground="#cbd5e1" Margin="0,5,0,0"/>
+            </StackPanel>
+            
+            <!-- VIP / AD Banner -->
+            <Border x:Name="SponsorBannerBorder" Grid.Column="1" Width="300" Height="70" Background="#1e293b" CornerRadius="8" BorderThickness="1" BorderBrush="#38bdf8" Cursor="Hand" ToolTip="VIP olarak reklamları kaldırabilirsiniz. (BETA Ad Alanı)" MouseLeftButtonDown="SponsorBannerBorder_MouseLeftButtonDown">
+                <Grid>
+                    <TextBlock Text="Reklam / Sponsor Alanı" Foreground="#64748b" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock Text="VIP OL 💎" Foreground="#fbbf24" FontWeight="Bold" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="5"/>
+                </Grid>
+            </Border>
+        </Grid>
 
         <!-- Toolbar -->
         <Border Grid.Row="1" Background="#1e293b" CornerRadius="12" Padding="15" Margin="0,0,0,20" BorderBrush="#334155" BorderThickness="1">

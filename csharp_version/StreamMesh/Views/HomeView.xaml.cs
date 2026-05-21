@@ -30,6 +30,16 @@ namespace StreamMesh.Views
         {
             _allChannels = _databaseService.GetAllChannels();
             _currentPage = 1;
+
+            if (_databaseService.GetSetting("IsVIP", "false") == "true")
+            {
+                SponsorBannerBorder.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                SponsorBannerBorder.Visibility = Visibility.Visible;
+            }
+
             FilterChannels();
         }
 
@@ -37,6 +47,19 @@ namespace StreamMesh.Views
         {
             if (this.Visibility == Visibility.Visible)
             {
+                LoadChannels();
+            }
+        }
+
+        private void SponsorBannerBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var window = Window.GetWindow(this);
+            if (window != null)
+            {
+                var donationWindow = new Views.DonationWindow();
+                donationWindow.Owner = window;
+                donationWindow.ShowDialog();
+                // Reload channels to hide banner if activated
                 LoadChannels();
             }
         }

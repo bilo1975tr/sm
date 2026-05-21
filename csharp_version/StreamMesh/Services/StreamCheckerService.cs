@@ -245,8 +245,9 @@ namespace StreamMesh.Services
                     channel.IsVerified = true;
                     db.SaveChannel(channel); // Update verification status
                     
-                    // Sadece önceden onaysız olup ŞİMDİ onaylananları Firebase'e gönder!
-                    if (!wasVerifiedLocally)
+                    // Kullanıcı manuel olarak tüm listeyi test ediyorsa, daha önce onaylı olsa da havuza göndererek günceller,
+                    // Eğer sadece 'onaysız' listesi deneniyorsa zaten (!wasVerifiedLocally) bloğuna girer.
+                    if (!wasVerifiedLocally || !unverifiedOnly)
                     {
                         newlyVerified.Add(channel);
                     }

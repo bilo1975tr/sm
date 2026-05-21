@@ -30,6 +30,21 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00054] - 2026-05-21
+- **Arka Plan FFmpeg İndirici:** `run_c.bat` dosyasına otomatik FFmpeg indirip kuran ve `csharp_version\StreamMesh\ffmpeg.exe` yoluna atan bir script eklendi. FFmpeg yüklü değilse uygulama başlamadan önce indirilir.
+- **FFmpeg Akıllı Çözünürlük ve Aspect Ratio:** AceStream web üzerinden izlenirken dönüştürücüde kullanılan `-vf scale` filtresi `scale='min(1920,iw)':-2` olarak değiştirildi. Böylece yayın orantıları bozulmadan maksimum yatay 1920 olacak şekilde (1080p limitlerinde) korundu.
+- **Firebase Tam Liste Senkronizasyonu:** "Tüm Kanalları Kontrol Et" tıklandığında önceden `IsVerified` (onaylı) olan kanalların (gereksiz gönderim yapmamak adına) Firebase'e tekrar yollanmaması kuralı esnetildi. Artık manuel tam liste taraması başlatıldığında, çalışan tüm kanallar başarı durumlarına göre Firebase'e gönderiliyor (`!unverifiedOnly` şartiyla esneme yapıldı).
+
+### [0.0 alfa 00053] - 2026-05-20
+- **Topluluk Bağış (Donation) Modeli ve VIP Sistemi:** Uygulamaya `DonationWindow` (VIP & Destek) modülü eklendi.
+- **USDT Kripto Entegrasyonu:** Kullanıcıların belirtilen BEP20 USDT (0xbfa68d...) adresine bağış yaparak TxHash ile otomatik VIP statüsüne geçmeleri sağlandı (Otonom doğrulama mekanizması).
+- **Masaüstü Reklam (Sponsor) Alanı:** Kütüphane ekranının üst kısmına "Reklam / Sponsor Alanı" afişi eklendi. Bu afiş, VIP/Destekçi onayı alındığında anında ve otomatik olarak görünmez (Collapsed) hale gelir.
+
+### [0.0 alfa 00052] - 2026-05-20
+- **Modern Web Arayüzü (HTML Kanal Rehberi):** Yerel ağda dağıtılan `/` ana dizini artık doğrudan M3U metni vermek yerine, kanalların posterlerini ve gruplarını gösteren şık bir HTML arayüzüne dönüştürüldü.
+- **Tıkla-İzle (Web Player & Proxy Yönlendirmesi):** Web arayüzüne tıkladığınızda (veya m3u ile dışarıdan gelen isteklerde) AceStream ve YouTube adresleri statik url'ler yerine doğrudan cihazınız (local IP) üzerinden proxy yapılarak çalıştırılıyor. Web sayfasında hls.js entegrasyonu ile tıkla izle sağlandı.
+- **Dinamik Çoklu EpgUrl Desteği:** P2P veri kurgusuna ve yerel listeye birden fazla EpgUrl eklenebilmesi sağlandı. Veritabanı ve modeller bu sisteme uyarlandı.
+
 ### [0.0 alfa 00051] - 2026-05-19
 - **Detaylı Kanal Doğrulama İstatiği:** Kanal/Yayın doğrulama işlemi sırasında ekranda sadece işlenen sayı yerine, test edilen kanallar için kaynak tiplerine (AceStream, YouTube, M3U8) göre çalışma oranlarının detaylı bir şekilde gösterilmesi sağlandı (örn. AceStream: 150/150 doğrulandı, YouTube: 25/86 doğrulandı).
 

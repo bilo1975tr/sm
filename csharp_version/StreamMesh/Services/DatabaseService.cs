@@ -45,6 +45,7 @@ namespace StreamMesh.Services
                         Id TEXT PRIMARY KEY,
                         Name TEXT,
                         EpgId TEXT DEFAULT '',
+                        EpgUrl TEXT DEFAULT '',
                         Url TEXT,
                         GroupTitle TEXT,
                         LogoUrl TEXT,
@@ -109,6 +110,12 @@ namespace StreamMesh.Services
                     var alterCmdIsVerified = connection.CreateCommand();
                     alterCmdIsVerified.CommandText = "ALTER TABLE Channels ADD COLUMN IsVerified INTEGER DEFAULT 0;";
                     alterCmdIsVerified.ExecuteNonQuery();
+                } catch { }
+
+                try {
+                    var alterCmdEpgUrl = connection.CreateCommand();
+                    alterCmdEpgUrl.CommandText = "ALTER TABLE Channels ADD COLUMN EpgUrl TEXT DEFAULT '';";
+                    alterCmdEpgUrl.ExecuteNonQuery();
                 } catch { }
 
                 try {

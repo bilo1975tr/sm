@@ -16,6 +16,7 @@ namespace StreamMesh.Models
         private string _sourceType = "M3U"; // M3U, YOUTUBE, ACESTREAM
         private string _playlistUrl = string.Empty;
         private string _epgId = string.Empty;
+        private string _epgUrl = string.Empty;
         private string _currentEpgTitle;
         private string _currentEpgTime;
         private bool _isFavorite = false;
@@ -46,6 +47,12 @@ namespace StreamMesh.Models
         {
             get => _epgId;
             set { if (_epgId != value) { _epgId = value; OnPropertyChanged(); } }
+        }
+
+        public string EpgUrl
+        {
+            get => _epgUrl;
+            set { if (_epgUrl != value) { _epgUrl = value; OnPropertyChanged(); } }
         }
 
         public bool IsFavorite

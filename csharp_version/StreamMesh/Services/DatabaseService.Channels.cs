@@ -16,11 +16,12 @@ namespace StreamMesh.Services
                     connection.Open();
                     var command = connection.CreateCommand();
                     command.CommandText = @"
-                        INSERT INTO Channels (Id, Name, EpgId, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
-                        VALUES (@Id, @Name, @EpgId, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified)
+                        INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
+                        VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified)
                         ON CONFLICT(Id) DO UPDATE SET
                             Name=excluded.Name,
                             EpgId=excluded.EpgId,
+                            EpgUrl=excluded.EpgUrl,
                             Url=excluded.Url,
                             GroupTitle=excluded.GroupTitle,
                             LogoUrl=excluded.LogoUrl,
@@ -34,6 +35,7 @@ namespace StreamMesh.Services
                     command.Parameters.AddWithValue("@Id", channel.Id);
                     command.Parameters.AddWithValue("@Name", channel.Name ?? string.Empty);
                     command.Parameters.AddWithValue("@EpgId", channel.EpgId ?? string.Empty);
+                    command.Parameters.AddWithValue("@EpgUrl", channel.EpgUrl ?? string.Empty);
                     command.Parameters.AddWithValue("@Url", channel.Url ?? string.Empty);
                     command.Parameters.AddWithValue("@GroupTitle", channel.GroupTitle ?? string.Empty);
                     command.Parameters.AddWithValue("@LogoUrl", channel.LogoUrl ?? string.Empty);
@@ -104,11 +106,12 @@ namespace StreamMesh.Services
                     {
                         var command = connection.CreateCommand();
                         command.CommandText = @"
-                            INSERT INTO Channels (Id, Name, EpgId, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
-                            VALUES (@Id, @Name, @EpgId, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified)
+                            INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
+                            VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified)
                             ON CONFLICT(Id) DO UPDATE SET
                                 Name=excluded.Name,
                                 EpgId=excluded.EpgId,
+                                EpgUrl=excluded.EpgUrl,
                                 Url=excluded.Url,
                                 GroupTitle=excluded.GroupTitle,
                                 LogoUrl=excluded.LogoUrl,
@@ -123,6 +126,7 @@ namespace StreamMesh.Services
                         var pId = command.Parameters.Add("@Id", SqliteType.Text);
                         var pName = command.Parameters.Add("@Name", SqliteType.Text);
                         var pEpgId = command.Parameters.Add("@EpgId", SqliteType.Text);
+                        var pEpgUrl = command.Parameters.Add("@EpgUrl", SqliteType.Text);
                         var pUrl = command.Parameters.Add("@Url", SqliteType.Text);
                         var pGroup = command.Parameters.Add("@GroupTitle", SqliteType.Text);
                         var pLogo = command.Parameters.Add("@LogoUrl", SqliteType.Text);
@@ -164,6 +168,7 @@ namespace StreamMesh.Services
                             pId.Value = idToUse;
                             pName.Value = channel.Name ?? string.Empty;
                             pEpgId.Value = channel.EpgId ?? string.Empty;
+                            pEpgUrl.Value = channel.EpgUrl ?? string.Empty;
                             pUrl.Value = channel.Url ?? string.Empty;
                             pGroup.Value = channel.GroupTitle ?? string.Empty;
                             pLogo.Value = channel.LogoUrl ?? string.Empty;
@@ -298,7 +303,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate FROM Channels ORDER BY AddedDate DESC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels ORDER BY AddedDate DESC";
                 
                 using (var reader = command.ExecuteReader())
                 {
@@ -333,7 +338,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
                 command.Parameters.AddWithValue("@Url", playlistUrl);
                 
                 using (var reader = command.ExecuteReader())
@@ -405,7 +410,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate FROM Channels WHERE Id = @Id";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels WHERE Id = @Id";
                 command.Parameters.AddWithValue("@Id", id);
                 
                 using (var reader = command.ExecuteReader())
@@ -460,12 +465,31 @@ namespace StreamMesh.Services
                 
                 string newCombinedUrl = string.Join(",", urls);
 
+                var epgIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (!string.IsNullOrEmpty(target.EpgId)) { foreach (var u in target.EpgId.Split(',')) if (!string.IsNullOrEmpty(u.Trim())) epgIds.Add(u.Trim()); }
+                if (!string.IsNullOrEmpty(source.EpgId)) { foreach (var u in source.EpgId.Split(',')) if (!string.IsNullOrEmpty(u.Trim())) epgIds.Add(u.Trim()); }
+                
+                var epgUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (!string.IsNullOrEmpty(target.EpgUrl)) { foreach (var u in target.EpgUrl.Split(',')) if (!string.IsNullOrEmpty(u.Trim())) epgUrls.Add(u.Trim()); }
+                if (!string.IsNullOrEmpty(source.EpgUrl)) { foreach (var u in source.EpgUrl.Split(',')) if (!string.IsNullOrEmpty(u.Trim())) epgUrls.Add(u.Trim()); }
+
+                var logoUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (!string.IsNullOrEmpty(target.LogoUrl)) { foreach (var u in target.LogoUrl.Split(',')) if (!string.IsNullOrEmpty(u.Trim())) logoUrls.Add(u.Trim()); }
+                if (!string.IsNullOrEmpty(source.LogoUrl)) { foreach (var u in source.LogoUrl.Split(',')) if (!string.IsNullOrEmpty(u.Trim())) logoUrls.Add(u.Trim()); }
+
+                string newCombinedEpgId = string.Join(",", epgIds);
+                string newCombinedEpgUrl = string.Join(",", epgUrls);
+                string newCombinedLogoUrl = string.Join(",", logoUrls);
+
                 using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "UPDATE Channels SET Url = @Url WHERE Id = @Id";
+                    cmd.CommandText = "UPDATE Channels SET Url = @Url, EpgId = @EpgId, EpgUrl = @EpgUrl, LogoUrl = @LogoUrl WHERE Id = @Id";
                     cmd.Parameters.AddWithValue("@Url", newCombinedUrl);
+                    cmd.Parameters.AddWithValue("@EpgId", newCombinedEpgId);
+                    cmd.Parameters.AddWithValue("@EpgUrl", newCombinedEpgUrl);
+                    cmd.Parameters.AddWithValue("@LogoUrl", newCombinedLogoUrl);
                     cmd.Parameters.AddWithValue("@Id", targetId);
                     cmd.ExecuteNonQuery();
                 }
@@ -528,7 +552,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
                 command.Parameters.AddWithValue("@Limit", limit);
                 command.Parameters.AddWithValue("@Offset", offset);
                 
@@ -588,7 +612,7 @@ namespace StreamMesh.Services
                     // Step 1: Load lightweight lookup
                     using (var cmd = connection.CreateCommand())
                     {
-                        cmd.CommandText = "SELECT Id, Url, EpgId, LogoUrl, IsVerified FROM Channels";
+                        cmd.CommandText = "SELECT Id, Url, EpgId, LogoUrl, IsVerified, EpgUrl FROM Channels";
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -598,11 +622,14 @@ namespace StreamMesh.Services
                                 var localEpg = reader.IsDBNull(2) ? "" : reader.GetString(2);
                                 var localLogo = reader.IsDBNull(3) ? "" : reader.GetString(3);
                                 var localVerified = !reader.IsDBNull(4) && reader.GetInt32(4) == 1;
+                                var localEpgUrl = reader.IsDBNull(5) ? "" : reader.GetString(5);
 
-                                var info = new Channel { Id = localId, Url = localUrl, EpgId = localEpg, LogoUrl = localLogo, IsVerified = localVerified };
+                                var info = new Channel { Id = localId, Url = localUrl, EpgId = localEpg, LogoUrl = localLogo, IsVerified = localVerified, EpgUrl = localEpgUrl };
                                 existingChannels[localId] = info;
 
-                                if (!string.IsNullOrWhiteSpace(localEpg)) epgMap[localEpg.Trim()] = localId;
+                                if (!string.IsNullOrWhiteSpace(localEpg)) {
+                                    foreach(var u in localEpg.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) epgMap[u.Trim()] = localId;
+                                }
                                 if (!string.IsNullOrWhiteSpace(localUrl))
                                 {
                                     foreach (var u in localUrl.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
@@ -618,19 +645,21 @@ namespace StreamMesh.Services
                     using (var transaction = connection.BeginTransaction())
                     {
                         var updateCmd = connection.CreateCommand();
-                        updateCmd.CommandText = "UPDATE Channels SET Url=@Url, EpgId=@EpgId, LogoUrl=@LogoUrl, IsVerified=@IsVerified WHERE Id=@Id";
+                        updateCmd.CommandText = "UPDATE Channels SET Url=@Url, EpgId=@EpgId, LogoUrl=@LogoUrl, IsVerified=@IsVerified, EpgUrl=@EpgUrl WHERE Id=@Id";
                         var pId = updateCmd.Parameters.Add("@Id", SqliteType.Text);
                         var pUrl = updateCmd.Parameters.Add("@Url", SqliteType.Text);
                         var pEpg = updateCmd.Parameters.Add("@EpgId", SqliteType.Text);
                         var pLogo = updateCmd.Parameters.Add("@LogoUrl", SqliteType.Text);
                         var pVer = updateCmd.Parameters.Add("@IsVerified", SqliteType.Integer);
+                        var pEpgUrl = updateCmd.Parameters.Add("@EpgUrl", SqliteType.Text);
 
                         var insertCmd = connection.CreateCommand();
-                        insertCmd.CommandText = @"INSERT INTO Channels (Id, Name, EpgId, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
-                                                  VALUES (@Id, @Name, @EpgId, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, 0, @IsVerified)";
+                        insertCmd.CommandText = @"INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
+                                                  VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, 0, @IsVerified)";
                         var iId = insertCmd.Parameters.Add("@Id", SqliteType.Text);
                         var iName = insertCmd.Parameters.Add("@Name", SqliteType.Text);
                         var iEpg = insertCmd.Parameters.Add("@EpgId", SqliteType.Text);
+                        var iEpgUrl = insertCmd.Parameters.Add("@EpgUrl", SqliteType.Text);
                         var iUrl = insertCmd.Parameters.Add("@Url", SqliteType.Text);
                         var iGrp = insertCmd.Parameters.Add("@GroupTitle", SqliteType.Text);
                         var iLogo = insertCmd.Parameters.Add("@LogoUrl", SqliteType.Text);
@@ -647,9 +676,18 @@ namespace StreamMesh.Services
                         {
                             string matchedId = null;
 
-                            if (!string.IsNullOrWhiteSpace(c.EpgId) && epgMap.TryGetValue(c.EpgId.Trim(), out var byEpg))
-                                matchedId = byEpg;
-                            else if (!string.IsNullOrWhiteSpace(c.Url))
+                            if (!string.IsNullOrWhiteSpace(c.EpgId))
+                            {
+                                foreach (var u in c.EpgId.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    if (epgMap.TryGetValue(u.Trim(), out var byEpg))
+                                    {
+                                        matchedId = byEpg;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (matchedId == null && !string.IsNullOrWhiteSpace(c.Url))
                             {
                                 foreach (var u in c.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                                 {
@@ -671,18 +709,28 @@ namespace StreamMesh.Services
                                 foreach (var u in incomingUrls)
                                     if (existingUrls.Add(u.Trim())) changed = true;
 
-                                if (changed) existing.Url = string.Join(",", existingUrls);
+                                var existingEpgIds = new HashSet<string>((existing.EpgId ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
+                                var incomingEpgIds = (c.EpgId ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var u in incomingEpgIds)
+                                    if (existingEpgIds.Add(u.Trim())) changed = true;
 
-                                if (string.IsNullOrWhiteSpace(existing.EpgId) && !string.IsNullOrWhiteSpace(c.EpgId))
-                                {
-                                    existing.EpgId = c.EpgId;
-                                    changed = true;
-                                }
+                                var existingLogos = new HashSet<string>((existing.LogoUrl ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
+                                var incomingLogos = (c.LogoUrl ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var u in incomingLogos)
+                                    if (existingLogos.Add(u.Trim())) changed = true;
 
-                                if (string.IsNullOrWhiteSpace(existing.LogoUrl) && !string.IsNullOrWhiteSpace(c.LogoUrl))
+                                var existingEpgUrls = new HashSet<string>((existing.EpgUrl ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
+                                var incomingEpgUrls = (c.EpgUrl ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var u in incomingEpgUrls)
+                                    if (existingEpgUrls.Add(u.Trim())) changed = true;
+
+
+                                if (changed) 
                                 {
-                                    existing.LogoUrl = c.LogoUrl;
-                                    changed = true;
+                                    existing.Url = string.Join(",", existingUrls);
+                                    existing.EpgId = string.Join(",", existingEpgIds);
+                                    existing.LogoUrl = string.Join(",", existingLogos);
+                                    existing.EpgUrl = string.Join(",", existingEpgUrls);
                                 }
 
                                 if (!existing.IsVerified && c.IsVerified)
@@ -697,11 +745,14 @@ namespace StreamMesh.Services
                                     pUrl.Value = existing.Url;
                                     pEpg.Value = existing.EpgId;
                                     pLogo.Value = existing.LogoUrl;
+                                    pEpgUrl.Value = existing.EpgUrl;
                                     pVer.Value = existing.IsVerified ? 1 : 0;
                                     updateCmd.ExecuteNonQuery();
 
                                     // Update lookup
-                                    if (!string.IsNullOrWhiteSpace(existing.EpgId)) epgMap[existing.EpgId.Trim()] = existing.Id;
+                                    if (!string.IsNullOrWhiteSpace(existing.EpgId)) {
+                                        foreach(var u in existingEpgIds) epgMap[u.Trim()] = existing.Id;
+                                    }
                                     foreach (var u in existingUrls) urlMap[u.Trim()] = existing.Id;
                                 }
                             }
@@ -712,6 +763,7 @@ namespace StreamMesh.Services
                                 iId.Value = newId;
                                 iName.Value = c.Name ?? string.Empty;
                                 iEpg.Value = c.EpgId ?? string.Empty;
+                                iEpgUrl.Value = c.EpgUrl ?? string.Empty;
                                 iUrl.Value = c.Url ?? string.Empty;
                                 iGrp.Value = c.GroupTitle ?? string.Empty;
                                 iLogo.Value = c.LogoUrl ?? string.Empty;
@@ -723,9 +775,11 @@ namespace StreamMesh.Services
                                 iVer.Value = c.IsVerified ? 1 : 0;
                                 insertCmd.ExecuteNonQuery();
 
-                                var newLocal = new Channel { Id = newId, Url = c.Url ?? "", EpgId = c.EpgId ?? "", LogoUrl = c.LogoUrl ?? "", IsVerified = c.IsVerified };
+                                var newLocal = new Channel { Id = newId, Url = c.Url ?? "", EpgId = c.EpgId ?? "", LogoUrl = c.LogoUrl ?? "", IsVerified = c.IsVerified, EpgUrl = c.EpgUrl ?? "" };
                                 existingChannels[newId] = newLocal;
-                                if (!string.IsNullOrWhiteSpace(newLocal.EpgId)) epgMap[newLocal.EpgId.Trim()] = newId;
+                                if (!string.IsNullOrWhiteSpace(newLocal.EpgId)) {
+                                     foreach(var u in newLocal.EpgId.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) epgMap[u.Trim()] = newId;
+                                }
                                 foreach (var u in newLocal.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                                     urlMap[u.Trim()] = newId;
                             }

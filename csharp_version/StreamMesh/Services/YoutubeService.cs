@@ -72,6 +72,21 @@ namespace StreamMesh.Services
             }
         }
 
+        public async Task<string> GetSingleMuxedStreamUrlAsync(string videoUrl)
+        {
+            try
+            {
+                var manifest = await _youtubeClient.Videos.Streams.GetManifestAsync(videoUrl);
+                var muxedStream = manifest.GetMuxedStreams().GetWithHighestVideoQuality();
+                return muxedStream?.Url;
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"YouTube oynatma URL'si alınırken hata (Muxed): {ex.Message}", ex);
+                return null;
+            }
+        }
+
         public async Task<List<Channel>> GetChannelsFromUrlAsync(string url)
         {
             var channels = new List<Channel>();

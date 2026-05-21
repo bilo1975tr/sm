@@ -109,6 +109,13 @@ namespace StreamMesh
             LogService.Log($"Fullscreen toggled: {isFullscreen}");
         }
 
+        private void VIPButton_Click(object sender, RoutedEventArgs e)
+        {
+            var donationWindow = new Views.DonationWindow();
+            donationWindow.Owner = this;
+            donationWindow.ShowDialog();
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             _playerView?.Dispose();

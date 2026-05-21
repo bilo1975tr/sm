@@ -22,6 +22,11 @@
                 <RadioButton Style="{StaticResource NavButtonStyle}" Content="▶️" ToolTip="Oynatıcı" GroupName="NavMenu" x:Name="NavPlayer" IsChecked="True" Click="Nav_Click"/>
                 <RadioButton Style="{StaticResource NavButtonStyle}" Content="📊" ToolTip="İstatistikler" GroupName="NavMenu" x:Name="NavStats" Click="Nav_Click"/>
                 <RadioButton Style="{StaticResource NavButtonStyle}" Content="⚙️" ToolTip="Ayarlar &amp; Sunucu" GroupName="NavMenu" x:Name="NavSettings" Click="Nav_Click"/>
+                
+                <!-- Spacer -->
+                <Border Height="30"/>
+                <!-- VIP / Destek Button -->
+                <Button Content="💎" ToolTip="VIP &amp; Destek" Width="40" Height="40" Background="Transparent" Foreground="#fbbf24" FontSize="20" BorderThickness="0" Cursor="Hand" Click="VIPButton_Click" HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
 
