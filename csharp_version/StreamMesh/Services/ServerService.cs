@@ -52,8 +52,9 @@ namespace StreamMesh.Services
             LogService.Log($"Server starting on port {Port}...");
             try
             {
+                int internalPort = Port + 1;
                 _listener = new HttpListener();
-                _listener.Prefixes.Add($"http://*:{Port}/");
+                _listener.Prefixes.Add($"http://localhost:{internalPort}/");
                 _listener.Start();
                 _isRunning = true;
 
@@ -61,33 +62,56 @@ namespace StreamMesh.Services
                 _serverThread.IsBackground = true;
                 _serverThread.Start();
 
-                LogService.Log($"Server started successfully at http://*:{Port}/");
+                // Start TCP Relay to bypass Windows HttpListener Admin (URL ACL) restrictions
+                Task.Run(() => StartTcpRelay(Port, internalPort));
+
+                LogService.Log($"Server started successfully on port {Port} (Relay to {internalPort})");
                 OnStatusChanged?.Invoke(true, LocalIp, Port.ToString());
             }
             catch (Exception ex)
             {
-                LogService.LogError($"Server start error (wildcard failed). Trying localhost...", ex);
-                try
-                {
-                    _listener = new HttpListener();
-                    _listener.Prefixes.Add($"http://localhost:{Port}/");
-                    _listener.Start();
-                    _isRunning = true;
+                LogService.LogError($"Server start error.", ex);
+                _isRunning = false;
+                OnStatusChanged?.Invoke(false, "", "");
+            }
+        }
 
-                    _serverThread = new Thread(Listen);
-                    _serverThread.IsBackground = true;
-                    _serverThread.Start();
-
-                    LogService.Log($"Server started on localhost only.");
-                    OnStatusChanged?.Invoke(true, "localhost", Port.ToString());
-                }
-                catch (Exception e2)
+        private void StartTcpRelay(int publicPort, int internalPort)
+        {
+            try
+            {
+                var listener = new TcpListener(IPAddress.Any, publicPort);
+                listener.Start();
+                LogService.Log($"TCP Relay started listening on 0.0.0.0:{publicPort} -> 127.0.0.1:{internalPort}");
+                while (_isRunning)
                 {
-                    LogService.LogError("Server fallback failed completely.", e2);
-                    _isRunning = false;
-                    OnStatusChanged?.Invoke(false, "", "");
+                    var client = listener.AcceptTcpClient();
+                    Task.Run(() => HandleRelayClient(client, internalPort));
                 }
             }
+            catch (Exception ex)
+            {
+                LogService.LogError("TCP Relay bound failed", ex);
+            }
+        }
+
+        private async Task HandleRelayClient(TcpClient client, int internalPort)
+        {
+            try
+            {
+                using (client)
+                using (var target = new TcpClient("127.0.0.1", internalPort))
+                {
+                    using (var stream1 = client.GetStream())
+                    using (var stream2 = target.GetStream())
+                    {
+                        var task1 = stream1.CopyToAsync(stream2);
+                        var task2 = stream2.CopyToAsync(stream1);
+                        await Task.WhenAny(task1, task2);
+                    }
+                }
+            }
+            catch { }
         }
 
         public void StopServer()

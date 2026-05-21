@@ -30,6 +30,11 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00055] - 2026-05-21
+- **HttpListener Windows URL ACL Bypass (Ağ Erişim Hatası Çözümü):** Windows üzerinde `HttpListener`'ın wildcard (`*`) bağlaması yapabilmesi için Yönetici (Administrator) yetkisine ihtiyaç duyması nedeniyle LAN üzerinden diğer cihazların sunucuya (IP:5000) erişememesi sorunu çözüldü.
+- **TCP Relay Mimarisi:** Arka planda `localhost:5001` portundan çalışan gizli bir HTTP sunucusu ve 0.0.0.0:5000 üzerinden dinleyip HTTP sunucusuna trafiği yönlendiren bir TcpListener asenkron Relay (Proxy) sistemi kodlandı. Artık kullanıcılar hiçbir yönetici yetkisi veya güvenlik duvarı komutuna ihtiyaç duymadan LAN'daki diğer (Örn: Smart TV) cihazlarından kanallara ulaşabiliyor.
+- **GitHub Workflow Güncellemesi:** CI/CD süreçlerinde VERSION dosyası baz alınarak `ZIP` adlandırması yapılması sağlandı.
+
 ### [0.0 alfa 00054] - 2026-05-21
 - **Arka Plan FFmpeg İndirici:** `run_c.bat` dosyasına otomatik FFmpeg indirip kuran ve `csharp_version\StreamMesh\ffmpeg.exe` yoluna atan bir script eklendi. FFmpeg yüklü değilse uygulama başlamadan önce indirilir.
 - **FFmpeg Akıllı Çözünürlük ve Aspect Ratio:** AceStream web üzerinden izlenirken dönüştürücüde kullanılan `-vf scale` filtresi `scale='min(1920,iw)':-2` olarak değiştirildi. Böylece yayın orantıları bozulmadan maksimum yatay 1920 olacak şekilde (1080p limitlerinde) korundu.
