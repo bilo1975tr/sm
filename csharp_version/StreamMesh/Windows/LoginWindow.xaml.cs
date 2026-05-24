@@ -1,6 +1,8 @@
 using System;
 using System.Windows;
+using StreamMesh.Services;
 using StreamMesh.Services.P2P;
+using System.Windows.Controls;
 
 namespace StreamMesh.Windows
 {
@@ -11,6 +13,30 @@ namespace StreamMesh.Windows
         public LoginWindow()
         {
             InitializeComponent();
+            PopulateComboBoxes();
+        }
+
+        private void PopulateComboBoxes()
+        {
+            CountryCombo.ItemsSource = LocalizationManager.AllCountries;
+            CountryCombo.SelectedItem = "Türkiye";
+
+            Lang1Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
+            Lang1Combo.SelectedItem = "Tümü (Tüm Ülkeler)";
+
+            Lang2Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
+            Lang2Combo.SelectedItem = "Tümü (Tüm Ülkeler)";
+
+            AppLangCombo.ItemsSource = LocalizationManager.Top50Languages;
+            AppLangCombo.SelectedItem = LocalizationManager.Instance.CurrentLanguage;
+        }
+
+        private void AppLangCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (AppLangCombo.SelectedItem is string lang)
+            {
+                LocalizationManager.Instance.CurrentLanguage = lang;
+            }
         }
 
         private void Login_Click(object sender, RoutedEventArgs e)
@@ -23,22 +49,38 @@ namespace StreamMesh.Windows
                 return;
             }
 
-            string country = (CountryCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content.ToString() ?? "Türkiye";
-            string lang1 = (Lang1Combo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content.ToString();
-            string lang2 = (Lang2Combo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content.ToString();
+            string country = CountryCombo.SelectedItem as string ?? "Türkiye";
+            string lang1 = Lang1Combo.SelectedItem as string ?? "";
+            string lang2 = Lang2Combo.SelectedItem as string ?? "";
+            string appLang = AppLangCombo.SelectedItem as string ?? "Türkçe";
 
-            if (lang1 == "Seçili Değil") lang1 = "";
-            if (lang2 == "Seçili Değil") lang2 = "";
+            if (lang1 == "Tümü (Tüm Ülkeler)") lang1 = "";
+            if (lang2 == "Tümü (Tüm Ülkeler)") lang2 = "";
 
             try
             {
-                UserService.RegisterOrLogin(email, password, country, lang1, lang2);
+                UserService.RegisterOrLogin(email, password, country, lang1, lang2, appLang);
                 IsLoggedIn = true;
                 this.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Giriş sırasında hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void GuestLogin_Click(object sender, RoutedEventArgs e)
+        {
+            string appLang = AppLangCombo.SelectedItem as string ?? "Türkçe";
+            try
+            {
+                UserService.GuestLogin(appLang);
+                IsLoggedIn = true;
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Misafir girişi sırasında hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

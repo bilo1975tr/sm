@@ -69,25 +69,16 @@ namespace StreamMesh.Views
             int ytCount = channels.Count(c => c.SourceType == "YOUTUBE");
             int aceCount = channels.Count(c => c.SourceType == "ACESTREAM");
 
-            TotalChannelsText.Text = $"Toplam Kanal: {channels.Count}";
+            TotalChannelsText.Text = string.Format(LocalizationManager.Instance["Stats_TotChan"], channels.Count);
             M3uChannelsText.Text = $"M3U: {m3uCount}";
             YoutubeChannelsText.Text = $"YouTube: {ytCount}";
             AceChannelsText.Text = $"AceStream: {aceCount}";
 
-            // P2P gerçek mantık
-            var activeNodes = StreamMesh.Services.P2P.P2pNodeManager.GetActiveNodes();
-            bool isRunning = StreamMesh.Services.P2P.P2pService.IsRunning;
-
-            ActivePeersText.Text = $"Aktif Eş: {activeNodes.Count}";
-            SharedBytesText.Text = "Paylaşılan: Hesaplanıyor...";
-            P2pStatusText.Text = isRunning ? "Durum: Aktif (Ağa Bağlı)" : "Durum: Pasif (Bağlantı Bekleniyor)";
-
             // Cloud Stats
-            GitHubChanCountText.Text = $"GitHub'dan Gelen: {GitHubSyncService.LastPulledGitHubChannelCount}";
-            GitHubLastSyncText.Text = $"Son Okuma: {(GitHubSyncService.LastGitHubPullTime > DateTime.MinValue ? GitHubSyncService.LastGitHubPullTime.ToString("HH:mm:ss") : "Bekleniyor")}";
-            FirebasePushedText.Text = $"Firebase Havuza Gönderilen: {GitHubSyncService.TotalChannelsPushedToFirebase}";
-
-            PeersList.ItemsSource = activeNodes;
+            GitHubChanCountText.Text = string.Format(LocalizationManager.Instance["Stats_GitRecv"], GitHubSyncService.LastPulledGitHubChannelCount);
+            string waitStr = LocalizationManager.Instance["Stats_Waiting"];
+            GitHubLastSyncText.Text = string.Format(LocalizationManager.Instance["Stats_GitSync"], GitHubSyncService.LastGitHubPullTime > DateTime.MinValue ? GitHubSyncService.LastGitHubPullTime.ToString("HH:mm:ss") : waitStr);
+            FirebasePushedText.Text = string.Format(LocalizationManager.Instance["Stats_FbPush"], GitHubSyncService.TotalChannelsPushedToFirebase);
         }
 
         private void RefreshStatsBtn_Click(object sender, RoutedEventArgs e)

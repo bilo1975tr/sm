@@ -30,6 +30,41 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00062] - 2026-05-24
+- **Sistem Tepsisi (System Tray) Entegrasyonu:** Uygulama kapatıldığında (X) tamamen kapanmak yerine arka planda çalışmaya devam etmek üzere Sistem Tepsisine (Tray) küçültülmesi (Minimize) sağlandı. Tepsiden "Göster" veya "Çıkış" fonksiyonlarıyla yönetilebilir. Böylece uygulama açıkken P2P eşitlemeleri sekteye uğramaz.
+- **Akıllı Kaynak Tüketimi Yönetimi:** Uygulama Sistem Tepsisine küçültüldüğünde arka planda PC'yi veya interneti yormamak adına açık olan tüm aktif VLC Video/Audio yayınları anında sonlandırılır (StopPlayback).
+- **AceStream Engine Kapanış Entegrasyonu:** Sistem Tepsisine düşüldüğünde veya uygulamadan tamamen çıkış yapıldığında, AceStream motorunun arka planda gizlice çalışmaya ve kaynak tüketmeye devam etmesini engellemek için, aktif tüm `ace_engine` işlemleri (Process.Kill) zorunlu olarak kapatılacak şekilde düzenlendi.
+
+### [0.0 alfa 00061] - 2026-05-22
+- **Dinamik Envanter Sistemi:** Uygulama boyutunu devasa boyutlara çıkaran (örn. FFmpeg) dosyalar derleme dışına alındı. Uygulama, eksik dosyaları başlangıçta tespit edip GitHub Release üzerinden otomatik indirerek `%AppDir%/Envanter` klasörüne (InventoryService) atacak şekilde geliştirildi.
+- **Kurulum Sihirbazı (Inno Setup) Altyapısı:** Uygulamanın son kullanıcıya `C:\Program Files\StreamMesh` klasöründe çalışacak şekilde kurulabilmesi, masaüstü kısayolu, kaldırıcı (uninstall) özelliği barındırması için tam teşekküllü `setup_script.iss` ve paketleme scripti eklendi.
+- **GitHub Asset Yönetimi:** Projenin kök dizininde ikonlar ve logoların Inno Setup sırasında entegre edilmesi için `logos` ve `icons` dizinleri tanımlandı.
+- **Ayarlar Sekme Revizyonu:** Zaten otomatik başlatılan AceStream ayarları kaldırılarak yerine gerçek zamanlı Uygulama Dili (Kullanıcı Tercihli) değiştirme menüsü eklendi.
+
+### [0.0 alfa 00060] - 2026-05-22
+- **Küresel Çoklu-Dil Desteği (I18N):** `LocalizationManager` altyapısı kurularak uygulamanın tasarımına top 50 dil listesi eşlendi.
+- **Login Ekranı Entegrasyonu:** Bulunduğunuz ülke tüm dünya listesinden, Diğer bildiğiniz diller ülke listesinden ve yepyeni olan Uygulama Dili listesinden seçilebiliyor. Uygulama dili değiştiğinde arayüz gerçek zamanlı (istisnasız) çevrilir.
+- **Kullanıcı Profili:** Seçilen Uygulama Dili (`AppLanguage`), `UserProfile` sınıfı altında yerel veritabanında saklanır.
+
+### [0.0 alfa 00059] - 2026-05-22
+- **Misafir Girişi Desteği:** `LoginWindow` üzerine "Misafir Girişi" butonu eklendi ve varsayılan kullanıcı adı "Misafir" olacak şekilde ayarlandı.
+- **Kullanıcı Adı / Şifre Revizyonu:** "E-Posta Adresi" alanı, "E-Posta veya Kullanıcı Adı" olarak değiştirildi. Artık gerçek kullanıcı adıyla giriş yapılabiliyor.
+
+### [0.0 alfa 00058] - 2026-05-22
+- **P2P Ağının Kaldırılması:** Tüm kanalların zaten Firebase üzerinden senkronize edilmesi ve GitHub Raw üzerinden Limitsiz OKUMA sağlanması (Hibrit CQRS Modeli) nedeniyle karmaşık ve hata üretme potansiyeline sahip TCP ve UDP tabanlı P2P (Peer-to-Peer) eşleşme altyapısı kalıcı olarak uygulamadan silindi.
+- **İstatistik Ekranı Sadeleştirmesi (StatsView):** Uygulamadaki P2P İstatistikleri ve Aktif Düğümler paneli kaldırılarak İstatistikler sayfasının sadece Firebase havuza atılan ve GitHub'dan okunan bulut senkronizasyonuna tam odaklanması sağlandı.
+- **Güvenlik / Temizlik:** `Open.NAT` kütüphanesi ve açık API (ipify) gibi NAT delme araçları (StunService, UdpDiscovery, P2pNodeManager) projeden arındırılıp istemcilerin IP adreslerinin ifşası tamamen sonlandırıldı.
+
+### [0.0 alfa 00057] - 2026-05-21
+- **Web Arayüzü Geliştirmeleri:** Web arayüzüne Kanal Kategorileri (TV, Film, Dizi) filtreleri eklendi.
+- **Kişisel Favoriler:** Web istemcisine `localStorage` destekli Cihaza-Özel Favorilere Ekleme (⭐) özelliği eklendi, her cihaz kendi favorilerini saklar.
+- **Kesintisiz Web Player:** Oynatıcı ekranına anasayfaya dönüş başlığı eklendi ve AceStream gibi motorların başlatılması sırasında oluşan yayın kesintileri için otomatik 3.5 saniye zamanlı "Tekrar Dene" entegrasyonu kodlandı.
+- **MSBuild Virgul Hatası Tespiti:** .csproj içerisinde `MakeRelative` fonksiyonunun bulunduğu klasör ismindeki virgülden (',') dolayı çöktüğü tespit edildi, klasör ismi uyarısı kullanıcıya bildirilecek.
+
+### [0.0 alfa 00056] - 2026-05-21
+- **HttpListener Host Header Hatası Çözümü:** Windows ortamında IP (ör. 192.168.x.x) ile bağlantı sağlandığında HttpListener'ın "Invalid Hostname" diyerek veya URL ACL'ye takılarak yanıt vermemesi/şişmesi sorununa kök çözüm getirildi.
+- **TCP Socket Web Server:** Arka planda tüm HttpListener ve Relay mimarisi silindi. Yerine sadece .NET Socket (TcpListener) tabanlı, çok daha hafif ve "Host Header" veya Windows Yönetici izinleri umrunda olmayan nativ bir yerel HTTP sunucusu kodlandı. Artık sorunsuz şekilde her türlü IP ve cihazdan anında cevap verebilir.
+
 ### [0.0 alfa 00055] - 2026-05-21
 - **HttpListener Windows URL ACL Bypass (Ağ Erişim Hatası Çözümü):** Windows üzerinde `HttpListener`'ın wildcard (`*`) bağlaması yapabilmesi için Yönetici (Administrator) yetkisine ihtiyaç duyması nedeniyle LAN üzerinden diğer cihazların sunucuya (IP:5000) erişememesi sorunu çözüldü.
 - **TCP Relay Mimarisi:** Arka planda `localhost:5001` portundan çalışan gizli bir HTTP sunucusu ve 0.0.0.0:5000 üzerinden dinleyip HTTP sunucusuna trafiği yönlendiren bir TcpListener asenkron Relay (Proxy) sistemi kodlandı. Artık kullanıcılar hiçbir yönetici yetkisi veya güvenlik duvarı komutuna ihtiyaç duymadan LAN'daki diğer (Örn: Smart TV) cihazlarından kanallara ulaşabiliyor.

@@ -12,9 +12,12 @@ namespace StreamMesh.Services
 {
     public class ServerService
     {
-        private HttpListener _listener;
+        private static ServerService _instance;
+        public static ServerService Instance => _instance ?? (_instance = new ServerService());
+
         private Thread _serverThread;
         private bool _isRunning = false;
+        public bool IsRunning => _isRunning;
         private DatabaseService _databaseService;
         private YoutubeService _youtubeService;
         private AceStreamService _aceStreamService;
@@ -52,20 +55,15 @@ namespace StreamMesh.Services
             LogService.Log($"Server starting on port {Port}...");
             try
             {
-                int internalPort = Port + 1;
-                _listener = new HttpListener();
-                _listener.Prefixes.Add($"http://localhost:{internalPort}/");
-                _listener.Start();
+                var listener = new TcpListener(IPAddress.Any, Port);
+                listener.Start();
                 _isRunning = true;
 
-                _serverThread = new Thread(Listen);
+                _serverThread = new Thread(() => Listen(listener));
                 _serverThread.IsBackground = true;
                 _serverThread.Start();
 
-                // Start TCP Relay to bypass Windows HttpListener Admin (URL ACL) restrictions
-                Task.Run(() => StartTcpRelay(Port, internalPort));
-
-                LogService.Log($"Server started successfully on port {Port} (Relay to {internalPort})");
+                LogService.Log($"Server started successfully on port {Port} (Bypass Mode)");
                 OnStatusChanged?.Invoke(true, LocalIp, Port.ToString());
             }
             catch (Exception ex)
@@ -76,110 +74,120 @@ namespace StreamMesh.Services
             }
         }
 
-        private void StartTcpRelay(int publicPort, int internalPort)
-        {
-            try
-            {
-                var listener = new TcpListener(IPAddress.Any, publicPort);
-                listener.Start();
-                LogService.Log($"TCP Relay started listening on 0.0.0.0:{publicPort} -> 127.0.0.1:{internalPort}");
-                while (_isRunning)
-                {
-                    var client = listener.AcceptTcpClient();
-                    Task.Run(() => HandleRelayClient(client, internalPort));
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("TCP Relay bound failed", ex);
-            }
-        }
-
-        private async Task HandleRelayClient(TcpClient client, int internalPort)
-        {
-            try
-            {
-                using (client)
-                using (var target = new TcpClient("127.0.0.1", internalPort))
-                {
-                    using (var stream1 = client.GetStream())
-                    using (var stream2 = target.GetStream())
-                    {
-                        var task1 = stream1.CopyToAsync(stream2);
-                        var task2 = stream2.CopyToAsync(stream1);
-                        await Task.WhenAny(task1, task2);
-                    }
-                }
-            }
-            catch { }
-        }
-
         public void StopServer()
         {
             if (!_isRunning) return;
 
             _isRunning = false;
-            _listener?.Stop();
-            _listener?.Close();
             OnStatusChanged?.Invoke(false, "", "");
         }
 
-        private async void Listen()
+        private async void Listen(TcpListener listener)
         {
             while (_isRunning)
             {
                 try
                 {
-                    var context = await _listener.GetContextAsync();
-                    ProcessRequest(context);
-                }
-                catch (HttpListenerException)
-                {
-                    break; // Listener stopped or disposed
+                    var client = await listener.AcceptTcpClientAsync();
+                    _ = Task.Run(() => ProcessClientAsync(client));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Listen error: " + ex.Message);
+                    if (_isRunning) Console.WriteLine("Listen error: " + ex.Message);
                 }
             }
+            listener.Stop();
         }
 
-        private async void ProcessRequest(HttpListenerContext context)
+        private async Task ProcessClientAsync(TcpClient client)
         {
-            var request = context.Request;
-            var response = context.Response;
-            string path = request.Url.AbsolutePath;
+            using (client)
+            {
+                try
+                {
+                    var stream = client.GetStream();
+                    using (var reader = new System.IO.StreamReader(stream, Encoding.UTF8, true, 4096, true))
+                    {
+                        string requestLine = await reader.ReadLineAsync();
+                        if (string.IsNullOrEmpty(requestLine)) return;
 
-            try
-            {
-                if (path == "/playlist.m3u")
-                {
-                    await HandlePlaylistAsync(response);
+                        string[] parts = requestLine.Split(' ');
+                        if (parts.Length < 2) return;
+
+                        string method = parts[0];
+                        string fullUrl = parts[1];
+
+                        string path = fullUrl;
+                        string idStr = null;
+
+                        if (path.Contains("?"))
+                        {
+                            var partsUrl = path.Split('?');
+                            path = partsUrl[0];
+                            var query = partsUrl[1];
+                            foreach (var p in query.Split('&'))
+                            {
+                                if (p.StartsWith("id=")) idStr = p.Substring(3);
+                            }
+                        }
+
+                        // Read headers until empty line
+                        while (true)
+                        {
+                            string headerLine = await reader.ReadLineAsync();
+                            if (string.IsNullOrEmpty(headerLine)) break;
+                        }
+
+                        if (path == "/playlist.m3u")
+                        {
+                            await HandlePlaylistAsync(stream);
+                        }
+                        else if (path == "/stream")
+                        {
+                            await HandleStreamAsync(stream, idStr);
+                        }
+                        else if (path == "/")
+                        {
+                            await HandleHomeAsync(stream);
+                        }
+                        else
+                        {
+                            await WriteErrorAsync(stream, 404, "Not Found");
+                        }
+                    }
                 }
-                else if (path == "/stream")
+                catch (Exception ex)
                 {
-                    string idStr = request.QueryString["id"];
-                    await HandleStreamAsync(response, idStr);
+                    Console.WriteLine("ProcessClient error: " + ex.Message);
                 }
-                else if (path == "/")
-                {
-                    await HandleHomeAsync(response);
-                }
-                else
-                {
-                    response.StatusCode = 404;
-                    CloseResponse(response);
-                }
-            }
-            catch (Exception ex)
-            {
-                response.StatusCode = 500;
-                Console.WriteLine("Server error: " + ex.Message);
-                CloseResponse(response);
             }
         }
 
-        private async Task HandlePlaylistAsync(HttpListenerResponse response)
+        private async Task WriteHeadersAsync(NetworkStream stream, int statusCode, string statusText, string contentType, Dictionary<string, string> extraHeaders = null)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"HTTP/1.1 {statusCode} {statusText}");
+            sb.AppendLine($"Content-Type: {contentType}");
+            sb.AppendLine("Connection: close");
+            sb.AppendLine("Access-Control-Allow-Origin: *");
+            if (extraHeaders != null)
+            {
+                foreach (var h in extraHeaders)
+                    sb.AppendLine($"{h.Key}: {h.Value}");
+            }
+            sb.AppendLine();
+            byte[] headerBytes = Encoding.UTF8.GetBytes(sb.ToString());
+            await stream.WriteAsync(headerBytes, 0, headerBytes.Length);
+        }
+
+        private async Task WriteErrorAsync(NetworkStream stream, int statusCode, string statusText)
+        {
+            await WriteHeadersAsync(stream, statusCode, statusText, "text/plain");
+            byte[] body = Encoding.UTF8.GetBytes(statusText);
+            await stream.WriteAsync(body, 0, body.Length);
+        }
+
+        private async Task HandlePlaylistAsync(NetworkStream stream)
         {
             var channels = _databaseService.GetAllChannels();
             StringBuilder sb = new StringBuilder();
@@ -192,7 +200,6 @@ namespace StreamMesh.Services
                 string title = ch.Name ?? "Kanal";
                 string streamUrl = $"http://{LocalIp}:{Port}/stream?id={ch.Id}";
 
-                // Group fix for categories
                 if (!string.IsNullOrEmpty(ch.Category) && ch.Category != "TV")
                 {
                     if (ch.Category == "Film" && !group.StartsWith("Film"))
@@ -208,15 +215,17 @@ namespace StreamMesh.Services
             string content = sb.ToString();
             byte[] buffer = Encoding.UTF8.GetBytes(content);
 
-            response.ContentType = "audio/mpegurl";
-            response.ContentLength64 = buffer.Length;
-            response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
+            var headers = new Dictionary<string, string>
+            {
+                { "Content-Length", buffer.Length.ToString() },
+                { "Cache-Control", "no-cache, no-store, must-revalidate" }
+            };
 
-            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-            CloseResponse(response);
+            await WriteHeadersAsync(stream, 200, "OK", "audio/mpegurl", headers);
+            await stream.WriteAsync(buffer, 0, buffer.Length);
         }
 
-        private async Task HandleStreamAsync(HttpListenerResponse response, string idStr)
+        private async Task HandleStreamAsync(NetworkStream stream, string idStr)
         {
             if (!string.IsNullOrEmpty(idStr))
             {
@@ -233,16 +242,15 @@ namespace StreamMesh.Services
                     else if (channel.SourceType == "ACESTREAM")
                     {
                         await _aceStreamService.StartEngineAsync();
-                        string aceUrl = _aceStreamService.GetHttpUrl(url); // the TS stream url from AceStream
+                        string aceUrl = _aceStreamService.GetHttpUrl(url); 
                         
                         try
                         {
-                            response.ContentType = "video/mp4";
-                            response.Headers.Add("Access-Control-Allow-Origin", "*");
+                            await WriteHeadersAsync(stream, 200, "OK", "video/mp4");
                             
                             var psi = new System.Diagnostics.ProcessStartInfo
                             {
-                                FileName = "ffmpeg",
+                                FileName = StreamMesh.Services.InventoryService.FFmpegPath,
                                 Arguments = $"-i \"{aceUrl}\" -c:v libx264 -preset superfast -crf 28 -vf \"scale='min(1920,iw)':-2\" -c:a aac -b:a 128k -f mp4 -movflags frag_keyframe+empty_moov pipe:1",
                                 RedirectStandardOutput = true,
                                 UseShellExecute = false,
@@ -253,7 +261,7 @@ namespace StreamMesh.Services
                             {
                                 try
                                 {
-                                    await process.StandardOutput.BaseStream.CopyToAsync(response.OutputStream);
+                                    await process.StandardOutput.BaseStream.CopyToAsync(stream);
                                 }
                                 finally
                                 {
@@ -263,27 +271,29 @@ namespace StreamMesh.Services
                                     }
                                 }
                             }
-                            return; // Wait for completion
+                            return; 
                         }
                         catch (Exception ex)
                         {
                             LogService.LogError("FFmpeg Hatası, doğrudan yönlendirmeye düşülüyor: " + ex.Message, ex);
-                            // If ffmpeg fails, fallback to direct TS stream url (might not play in browser, but VLC handles it)
                             url = aceUrl.Replace("/ace/getstream", "/ace/manifest.m3u8").Replace("127.0.0.1", LocalIp);
                         }
                     }
 
-                    response.Redirect(url);
-                    CloseResponse(response);
+                    // HTTP 302 Redirect
+                    var redirectHeaders = new Dictionary<string, string>
+                    {
+                        { "Location", url }
+                    };
+                    await WriteHeadersAsync(stream, 302, "Found", "text/plain", redirectHeaders);
                     return;
                 }
             }
 
-            response.StatusCode = 404;
-            CloseResponse(response);
+            await WriteErrorAsync(stream, 404, "Not Found");
         }
 
-        private async Task HandleHomeAsync(HttpListenerResponse response)
+        private async Task HandleHomeAsync(NetworkStream stream)
         {
             var channels = _databaseService.GetAllChannels();
             
@@ -322,34 +332,44 @@ namespace StreamMesh.Services
         }}
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }}
         header {{ padding: 20px; background: var(--card-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; flex-shrink: 0; gap: 10px; flex-wrap: wrap; }}
-        header h2 {{ margin: 0; color: var(--primary); font-size: 20px; }}
+        header h2 {{ margin: 0; color: var(--primary); font-size: 20px; cursor: pointer; text-decoration: none; }}
         #search-box {{ padding: 8px 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; width: 250px; outline: none; }}
         #search-box:focus {{ border-color: var(--primary); }}
-        .btn {{ background: #22c55e; color: white; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: background 0.2s; white-space: nowrap; }}
+        .btn {{ background: #22c55e; color: white; padding: 10px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; transition: background 0.2s; white-space: nowrap; cursor: pointer; border: none; }}
         .btn:hover {{ background: #16a34a; }}
+        .filter-btn {{ background: #334155; color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; margin-right: 5px; }}
+        .filter-btn:hover {{ background: #475569; }}
+        .filter-btn.active {{ background: var(--primary); color: #0f172a; }}
+        .filters {{ display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }}
         
         .main-content {{ display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; }}
         
         .player-container {{ width: 100%; background: #000; display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-bottom: 1px solid #334155; flex-shrink: 0; }}
         video {{ max-width: 100%; width: 640px; height: 360px; background: #111; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: none; }}
-        #current-channel {{ margin-top: 10px; font-weight: bold; color: var(--primary); font-size: 18px; }}
+        .player-controls {{ margin-top: 15px; display: flex; gap: 10px; align-items: center; justify-content: center; }}
+        #current-channel {{ font-weight: bold; color: var(--primary); font-size: 18px; }}
+        .retry-btn {{ display: none; background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }}
+        .retry-btn:hover {{ background: #dc2626; }}
 
         .grid-container {{ padding: 20px; flex-grow: 1; overflow-y: auto; }}
         .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }}
         
-        .channel-card {{ background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid transparent; }}
+        .channel-card {{ position: relative; background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid transparent; }}
         .channel-card:hover {{ transform: scale(1.03); border-color: var(--primary); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }}
         .channel-card img {{ max-width: 100%; height: 80px; object-fit: contain; margin-bottom: 10px; border-radius: 4px; }}
         .channel-card h4 {{ margin: 0 0 5px 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
         .channel-card p {{ margin: 0 0 10px 0; font-size: 12px; color: var(--text-muted); }}
         .badge {{ background: #334155; color: white; padding: 3px 8px; border-radius: 12px; font-size: 10px; text-transform: uppercase; font-weight: bold; }}
+        .fav-star {{ position: absolute; top: 10px; right: 10px; font-size: 20px; color: #64748b; background: transparent; border: none; cursor: pointer; padding: 0; line-height: 1; outline: none; transition: transform 0.2s; z-index: 2; }}
+        .fav-star:hover {{ transform: scale(1.2); }}
+        .fav-star.active {{ color: #eab308; text-shadow: 0 0 5px rgba(234, 179, 8, 0.5); }}
         .load-more {{ background: #334155; color: white; padding: 12px; text-align: center; border-radius: 8px; margin-top: 20px; cursor: pointer; font-weight: bold; transition: background 0.2s; }}
         .load-more:hover {{ background: #475569; }}
     </style>
 </head>
 <body>
     <header>
-        <h2>StreamMesh Web Oynatıcı</h2>
+        <h2 onclick='closePlayer(); setCategory("""");'>StreamMesh Web Oynatıcı</h2>
         <input type='text' id='search-box' placeholder='Kanal ara...' onkeyup='filterSearch()'>
         <div>
             <span style='margin-right:15px; color:var(--text-muted); font-size:14px;' id='total-text'>Toplam: 0</span>
@@ -360,10 +380,20 @@ namespace StreamMesh.Services
     <div class='main-content'>
         <div class='player-container' id='player-container' style='display: none;'>
             <video id='video' controls autoplay style='display: none;'></video>
-            <div id='current-channel'></div>
+            <div class='player-controls'>
+                <div id='current-channel'></div>
+                <button id='retry-btn' class='retry-btn' onclick='retryCurrent()'>Tekrar Dene</button>
+            </div>
         </div>
 
         <div class='grid-container'>
+            <div class='filters'>
+                <button class='filter-btn active' id='filter-all' onclick='setCategory("""")'>Tümü</button>
+                <button class='filter-btn' id='filter-fav' onclick='setCategory(""Fav"")'>Favoriler ⭐</button>
+                <button class='filter-btn' id='filter-tv' onclick='setCategory(""TV"")'>TV</button>
+                <button class='filter-btn' id='filter-film' onclick='setCategory(""Film"")'>Film</button>
+                <button class='filter-btn' id='filter-dizi' onclick='setCategory(""Dizi"")'>Dizi</button>
+            </div>
             <div class='grid' id='channel-grid'></div>
             <div id='load-more-btn' class='load-more' onclick='loadMore()' style='display:none;'>Daha Fazla Yükle</div>
         </div>
@@ -374,6 +404,17 @@ namespace StreamMesh.Services
         var filteredChannels = allChannels;
         var currentPage = 1;
         var pageSize = 50;
+        var currentCategory = """";
+        var favorites = JSON.parse(localStorage.getItem('sm_favorites') || '[]');
+
+        function toggleFavorite(event, id) {{
+            event.stopPropagation();
+            var index = favorites.indexOf(id);
+            if(index > -1) {{ favorites.splice(index, 1); }}
+            else {{ favorites.push(id); }}
+            localStorage.setItem('sm_favorites', JSON.stringify(favorites));
+            renderGrid(false);
+        }}
 
         document.getElementById('total-text').innerText = 'Toplam: ' + allChannels.length;
 
@@ -389,7 +430,12 @@ namespace StreamMesh.Services
                 var div = document.createElement('div');
                 div.className = 'channel-card';
                 div.onclick = (function(c) {{ return function() {{ playChannel(c); }} }})(ch);
-                div.innerHTML = ""<img src='"" + ch.logo + ""' onerror=\""this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iODAiPjxwYXRoIGQ9Ik0wIDBoMTUwdjgwaC0xNTB6IiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNzUiIHk9IjQ1IiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TmV0U3RyZWFtPC90ZXh0Pjwvc3ZnPg==';\"">"" +
+                
+                var isFav = favorites.includes(ch.id);
+                var starClass = isFav ? 'fav-star active' : 'fav-star';
+                
+                div.innerHTML = ""<button class='"" + starClass + ""' onclick='toggleFavorite(event, \"""" + ch.id + ""\"")' title='Favorilere Ekle/Çıkar'>★</button>"" +
+                                ""<img src='"" + ch.logo + ""' onerror=\""this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iODAiPjxwYXRoIGQ9Ik0wIDBoMTUwdjgwaC0xNTB6IiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNzUiIHk9IjQ1IiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TmV0U3RyZWFtPC90ZXh0Pjwvc3ZnPg==';\"">"" +
                                 ""<h4>"" + ch.name + ""</h4>"" +
                                 ""<p>"" + ch.group + ""</p>"" +
                                 ""<span class='badge'>"" + (ch.cat || 'Diğer') + ""</span> "" +
@@ -404,17 +450,42 @@ namespace StreamMesh.Services
             renderGrid(true);
         }}
 
-        function filterSearch() {{
+        function applyFilters() {{
             var q = document.getElementById('search-box').value.toLowerCase();
-            if (!q) {{
-                filteredChannels = allChannels;
-            }} else {{
-                filteredChannels = allChannels.filter(function(c) {{
-                    return c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q);
-                }});
-            }}
+            filteredChannels = allChannels.filter(function(c) {{
+                var matchesSearch = !q || c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q);
+                var matchesCat = true;
+                if (currentCategory === 'Fav') {{
+                    matchesCat = favorites.includes(c.id);
+                }} else if (currentCategory !== """") {{
+                    matchesCat = (c.cat || """").toUpperCase() === currentCategory.toUpperCase();
+                }}
+                return matchesSearch && matchesCat;
+            }});
             document.getElementById('total-text').innerText = 'Bulunan: ' + filteredChannels.length;
             renderGrid(false);
+        }}
+
+        function filterSearch() {{ applyFilters(); }}
+
+        function setCategory(cat) {{
+            currentCategory = cat;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if(cat === """") document.getElementById('filter-all').classList.add('active');
+            else if(cat === ""Fav"") document.getElementById('filter-fav').classList.add('active');
+            else if(cat === ""TV"") document.getElementById('filter-tv').classList.add('active');
+            else if(cat === ""Film"") document.getElementById('filter-film').classList.add('active');
+            else if(cat === ""Dizi"") document.getElementById('filter-dizi').classList.add('active');
+            applyFilters();
+        }}
+        
+        function closePlayer() {{
+            video.pause();
+            video.src = '';
+            if(hls) {{ hls.destroy(); hls = null; }}
+            container.style.display = 'none';
+            document.getElementById('retry-btn').style.display = 'none';
+            channelTitle.innerText = '';
         }}
 
         window.onload = function() {{ renderGrid(false); }};
@@ -422,11 +493,19 @@ namespace StreamMesh.Services
         var video = document.getElementById('video');
         var container = document.getElementById('player-container');
         var channelTitle = document.getElementById('current-channel');
+        var retryBtn = document.getElementById('retry-btn');
         var hls = null;
+        var currentPlayedChannel = null;
+
+        function retryCurrent() {{
+            if (currentPlayedChannel) playChannel(currentPlayedChannel);
+        }}
 
         function playChannel(ch) {{
+            currentPlayedChannel = ch;
             container.style.display = 'flex';
             channelTitle.innerText = ch.name + ' - Yükleniyor...';
+            retryBtn.style.display = 'none';
             
             video.style.display = 'block';
             if(hls) {{ hls.destroy(); hls = null; }}
@@ -436,15 +515,15 @@ namespace StreamMesh.Services
             var streamUrl = '/stream?id=' + ch.id;
             
             if (ch.srcType === 'ACESTREAM' || ch.srcType === 'YOUTUBE') {{
-                fallbackNative(streamUrl, ch.name);
+                fallbackNative(streamUrl, ch.name, ch.srcType);
             }} else {{
-                playNativeOrHls(streamUrl, ch.name);
+                playNativeOrHls(streamUrl, ch.name, ch.srcType);
             }}
             
             window.scrollTo(0, 0);
         }}
 
-        function playNativeOrHls(streamUrl, name) {{
+        function playNativeOrHls(streamUrl, name, srcType) {{
             video.style.display = 'block';
             if (Hls.isSupported()) {{
                 hls = new Hls();
@@ -457,40 +536,56 @@ namespace StreamMesh.Services
                 hls.on(Hls.Events.ERROR, function(event, data) {{
                     if (data.fatal) {{
                         console.log('HLS.js fallback');
-                        fallbackNative(streamUrl, name);
+                        fallbackNative(streamUrl, name, srcType);
                     }}
                 }});
             }} else if (video.canPlayType('application/vnd.apple.mpegurl')) {{
-                fallbackNative(streamUrl, name);
+                fallbackNative(streamUrl, name, srcType);
             }} else {{
-                fallbackNative(streamUrl, name);
+                fallbackNative(streamUrl, name, srcType);
             }}
         }}
 
-        function fallbackNative(url, name) {{
+        function fallbackNative(url, name, srcType) {{
             if(hls) {{ hls.destroy(); }}
             video.src = url;
-            video.play().then(() => {{
-                channelTitle.innerText = name;
-            }}).catch(e => {{
-                channelTitle.innerText = name + ' (Oynatılamadı/Cors)';
-                console.log('Native playback error:', e);
-            }});
+            
+            var playPromise = video.play();
+            if (playPromise !== undefined) {{
+                playPromise.then(() => {{
+                    channelTitle.innerText = name;
+                }}).catch(e => {{
+                    channelTitle.innerText = name + ' (Bekleniyor...)';
+                    if (srcType === 'ACESTREAM') {{
+                         retryBtn.style.display = 'block';
+                         channelTitle.innerText += ' - AceStream Motoru Başlıyor...';
+                         setTimeout(() => {{ if (currentPlayedChannel && currentPlayedChannel.name === name) retryCurrent(); }}, 3500);
+                    }} else {{
+                         retryBtn.style.display = 'block';
+                         console.log('Native playback error:', e);
+                    }}
+                }});
+            }}
         }}
+
+        video.addEventListener('error', function(e) {{
+            if (currentPlayedChannel) {{
+                 retryBtn.style.display = 'block';
+                 channelTitle.innerText = currentPlayedChannel.name + ' (Yayın Hatası)';
+                 console.log('Video Element Error', e);
+            }}
+        }});
     </script>
 </body>
 </html>";
 
             byte[] buffer = Encoding.UTF8.GetBytes(html);
-            response.ContentType = "text/html; charset=utf-8";
-            response.ContentLength64 = buffer.Length;
-            await response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
-            CloseResponse(response);
-        }
-
-        private void CloseResponse(HttpListenerResponse response)
-        {
-            try { response.OutputStream.Close(); } catch { }
+            var headers = new Dictionary<string, string>
+            {
+                { "Content-Length", buffer.Length.ToString() }
+            };
+            await WriteHeadersAsync(stream, 200, "OK", "text/html; charset=utf-8", headers);
+            await stream.WriteAsync(buffer, 0, buffer.Length);
         }
     }
 }

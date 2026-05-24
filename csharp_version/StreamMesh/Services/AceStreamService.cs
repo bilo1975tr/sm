@@ -70,5 +70,22 @@ namespace StreamMesh.Services
 
             return $"http://127.0.0.1:{ACESTREAM_PORT}/ace/getstream?id={contentId}";
         }
+
+        public void KillEngine()
+        {
+            try
+            {
+                Process[] pname = Process.GetProcessesByName("ace_engine");
+                foreach (var p in pname)
+                {
+                    p.Kill();
+                }
+                LogService.Log("AceStream processes killed.");
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("Failed to kill AceStream processes.", ex);
+            }
+        }
     }
 }

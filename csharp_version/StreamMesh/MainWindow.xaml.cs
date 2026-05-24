@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Windows;
 using LibVLCSharp.Shared;
 using StreamMesh.Views;
@@ -13,9 +14,15 @@ namespace StreamMesh
         private StatsView _statsView;
         private SettingsView _settingsView;
 
+        private System.Windows.Forms.NotifyIcon _notifyIcon;
+        private bool _isRealClose = false;
+
         public MainWindow()
         {
             InitializeComponent();
+            this.Loaded += MainWindow_Loaded;
+            
+            InitializeTrayIcon();
             
             // Versiyonu yükle
             try
@@ -48,6 +55,17 @@ namespace StreamMesh
             // Varsayılan sayfa: Kütüphane (Home)
             NavHome.IsChecked = true;
             MainContent.Content = _homeView;
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            await InventoryService.CheckAndDownloadInventoryAsync();
+
+            if (InventoryService.AreComponentsMissing())
+            {
+                var missingWindow = new StreamMesh.Windows.MissingComponentsWindow();
+                missingWindow.ShowDialog();
+            }
         }
 
         private void OnChannelSelected(Models.Channel channel, List<Models.Channel> playlist)
@@ -114,6 +132,70 @@ namespace StreamMesh
             var donationWindow = new Views.DonationWindow();
             donationWindow.Owner = this;
             donationWindow.ShowDialog();
+        }
+
+        private void InitializeTrayIcon()
+        {
+            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            try
+            {
+                _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            }
+            catch
+            {
+                _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+            }
+            _notifyIcon.Text = "StreamMesh";
+            _notifyIcon.Visible = true;
+
+            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
+
+            var showItem = new System.Windows.Forms.ToolStripMenuItem("Göster");
+            showItem.Click += (s, e) => ShowWindow();
+
+            var exitItem = new System.Windows.Forms.ToolStripMenuItem("Çıkış");
+            exitItem.Click += (s, e) =>
+            {
+                _isRealClose = true;
+                _notifyIcon.Visible = false;
+                _notifyIcon.Dispose();
+                
+                new AceStreamService().KillEngine();
+                
+                this.Close();
+            };
+
+            contextMenu.Items.Add(showItem);
+            contextMenu.Items.Add(exitItem);
+            _notifyIcon.ContextMenuStrip = contextMenu;
+
+            _notifyIcon.DoubleClick += (s, ev) => ShowWindow();
+        }
+
+        private void ShowWindow()
+        {
+            this.Show();
+            if (this.WindowState == WindowState.Minimized)
+            {
+                this.WindowState = WindowState.Normal;
+            }
+            this.Activate();
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (!_isRealClose)
+            {
+                e.Cancel = true;
+                this.Hide();
+
+                // Aktif yayınları ve AceStream'i durdur
+                _playerView?.StopPlayback();
+                new AceStreamService().KillEngine();
+
+                _notifyIcon.ShowBalloonTip(2000, "StreamMesh", "Uygulama arka planda çalışmaya devam ediyor.", System.Windows.Forms.ToolTipIcon.Info);
+            }
+            base.OnClosing(e);
         }
 
         protected override void OnClosed(EventArgs e)

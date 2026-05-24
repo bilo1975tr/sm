@@ -52,6 +52,7 @@ jobs:
         shell: powershell
         run: |
           $publishPath = "csharp_version\StreamMesh\bin\Release\net8.0-windows\win-x64\publish\*"
+          Copy-Item -Path "VERSION" -Destination "csharp_version\StreamMesh\bin\Release\net8.0-windows\win-x64\publish\"
           $zipPath = "StreamMesh-${env:SAFE_VERSION}.zip"
           Compress-Archive -Path $publishPath -DestinationPath $zipPath -Force
 

@@ -1,0 +1,10 @@
+# StreamMesh Masaüstü ve Sistem İkonları
+
+Bu klasöre uygulamanın başlatıcısı (Desktop Shortcut), görev çubuğu ve görev yöneticisinde görünecek ikon dosyalarını atın.
+
+Gereksinimler:
+- Çalıştırılabilir Dosya İkonu (.exe için): .ico formatında olmalıdır.
+  - İdeal 16x16, 32x32, 48x48, 64x64, 128x128 ve 256x256 boyutlarını barındıran tek bir .ico dosyası (örn: app_icon.ico).
+- Installer (Kurulum Sihirbazı) İkonu: .ico formatı tercih edilir.
+
+Not: Uygulama derlenirken ve Inno Setup kurulum dosyası hazırlanırken buradaki .ico dosyası kullanılacaktır.

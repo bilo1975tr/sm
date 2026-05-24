@@ -33,6 +33,7 @@ namespace StreamMesh.Services.P2P
                             user.LastLoginTime = DateTime.UtcNow;
                             CurrentUser = user;
                             SaveUser();
+                            LocalizationManager.Instance.CurrentLanguage = CurrentUser.AppLanguage ?? "Türkçe";
                             return true;
                         }
                     }
@@ -42,7 +43,7 @@ namespace StreamMesh.Services.P2P
             return false;
         }
 
-        public static void RegisterOrLogin(string email, string password, string country, string l1, string l2)
+        public static void RegisterOrLogin(string email, string password, string country, string l1, string l2, string appLang)
         {
             if (File.Exists(UserFilePath))
             {
@@ -54,8 +55,12 @@ namespace StreamMesh.Services.P2P
                     if (user != null && user.Email == email && user.PasswordHash == HashPassword(password))
                     {
                         user.LastLoginTime = DateTime.UtcNow;
+                        user.Country = country;
+                        user.Languages = new System.Collections.Generic.List<string> { l1, l2 };
+                        user.AppLanguage = appLang;
                         CurrentUser = user;
                         SaveUser();
+                        LocalizationManager.Instance.CurrentLanguage = appLang;
                         return; // Logged in
                     }
                 }
@@ -68,9 +73,38 @@ namespace StreamMesh.Services.P2P
                 PasswordHash = HashPassword(password),
                 Country = country,
                 Languages = new System.Collections.Generic.List<string> { l1, l2 },
+                AppLanguage = appLang,
                 IsPremium = false,
                 LastLoginTime = DateTime.UtcNow
             };
+            SaveUser();
+            LocalizationManager.Instance.CurrentLanguage = appLang;
+        }
+
+        public static void GuestLogin(string appLang = "Türkçe")
+        {
+            CurrentUser = new UserProfile
+            {
+                Email = "Misafir",
+                PasswordHash = "",
+                Country = "Türkiye",
+                Languages = new System.Collections.Generic.List<string> { "İngilizce" },
+                AppLanguage = appLang,
+                IsPremium = false,
+                LastLoginTime = DateTime.UtcNow
+            };
+            SaveUser(); // So auto-login works next time for the guest as well
+            LocalizationManager.Instance.CurrentLanguage = appLang;
+        }
+
+        public static UserProfile GetProfile()
+        {
+            return CurrentUser;
+        }
+
+        public static void SaveProfile(UserProfile profile)
+        {
+            CurrentUser = profile;
             SaveUser();
         }
 

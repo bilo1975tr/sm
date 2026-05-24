@@ -375,6 +375,11 @@ namespace StreamMesh.Views
             }
         }
 
+        public void StopPlayback()
+        {
+            _mediaPlayer?.Stop();
+        }
+
         public void Dispose()
         {
             _mediaPlayer?.Stop();

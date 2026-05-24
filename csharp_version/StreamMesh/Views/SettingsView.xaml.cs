@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using StreamMesh.Services;
+using StreamMesh.Services.P2P;
 
 namespace StreamMesh.Views
 {
@@ -14,7 +15,6 @@ namespace StreamMesh.Views
         private ServerService _serverService;
         private AceStreamService _aceStreamService;
         private bool _isServerRunning = false;
-        private DispatcherTimer _aceStatusTimer;
 
         public class EpgSourceInfo
         {
@@ -33,19 +33,112 @@ namespace StreamMesh.Views
             InitializeComponent();
             _databaseService = new DatabaseService();
             _m3uService = new M3uService();
-            _serverService = new ServerService();
+            _serverService = ServerService.Instance;
             _aceStreamService = new AceStreamService();
             
             _serverService.OnStatusChanged += ServerService_OnStatusChanged;
 
-            _aceStatusTimer = new DispatcherTimer();
-            _aceStatusTimer.Interval = TimeSpan.FromSeconds(2);
-            _aceStatusTimer.Tick += AceStatusTimer_Tick;
-            _aceStatusTimer.Start();
-            
-            UpdateAceStatus();
+            // Güncel durumu butona yansıt
+            if (_serverService.IsRunning)
+            {
+                ServerService_OnStatusChanged(true, _serverService.LocalIp, _serverService.Port.ToString());
+            }
+
             LoadM3uSources();
             LoadEpgSources();
+            
+            SetCurrentLanguageInCombo();
+        }
+
+        private void SetCurrentLanguageInCombo()
+        {
+            try
+            {
+                string currentLang = LocalizationManager.Instance.CurrentLanguage;
+                foreach (ComboBoxItem item in LanguageCombo.Items)
+                {
+                    if (item.Tag?.ToString() == currentLang)
+                    {
+                        LanguageCombo.SelectedItem = item;
+                        break;
+                    }
+                }
+
+                var profile = UserService.GetProfile();
+                if (profile != null)
+                {
+                    CountryCombo.ItemsSource = LocalizationManager.AllCountries;
+                    Lang1Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
+                    Lang2Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
+
+                    CountryCombo.SelectedItem = string.IsNullOrEmpty(profile.Country) ? "Türkiye" : profile.Country;
+                    
+                    if (profile.Languages != null)
+                    {
+                        Lang1Combo.SelectedItem = profile.Languages.Count > 1 ? profile.Languages[1] : "Tümü (Tüm Ülkeler)";
+                        Lang2Combo.SelectedItem = profile.Languages.Count > 2 ? profile.Languages[2] : "Tümü (Tüm Ülkeler)";
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void ProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!this.IsLoaded) return; // Ignore events during initialization
+            var profile = UserService.GetProfile();
+            if (profile != null)
+            {
+                string country = CountryCombo.SelectedItem as string ?? "Türkiye";
+                string lang1 = Lang1Combo.SelectedItem as string ?? "Tümü (Tüm Ülkeler)";
+                string lang2 = Lang2Combo.SelectedItem as string ?? "Tümü (Tüm Ülkeler)";
+
+                profile.Country = country;
+                
+                var langs = new System.Collections.Generic.List<string> { "Türkçe" }; // Varsayılanı Türkçe bırakabiliriz veya değiştirebiliriz. Fakat P2P'de Türkiye/Türkçe bazlıydı
+                if (lang1 != "Tümü (Tüm Ülkeler)" && !string.IsNullOrEmpty(lang1)) langs.Add(lang1);
+                if (lang2 != "Tümü (Tüm Ülkeler)" && !string.IsNullOrEmpty(lang2)) langs.Add(lang2);
+                
+                profile.Languages = langs;
+
+                UserService.SaveProfile(profile);
+            }
+        }
+
+        private async void DownloadComponentsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DownloadComponentsBtn.IsEnabled = false;
+            DownloadStatusText.Text = "Kontrol ediliyor...";
+
+            string githubAceStreamUrl = "https://github.com/bilo1975tr/sm/releases/download/v1.0/AceStream.zip"; 
+            
+            await Task.Run(async () =>
+            {
+                await InventoryService.DownloadComponentsManuallyAsync(githubAceStreamUrl, (message) => 
+                {
+                    Dispatcher.Invoke(() => DownloadStatusText.Text = message);
+                });
+            });
+
+            Dispatcher.Invoke(() => DownloadComponentsBtn.IsEnabled = true);
+        }
+
+        private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LanguageCombo.SelectedItem is ComboBoxItem selectedItem)
+            {
+                string lang = selectedItem.Tag?.ToString();
+                if (!string.IsNullOrEmpty(lang))
+                {
+                    LocalizationManager.Instance.LoadTranslations(lang);
+                    var userProfile = UserService.GetProfile();
+                    if (userProfile != null)
+                    {
+                        userProfile.AppLanguage = lang;
+                        UserService.SaveProfile(userProfile);
+                    }
+                }
+            }
         }
 
         private void LoadM3uSources()
@@ -177,38 +270,6 @@ namespace StreamMesh.Views
                 LoadM3uSources();
                 MessageBox.Show("Kaynak ve kanalları silindi.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-        }
-
-        private void AceStatusTimer_Tick(object sender, EventArgs e)
-        {
-            UpdateAceStatus();
-        }
-
-        private void UpdateAceStatus()
-        {
-            bool isRunning = _aceStreamService.IsRunning();
-            if (isRunning)
-            {
-                AceStatusText.Text = "Durum: Çalışıyor";
-                AceStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(34, 197, 94));
-                AceStartBtn.IsEnabled = false;
-            }
-            else
-            {
-                AceStatusText.Text = "Durum: Kapalı";
-                AceStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(252, 165, 165));
-                AceStartBtn.IsEnabled = true;
-            }
-        }
-
-        private async void AceStartBtn_Click(object sender, RoutedEventArgs e)
-        {
-            AceStartBtn.IsEnabled = false;
-            AceStatusText.Text = "Durum: Başlatılıyor...";
-            AceStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(250, 204, 21)); // Yellow
-            
-            await _aceStreamService.StartEngineAsync();
-            UpdateAceStatus();
         }
 
         private void ServerControlBtn_Click(object sender, RoutedEventArgs e)

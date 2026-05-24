@@ -46,8 +46,15 @@ namespace StreamMesh
                 }
             }
 
-            // Start P2P Mesh Network
-            _ = StreamMesh.Services.P2P.P2pService.StartAsync();
+            // Gelişmiş dil yükleme (AutoLogin veya LoginWindow sonrası)
+            var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+            if (profile != null && !string.IsNullOrEmpty(profile.AppLanguage))
+            {
+                StreamMesh.Services.LocalizationManager.Instance.LoadTranslations(profile.AppLanguage);
+            }
+
+            // Start Local Server
+            StreamMesh.Services.ServerService.Instance.StartServer();
 
             // Start GitHub Sync
             StreamMesh.Services.GitHubSyncService.Start();

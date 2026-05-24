@@ -1,7 +1,8 @@
 <Window x:Class="StreamMesh.Windows.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="StreamMesh - Giriş / Kayıt" Height="480" Width="420"
+        xmlns:services="clr-namespace:StreamMesh.Services"
+        Title="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Title]}" Height="640" Width="440"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#0f172a" Foreground="#f8fafc">
     <Grid Margin="30">
@@ -12,44 +13,42 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="StreamMesh Ağına Katıl" FontSize="24" FontWeight="Bold" Foreground="#38bdf8" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-        <TextBlock Grid.Row="1" Text="Hesabınız yoksa otomatik oluşturulacaktır (P2P tabanlı)" FontSize="12" Foreground="#94a3b8" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+        <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[StreamMeshNetwork]}" FontSize="24" FontWeight="Bold" Foreground="#38bdf8" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="1" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[LoginDesc]}" FontSize="12" Foreground="#94a3b8" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
         <StackPanel Grid.Row="2" VerticalAlignment="Center">
-            <TextBlock Text="E-Posta Adresi" Foreground="#94a3b8" Margin="0,0,0,5"/>
+            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[EmailOrUser]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
             <TextBox x:Name="EmailBox" Height="35" Margin="0,0,0,15"/>
 
-            <TextBlock Text="Şifre" Foreground="#94a3b8" Margin="0,0,0,5"/>
+            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Password]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
             <PasswordBox x:Name="PasswordBox" Height="35" Background="#1e293b" Foreground="#f8fafc" BorderBrush="#334155" Padding="10,8" Margin="0,0,0,15"/>
 
-            <TextBlock Text="Bulunduğunuz Ülke" Foreground="#94a3b8" Margin="0,0,0,5"/>
-            <ComboBox x:Name="CountryCombo" Height="35" Margin="0,0,0,15" Background="#1e293b" Foreground="#0f172a">
-                <ComboBoxItem Content="Türkiye" IsSelected="True"/>
-                <ComboBoxItem Content="Almanya"/>
-                <ComboBoxItem Content="Amerika"/>
-                <ComboBoxItem Content="İngiltere"/>
-            </ComboBox>
+            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Country]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
+            <ComboBox x:Name="CountryCombo" Height="35" Margin="0,0,0,15" Background="#1e293b" Foreground="#0f172a"/>
 
-            <TextBlock Text="Diğer Bildiğiniz Diller" Foreground="#94a3b8" Margin="0,0,0,5"/>
-            <Grid>
+            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[KnownLangs]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
+            <Grid Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <ComboBox x:Name="Lang1Combo" Grid.Column="0" Height="35" Background="#1e293b" Foreground="#0f172a">
-                    <ComboBoxItem Content="Seçili Değil" IsSelected="True"/>
-                    <ComboBoxItem Content="İngilizce"/>
-                    <ComboBoxItem Content="Almanca"/>
-                </ComboBox>
-                <ComboBox x:Name="Lang2Combo" Grid.Column="2" Height="35" Background="#1e293b" Foreground="#0f172a">
-                    <ComboBoxItem Content="Seçili Değil" IsSelected="True"/>
-                    <ComboBoxItem Content="İngilizce"/>
-                    <ComboBoxItem Content="Almanca"/>
-                </ComboBox>
+                <ComboBox x:Name="Lang1Combo" Grid.Column="0" Height="35" Background="#1e293b" Foreground="#0f172a"/>
+                <ComboBox x:Name="Lang2Combo" Grid.Column="2" Height="35" Background="#1e293b" Foreground="#0f172a"/>
             </Grid>
+            
+            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[AppLang]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
+            <ComboBox x:Name="AppLangCombo" Height="35" Background="#1e293b" Foreground="#0f172a" SelectionChanged="AppLangCombo_SelectionChanged"/>
         </StackPanel>
 
-        <Button Grid.Row="3" Content="Giriş Yap / Kayıt Ol" Height="45" Margin="0,20,0,0" Style="{DynamicResource PrimaryButtonStyle}" Click="Login_Click"/>
+        <Grid Grid.Row="3" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[GuestLogin]}" Height="45" Background="#334155" Foreground="#f8fafc" BorderThickness="0" Click="GuestLogin_Click"/>
+            <Button Grid.Column="2" Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[LoginReg]}" Height="45" Style="{DynamicResource PrimaryButtonStyle}" Click="Login_Click"/>
+        </Grid>
     </Grid>
 </Window>

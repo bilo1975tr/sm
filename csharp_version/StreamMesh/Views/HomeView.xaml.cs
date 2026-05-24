@@ -117,8 +117,8 @@ namespace StreamMesh.Views
             }
 
             ChannelGrid.ItemsSource = paged;
-            TotalCountText.Text = $"Toplam: {_filteredChannels.Count} İçerik";
-            PageInfoText.Text = $"Sayfa {_currentPage} / {_totalPages}";
+            TotalCountText.Text = string.Format(LocalizationManager.Instance["Home_Total"], _filteredChannels.Count);
+            PageInfoText.Text = string.Format(LocalizationManager.Instance["Home_Page"], _currentPage, _totalPages);
             PrevPageBtn.IsEnabled = _currentPage > 1;
             NextPageBtn.IsEnabled = _currentPage < _totalPages;
         }

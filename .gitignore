@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# C# and Project specific
+[Bb]in/
+[Oo]bj/
+backups/
+tmp_libvlcsharp/
+.vs/
+*.user
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

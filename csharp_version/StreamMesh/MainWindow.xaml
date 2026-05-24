@@ -1,6 +1,7 @@
 <Window x:Class="StreamMesh.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:services="clr-namespace:StreamMesh.Services"
         Title="StreamMesh P2P" Height="700" Width="1000" Background="#0f172a" WindowStartupLocation="CenterScreen" FontFamily="Segoe UI, Helvetica Neue, sans-serif" FontSize="14" Foreground="#f8fafc">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -18,10 +19,10 @@
                     <TextBlock x:Name="VersionText" Text="v0.0.0" Foreground="#cbd5e1" FontSize="11" FontWeight="SemiBold"/>
                 </Border>
                 
-                <RadioButton Style="{StaticResource NavButtonStyle}" Content="📺" ToolTip="Kütüphane" GroupName="NavMenu" x:Name="NavHome" Click="Nav_Click"/>
-                <RadioButton Style="{StaticResource NavButtonStyle}" Content="▶️" ToolTip="Oynatıcı" GroupName="NavMenu" x:Name="NavPlayer" IsChecked="True" Click="Nav_Click"/>
-                <RadioButton Style="{StaticResource NavButtonStyle}" Content="📊" ToolTip="İstatistikler" GroupName="NavMenu" x:Name="NavStats" Click="Nav_Click"/>
-                <RadioButton Style="{StaticResource NavButtonStyle}" Content="⚙️" ToolTip="Ayarlar &amp; Sunucu" GroupName="NavMenu" x:Name="NavSettings" Click="Nav_Click"/>
+                <RadioButton Style="{StaticResource NavButtonStyle}" Content="📺" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavLibrary]}" GroupName="NavMenu" x:Name="NavHome" Click="Nav_Click"/>
+                <RadioButton Style="{StaticResource NavButtonStyle}" Content="▶️" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavPlayer]}" GroupName="NavMenu" x:Name="NavPlayer" IsChecked="True" Click="Nav_Click"/>
+                <RadioButton Style="{StaticResource NavButtonStyle}" Content="📊" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavStats]}" GroupName="NavMenu" x:Name="NavStats" Click="Nav_Click"/>
+                <RadioButton Style="{StaticResource NavButtonStyle}" Content="⚙️" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavSettings]}" GroupName="NavMenu" x:Name="NavSettings" Click="Nav_Click"/>
                 
                 <!-- Spacer -->
                 <Border Height="30"/>
