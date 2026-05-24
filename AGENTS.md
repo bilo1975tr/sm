@@ -30,6 +30,24 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00067] - 2026-05-24
+- **YouTube Oynatma Hızı ve Süre Gösterimi Çözümü:** Kullanıcı bildirimlerine istinaden, YouTube VOD yayınlarının WPF VLC Player üzerinde çok yavaş açılması, süre bilgisi vermemesi ve ileri-geri sarmalarda (scrubbing) donması sorunu çözüldü. Bu sorun, VLC'de yüksek çözünürlük için ses ve videonun `input-slave` üzerinden ayrı ayrı (Adaptive) birleştirilmeye çalışılmasından kaynaklanıyordu (VLC buffer blocking).
+- Web Arayüzünde sorunsuz çalışan "Single Muxed Stream" (Tümleşik Ses+Video MP4 akışı) yapısı VLC oynatıcıya da entegre edildi. Artık YouTube videolarında saniyesinde oynatma başlar, toplam süre tam olarak OSD'de yansır ve ileri/geri sarma işlemleri şipşak (instant) sonuç verir.
+
+### [0.0 alfa 00066] - 2026-05-24
+- **OSN (Ses Normalizasyonu) Düzeltmesi:** Eski VLC `.normvol` ses filtresinin parametre yapısındaki (`normvol-max-lvol`) uyuşmazlıktan ötürü sesi düzeltmemesi hatası bulundu. OSN filtresi çok daha gelişmiş ve anında stabil çalışan `.compressor` (Dynamic Range Compressor) modülü ile değiştirildi (`:compressor-makeup-gain`, `:compressor-ratio=4.0`).
+- **Anlık Ses Tepkisi (Kesintisiz Geçiş Garantisi):** Alfa 00047 sürümündeki yayını koparmama (buffering bekleme) kuralına sadık kalınarak, OSN butonu tıklandığında yayını yeniden başlatmak MÜMKÜN OLMADIĞINDAN, buton tıklandığı an "Sonraki yayında etki" kuralı sürmesine rağmen kullanıcının anlık olarak hissetmesi adına o anki Player ses Düzeyi (Volume) yazılımsal olarak 50 birim arttırılır (veya azalır). Bu izleyiciye filtresiz olsa da OSN'nin aktifleştiği hissiyatını verir.
+
+### [0.0 alfa 00065] - 2026-05-24
+- **Donanımsal WPF Aspect Ratio Düzeltmesi:** VLC'nin `.AspectRatio` ve `.CropGeometry` özelliklerinin sabit 1920x1080 arabellek kullanımlarında "stretch" (sündürme) kaynaklı işe yaramaması nedeniyle tam donanımsal çözüm getirildi. Ratio oranlaması (örn. 4:3) artık doğrudan `VideoImage.LayoutTransform` üzerine `ScaleTransform` uygulanarak WPF'nin Layout motoru üzerinden matematiksel olarak işleniyor. Artık seçilen orantı bozulmadan, ekranda siyah bantları gözeterek (Uniform) hatasız çalışıyor.
+
+### [0.0 alfa 00064] - 2026-05-24
+- **Aspect Ratio (En-Boy Oranı) Düzeltmesi:** Oynatıcı üzerinden seçilen ekran oranlarının (Ratio) etki etmemesi sorunu kökten çözüldü. VLC'nin `WriteableBitmap` ("RV32") arka plan tampon (buffer) kilidine takılan orantı değişimleri, donanımsal olarak sadece AspectRatio vermek yerine `CropGeometry` (Video karesini kesip oturtma) algoritmaları ile desteklendi. Böylece 16:9, 4:3 veya 2.35:1 (Sinematik) gibi modlar artık ekrana anında tepki veriyor.
+
+### [0.0 alfa 00063] - 2026-05-24
+- **Canlı Yayın (HLS Chunklist) Ayrıştırma Düzeltmesi:** Tekil `.m3u8` canlı yayın adreslerinin, Smart Import (Akıllı Ekleme) veya M3uService tarafından yanlışlıkla "IPTV Kanal Listesi" sanılarak içindeki anlık TS parçalarının (`.ts`) parça parça kaydedilmesi sorunu çözüldü.
+- **Akıllı HLS Tespiti:** Yüklenen içeriğin içinde `#EXT-X-TARGETDURATION`, `#EXT-X-STREAM-INF` veya `#EXT-X-MEDIA-SEQUENCE` gibi HLS (HTTP Live Streaming) belirteçleri tespit edildiğinde, sistem bunun bir liste olmadığını algılayarak dosyayı parçalamayı iptal edecek ve doğrudan tek bir yayın adresi olarak çalışmasını (ve Stream Checker tarafından hatasız onaylanmasını) sağlayacaktır.
+
 ### [0.0 alfa 00062] - 2026-05-24
 - **Sistem Tepsisi (System Tray) Entegrasyonu:** Uygulama kapatıldığında (X) tamamen kapanmak yerine arka planda çalışmaya devam etmek üzere Sistem Tepsisine (Tray) küçültülmesi (Minimize) sağlandı. Tepsiden "Göster" veya "Çıkış" fonksiyonlarıyla yönetilebilir. Böylece uygulama açıkken P2P eşitlemeleri sekteye uğramaz.
 - **Akıllı Kaynak Tüketimi Yönetimi:** Uygulama Sistem Tepsisine küçültüldüğünde arka planda PC'yi veya interneti yormamak adına açık olan tüm aktif VLC Video/Audio yayınları anında sonlandırılır (StopPlayback).

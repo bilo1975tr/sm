@@ -198,29 +198,13 @@ namespace StreamMesh.Views
                     if (channel.SourceType == "YOUTUBE" || isYoutube)
                     {
                         StatusTextBlock.Text = "YouTube bağlantısı çözülüyor...";
-                        var directUrl = await _youtubeService.GetDirectStreamUrlAsync(finalUrl);
+                        // Web arayüzünde kullanılan Hızlı (Muxed) stream metoduna geçildi.
+                        // Adaptive stream (ayrı ses ve görüntü) VLC'de yavaş arabelleğe alınıyor, süre göstermiyor ve ileri sarmada sorun yaşatıyordu.
+                        var directUrl = await _youtubeService.GetSingleMuxedStreamUrlAsync(finalUrl);
                         if (!string.IsNullOrEmpty(directUrl))
                         {
-                            if (directUrl.StartsWith("YTCUSTOM::::"))
-                            {
-                                var segments = directUrl.Split(new[]{"::::"}, StringSplitOptions.RemoveEmptyEntries);
-                                if (segments.Length > 2)
-                                {
-                                    _currentYtAudioUrl = segments[1];
-                                    _currentYtVideoStreams = new List<Tuple<string, string>>();
-                                    for (int i = 2; i < segments.Length; i++)
-                                    {
-                                        var sp = segments[i].Split(new[]{"|||"}, StringSplitOptions.RemoveEmptyEntries);
-                                        if (sp.Length == 2) _currentYtVideoStreams.Add(new Tuple<string, string>(sp[0], sp[1]));
-                                    }
-                                    if (_currentYtVideoStreams.Count > 0)
-                                    {
-                                        finalUrl = _currentYtVideoStreams[0].Item2;
-                                        _currentYtVideoUrl = finalUrl;
-                                    }
-                                }
-                            }
-                            else finalUrl = directUrl;
+                            finalUrl = directUrl;
+                            _currentYtAudioUrl = null; // Ayrı ses akışı kullanılmıyor
                         }
                         else throw new Exception("YouTube stream çözülemedi.");
                     }
@@ -297,12 +281,10 @@ namespace StreamMesh.Views
                 StatusTextBlock.Text = "Oynatılıyor";
                 PlayPauseBtn.Content = "⏸";
                 
-                // Ratio'yu tekrar uygula (VLC bazen geç algılar)
+                // Aspect Ratio'yu UI tarafında tekrar uygula (VLC bazen geç algılar ve sıfırlar)
                 if (_currentRatioIndex > 0)
                 {
-                    string ratio = _ratios[_currentRatioIndex];
-                    if (ratio == "1:1") VideoImage.Stretch = Stretch.Fill;
-                    else _mediaPlayer.AspectRatio = ratio;
+                    ApplyCurrentRatio();
                 }
 
                 // GO (Görüntü Onarıcı) filtresini yeni yayına taşı
@@ -369,9 +351,11 @@ namespace StreamMesh.Views
         {
             if (_isOsnEnabled)
             {
-                media.AddOption(":audio-filter=normvol");
-                media.AddOption(":normvol-buff-size=20");
-                media.AddOption(":normvol-max-lvol=2.0");
+                // normvol module can be finicky on some VLC versions. Compressor yields a louder, normalized output.
+                media.AddOption(":audio-filter=compressor");
+                media.AddOption(":compressor-makeup-gain=15.0"); // Boost the normalized sound
+                media.AddOption(":compressor-threshold=-15.0"); // Catch loud sounds early
+                media.AddOption(":compressor-ratio=4.0"); // 4:1 compression ratio
             }
         }
 

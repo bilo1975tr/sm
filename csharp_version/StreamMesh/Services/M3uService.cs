@@ -46,6 +46,13 @@ namespace StreamMesh.Services
                          return channels; 
                     }
 
+                    // HLS Chunklist / Master Playlist kontrolü (Canlı yayın linkini IPTV listesi sanmasını engellemek için)
+                    if (content.Contains("#EXT-X-TARGETDURATION") || content.Contains("#EXT-X-STREAM-INF") || content.Contains("#EXT-X-MEDIA-SEQUENCE"))
+                    {
+                        LogService.Log("Content is an HLS stream chunklist, not an IPTV channel list. Falling back to direct link mode.");
+                        return channels; 
+                    }
+
                     playlistUrl = m3uContentOrUrl;
                     fileName = Path.GetFileName(new Uri(m3uContentOrUrl).AbsolutePath);
                 }
