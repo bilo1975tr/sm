@@ -10,24 +10,51 @@ namespace StreamMesh.Services
     {
         public static string InventoryPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Envanter");
         public static string FFmpegPath => Path.Combine(InventoryPath, "ffmpeg.exe");
+        
+        private static readonly System.Threading.SemaphoreSlim _downloadSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
-        public static async Task DownloadComponentsManuallyAsync(string aceStreamZipUrl, Action<string> progressCallback = null)
+        public static async Task DownloadFFmpegManuallyAsync(Action<string> progressCallback = null)
         {
-            if (!Directory.Exists(InventoryPath))
-            {
-                Directory.CreateDirectory(InventoryPath);
-            }
-
+            await _downloadSemaphore.WaitAsync();
             try
             {
-                // 1. Download FFmpeg if missing
+                if (!Directory.Exists(InventoryPath))
+                {
+                    Directory.CreateDirectory(InventoryPath);
+                }
+
                 if (!File.Exists(FFmpegPath))
                 {
                     progressCallback?.Invoke("FFmpeg indiriliyor...");
                     await DownloadFFmpegAsync();
+                    progressCallback?.Invoke("FFmpeg başarıyla yüklendi!");
+                }
+                else
+                {
+                    progressCallback?.Invoke("FFmpeg bilgisayarınızda zaten yüklü.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[Envanter] FFmpeg manuel indirme hatası", ex);
+                progressCallback?.Invoke($"Hata: {ex.Message}");
+            }
+            finally
+            {
+                _downloadSemaphore.Release();
+            }
+        }
+
+        public static async Task DownloadAceStreamManuallyAsync(string aceStreamZipUrl, Action<string> progressCallback = null)
+        {
+            await _downloadSemaphore.WaitAsync();
+            try
+            {
+                if (!Directory.Exists(InventoryPath))
+                {
+                    Directory.CreateDirectory(InventoryPath);
                 }
 
-                // 2. Download AceStream
                 string appDataRoaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string aceStreamDir = Path.Combine(appDataRoaming, "AceStream");
                 string aceEnginePath = Path.Combine(aceStreamDir, "engine", "ace_engine.exe");
@@ -60,18 +87,28 @@ namespace StreamMesh.Services
                     ZipFile.ExtractToDirectory(aceZipPath, aceStreamDir);
                     
                     File.Delete(aceZipPath);
-                    progressCallback?.Invoke("Bileşenler başarıyla kuruldu!");
+                    progressCallback?.Invoke("Ace Stream başarıyla kuruldu!");
                 }
                 else
                 {
-                    progressCallback?.Invoke("Tüm bileşenler bilgisayarınızda zaten yüklü.");
+                    progressCallback?.Invoke("Ace Stream bilgisayarınızda zaten yüklü.");
                 }
             }
             catch (Exception ex)
             {
-                LogService.LogError("[Envanter] Manuel indirme hatası", ex);
+                LogService.LogError("[Envanter] Ace Stream manuel indirme hatası", ex);
                 progressCallback?.Invoke($"Hata: {ex.Message}");
             }
+            finally
+            {
+                _downloadSemaphore.Release();
+            }
+        }
+
+        public static async Task DownloadComponentsManuallyAsync(string aceStreamZipUrl, Action<string> progressCallback = null)
+        {
+            await DownloadFFmpegManuallyAsync(progressCallback);
+            await DownloadAceStreamManuallyAsync(aceStreamZipUrl, progressCallback);
         }
 
         public static bool AreComponentsMissing()
@@ -80,6 +117,18 @@ namespace StreamMesh.Services
             string aceEnginePath = Path.Combine(appDataRoaming, "AceStream", "engine", "ace_engine.exe");
 
             return !File.Exists(FFmpegPath) || !File.Exists(aceEnginePath);
+        }
+
+        public static bool IsFFmpegInstalled()
+        {
+            return File.Exists(FFmpegPath);
+        }
+
+        public static bool IsAceStreamInstalled()
+        {
+            string appDataRoaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string aceEnginePath = Path.Combine(appDataRoaming, "AceStream", "engine", "ace_engine.exe");
+            return File.Exists(aceEnginePath);
         }
 
         public static async Task CheckAndDownloadInventoryAsync()
@@ -91,8 +140,19 @@ namespace StreamMesh.Services
 
             if (!File.Exists(FFmpegPath))
             {
-                LogService.Log("[Envanter] FFmpeg bulunamadı, indiriliyor...");
-                await DownloadFFmpegAsync();
+                await _downloadSemaphore.WaitAsync();
+                try
+                {
+                    if (!File.Exists(FFmpegPath))
+                    {
+                        LogService.Log("[Envanter] FFmpeg bulunamadı, indiriliyor...");
+                        await DownloadFFmpegAsync();
+                    }
+                }
+                finally
+                {
+                    _downloadSemaphore.Release();
+                }
             }
         }
 

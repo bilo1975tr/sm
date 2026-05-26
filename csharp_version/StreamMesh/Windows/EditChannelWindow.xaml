@@ -63,7 +63,7 @@
             </ComboBox>
 
             <TextBlock Text="Dil (Language):" Foreground="#94a3b8"/>
-            <TextBox x:Name="LangTxt" Height="38" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
+            <ComboBox x:Name="LangCombo" Height="38" VerticalContentAlignment="Center" Margin="0,0,0,10" IsEditable="True"/>
 
             <TextBlock Text="Grup (Group Title):" Foreground="#94a3b8"/>
             <TextBox x:Name="GroupTxt" Height="38" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
@@ -71,8 +71,43 @@
             <TextBlock Text="Kaynak Tipi (Source Type):" Foreground="#94a3b8"/>
             <TextBox x:Name="SourceTxt" Height="38" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
 
-            <TextBlock Text="Logo URL:" Foreground="#94a3b8" />
-            <TextBox x:Name="LogoTxt" Height="38" VerticalContentAlignment="Center" Margin="0,0,0,10"/>
+            <TextBlock Text="Logo URL'leri (En üstteki varsayılandır):" Foreground="#94a3b8" Margin="0,5,0,0"/>
+            <ListBox x:Name="LogoList" Height="100" Background="#1e293b" BorderThickness="1" BorderBrush="#334155" Margin="0,2,0,5">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Mini preview for logos without crashing binding, bypassing LogoCacheConverter to avoid issues or using string direct -->
+                            <Image Source="{Binding}" Width="24" Height="24" Stretch="Uniform" Margin="0,0,5,0">
+                                <Image.ToolTip>
+                                    <Image Source="{Binding}" Width="300" />
+                                </Image.ToolTip>
+                            </Image>
+                            <TextBlock Grid.Column="1" Text="{Binding}" VerticalAlignment="Center" Foreground="#e2e8f0" FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="250"/>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <Button Content="⭐" Width="26" Height="26" Margin="4,0,0,0" ToolTip="Varsayılan Yap" 
+                                        Click="MakeDefaultLogo_Click" Background="#334155" Foreground="#fbbf24" BorderThickness="0" Cursor="Hand"/>
+                                <Button Content="❌" Width="26" Height="26" Margin="4,0,0,0" ToolTip="Sil" 
+                                        Click="RemoveLogo_Click" Background="#334155" Foreground="#ef4444" BorderThickness="0" Cursor="Hand"/>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="NewLogoTxt" Height="38" VerticalContentAlignment="Center" Background="#1e293b" Foreground="White" BorderThickness="1" BorderBrush="#334155" Padding="5,0"/>
+                <Button Grid.Column="1" Content="➕ Ekle" Width="70" Margin="5,0,0,0" Click="AddLogo_Click" 
+                        Background="#10b981" Foreground="White" BorderThickness="0" Cursor="Hand"/>
+            </Grid>
 
             <CheckBox x:Name="FavoriteChk" Content="Favorilere Ekle" Foreground="#fbbf24" FontSize="14" Margin="0,5,0,10"/>
 

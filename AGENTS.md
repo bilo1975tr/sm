@@ -30,6 +30,15 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00069] - 2026-05-25
+- **Canlı Önizleme Geliştirmeleri:** FFmpeg ile alınan kanal anlık görüntülerinin (snapshot) kanalların kalıcı Logosu olarak kaydedilmesi engellendi. Artık bu görüntüler sadece Geçici Önizleme (Temporary Preview) olarak `AdvancedChannelEditorWindow` üzerinde gösteriliyor ve pencere kapatıldığında sistemden (diskteki geçici alandan) silinerek depolama dostu, sadece yayını anlama amaçlı bir vizyon kazandırıldı.
+
+### [0.0 alfa 00068] - 2026-05-24
+- **Gizli Gelişmiş Kanal Yöneticisi:** Kullanıcı isteği üzerine kanalları çoklu düzenlemek, aramak ve birleştirmek için gizli bir kelimeyle (Kütüphane arama kutusuna "i am prenses" yazılarak) tetiklenen `AdvancedChannelEditorWindow` (Gelişmiş Kanal Yöneticisi) yazıldı.
+- **Toplu İşlemler & Fuzzy Search:** Bu ekranda kanal adları %75+ benzerlik oranına göre (FuzzySharp) listelenebilir, seçilen kanallara tek tuşla Kategori ve Ülke/Dil (ComboBox standart listesiyle) atanabilir. Birden fazla seçili kanal tek bir kanalda birleştirilebilir (Logolar ve URL'ler cüzdan gibi tek kanala aktarılır).
+- **Canlı Önizleme (Snapshot):** Logosu olmayan kanallar için FFmpeg kancası kurularak yayın adresinden otomatik 1 kare görüntüsü alınıp yerel diske (Thumbnail) kaydedilmesi ve çoklu logolar arasına eklenmesi donanımsal olarak (AppDomain/ffmpeg.exe) entegre edildi. Düzenleme ekranlarında logo ve thumbnail resimlerinin üzerine gelindiğinde farenin tooltip'i ile görüntünün büyütülmesi eklendi.
+- **Çoklu Logo Yönetimi:** `EditChannelWindow` içerisindeki eski metin kutusu tipindeki Logo alanı; listelenebilir, yıldızlanabilir (Varsayılan yapılabilir), silinebilir ve mini önizlemesi olan gelişmiş bir `ListBox` yapısına taşındı.
+
 ### [0.0 alfa 00067] - 2026-05-24
 - **YouTube Oynatma Hızı ve Süre Gösterimi Çözümü:** Kullanıcı bildirimlerine istinaden, YouTube VOD yayınlarının WPF VLC Player üzerinde çok yavaş açılması, süre bilgisi vermemesi ve ileri-geri sarmalarda (scrubbing) donması sorunu çözüldü. Bu sorun, VLC'de yüksek çözünürlük için ses ve videonun `input-slave` üzerinden ayrı ayrı (Adaptive) birleştirilmeye çalışılmasından kaynaklanıyordu (VLC buffer blocking).
 - Web Arayüzünde sorunsuz çalışan "Single Muxed Stream" (Tümleşik Ses+Video MP4 akışı) yapısı VLC oynatıcıya da entegre edildi. Artık YouTube videolarında saniyesinde oynatma başlar, toplam süre tam olarak OSD'de yansır ve ileri/geri sarma işlemleri şipşak (instant) sonuç verir.

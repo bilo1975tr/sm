@@ -218,11 +218,29 @@
                         <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
 
                         <!-- Component Management -->
-                        <TextBlock Text="🚨 Eksik Bileşen Yönetimi" FontWeight="Bold" FontSize="18" Foreground="#ef4444" Margin="0,0,0,10"/>
+                        <TextBlock Text="🚨 Bileşen Yönetimi" FontWeight="Bold" FontSize="18" Foreground="#ef4444" Margin="0,0,0,10"/>
                         <TextBlock Text="FFmpeg veya Ace Stream motorunuz eksikse donanımları veya OSD yeteneklerini tam kullanamazsınız." Foreground="#94a3b8" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,20">
-                            <Button x:Name="DownloadComponentsBtn" Content="Eksik Bileşenleri İndir" Width="150" Height="35" Click="DownloadComponentsBtn_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                            <TextBlock x:Name="DownloadStatusText" Text="" VerticalAlignment="Center" Foreground="#38bdf8" Margin="15,0,0,0"/>
+                        
+                        <StackPanel Margin="0,5,0,20">
+                            <!-- Tümünü İndir -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button x:Name="DownloadAllComponentsBtn" Content="Tüm Eksikleri İndir" Width="150" Height="35" Click="DownloadAllComponentsBtn_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                                <TextBlock x:Name="DownloadStatusText" Text="" VerticalAlignment="Center" Foreground="#38bdf8" Margin="15,0,0,0"/>
+                            </StackPanel>
+
+                            <!-- FFmpeg -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button x:Name="DownloadFFmpegBtn" Content="FFmpeg İndir" Width="150" Height="35" Click="DownloadFFmpegBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#3b82f6"/>
+                                <Ellipse x:Name="FFmpegStatusIndicator" Width="12" Height="12" Fill="#ef4444" Margin="15,0,5,0" />
+                                <TextBlock x:Name="FFmpegStatusText" Text="FFmpeg Yüklü Değil" VerticalAlignment="Center" Foreground="#94a3b8"/>
+                            </StackPanel>
+
+                            <!-- AceStream -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button x:Name="DownloadAceStreamBtn" Content="AceStream İndir" Width="150" Height="35" Click="DownloadAceStreamBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#6366f1"/>
+                                <Ellipse x:Name="AceStreamStatusIndicator" Width="12" Height="12" Fill="#ef4444" Margin="15,0,5,0" />
+                                <TextBlock x:Name="AceStreamStatusText" Text="AceStream Yüklü Değil" VerticalAlignment="Center" Foreground="#94a3b8"/>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </Border>

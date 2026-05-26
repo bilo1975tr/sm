@@ -48,6 +48,38 @@ namespace StreamMesh.Views
             LoadEpgSources();
             
             SetCurrentLanguageInCombo();
+            UpdateComponentStatusUI();
+        }
+
+        private void UpdateComponentStatusUI()
+        {
+            Dispatcher.Invoke(() => 
+            {
+                bool hasFFmpeg = InventoryService.IsFFmpegInstalled();
+                bool hasAce = InventoryService.IsAceStreamInstalled();
+
+                if (hasFFmpeg)
+                {
+                    FFmpegStatusIndicator.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(34, 197, 94)); // Green
+                    FFmpegStatusText.Text = "FFmpeg Yüklü";
+                }
+                else
+                {
+                    FFmpegStatusIndicator.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(239, 68, 68)); // Red
+                    FFmpegStatusText.Text = "FFmpeg Yüklü Değil";
+                }
+
+                if (hasAce)
+                {
+                    AceStreamStatusIndicator.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(34, 197, 94)); // Green
+                    AceStreamStatusText.Text = "AceStream Yüklü";
+                }
+                else
+                {
+                    AceStreamStatusIndicator.Fill = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(239, 68, 68)); // Red
+                    AceStreamStatusText.Text = "AceStream Yüklü Değil";
+                }
+            });
         }
 
         private void SetCurrentLanguageInCombo()
@@ -105,9 +137,9 @@ namespace StreamMesh.Views
             }
         }
 
-        private async void DownloadComponentsBtn_Click(object sender, RoutedEventArgs e)
+        private async void DownloadAllComponentsBtn_Click(object sender, RoutedEventArgs e)
         {
-            DownloadComponentsBtn.IsEnabled = false;
+            DownloadAllComponentsBtn.IsEnabled = false;
             DownloadStatusText.Text = "Kontrol ediliyor...";
 
             string githubAceStreamUrl = "https://github.com/bilo1975tr/sm/releases/download/v1.0/AceStream.zip"; 
@@ -120,7 +152,44 @@ namespace StreamMesh.Views
                 });
             });
 
-            Dispatcher.Invoke(() => DownloadComponentsBtn.IsEnabled = true);
+            UpdateComponentStatusUI();
+            Dispatcher.Invoke(() => DownloadAllComponentsBtn.IsEnabled = true);
+        }
+
+        private async void DownloadFFmpegBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DownloadFFmpegBtn.IsEnabled = false;
+            DownloadStatusText.Text = "FFmpeg kontrol ediliyor...";
+
+            await Task.Run(async () =>
+            {
+                await InventoryService.DownloadFFmpegManuallyAsync((message) => 
+                {
+                    Dispatcher.Invoke(() => DownloadStatusText.Text = message);
+                });
+            });
+
+            UpdateComponentStatusUI();
+            Dispatcher.Invoke(() => DownloadFFmpegBtn.IsEnabled = true);
+        }
+
+        private async void DownloadAceStreamBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DownloadAceStreamBtn.IsEnabled = false;
+            DownloadStatusText.Text = "AceStream kontrol ediliyor...";
+
+            string githubAceStreamUrl = "https://github.com/bilo1975tr/sm/releases/download/v1.0/AceStream.zip"; 
+
+            await Task.Run(async () =>
+            {
+                await InventoryService.DownloadAceStreamManuallyAsync(githubAceStreamUrl, (message) => 
+                {
+                    Dispatcher.Invoke(() => DownloadStatusText.Text = message);
+                });
+            });
+
+            UpdateComponentStatusUI();
+            Dispatcher.Invoke(() => DownloadAceStreamBtn.IsEnabled = true);
         }
 
         private void LanguageCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)

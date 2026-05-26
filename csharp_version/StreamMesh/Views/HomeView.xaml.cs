@@ -147,6 +147,16 @@ namespace StreamMesh.Views
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
+            string query = SearchBox.Text.ToLower().Trim();
+            if (query == "i am prenses")
+            {
+                SearchBox.Text = "";
+                var window = new StreamMesh.Windows.AdvancedChannelEditorWindow();
+                window.ShowDialog();
+                LoadChannels();
+                return;
+            }
+
             _currentPage = 1;
             FilterChannels();
         }

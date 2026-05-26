@@ -11,11 +11,20 @@ namespace StreamMesh.Windows
         private Channel _channel;
         private System.Collections.Generic.List<string> _allEpgNames = new System.Collections.Generic.List<string>();
         public ObservableCollection<string> Urls { get; set; } = new ObservableCollection<string>();
+        public ObservableCollection<string> Logos { get; set; } = new ObservableCollection<string>();
         public EditChannelWindow(Channel channel)
         {
             InitializeComponent();
             _channel = channel;
             this.Title = $"Kanal Düzenle - {channel.Name}";
+
+            // Populate Languages
+            var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
+                .Select(c => c.NativeName)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToList();
+            foreach (var lang in cultures) LangCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = lang });
 
             // EPG İsimlerini yükle
             try {
@@ -35,9 +44,15 @@ namespace StreamMesh.Windows
             }
             UrlList.ItemsSource = Urls;
 
+            if (!string.IsNullOrWhiteSpace(channel.LogoUrl))
+            {
+                var split = channel.LogoUrl.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var l in split) Logos.Add(l.Trim());
+            }
+            LogoList.ItemsSource = Logos;
+
             CatCombo.Text = channel.Category;
-            LogoTxt.Text = channel.LogoUrl;
-            LangTxt.Text = channel.Language;
+            LangCombo.Text = channel.Language;
             GroupTxt.Text = channel.GroupTitle;
             SourceTxt.Text = channel.SourceType;
             FavoriteChk.IsChecked = channel.IsFavorite;
@@ -55,14 +70,47 @@ namespace StreamMesh.Windows
             _channel.EpgId = EpgIdCombo.Text.Trim();
             _channel.Url = string.Join(",", Urls);
             _channel.Category = CatCombo.Text.Trim();
-            _channel.LogoUrl = LogoTxt.Text.Trim();
-            _channel.Language = LangTxt.Text.Trim();
+            _channel.LogoUrl = string.Join(",", Logos);
+            _channel.Language = LangCombo.Text?.Trim() ?? "";
             _channel.GroupTitle = GroupTxt.Text.Trim();
             _channel.SourceType = SourceTxt.Text.Trim();
             _channel.IsFavorite = FavoriteChk.IsChecked ?? false;
 
             DialogResult = true;
             Close();
+        }
+
+        private void AddLogo_Click(object sender, RoutedEventArgs e)
+        {
+            string url = NewLogoTxt.Text?.Trim();
+            if (string.IsNullOrEmpty(url)) return;
+            
+            if (!Logos.Contains(url))
+            {
+                Logos.Add(url);
+                NewLogoTxt.Clear();
+            }
+        }
+
+        private void RemoveLogo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is string url)
+            {
+                Logos.Remove(url);
+            }
+        }
+
+        private void MakeDefaultLogo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is string url)
+            {
+                int index = Logos.IndexOf(url);
+                if (index > 0)
+                {
+                    Logos.Move(index, 0);
+                    MessageBox.Show("Bu logo varsayılan olarak ayarlandı.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
         }
 
         private void AddUrl_Click(object sender, RoutedEventArgs e)
