@@ -26,7 +26,7 @@ jobs:
           curl -s 'https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json' > firebase_new.json
           
           # Node.js scripti ile verileri birleştirme ve dillerine göre ayırma
-          cat << 'EOF' > process.js
+          cat << 'EOF' > process.cjs
           const fs = require('fs');
           
           let current = [];
@@ -83,7 +83,7 @@ jobs:
           }
           EOF
           
-          node process.js
+          node process.cjs
           
           # Hata verdiyse çıkış yap
           if [ $? -ne 0 ]; then
