@@ -36,12 +36,12 @@ jobs:
           if (Array.isArray(firebaseNew)) newChannels = firebaseNew;
           else if (typeof firebaseNew === 'object' && firebaseNew !== null) newChannels = Object.values(firebaseNew);
           
-          if (newChannels.length === 0) {
-              console.log("No new channels");
+          const allChannels = [...current, ...newChannels];
+          if (allChannels.length === 0) {
+              console.log("No channels to process");
               process.exit(0);
           }
           
-          const allChannels = [...current, ...newChannels];
           const unique = [];
           const map = new Set();
           for (const c of allChannels) {
@@ -88,20 +88,22 @@ jobs:
             exit 1
           fi
 
-          if [ ! -s firebase_new.json ] || [ "$(cat firebase_new.json)" == "null" ] || [ "$(cat firebase_new.json)" == "{}" ]; then
-             echo "SKIP_COMMIT=true" >> $GITHUB_ENV
-          fi
+          # Eğer firebase'den yeni kanal gelmediyse ama current'ta varya yine de json/m3u üretildi. 
+          # GitHub action'ın commit atması için değişiklik olması yeterli.
+          # SKIP_COMMIT mantığını kaldırıyoruz, git diff --quiet'a bırakıyoruz.
 
       - name: Commit and Push changes
-        if: env.SKIP_COMMIT != 'true'
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # nullglob özelliğini açarak dosya yoksa git add'in patlamasını engelliyoruz
+          shopt -s nullglob
           git add channels.json channels_*.json kanallar_*.m3u
           
           # 6. Sadece değişiklik varsa Commit at
           if ! git diff --staged --quiet; then
-            git commit -m "Saatlik Firebase Senkronizasyonu"
+            git commit -m "Saatlik Firebase Senkronizasyonu ve Dil Ayrıştırma"
             
             # --- UZAK SUNUCUDAKİ DEĞİŞİKLİKLERİ AL (Çakışma / Error 1 Çözümü) ---
             git pull --rebase origin main
