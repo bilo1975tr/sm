@@ -97,9 +97,11 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
-          # nullglob özelliğini açarak dosya yoksa git add'in patlamasını engelliyoruz
-          shopt -s nullglob
-          git add channels.json channels_*.json kanallar_*.m3u
+          for f in channels.json channels_*.json kanallar_*.m3u; do
+            if [ -e "$f" ]; then
+              git add "$f"
+            fi
+          done
           
           # 6. Sadece değişiklik varsa Commit at
           if ! git diff --staged --quiet; then
