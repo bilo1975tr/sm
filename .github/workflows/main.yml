@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   sync_channels:
     runs-on: ubuntu-latest
@@ -94,32 +97,32 @@ jobs:
 
       - name: Commit and Push changes
         run: |
+          set -e
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           
+          # nullglob açık kalsın, match olmazsa döngüye girmesin
+          shopt -s nullglob
           for f in channels.json channels_*.json kanallar_*.m3u; do
             if [ -e "$f" ]; then
               git add "$f"
             fi
           done
           
-          # 6. Sadece değişiklik varsa Commit at
-          if ! git diff --staged --quiet; then
-            git commit -m "Saatlik Firebase Senkronizasyonu ve Dil Ayrıştırma"
-            
-            # --- UZAK SUNUCUDAKİ DEĞİŞİKLİKLERİ AL (Çakışma / Error 1 Çözümü) ---
-            git pull --rebase origin main
-            
-            git push
-            
-            # 7. Push başarılı olduysa Firebase'i temizle
-            if [ $? -eq 0 ]; then
-              curl -X DELETE 'https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json'
-              echo "Senkronizasyon başarılı, GitHub güncellendi ve Firebase boşaltıldı."
-            else
-              echo "Push işlemi başarısız oldu!"
-              exit 1
-            fi
-          else
+          # Değişiklik yoksa çık
+          if git diff --staged --quiet; then
             echo "Herhangi bir değişiklik bulunamadı, commit atlandı."
+            exit 0
           fi
+          
+          git commit -m "Saatlik Firebase Senkronizasyonu ve Dil Ayrıştırma"
+          
+          # Uzaktaki değişiklikleri al (rebase ile)
+          git pull --rebase origin main || { echo "Git pull rebase failed!"; exit 1; }
+          
+          # Değişiklikleri gönder
+          git push || { echo "Git push failed!"; exit 1; }
+          
+          # Başarı durumunda Firebase'i temizle
+          curl -X DELETE 'https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json'
+          echo "Senkronizasyon başarılı, GitHub güncellendi ve Firebase boşaltıldı."
