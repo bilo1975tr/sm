@@ -17,16 +17,7 @@
         <Border Grid.Row="1" Background="#1e293b" Padding="15" CornerRadius="8" Margin="0,0,0,15" BorderBrush="#334155" BorderThickness="1">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Seçililer için Dil Seç:" VerticalAlignment="Center" Foreground="#94a3b8" Margin="0,0,10,0"/>
-                <ComboBox x:Name="LanguageCombo" Width="150" Height="35">
-                    <ComboBoxItem Content="Türkçe" IsSelected="True"/>
-                    <ComboBoxItem Content="Almanca"/>
-                    <ComboBoxItem Content="İngilizce"/>
-                    <ComboBoxItem Content="Fransızca"/>
-                    <ComboBoxItem Content="İspanyolca"/>
-                    <ComboBoxItem Content="Rusça"/>
-                    <ComboBoxItem Content="Arapça"/>
-                    <ComboBoxItem Content="Bilinmiyor"/>
-                </ComboBox>
+                <ComboBox x:Name="LanguageCombo" Width="150" Height="35" IsEditable="True"/>
                 <Button x:Name="ApplyLanguageBtn" Content="Dili Uygula" Width="100" Height="35" Margin="10,0,20,0" 
                         Click="ApplyLanguageBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#0ea5e9"/>
                 

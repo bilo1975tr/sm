@@ -51,6 +51,21 @@ namespace StreamMesh.Services
             }
         }
 
+        private static string NormalizeLanguageFilename(string lang)
+        {
+            if (string.IsNullOrWhiteSpace(lang)) return "bilinmiyor";
+            var s = lang.ToLowerInvariant();
+            s = s.Replace("(", "").Replace(")", "");
+            var sb = new System.Text.StringBuilder();
+            foreach (var c in s)
+            {
+                if (char.IsLetterOrDigit(c) || c == 'ı' || c == 'ğ' || c == 'ü' || c == 'ş' || c == 'ö' || c == 'ç' || c == ' ' || c == '-')
+                    sb.Append(c);
+            }
+            string result = sb.ToString().Replace("  ", " ").Trim().Replace(" ", "_");
+            return string.IsNullOrEmpty(result) ? "bilinmiyor" : result;
+        }
+
         /// <summary>
         /// Milyonlarca uygulamanın kotasız şekilde güncel listeyi çektiği metot
         /// </summary>
@@ -61,25 +76,43 @@ namespace StreamMesh.Services
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(15);
 
-                var response = await client.GetAsync(GitHubRawUrl);
-                
-                if (response.IsSuccessStatusCode)
+                var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                var langs = profile?.Languages;
+                if (langs == null || langs.Count == 0)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var remoteChannels = JsonConvert.DeserializeObject<List<Channel>>(json) ?? new List<Channel>();
+                    langs = new List<string> { "Türkçe (Türkiye)" };
+                }
 
-                    if (remoteChannels.Count > 0)
+                var allRemoteChannels = new List<Channel>();
+
+                foreach (var originalLang in langs)
+                {
+                    if (string.IsNullOrEmpty(originalLang) || originalLang == "Hiçbiri") continue;
+                    
+                    string safeLang = NormalizeLanguageFilename(originalLang);
+                    string targetUrl = $"https://raw.githubusercontent.com/bilo1975tr/sm/main/channels_{safeLang}.json";
+
+                    var response = await client.GetAsync(targetUrl);
+                    
+                    if (response.IsSuccessStatusCode)
                     {
-                        LastPulledGitHubChannelCount = remoteChannels.Count;
-                        LastGitHubPullTime = DateTime.Now;
-                        var db = new DatabaseService();
-                        db.SyncIncomingP2PChannels(remoteChannels);
-                        LogService.Log($"GitHub'dan {remoteChannels.Count} kanal çekildi ve yerel ile eşitlendi.");
+                        var json = await response.Content.ReadAsStringAsync();
+                        var remoteChannels = JsonConvert.DeserializeObject<List<Channel>>(json) ?? new List<Channel>();
+                        allRemoteChannels.AddRange(remoteChannels);
+                    }
+                    else
+                    {
+                        LogService.Log($"GitHub'da '{safeLang}' için channels JSON bulunamadı veya ulaşılamıyor (Status: {response.StatusCode}).");
                     }
                 }
-                else
+
+                if (allRemoteChannels.Count > 0)
                 {
-                    LogService.Log($"GitHub'da henüz channels.json yok veya ulaşılamıyor (Status: {response.StatusCode}).");
+                    LastPulledGitHubChannelCount = allRemoteChannels.Count;
+                    LastGitHubPullTime = DateTime.Now;
+                    var db = new DatabaseService();
+                    db.SyncIncomingP2PChannels(allRemoteChannels);
+                    LogService.Log($"GitHub'dan toplam {allRemoteChannels.Count} dil bazlı kanal çekildi ve yerel ile eşitlendi.");
                 }
             }
             catch (Exception ex)

@@ -346,6 +346,29 @@ namespace StreamMesh.Services
             "Amharca", "Afrikanca", "Tamilce", "Telugu", "Marathice"
         };
         
+        public static List<string> SystemCultures
+        {
+            get
+            {
+                var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
+                    .Select(c => c.NativeName)
+                    .Distinct()
+                    .OrderBy(n => n)
+                    .ToList();
+                return cultures;
+            }
+        }
+
+        public static List<string> SystemCulturesWithNone
+        {
+            get
+            {
+                var list = new List<string> { "Hiçbiri" };
+                list.AddRange(SystemCultures);
+                return list;
+            }
+        }
+
         public static readonly List<string> AllCountries = new List<string>
         {
             "Türkiye", "Almanya", "Amerika Birleşik Devletleri", "Birleşik Krallık", "Fransa", 

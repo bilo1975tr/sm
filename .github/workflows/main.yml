@@ -19,33 +19,77 @@ jobs:
 
       - name: Fetch and Sync
         run: |
-          # 1. Mevcut dosyayı hazırla (Yoksa veya boşsa oluştur)
-          if [ -s channels.json ]; then
-            cat channels.json > current.json
-          else
-            echo "[]" > current.json
-          fi
-          
           # 2. Firebase'den çek
           curl -s 'https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json' > firebase_new.json
           
-          # 3. Firebase boşsa diğer adıma GEÇ sinyali gönder
+          # Node.js scripti ile verileri birleştirme ve dillerine göre ayırma
+          cat << 'EOF' > process.js
+          const fs = require('fs');
+          
+          let current = [];
+          try { current = JSON.parse(fs.readFileSync('channels.json', 'utf8')); } catch(e){}
+          
+          let firebaseNew = {};
+          try { firebaseNew = JSON.parse(fs.readFileSync('firebase_new.json', 'utf8')); } catch(e){}
+          
+          let newChannels = [];
+          if (Array.isArray(firebaseNew)) newChannels = firebaseNew;
+          else if (typeof firebaseNew === 'object' && firebaseNew !== null) newChannels = Object.values(firebaseNew);
+          
+          if (newChannels.length === 0) {
+              console.log("No new channels");
+              process.exit(0);
+          }
+          
+          const allChannels = [...current, ...newChannels];
+          const unique = [];
+          const map = new Set();
+          for (const c of allChannels) {
+              if (!c || !c.Id) continue;
+              if (!map.has(c.Id)) {
+                  map.add(c.Id);
+                  unique.push(c);
+              }
+          }
+          
+          fs.writeFileSync('channels.json', JSON.stringify(unique, null, 2));
+          
+          // Dillerine göre gruplama
+          const byLang = {};
+          for (const c of unique) {
+              let lang = (c.Language || "Bilinmiyor").trim();
+              let safeLang = lang.toLowerCase();
+              safeLang = safeLang.replace(/[\(\)]/g, '').replace(/[^a-z0-9ığüşöç\s\-]/gi, '').replace(/\s+/g, '_');
+              if (!safeLang) safeLang = "bilinmiyor";
+              
+              if (!byLang[safeLang]) byLang[safeLang] = [];
+              byLang[safeLang].push(c);
+          }
+          
+          for (const [lang, channels] of Object.entries(byLang)) {
+              fs.writeFileSync(`channels_${lang}.json`, JSON.stringify(channels, null, 2));
+              
+              let m3u = "#EXTM3U\n";
+              for (const c of channels) {
+                  let logo = (c.LogoUrl || "").split(',')[0] || "";
+                  let src = (c.Url || "").split(',')[0] || "";
+                  m3u += `#EXTINF:-1 tvg-id="${c.EpgId || ""}" tvg-name="${c.Name || ""}" tvg-logo="${logo}" group-title="${c.GroupTitle || ""}",${c.Name || ""}\n`;
+                  m3u += `${src}\n`;
+              }
+              fs.writeFileSync(`kanallar_${lang}.m3u`, m3u);
+          }
+          EOF
+          
+          node process.js
+          
+          # Hata verdiyse çıkış yap
+          if [ $? -ne 0 ]; then
+            echo "Node.js proses hatası!"
+            exit 1
+          fi
+
           if [ ! -s firebase_new.json ] || [ "$(cat firebase_new.json)" == "null" ] || [ "$(cat firebase_new.json)" == "{}" ]; then
-            echo "Firebase havuzunda yeni kanal yok. Çıkış yapılıyor."
-            echo "SKIP_COMMIT=true" >> $GITHUB_ENV
-            exit 0
-          fi
-          
-          # 4. JSON Birleştirme (Obje veya dizi gelme ihtimaline karşı)
-          if ! jq -e -s '.[0] + (if (.[1] | type) == "object" then (.[1] | to_entries | map(.value)) elif (.[1] | type) == "array" then .[1] else [] end | flatten)' current.json firebase_new.json > updated.json; then
-            echo "JSON Merge Hatası!"
-            exit 1
-          fi
-          
-          # 5. Mükerrerleri temizle
-          if ! jq -e 'unique_by(.Id)' updated.json > channels.json; then
-            echo "JSON Filtreleme Hatası!"
-            exit 1
+             echo "SKIP_COMMIT=true" >> $GITHUB_ENV
           fi
 
       - name: Commit and Push changes
@@ -53,7 +97,7 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add channels.json
+          git add channels.json channels_*.json kanallar_*.m3u
           
           # 6. Sadece değişiklik varsa Commit at
           if ! git diff --staged --quiet; then

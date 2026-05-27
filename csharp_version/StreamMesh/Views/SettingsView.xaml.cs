@@ -99,16 +99,17 @@ namespace StreamMesh.Views
                 var profile = UserService.GetProfile();
                 if (profile != null)
                 {
-                    CountryCombo.ItemsSource = LocalizationManager.AllCountries;
-                    Lang1Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
-                    Lang2Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
+                    CountryCombo.ItemsSource = LocalizationManager.SystemCultures;
+                    Lang1Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
+                    Lang2Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
 
-                    CountryCombo.SelectedItem = string.IsNullOrEmpty(profile.Country) ? "Türkiye" : profile.Country;
+                    var defaultCountry = LocalizationManager.SystemCultures.FirstOrDefault(c => c.Contains("Türkçe")) ?? LocalizationManager.SystemCultures.FirstOrDefault();
+                    CountryCombo.SelectedItem = string.IsNullOrEmpty(profile.Country) ? defaultCountry : profile.Country;
                     
                     if (profile.Languages != null)
                     {
-                        Lang1Combo.SelectedItem = profile.Languages.Count > 1 ? profile.Languages[1] : "Tümü (Tüm Ülkeler)";
-                        Lang2Combo.SelectedItem = profile.Languages.Count > 2 ? profile.Languages[2] : "Tümü (Tüm Ülkeler)";
+                        Lang1Combo.SelectedItem = profile.Languages.Count > 1 ? profile.Languages[1] : "Hiçbiri";
+                        Lang2Combo.SelectedItem = profile.Languages.Count > 2 ? profile.Languages[2] : "Hiçbiri";
                     }
                 }
             }
@@ -121,17 +122,18 @@ namespace StreamMesh.Views
             var profile = UserService.GetProfile();
             if (profile != null)
             {
-                string country = CountryCombo.SelectedItem as string ?? "Türkiye";
-                string lang1 = Lang1Combo.SelectedItem as string ?? "Tümü (Tüm Ülkeler)";
-                string lang2 = Lang2Combo.SelectedItem as string ?? "Tümü (Tüm Ülkeler)";
+                var defaultCountry = LocalizationManager.SystemCultures.FirstOrDefault(c => c.Contains("Türkçe")) ?? LocalizationManager.SystemCultures.FirstOrDefault();
+                string country = CountryCombo.SelectedItem as string ?? defaultCountry;
+                string lang1 = Lang1Combo.SelectedItem as string ?? "Hiçbiri";
+                string lang2 = Lang2Combo.SelectedItem as string ?? "Hiçbiri";
 
                 profile.Country = country;
                 
-                var langs = new System.Collections.Generic.List<string> { "Türkçe" }; // Varsayılanı Türkçe bırakabiliriz veya değiştirebiliriz. Fakat P2P'de Türkiye/Türkçe bazlıydı
-                if (lang1 != "Tümü (Tüm Ülkeler)" && !string.IsNullOrEmpty(lang1)) langs.Add(lang1);
-                if (lang2 != "Tümü (Tüm Ülkeler)" && !string.IsNullOrEmpty(lang2)) langs.Add(lang2);
+                var langs = new System.Collections.Generic.List<string> { country };
+                if (lang1 != "Hiçbiri" && !string.IsNullOrEmpty(lang1)) langs.Add(lang1);
+                if (lang2 != "Hiçbiri" && !string.IsNullOrEmpty(lang2)) langs.Add(lang2);
                 
-                profile.Languages = langs;
+                profile.Languages = langs.Distinct().ToList();
 
                 UserService.SaveProfile(profile);
             }

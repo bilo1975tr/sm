@@ -30,6 +30,14 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00071] - 2026-05-27
+- **Ayarlar Dil Eşitlemesi:** Ayarlar ve Giriş ekranındaki Bulunduğunuz Ülke ve Ek Dil seçeneklerindeki farklı dil listeleri (AllCountries vb.) kaldırılarak Kanal Düzenleme ekranındaki ile birebir aynı olan kültür listesi (`SystemCultures`) ile senkronize edildi. Ek dil seçeneklerinde varsayılan olarak "Hiçbiri" eklendi.
+- **Dile Göre JSON & M3U Üretimi:** GitHub Actions script'i yeniden yazılarak Node.js entegre edildi. Artık `channels.json` dosyasından ayrı olarak, her bir dil için özel (örn: `channels_turkce_turkiye.json` ve `kanallar_turkce_turkiye.m3u`) dosyalar üretilmektedir. M3U yeteneği ile diğer oynatıcıların da listeyi kullanması sağlandı.
+- **Akıllı İstemci (Client) Eşitlemesi:** İstemciler artık devasa tekilleştirilmiş dosya yerine, sadece kullanıcının seçtiği ana dil ve ek dillere ait dosyaları GitHub'dan çekerek çok daha az veri tüketimiyle çalışır.
+
+### [0.0 alfa 00070] - 2026-05-27
+- **Gelişmiş Dil Seçenekleri Eşitlemesi:** Kaynak Düzenleyici (`SourceEditorWindow`) penceresindeki sadece 8 adet sabit dilin bulunduğu ComboBox tamamen kaldırılarak, yerine sistem kültür listesinden (`System.Globalization.CultureInfo`) çekilen dünya dillerinin tümünün dinamik bir şekilde yüklendiği ve arama yapılabilen yapıya geçirildi. Diğer pencereler ile dili birebir eşleştirildi.
+
 ### [0.0 alfa 00069] - 2026-05-25
 - **Canlı Önizleme Geliştirmeleri:** FFmpeg ile alınan kanal anlık görüntülerinin (snapshot) kanalların kalıcı Logosu olarak kaydedilmesi engellendi. Artık bu görüntüler sadece Geçici Önizleme (Temporary Preview) olarak `AdvancedChannelEditorWindow` üzerinde gösteriliyor ve pencere kapatıldığında sistemden (diskteki geçici alandan) silinerek depolama dostu, sadece yayını anlama amaçlı bir vizyon kazandırıldı.
 

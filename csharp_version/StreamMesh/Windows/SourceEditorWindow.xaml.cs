@@ -24,7 +24,24 @@ namespace StreamMesh.Windows
             _playlistUrl = playlistUrl;
             _dbService = new DatabaseService();
             SourceTitleText.Text = $"Kaynak: {playlistUrl}";
+            PopulateLanguages();
             LoadChannels();
+        }
+
+        private void PopulateLanguages()
+        {
+            var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
+                .Select(c => c.NativeName)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToList();
+
+            foreach (var lang in cultures)
+            {
+                LanguageCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = lang });
+            }
+            LanguageCombo.SelectedIndex = cultures.IndexOf("Türkçe (Türkiye)");
+            if(LanguageCombo.SelectedIndex == -1) LanguageCombo.SelectedIndex = 0;
         }
 
         private void LoadChannels()
@@ -56,7 +73,7 @@ namespace StreamMesh.Windows
                 return;
             }
 
-            string targetLang = (LanguageCombo.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            string targetLang = LanguageCombo.Text?.Trim();
             if (string.IsNullOrEmpty(targetLang)) return;
 
             var ids = selectedItems.Select(s => s.Id).ToList();

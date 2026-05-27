@@ -18,14 +18,15 @@ namespace StreamMesh.Windows
 
         private void PopulateComboBoxes()
         {
-            CountryCombo.ItemsSource = LocalizationManager.AllCountries;
-            CountryCombo.SelectedItem = "Türkiye";
+            CountryCombo.ItemsSource = LocalizationManager.SystemCultures;
+            var defaultCountry = LocalizationManager.SystemCultures.FirstOrDefault(c => c.Contains("Türkçe")) ?? LocalizationManager.SystemCultures.FirstOrDefault();
+            CountryCombo.SelectedItem = defaultCountry;
 
-            Lang1Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
-            Lang1Combo.SelectedItem = "Tümü (Tüm Ülkeler)";
+            Lang1Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
+            Lang1Combo.SelectedItem = "Hiçbiri";
 
-            Lang2Combo.ItemsSource = LocalizationManager.KnownLanguagesList;
-            Lang2Combo.SelectedItem = "Tümü (Tüm Ülkeler)";
+            Lang2Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
+            Lang2Combo.SelectedItem = "Hiçbiri";
 
             AppLangCombo.ItemsSource = LocalizationManager.Top50Languages;
             AppLangCombo.SelectedItem = LocalizationManager.Instance.CurrentLanguage;
@@ -49,13 +50,13 @@ namespace StreamMesh.Windows
                 return;
             }
 
-            string country = CountryCombo.SelectedItem as string ?? "Türkiye";
+            string country = CountryCombo.SelectedItem as string ?? "Türkçe (Türkiye)";
             string lang1 = Lang1Combo.SelectedItem as string ?? "";
             string lang2 = Lang2Combo.SelectedItem as string ?? "";
             string appLang = AppLangCombo.SelectedItem as string ?? "Türkçe";
 
-            if (lang1 == "Tümü (Tüm Ülkeler)") lang1 = "";
-            if (lang2 == "Tümü (Tüm Ülkeler)") lang2 = "";
+            if (lang1 == "Hiçbiri") lang1 = "";
+            if (lang2 == "Hiçbiri") lang2 = "";
 
             try
             {

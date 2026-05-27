@@ -56,7 +56,12 @@ namespace StreamMesh.Services.P2P
                     {
                         user.LastLoginTime = DateTime.UtcNow;
                         user.Country = country;
-                        user.Languages = new System.Collections.Generic.List<string> { l1, l2 };
+                        
+                        var langs = new System.Collections.Generic.List<string> { country };
+                        if (!string.IsNullOrEmpty(l1)) langs.Add(l1);
+                        if (!string.IsNullOrEmpty(l2)) langs.Add(l2);
+                        user.Languages = langs.Distinct().ToList();
+                        
                         user.AppLanguage = appLang;
                         CurrentUser = user;
                         SaveUser();
@@ -66,13 +71,17 @@ namespace StreamMesh.Services.P2P
                 }
             }
             
+            var langs = new System.Collections.Generic.List<string> { country };
+            if (!string.IsNullOrEmpty(l1)) langs.Add(l1);
+            if (!string.IsNullOrEmpty(l2)) langs.Add(l2);
+
             // New register or overwrite
             CurrentUser = new UserProfile
             {
                 Email = email,
                 PasswordHash = HashPassword(password),
                 Country = country,
-                Languages = new System.Collections.Generic.List<string> { l1, l2 },
+                Languages = langs.Distinct().ToList(),
                 AppLanguage = appLang,
                 IsPremium = false,
                 LastLoginTime = DateTime.UtcNow
