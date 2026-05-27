@@ -11,8 +11,6 @@ namespace StreamMesh.Services
     public class GitHubSyncService
     {
         // Okuma İşlemi (Sınırsız/Kotasız) - GitHub Raw CDN
-        private static readonly string GitHubRawUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/main/channels.json";
-        
         // Yazma Havuzu (Yeni Kanallar) - Firebase
         private static readonly string FirebasePoolUrl = "https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json";
         

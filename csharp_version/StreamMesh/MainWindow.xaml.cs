@@ -139,7 +139,11 @@ namespace StreamMesh
             _notifyIcon = new System.Windows.Forms.NotifyIcon();
             try
             {
-                _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                using (var process = System.Diagnostics.Process.GetCurrentProcess())
+                {
+                    string exePath = process.MainModule?.FileName ?? System.IO.Path.Combine(AppContext.BaseDirectory, "StreamMesh.exe");
+                    _notifyIcon.Icon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+                }
             }
             catch
             {

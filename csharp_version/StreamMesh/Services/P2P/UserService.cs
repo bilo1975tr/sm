@@ -71,9 +71,9 @@ namespace StreamMesh.Services.P2P
                 }
             }
             
-            var langs = new System.Collections.Generic.List<string> { country };
-            if (!string.IsNullOrEmpty(l1)) langs.Add(l1);
-            if (!string.IsNullOrEmpty(l2)) langs.Add(l2);
+            var defaultLangs = new System.Collections.Generic.List<string> { country };
+            if (!string.IsNullOrEmpty(l1)) defaultLangs.Add(l1);
+            if (!string.IsNullOrEmpty(l2)) defaultLangs.Add(l2);
 
             // New register or overwrite
             CurrentUser = new UserProfile
@@ -81,7 +81,7 @@ namespace StreamMesh.Services.P2P
                 Email = email,
                 PasswordHash = HashPassword(password),
                 Country = country,
-                Languages = langs.Distinct().ToList(),
+                Languages = defaultLangs.Distinct().ToList(),
                 AppLanguage = appLang,
                 IsPremium = false,
                 LastLoginTime = DateTime.UtcNow
