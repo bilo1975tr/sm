@@ -36,23 +36,30 @@ jobs:
           try { firebaseNew = JSON.parse(fs.readFileSync('firebase_new.json', 'utf8')); } catch(e){}
           
           let newChannels = [];
-          if (Array.isArray(firebaseNew)) newChannels = firebaseNew;
-          else if (typeof firebaseNew === 'object' && firebaseNew !== null) newChannels = Object.values(firebaseNew);
-          
-          const allChannels = [...current, ...newChannels];
-          if (allChannels.length === 0) {
-              console.log("No channels to process");
-              process.exit(0);
+          let deletePayload = {};
+          if (typeof firebaseNew === 'object' && firebaseNew !== null && !Array.isArray(firebaseNew)) {
+              for (const [key, val] of Object.entries(firebaseNew)) {
+                  deletePayload[key] = null;
+                  newChannels.push(val);
+              }
+              fs.writeFileSync('delete_payload.json', JSON.stringify(deletePayload));
+          } else if (Array.isArray(firebaseNew)) {
+              newChannels = firebaseNew;
           }
           
-          const unique = [];
-          const map = new Set();
-          for (const c of allChannels) {
-              if (!c || !c.Id) continue;
-              if (!map.has(c.Id)) {
-                  map.add(c.Id);
-                  unique.push(c);
-              }
+          const map = new Map();
+          for (const c of current) {
+              if (c && c.Id) map.set(c.Id, c);
+          }
+          // Yeni gelenler eskinin üzerine yazsın (URL vb. güncellenmesi için)
+          for (const c of newChannels) {
+              if (c && c.Id) map.set(c.Id, c);
+          }
+          
+          const unique = Array.from(map.values());
+          if (unique.length === 0) {
+              console.log("No channels to process");
+              process.exit(0);
           }
           
           fs.writeFileSync('channels.json', JSON.stringify(unique, null, 2));
@@ -123,5 +130,10 @@ jobs:
           git push || { echo "Git push failed!"; exit 1; }
           
           # Başarı durumunda Firebase'i temizle
-          curl -X DELETE 'https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json'
-          echo "Senkronizasyon başarılı, GitHub güncellendi ve Firebase boşaltıldı."
+          if [ -f delete_payload.json ]; then
+            curl -X PATCH -d @delete_payload.json -H "Content-Type: application/json" 'https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json'
+            echo "Senkronizasyon başarılı, GitHub güncellendi ve işlem gören kanallar Firebase havuzundan silindi."
+          else
+            curl -X DELETE 'https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json'
+            echo "Senkronizasyon başarılı, GitHub güncellendi ve (fallback) Firebase boşaltıldı."
+          fi
