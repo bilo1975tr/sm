@@ -1,0 +1,9 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="DE - Universal TV" tvg-name="universal tv" tvg-logo="" group-title="Manuel Eklenenler",universal tv
+acestream://7f8a688bbe9367c1ecbe733116a6aefb1bd22bb6
+#EXTINF:-1 tvg-id="" tvg-name="OK Wernigerode (1080p)" tvg-logo="" group-title="Genel",OK Wernigerode (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-wernigerode_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="OK WERNIGERODE (1080P)" tvg-logo="" group-title="Genel",OK WERNIGERODE (1080P)
+acestream://b3d993123ce88e23569a5652518f4fee33f454bc
+#EXTINF:-1 tvg-id="" tvg-name="OK Wernigerode (1080p)" tvg-logo="" group-title="Genel",OK Wernigerode (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/mp4:ok-wernigerode_high/playlist.m3u8
