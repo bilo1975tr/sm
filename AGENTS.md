@@ -30,6 +30,11 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00072] - 2026-05-31
+- **Güncelleme Kontrolü:** Uygulama açılışına `UpdateService` ile GitHub üzerinden otomatik yeni sürüm kontrolü (otomatik güncelleme bildirimi) eklendi.
+- **Kişisel İzleme Geçmişi & Sizin Çok İzledikleriniz:** `Channel` modeline `PersonalWatchCount` ve `HasPersonalWatch` eklendi. Ana ekranda bu verilere dayalı filtre (Sizin Çok İzledikleriniz) devreye alındı. Kişisel izleme rozetleri kullanıcı arayüzüne eklendi.
+- **GitHub Sync Hata İncelemesi Katmanı:** Yapay zeka ile GitHub senkronizasyonu başlatıldığında veritabanlarının (`channels.json` vb.) silinmesini/yok sayılmasını engellemek üzere `.gitignore` dosyasına filtreler (`channels.json`, `channels_*.json`, `kanallar_*.m3u`) başarıyla işlendi ve CI/CD pipeline incelendi.
+
 ### [0.0 alfa 00071] - 2026-05-27
 - **Ayarlar Dil Eşitlemesi:** Ayarlar ve Giriş ekranındaki Bulunduğunuz Ülke ve Ek Dil seçeneklerindeki farklı dil listeleri (AllCountries vb.) kaldırılarak Kanal Düzenleme ekranındaki ile birebir aynı olan kültür listesi (`SystemCultures`) ile senkronize edildi. Ek dil seçeneklerinde varsayılan olarak "Hiçbiri" eklendi.
 - **Dile Göre JSON & M3U Üretimi:** GitHub Actions script'i yeniden yazılarak Node.js entegre edildi. Artık `channels.json` dosyasından ayrı olarak, her bir dil için özel (örn: `channels_turkce_turkiye.json` ve `kanallar_turkce_turkiye.m3u`) dosyalar üretilmektedir. M3U yeteneği ile diğer oynatıcıların da listeyi kullanması sağlandı.
