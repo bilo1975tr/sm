@@ -125,6 +125,18 @@
                 </Grid>
             </Border>
 
+            <!-- Ad Banner Panel -->
+            <Border x:Name="OsdAdBanner" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="20,0,20,100" Padding="15" CornerRadius="12"
+                    Background="#C81e293b" BorderBrush="#38bdf8" BorderThickness="2" Visibility="Collapsed" MaxWidth="600">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="⭐" FontSize="30" VerticalAlignment="Center" Margin="0,0,15,0" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Reklam / Sponsor Alanı" FontWeight="Bold" FontSize="16" Foreground="White" />
+                        <TextBlock Text="Yayın keyfinizi kesintiye uğratmayan, 30 saniye içinde kaybolan sponsor reklam alanı." FontSize="12" Foreground="#cbd5e1" TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Bottom Panel -->
             <Border x:Name="BottomOsd" VerticalAlignment="Bottom" Margin="20" Padding="15" CornerRadius="12"
                     Background="#990f172a" BorderBrush="#33ffffff" BorderThickness="1" Visibility="Collapsed">
@@ -192,7 +204,40 @@
             <!-- Left Panel: Channel List -->
             <Border x:Name="SidebarBorder" HorizontalAlignment="Left" Width="300" Margin="20,90,0,90" Padding="10" CornerRadius="12"
                     Background="#eb0f172a" BorderBrush="#33ffffff" BorderThickness="1" Visibility="Collapsed">
-                <ListView x:Name="ChannelListView" Background="Transparent" Foreground="#f8fafc" BorderBrush="Transparent" SelectionChanged="ChannelListView_SelectionChanged">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBox x:Name="OsdSearchBox" Padding="8,5" Background="#1e293b" Foreground="White" BorderBrush="#334155" BorderThickness="1" TextChanged="OsdSearchBox_TextChanged" Margin="0,0,0,5" />
+                        <ComboBox x:Name="OsdCategoryBox" Background="#1e293b" Foreground="White" BorderThickness="0" Padding="5" SelectionChanged="OsdCategoryBox_SelectionChanged">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Background" Value="#1e293b"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#334155"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#38bdf8"/>
+                                            <Setter Property="Foreground" Value="Black"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                            <ComboBoxItem Content="Tümü" IsSelected="True"/>
+                            <ComboBoxItem Content="Favoriler"/>
+                            <ComboBoxItem Content="TV"/>
+                            <ComboBoxItem Content="Film"/>
+                            <ComboBoxItem Content="Dizi"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <ListView x:Name="ChannelListView" Grid.Row="1" Background="Transparent" Foreground="#f8fafc" BorderBrush="Transparent" SelectionChanged="ChannelListView_SelectionChanged" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,8" Padding="10" BorderThickness="1" BorderBrush="#334155" x:Name="ItemBorder">
@@ -232,6 +277,7 @@
                         </Style>
                     </ListView.ItemContainerStyle>
                 </ListView>
+                </Grid>
             </Border>
 
         </Grid>

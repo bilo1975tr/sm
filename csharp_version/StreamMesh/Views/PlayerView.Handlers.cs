@@ -149,6 +149,16 @@ namespace StreamMesh.Views
             }
         }
 
+        private void OsdSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            FilterChannels();
+        }
+
+        private void OsdCategoryBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            FilterChannels();
+        }
+
         private void ChannelListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ChannelListView.SelectedItem is Channel selectedChannel)

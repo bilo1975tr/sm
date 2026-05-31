@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using LibVLCSharp.Shared;
 using StreamMesh.Models;
 using StreamMesh.Services;
+using StreamMesh.Services.P2P;
 
 namespace StreamMesh.Views
 {
@@ -42,6 +43,8 @@ namespace StreamMesh.Views
         private string _currentYtAudioUrl;
         private List<Tuple<string, string>> _currentYtVideoStreams;
         private string _currentYtVideoUrl;
+        private List<Channel> _allChannels = new List<Channel>();
+        private DispatcherTimer _adBannerTimer;
 
         public PlayerView()
         {
@@ -60,6 +63,10 @@ namespace StreamMesh.Views
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += UpdateTimer_Tick;
             _updateTimer.Start();
+
+            _adBannerTimer = new DispatcherTimer();
+            _adBannerTimer.Interval = TimeSpan.FromSeconds(30);
+            _adBannerTimer.Tick += AdBannerTimer_Tick;
 
             try
             {
@@ -100,8 +107,43 @@ namespace StreamMesh.Views
 
         private void LoadChannelsFromDb()
         {
-            var channels = _databaseService.GetAllChannels();
-            ChannelListView.ItemsSource = channels;
+            _allChannels = _databaseService.GetAllChannels();
+            FilterChannels();
+        }
+
+        private void FilterChannels()
+        {
+            if (ChannelListView == null || _allChannels == null) return;
+            string searchText = OsdSearchBox?.Text?.ToLower() ?? "";
+            int selectedCatIndex = OsdCategoryBox?.SelectedIndex ?? 0;
+            // 0: Tümü, 1: Favoriler, 2: TV, 3: Film, 4: Dizi
+
+            var filtered = new List<Channel>();
+            foreach (var ch in _allChannels)
+            {
+                if (!string.IsNullOrWhiteSpace(searchText) && ch.Name != null && !ch.Name.ToLower().Contains(searchText))
+                    continue;
+
+                if (selectedCatIndex == 1) // Favoriler
+                {
+                    if (!ch.IsFavorite) continue;
+                }
+                else if (selectedCatIndex == 2) // TV
+                {
+                    if (ch.Category != null && !ch.Category.ToLower().Contains("tv")) continue;
+                }
+                else if (selectedCatIndex == 3) // Film
+                {
+                    if (ch.Category != null && !ch.Category.ToLower().Contains("film")) continue;
+                }
+                else if (selectedCatIndex == 4) // Dizi
+                {
+                    if (ch.Category != null && !ch.Category.ToLower().Contains("dizi") && !ch.Category.ToLower().Contains("series")) continue;
+                }
+
+                filtered.Add(ch);
+            }
+            ChannelListView.ItemsSource = filtered;
         }
 
         public async void LoadChannel(Channel channel, List<Channel> playlist = null)
@@ -109,11 +151,35 @@ namespace StreamMesh.Views
             if (channel == null) return;
             _currentChannel = channel;
 
-            if (playlist != null)
+            // Sync OSD Category Combobox with the dragged/played channel to provide continuous context
+            if (OsdCategoryBox != null)
             {
-                ChannelListView.ItemsSource = playlist;
+                OsdCategoryBox.SelectionChanged -= OsdCategoryBox_SelectionChanged;
+
+                if (playlist != null && playlist.All(c => c.IsFavorite)) 
+                {
+                    OsdCategoryBox.SelectedIndex = 1; // Favoriler
+                }
+                else if (channel.Category != null)
+                {
+                    string cat = channel.Category.ToLower();
+                    if (cat.Contains("film") || cat.Contains("movie")) OsdCategoryBox.SelectedIndex = 3;
+                    else if (cat.Contains("dizi") || cat.Contains("series")) OsdCategoryBox.SelectedIndex = 4;
+                    else OsdCategoryBox.SelectedIndex = 2; // TV
+                }
+                else
+                {
+                    OsdCategoryBox.SelectedIndex = 0;
+                }
+
+                OsdCategoryBox.SelectionChanged += OsdCategoryBox_SelectionChanged;
+                FilterChannels(); // Apply filter based on this new selection
+            }
+
+            if (ChannelListView != null)
+            {
                 ChannelListView.SelectedItem = channel;
-                ChannelListView.ScrollIntoView(channel);
+                try { ChannelListView.ScrollIntoView(channel); } catch { }
             }
             
             OsdTitle.Text = channel.Name;
@@ -329,6 +395,19 @@ namespace StreamMesh.Views
             BottomOsd.Visibility = Visibility.Visible;
             this.Cursor = Cursors.Arrow;
             ResetOsdTimer();
+
+            if (UserService.CurrentUser != null && !UserService.CurrentUser.IsPremium)
+            {
+                if (OsdAdBanner.Visibility != Visibility.Visible && !_adBannerTimer.IsEnabled)
+                {
+                    OsdAdBanner.Visibility = Visibility.Visible;
+                    _adBannerTimer.Start();
+                }
+            }
+            else
+            {
+                OsdAdBanner.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void HideOsd()
@@ -357,6 +436,12 @@ namespace StreamMesh.Views
                 media.AddOption(":compressor-threshold=-15.0"); // Catch loud sounds early
                 media.AddOption(":compressor-ratio=4.0"); // 4:1 compression ratio
             }
+        }
+        
+        private void AdBannerTimer_Tick(object sender, EventArgs e)
+        {
+            _adBannerTimer.Stop();
+            if (OsdAdBanner != null) OsdAdBanner.Visibility = Visibility.Collapsed;
         }
 
         public void StopPlayback()
