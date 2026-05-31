@@ -203,8 +203,6 @@ https://livestream.telvue.com/nashuanh1/f7b44cfafd5c52223d5498196c8a2e7b.sdp/pla
 https://1601580044.rsc.cdn77.org/live/_jcn_/amlst:CHANNEL_2/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="La Top 107.7 (720p)" tvg-logo="https://imgs.ct.ws/latop1077.png" group-title="Genel",La Top 107.7 (720p)
 https://59d39900ebfb8.streamlock.net/top107/top107/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TV 264 [TR]" tvg-logo="https://imgs.ct.ws/tv264.png" group-title="Genel",TV 264 [TR]
-https://b01c02nl.mediatriple.net/videoonlylive/mtdxkkitgbrckilive/broadcast_5ee244263fd6d.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Battal Gazinin İntikamı (archive)" tvg-logo="https://imgs.ct.ws/iptv.png" group-title="Genel",Battal Gazinin İntikamı (archive)
 https://ia801707.us.archive.org/32/items/battal-gazinin-intikami_movie/Battal%20Gazi%27nin%20%C4%B0ntikam%C4%B1%20_%20Eski%20T%C3%BCrk%20Filmi%20Tek%20Par%C3%A7a%20%28Restorasyonlu%29.mp4
 #EXTINF:-1 tvg-id="" tvg-name="Bizim Aile (archive)" tvg-logo="https://imgs.ct.ws/iptv.png" group-title="Genel",Bizim Aile (archive)
@@ -1027,8 +1025,6 @@ https://vidrame.pro/vr/get/8102109e/1080.txt?=.mp4
 https://archive.org/serve/uc-kagitci_movie/%C3%9C%C3%87%20KA%C4%9EIT%C3%87I%20-%20T%C3%BCrk%20Filmi%20%28Kemal%20Sunal%29.mp4
 #EXTINF:-1 tvg-id="" tvg-name="Visión Televisión (720p)" tvg-logo="https://i.imgur.com/HV5tgcM.png" group-title="Music",Visión Televisión (720p)
 https://cloudvideo.servers10.com:8081/8016/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Haber61 TV [TR]" tvg-logo="https://imgs.ct.ws/haber61.png" group-title="Genel",Haber61 TV [TR]
-https://cdn-haber61tv.yayin.com.tr/haber61tv/smil:haber61tv.smil/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Sundskanalen" tvg-logo="https://i.imgur.com/8uT0p3q.jpg" group-title="Sweden",Sundskanalen
 https://stream.sundskanalen.se/live/view/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="[KS] Tosun Paşa (archive)" tvg-logo="https://imgs.ct.ws/tosunpasa.png" group-title="Genel",[KS] Tosun Paşa (archive)
@@ -1123,8 +1119,6 @@ http://iptv.supertv.ro:8000/play/a001/index.m3u8
 https://rds3.desdeparaguay.net/republicatv/republicatv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="A2 HD" tvg-logo="https://imgs.ct.ws/a2hd.png" group-title="Genel",A2 HD
 https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/a2tv/a2tv_1080p.m3u8
-#EXTINF:-1 tvg-id="" tvg-name=".Euro D" tvg-logo="https://imgs.ct.ws/eurod.png" group-title="Genel",.Euro D
-https://live.duhnet.tv/S2/HLS_LIVE/eurodnp/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Sankhya TV (720p)" tvg-logo="https://i.ibb.co/Dgv6PvM/STV-NEW-LOGO-WITH-WHITE-SHADOW.png" group-title="Religious",Sankhya TV (720p)
 https://5c59fd5680a05.streamlock.net/live/_definst_/ngrp:SANKHYATV.stream_all/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Asharq Radio (1080p)" tvg-logo="https://i.imgur.com/M6K8cD3.jpeg" group-title="Business;News",Asharq Radio (1080p)
@@ -2107,8 +2101,6 @@ https://stream.polar.cz/polar2/polarlive2-1/playlist.m3u8
 https://pixeldrain.com/api/file/JiQjv4cX?=.mp4
 #EXTINF:-1 tvg-id="" tvg-name="Akaku 53 (Hawaii) (1080p)" tvg-logo="https://imgs.ct.ws/akakutv.png" group-title="Genel",Akaku 53 (Hawaii) (1080p)
 https://castus-vod-dev.s3.amazonaws.com/vod_clients/akaku/live/ch1/video.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Juwelo (720p)" tvg-logo="https://imgs.ct.ws/juwelo.png" group-title="Genel",Juwelo (720p)
-https://sdn-global-live-streaming-packager-cache.3qsdn.com/7441/7441_264_live.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="10.Lucha Plus" tvg-logo="" group-title="Genel",10.Lucha Plus
 https://amg17334-amg17334c1-freelivesports-emea-7386.playouts.now.amagi.tv/playlist/amg17334-luchalibrefast-luchalibre-freelivesportsemea/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Newfoundland Television (480p)" tvg-logo="https://imgs.ct.ws/newfoundlandtelevision.png" group-title="Genel",Newfoundland Television (480p)
@@ -2425,8 +2417,6 @@ https://livecdn.live247stream.com/joomusic/tv/playlist.m3u8
 https://host.onlineradyotv.net:8081/sdmtv/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="(CY) GORA (PIXEL)" tvg-logo="https://imgs.ct.ws/gora.png" group-title="Genel",(CY) GORA (PIXEL)
 https://pixeldrain.com/api/file/RA34BkX8?=.mp4
-#EXTINF:-1 tvg-id="" tvg-name="TV4 [TR]" tvg-logo="https://imgs.ct.ws/4.png" group-title="Genel",TV4 [TR]
-https://turkmedya-live.ercdn.net/tv4/tv4.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="HSE24 Extra (1080p)" tvg-logo="https://imgs.ct.ws/hse24e.png" group-title="Genel",HSE24 Extra (1080p)
 https://hse24extra.akamaized.net/hls/live/2006596/hse24extra/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="[KS] Orta Direk Şaban (archive)" tvg-logo="https://imgs.ct.ws/ortadireksaban.png" group-title="Genel",[KS] Orta Direk Şaban (archive)
@@ -2505,8 +2495,6 @@ https://stream.sen-gt.com/A2iReligion/myStream/playlist.m3u8
 https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/49f275ac-7129-4492-93c0-854b3c3138f0/manifest.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Les Z Amours" tvg-logo="https://imgs.ct.ws/leszamours.png" group-title="Genel",Les Z Amours
 https://d34pj260kw1xmk.cloudfront.net/live/l1/tv/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Kanal Hayat (1080p) [TR]" tvg-logo="https://imgs.ct.ws/hayat.png" group-title="Genel",Kanal Hayat (1080p) [TR]
-https://tbn02a.ltnschedule.com/hls/nx21i.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Bibel TV (720p)" tvg-logo="https://imgs.ct.ws/bibel.png" group-title="Genel",Bibel TV (720p)
 https://bibint01.iptv-playoutcenter.de/bibint01/bibint01.stream_all/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Bloomberg TV US Live Event (720p)" tvg-logo="https://i.imgur.com/OuogLHx.png" group-title="Business",Bloomberg TV US Live Event (720p)
@@ -2575,8 +2563,6 @@ https://live.streamjo.com/eetlive/eettv.m3u8
 https://live.ipstream.it/etvmarche/etvmarche.stream/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="10.DAZN Combat" tvg-logo="" group-title="Genel",10.DAZN Combat
 https://dazn-combat-rakuten.amagi.tv/hls/amagi_hls_data_rakutenAA-dazn-combat-rakuten/CDN/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Trt 2 HD" tvg-logo="https://imgs.ct.ws/trt2.png" group-title="Genel",Trt 2 HD
-https://tv-trt2.medya.trt.com.tr/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BeitolAbbas TV Channel (720p)" tvg-logo="https://i.imgur.com/s8PfUQy.png" group-title="Religious",BeitolAbbas TV Channel (720p)
 https://live.beitolabbas.tv/live/beitolabbastv.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="23 ABC Bakersfield CA (KERO) (720p)" tvg-logo="https://imgs.ct.ws/23abc.png" group-title="Genel",23 ABC Bakersfield CA (KERO) (720p)
@@ -3437,3 +3423,381 @@ https://videos.pexels.com/video-files/31544195/13444111_2560_1440_24fps.mp4?=.mp
 https://live.obslivestream.com/controversiatv/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Alkarma TV Family (1080p)" tvg-logo="https://imgs.ct.ws/alkarma.png" group-title="Genel",Alkarma TV Family (1080p)
 https://58cc65c534c67.streamlock.net/alkarmatv.com/alkarmaNA2.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CNN TÜRK" tvg-logo="" group-title="Genel",CNN TÜRK
+https://www.youtube.com/user/cnnturk/live
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Fenomen" tvg-logo="" group-title="Genel",Radyo Fenomen
+https://www.youtube.com/watch?v=S1OGVL2G42U
+#EXTINF:-1 tvg-id="" tvg-name="SHOWMAX" tvg-logo="" group-title="Genel",SHOWMAX
+https://www.youtube.com/watch?v=DzPDPtxeY2Y
+#EXTINF:-1 tvg-id="" tvg-name="Elsharq El Awast" tvg-logo="" group-title="Genel",Elsharq El Awast
+https://mn-nl.mncdn.com/elsharq_live/live/chunklist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Umut - London" tvg-logo="" group-title="Genel",Radyo Umut - London
+https://www.youtube.com/watch?v=KpjU_cWBCoo
+#EXTINF:-1 tvg-id="" tvg-name="Düzce TV" tvg-logo="" group-title="Genel",Düzce TV
+https://www.youtube.com/user/duzcetv/live
+#EXTINF:-1 tvg-id="" tvg-name="ARB Aran Azerbaycan" tvg-logo="" group-title="Genel",ARB Aran Azerbaycan
+https://www.youtube.com/watch?v=WJHlYKl4kwI
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Dance Radyo" tvg-logo="" group-title="Genel",Number1 Dance Radyo
+https://www.youtube.com/watch?v=vR6uk9wEoJA
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Başkent" tvg-logo="" group-title="Genel",Radyo Başkent
+https://www.youtube.com/watch?v=FlsFjvhsLlc
+#EXTINF:-1 tvg-id="" tvg-name="Best FM" tvg-logo="" group-title="Genel",Best FM
+https://www.youtube.com/watch?v=092jmGKWkkc
+#EXTINF:-1 tvg-id="" tvg-name="Süper FM" tvg-logo="" group-title="Genel",Süper FM
+https://www.youtube.com/watch?v=5GvcS0uY4ZU
+#EXTINF:-1 tvg-id="" tvg-name="Diyarbakır Can Radyo" tvg-logo="" group-title="Genel",Diyarbakır Can Radyo
+https://www.youtube.com/watch?v=3e6rjaj43go
+#EXTINF:-1 tvg-id="" tvg-name="98.3 Üniversite FM (Üniversite FM - Kayseri Meslek Yüksekokulu)" tvg-logo="" group-title="Genel",98.3 Üniversite FM (Üniversite FM - Kayseri Meslek Yüksekokulu)
+https://www.youtube.com/watch?v=EaTRD-DpZSc
+#EXTINF:-1 tvg-id="" tvg-name="NEWSCHANNEL" tvg-logo="" group-title="Genel",NEWSCHANNEL
+https://www.youtube.com/watch?v=0BF6WYNTexc
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk Rock" tvg-logo="" group-title="Genel",Number1 Türk Rock
+https://www.youtube.com/watch?v=tEEYm4dgvBk
+#EXTINF:-1 tvg-id="" tvg-name="NRT 2 TV HD" tvg-logo="" group-title="Genel",NRT 2 TV HD
+https://www.youtube.com/watch?v=mn5ZaLcjX6Q
+#EXTINF:-1 tvg-id="" tvg-name="TRT Kurdi" tvg-logo="" group-title="Genel",TRT Kurdi
+https://www.youtube.com/user/trtses6/live
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Lougne" tvg-logo="" group-title="Genel",Number1 Lougne
+https://www.youtube.com/watch?v=BNjH1YSeZQ4
+#EXTINF:-1 tvg-id="" tvg-name="Show Radyo" tvg-logo="" group-title="Genel",Show Radyo
+https://www.youtube.com/watch?v=-EYr2pNuq7w
+#EXTINF:-1 tvg-id="" tvg-name="Baba Radyo" tvg-logo="" group-title="Genel",Baba Radyo
+https://www.youtube.com/watch?v=pHQ4OtJzjZA
+#EXTINF:-1 tvg-id="" tvg-name="NTV Radyo (Stüdyodan Canlı Yayın)" tvg-logo="" group-title="Genel",NTV Radyo (Stüdyodan Canlı Yayın)
+https://www.youtube.com/watch?v=0Z7oiijWvLQ
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Hilal" tvg-logo="" group-title="Genel",Radyo Hilal
+https://www.youtube.com/watch?v=B1-LMOz_WG8
+#EXTINF:-1 tvg-id="" tvg-name="Damla FM" tvg-logo="" group-title="Genel",Damla FM
+https://www.youtube.com/watch?v=UeJwY0tDOgM
+#EXTINF:-1 tvg-id="" tvg-name="Ümüd TV" tvg-logo="" group-title="Genel",Ümüd TV
+https://www.youtube.com/watch?v=ER650YeSyNs
+#EXTINF:-1 tvg-id="" tvg-name="PAL Doğa Radyo" tvg-logo="" group-title="Genel",PAL Doğa Radyo
+https://www.youtube.com/watch?v=ZPngde18c2g
+#EXTINF:-1 tvg-id="" tvg-name="Diyar TV" tvg-logo="" group-title="Genel",Diyar TV
+https://www.youtube.com/channel/UC9vGf6Hq29MA5B-XQ5ZL6CA/live
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk FM" tvg-logo="" group-title="Genel",Number1 Türk FM
+https://www.youtube.com/watch?v=KYCdfRX932g
+#EXTINF:-1 tvg-id="" tvg-name="DMAX (NTV Spor)" tvg-logo="" group-title="Genel",DMAX (NTV Spor)
+https://www.youtube.com/watch?v=uxgKogFymQU
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Alaturka" tvg-logo="" group-title="Genel",Radyo Alaturka
+https://www.youtube.com/watch?v=qcUyCIerSXE
+#EXTINF:-1 tvg-id="" tvg-name="ARB Aran" tvg-logo="" group-title="Genel",ARB Aran
+https://www.youtube.com/watch?v=5koR5ATxuQA
+#EXTINF:-1 tvg-id="" tvg-name="TJK TV" tvg-logo="" group-title="Genel",TJK TV
+https://www.youtube.com/channel/UCNLO4lpteIloZ4IKb9L2DoA/live
+#EXTINF:-1 tvg-id="" tvg-name="VOA Farsi" tvg-logo="" group-title="Genel",VOA Farsi
+https://www.youtube.com/user/PNNVideo/live
+#EXTINF:-1 tvg-id="" tvg-name="CRI Türk FM" tvg-logo="" group-title="Genel",CRI Türk FM
+https://www.youtube.com/watch?v=ggEPY5hWuRo
+#EXTINF:-1 tvg-id="" tvg-name="Kadirlim TV" tvg-logo="" group-title="Genel",Kadirlim TV
+https://www.youtube.com/watch?v=wUio08Gqn_Q
+#EXTINF:-1 tvg-id="" tvg-name="A Para" tvg-logo="" group-title="Genel",A Para
+https://www.youtube.com/channel/UCzrGg6iyRDuUSnO0cQ5oLcA/live
+#EXTINF:-1 tvg-id="" tvg-name="ORAY TV 81" tvg-logo="" group-title="Genel",ORAY TV 81
+https://www.youtube.com/channel/UCmufenkVkvCLm-8ydo9-5sA/live
+#EXTINF:-1 tvg-id="" tvg-name="Kirpi TV" tvg-logo="" group-title="Genel",Kirpi TV
+https://www.youtube.com/channel/UCFlRss80dN3kKFisACe0raA/live
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Üsküdar Musiki Cemiyeti Radyosu" tvg-logo="" group-title="Genel",Number1 Üsküdar Musiki Cemiyeti Radyosu
+https://www.youtube.com/watch?v=yvxqVxsWgiQ
+#EXTINF:-1 tvg-id="" tvg-name="Esenyel FM" tvg-logo="" group-title="Genel",Esenyel FM
+https://www.youtube.com/watch?v=RViUue98pGQ
+#EXTINF:-1 tvg-id="" tvg-name="Kral World Radio" tvg-logo="" group-title="Genel",Kral World Radio
+https://www.youtube.com/watch?v=GFFP_tapbmM
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Arabesk" tvg-logo="" group-title="Genel",Radyo Arabesk
+https://www.youtube.com/watch?v=rIiz-qWtCIM
+#EXTINF:-1 tvg-id="" tvg-name="NRT TV HD" tvg-logo="" group-title="Genel",NRT TV HD
+https://www.youtube.com/watch?v=5gi-thB2YKI
+#EXTINF:-1 tvg-id="" tvg-name="Radyo A" tvg-logo="" group-title="Genel",Radyo A
+https://www.youtube.com/watch?v=I1BqE8z2c-8
+#EXTINF:-1 tvg-id="" tvg-name="Bloomberg HT" tvg-logo="" group-title="Genel",Bloomberg HT
+https://www.youtube.com/user/BloombergHT/live
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Number1 Zeki Müren Radyosu" tvg-logo="" group-title="Genel",Number1 Number1 Zeki Müren Radyosu
+https://www.youtube.com/watch?v=j_Nr2pLI8M0
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Mega" tvg-logo="" group-title="Genel",Radyo Mega
+https://www.youtube.com/watch?v=cS01IoJXAXQ
+#EXTINF:-1 tvg-id="" tvg-name="TRT HABER" tvg-logo="" group-title="Genel",TRT HABER
+https://www.youtube.com/user/trthaber/live
+#EXTINF:-1 tvg-id="" tvg-name="Radyo 34" tvg-logo="" group-title="Genel",Radyo 34
+https://www.youtube.com/watch?v=OHaZxmJhXHY
+#EXTINF:-1 tvg-id="" tvg-name="İstanbulun Sesi Radyosu" tvg-logo="" group-title="Genel",İstanbulun Sesi Radyosu
+https://www.youtube.com/watch?v=L2LGqi-DaHQ
+#EXTINF:-1 tvg-id="" tvg-name="Ankara Büyükşehir Belediyesi TV" tvg-logo="" group-title="Genel",Ankara Büyükşehir Belediyesi TV
+https://www.youtube.com/user/ankarawebtv/live
+#EXTINF:-1 tvg-id="" tvg-name="KANAL D" tvg-logo="" group-title="Genel",KANAL D
+https://www.youtube.com/user/KanalD/live
+#EXTINF:-1 tvg-id="" tvg-name="Rock FM" tvg-logo="" group-title="Genel",Rock FM
+https://www.youtube.com/watch?v=iGoDjLuBmDQ
+#EXTINF:-1 tvg-id="" tvg-name="Üsküdar Musiki Cemiyeti Radyosu" tvg-logo="" group-title="Genel",Üsküdar Musiki Cemiyeti Radyosu
+https://www.youtube.com/watch?v=VSG-301OaYs
+#EXTINF:-1 tvg-id="" tvg-name="Xəzər TV" tvg-logo="" group-title="Genel",Xəzər TV
+https://www.youtube.com/user/Xezermedia/live
+#EXTINF:-1 tvg-id="" tvg-name="Radyo D" tvg-logo="" group-title="Genel",Radyo D
+https://www.youtube.com/watch?v=JrhvBq81fRw
+#EXTINF:-1 tvg-id="" tvg-name="NUR TV" tvg-logo="" group-title="Genel",NUR TV
+https://www.youtube.com/watch?v=uClHBOM10YI
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENELI TV HD" tvg-logo="" group-title="Genel",TÜRKMENELI TV HD
+https://www.youtube.com/watch?v=7f-T-B1TbZc
+#EXTINF:-1 tvg-id="" tvg-name="Haber 61 TV" tvg-logo="" group-title="Genel",Haber 61 TV
+http://win8.yayin.com.tr/haber61tv/smil:haber61tv.smil/iptvdelisi.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Şehir Ekranı" tvg-logo="" group-title="Genel",Şehir Ekranı
+https://www.youtube.com/watch?v=FEzLGYPoOu0
+#EXTINF:-1 tvg-id="" tvg-name="Merih FM" tvg-logo="" group-title="Genel",Merih FM
+https://www.youtube.com/watch?v=22YwpZO_swY
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Akdeniz" tvg-logo="" group-title="Genel",Radyo Akdeniz
+https://www.youtube.com/user/bancana38/live
+#EXTINF:-1 tvg-id="" tvg-name="TRT Avaz" tvg-logo="" group-title="Genel",TRT Avaz
+https://www.youtube.com/user/trtavaz/live
+#EXTINF:-1 tvg-id="" tvg-name="Metropol FM Arabesk" tvg-logo="" group-title="Genel",Metropol FM Arabesk
+https://www.youtube.com/watch?v=bpQUX6O07Ck
+#EXTINF:-1 tvg-id="" tvg-name="Boğaziçi FM" tvg-logo="" group-title="Genel",Boğaziçi FM
+https://www.youtube.com/watch?v=1V4UjlV4MCc
+#EXTINF:-1 tvg-id="" tvg-name="Fıstık FM" tvg-logo="" group-title="Genel",Fıstık FM
+https://www.youtube.com/watch?v=8Xauxan4g3A
+#EXTINF:-1 tvg-id="" tvg-name="Hotel Les Ottomans" tvg-logo="" group-title="Genel",Hotel Les Ottomans
+https://www.youtube.com/watch?v=i-mL7ojKCXw
+#EXTINF:-1 tvg-id="" tvg-name="KentFm 101.4" tvg-logo="" group-title="Genel",KentFm 101.4
+https://www.youtube.com/watch?v=Yk6QU-gsRaY
+#EXTINF:-1 tvg-id="" tvg-name="FM TV" tvg-logo="" group-title="Genel",FM TV
+https://www.youtube.com/watch?v=c_zY4f2bxvQ
+#EXTINF:-1 tvg-id="" tvg-name="TV 52" tvg-logo="" group-title="Genel",TV 52
+https://www.youtube.com/user/ordutv52/live
+#EXTINF:-1 tvg-id="" tvg-name="Tivibu Spor" tvg-logo="" group-title="Genel",Tivibu Spor
+https://www.youtube.com/watch?v=tNVkH1mxgow
+#EXTINF:-1 tvg-id="" tvg-name="EL TV" tvg-logo="" group-title="Genel",EL TV
+http://85.132.53.162:1935/live/eltv/chunklist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radyo 45'lik" tvg-logo="" group-title="Genel",Radyo 45'lik
+https://www.youtube.com/watch?v=HMOi_XdQudM
+#EXTINF:-1 tvg-id="" tvg-name="Kral POP Akustik TV" tvg-logo="" group-title="Genel",Kral POP Akustik TV
+https://www.youtube.com/watch?v=g4mLF-SJbVs
+#EXTINF:-1 tvg-id="" tvg-name="Medya FM" tvg-logo="" group-title="Genel",Medya FM
+https://www.youtube.com/watch?v=42xJF0avtLY
+#EXTINF:-1 tvg-id="" tvg-name="Kral FM" tvg-logo="" group-title="Genel",Kral FM
+https://www.youtube.com/watch?v=zLVvQ3-eTvs
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Deephouse Radyo" tvg-logo="" group-title="Genel",Number1 Deephouse Radyo
+https://www.youtube.com/watch?v=5Dr89A4SJxE
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Huzur MALATYA" tvg-logo="" group-title="Genel",Radyo Huzur MALATYA
+https://www.youtube.com/user/tatlisozhaber/live
+#EXTINF:-1 tvg-id="" tvg-name="Karadeniz FM" tvg-logo="" group-title="Genel",Karadeniz FM
+https://www.youtube.com/watch?v=wjeRqkfUR9Q
+#EXTINF:-1 tvg-id="" tvg-name="TRT 2" tvg-logo="" group-title="Genel",TRT 2
+https://www.youtube.com/channel/UC2r8FIjCvkYbcbxVe5koa_g/live
+#EXTINF:-1 tvg-id="" tvg-name="FTV Türk" tvg-logo="" group-title="Genel",FTV Türk
+https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master_1660.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NTV" tvg-logo="" group-title="Genel",NTV
+https://www.youtube.com/watch?v=oruk-T3_xSw
+#EXTINF:-1 tvg-id="" tvg-name="Real TV az" tvg-logo="" group-title="Genel",Real TV az
+https://www.youtube.com/channel/UCidHhJSn6GtsrS2z_74HgtQ/live
+#EXTINF:-1 tvg-id="" tvg-name="PAL Station" tvg-logo="" group-title="Genel",PAL Station
+https://www.youtube.com/watch?v=2TQKXvJZ4eQ
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Disko" tvg-logo="" group-title="Genel",Number1 Disko
+https://www.youtube.com/watch?v=L24OZyHco6U
+#EXTINF:-1 tvg-id="" tvg-name="Korek TV" tvg-logo="" group-title="Genel",Korek TV
+https://www.youtube.com/watch?v=7ZgcQjUAuJQ
+#EXTINF:-1 tvg-id="" tvg-name="Didgah TV" tvg-logo="" group-title="Genel",Didgah TV
+https://www.youtube.com/watch?v=YKzpwtxrCfg
+#EXTINF:-1 tvg-id="" tvg-name="TBMM TV" tvg-logo="" group-title="Genel",TBMM TV
+https://www.youtube.com/channel/UCQ_b7G2N77xia2XzLP1ohFQ/live
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Classic" tvg-logo="" group-title="Genel",Number1 Classic
+https://www.youtube.com/watch?v=4nws6gFBJ-I
+#EXTINF:-1 tvg-id="" tvg-name="IBB TV" tvg-logo="" group-title="Genel",IBB TV
+https://www.youtube.com/channel/UCyAn-CGmx_ecg2q0GrhLbcw/live
+#EXTINF:-1 tvg-id="" tvg-name="Tay TV" tvg-logo="" group-title="Genel",Tay TV
+https://www.youtube.com/user/TAYTV2013/live
+#EXTINF:-1 tvg-id="" tvg-name="Radio Life Kayseri" tvg-logo="" group-title="Genel",Radio Life Kayseri
+https://www.youtube.com/watch?v=U44XKDvHnxI
+#EXTINF:-1 tvg-id="" tvg-name="Hunat TV Kayseri yt" tvg-logo="" group-title="Genel",Hunat TV Kayseri yt
+https://www.youtube.com/channel/UCs9txwkB_q2Yq-7sEPL0Vkw/live
+#EXTINF:-1 tvg-id="" tvg-name="Show Türk" tvg-logo="" group-title="Genel",Show Türk
+https://www.youtube.com/user/ShowTVShowTV/live
+#EXTINF:-1 tvg-id="" tvg-name="TGRT Belgesel TV" tvg-logo="" group-title="Genel",TGRT Belgesel TV
+https://www.youtube.com/user/tgrtbelgesel/live
+#EXTINF:-1 tvg-id="" tvg-name="Lig Radyo" tvg-logo="" group-title="Genel",Lig Radyo
+https://www.youtube.com/watch?v=nFWTHU46UyI
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Ajda Pekkan Radyosu" tvg-logo="" group-title="Genel",Number1 Ajda Pekkan Radyosu
+https://www.youtube.com/watch?v=4H0VhANOGpg
+#EXTINF:-1 tvg-id="" tvg-name="HALK TV" tvg-logo="" group-title="Genel",HALK TV
+https://www.youtube.com/watch?v=RnVoCmcwAFc
+#EXTINF:-1 tvg-id="" tvg-name="SEMERKAND TV" tvg-logo="" group-title="Genel",SEMERKAND TV
+https://www.youtube.com/watch?v=PQ4sc2tAGy4
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Barış Manco Radyosu" tvg-logo="" group-title="Genel",Number1 Barış Manco Radyosu
+https://www.youtube.com/watch?v=ufkQ9Zr9yP4
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Seymen" tvg-logo="" group-title="Genel",Radyo Seymen
+https://www.youtube.com/watch?v=F7ThiB11Nhg
+#EXTINF:-1 tvg-id="" tvg-name="SHOW TV HD" tvg-logo="" group-title="Genel",SHOW TV HD
+https://www.youtube.com/watch?v=tX6nsdpgDm8
+#EXTINF:-1 tvg-id="" tvg-name="Ulusal Radyo" tvg-logo="" group-title="Genel",Ulusal Radyo
+https://www.youtube.com/watch?v=HAAtfA_56bw
+#EXTINF:-1 tvg-id="" tvg-name="ÖZLEM FM UŞAK" tvg-logo="" group-title="Genel",ÖZLEM FM UŞAK
+https://www.youtube.com/watch?v=DNi7GjURmxA
+#EXTINF:-1 tvg-id="" tvg-name="Karadeniz Akustik Radyo" tvg-logo="" group-title="Genel",Karadeniz Akustik Radyo
+https://www.youtube.com/watch?v=Fsq3lXgB4jk
+#EXTINF:-1 tvg-id="" tvg-name="Kral Pop Radyo" tvg-logo="" group-title="Genel",Kral Pop Radyo
+https://www.youtube.com/watch?v=CqcvtCbreBI
+#EXTINF:-1 tvg-id="" tvg-name="Meşk FM Adana" tvg-logo="" group-title="Genel",Meşk FM Adana
+https://www.youtube.com/watch?v=Xn_fzuVxe3I
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Slow Radyo" tvg-logo="" group-title="Genel",Number1 Slow Radyo
+https://www.youtube.com/watch?v=Ql26_DO7OyQ
+#EXTINF:-1 tvg-id="" tvg-name="Az TV Azerbaycan" tvg-logo="" group-title="Genel",Az TV Azerbaycan
+https://www.youtube.com/watch?v=025yUxCHen8
+#EXTINF:-1 tvg-id="" tvg-name="Radyo 7" tvg-logo="" group-title="Genel",Radyo 7
+https://www.youtube.com/watch?v=5RaO6jzgWmU
+#EXTINF:-1 tvg-id="" tvg-name="ARTI TV" tvg-logo="" group-title="Genel",ARTI TV
+https://www.youtube.com/watch?v=XTWfbdSTxb4
+#EXTINF:-1 tvg-id="" tvg-name="Alem FM" tvg-logo="" group-title="Genel",Alem FM
+https://www.youtube.com/watch?v=DJDjfs5bHxg
+#EXTINF:-1 tvg-id="" tvg-name="Ülke TV" tvg-logo="" group-title="Genel",Ülke TV
+https://www.youtube.com/user/ulketv/live
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Ritim" tvg-logo="" group-title="Genel",Radyo Ritim
+https://www.youtube.com/watch?v=mWSKOj_9f38
+#EXTINF:-1 tvg-id="" tvg-name="TV NET" tvg-logo="" group-title="Genel",TV NET
+https://www.youtube.com/watch?v=9V8P68BMQTg
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Ertugrul Özkök Radyosu" tvg-logo="" group-title="Genel",Number1 Ertugrul Özkök Radyosu
+https://www.youtube.com/watch?v=L45qz_Bz4kM
+#EXTINF:-1 tvg-id="" tvg-name="TOLO News" tvg-logo="" group-title="Genel",TOLO News
+https://www.youtube.com/user/TOLOnewsLive/live
+#EXTINF:-1 tvg-id="" tvg-name="KANAL 23" tvg-logo="" group-title="Genel",KANAL 23
+https://cdn13-kanal23.yayin.com.tr/kanal23/ngrp:kanal23/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="KRT Kultur TV" tvg-logo="" group-title="Genel",KRT Kultur TV
+https://www.youtube.com/watch?v=QJXT8XA-J3Q
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Derman" tvg-logo="" group-title="Genel",Radyo Derman
+https://www.youtube.com/watch?v=NX6C8XSOYOo
+#EXTINF:-1 tvg-id="" tvg-name="Kral TV" tvg-logo="" group-title="Genel",Kral TV
+https://www.youtube.com/watch?v=6N4tCSY3TIo
+#EXTINF:-1 tvg-id="" tvg-name="RADYO 06" tvg-logo="" group-title="Genel",RADYO 06
+https://www.youtube.com/watch?v=4uJzFddeeEg
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Ekin" tvg-logo="" group-title="Genel",Radyo Ekin
+https://www.youtube.com/watch?v=qHGpr-3EAzg
+#EXTINF:-1 tvg-id="" tvg-name="CAN TV" tvg-logo="" group-title="Genel",CAN TV
+https://www.youtube.com/watch?v=pne27dY5pyY
+#EXTINF:-1 tvg-id="" tvg-name="Praga FM" tvg-logo="" group-title="Genel",Praga FM
+https://www.youtube.com/watch?v=XliNt8cs0qM
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Orhan Baba Radyosu" tvg-logo="" group-title="Genel",Number1 Orhan Baba Radyosu
+https://www.youtube.com/watch?v=v3H3RL9Eapo
+#EXTINF:-1 tvg-id="" tvg-name="Efkar FM" tvg-logo="" group-title="Genel",Efkar FM
+https://www.youtube.com/watch?v=VInG402LMjA
+#EXTINF:-1 tvg-id="" tvg-name="TRT 1" tvg-logo="" group-title="Genel",TRT 1
+https://www.youtube.com/user/trttv1/live
+#EXTINF:-1 tvg-id="" tvg-name="Naxcivan TV HD" tvg-logo="" group-title="Genel",Naxcivan TV HD
+https://www.youtube.com/channel/UCxh0ragCDTF1tbA5_GFKopQ/live
+#EXTINF:-1 tvg-id="" tvg-name="Lâlegül FM" tvg-logo="" group-title="Genel",Lâlegül FM
+https://www.youtube.com/watch?v=R7mGDY9PJLc
+#EXTINF:-1 tvg-id="" tvg-name="Aztürk FM" tvg-logo="" group-title="Genel",Aztürk FM
+https://www.youtube.com/watch?v=zX34TFNby4U
+#EXTINF:-1 tvg-id="" tvg-name="Aksaray Belediyesi TV" tvg-logo="" group-title="Genel",Aksaray Belediyesi TV
+https://www.youtube.com/watch?v=eMVeXnW5In0
+#EXTINF:-1 tvg-id="" tvg-name="Cagri Radyo" tvg-logo="" group-title="Genel",Cagri Radyo
+https://www.youtube.com/watch?v=07X-oFWrjag
+#EXTINF:-1 tvg-id="" tvg-name="Meyer Group Kamera" tvg-logo="" group-title="Genel",Meyer Group Kamera
+https://www.youtube.com/watch?v=rdyBzTIQrVo
+#EXTINF:-1 tvg-id="" tvg-name="Akdamar TV Van" tvg-logo="" group-title="Genel",Akdamar TV Van
+https://www.youtube.com/watch?v=mY4EtSH_Xn0
+#EXTINF:-1 tvg-id="" tvg-name="Аланья Турция Palmiye Beach Hotel Live Camera. PalmiyeBeachhotel.com" tvg-logo="" group-title="Genel",Аланья Турция Palmiye Beach Hotel Live Camera. PalmiyeBeachhotel.com
+https://www.youtube.com/watch?v=KZHYwN39t5I
+#EXTINF:-1 tvg-id="" tvg-name="Kurdistan24" tvg-logo="" group-title="Genel",Kurdistan24
+https://www.youtube.com/watch?v=ezg9zR-SUkU
+#EXTINF:-1 tvg-id="" tvg-name="beIN SPORTS HABER" tvg-logo="" group-title="Genel",beIN SPORTS HABER
+https://www.youtube.com/watch?v=LXhXytJnicY
+#EXTINF:-1 tvg-id="" tvg-name="Biber FM Eskişehir/Merkez" tvg-logo="" group-title="Genel",Biber FM Eskişehir/Merkez
+https://www.youtube.com/watch?v=txgrS0tMlgM
+#EXTINF:-1 tvg-id="" tvg-name="Dream TV" tvg-logo="" group-title="Genel",Dream TV
+https://www.youtube.com/channel/UCo7UN73hc3pb5X-kYvUw5XQ/live
+#EXTINF:-1 tvg-id="" tvg-name="TGRT HABER" tvg-logo="" group-title="Genel",TGRT HABER
+https://www.youtube.com/watch?v=6Cp15xLfuSA
+#EXTINF:-1 tvg-id="" tvg-name="Med Muzik" tvg-logo="" group-title="Genel",Med Muzik
+https://www.youtube.com/watch?v=tEGKUNhAO0A
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Hearth" tvg-logo="" group-title="Genel",Number1 Hearth
+https://www.youtube.com/watch?v=ZI_tlALWf6k
+#EXTINF:-1 tvg-id="" tvg-name="Habertürk TV" tvg-logo="" group-title="Genel",Habertürk TV
+https://www.youtube.com/user/TVhaberturk/live
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Sezen Aksu Radyosu" tvg-logo="" group-title="Genel",Number1 Sezen Aksu Radyosu
+https://www.youtube.com/watch?v=DJFXxTRkVl0
+#EXTINF:-1 tvg-id="" tvg-name="Kanal Antalya" tvg-logo="" group-title="Genel",Kanal Antalya
+https://www.youtube.com/channel/UCsN8gKdEj7echJrzgheghbQ/live
+#EXTINF:-1 tvg-id="" tvg-name="Agro TV" tvg-logo="" group-title="Genel",Agro TV
+https://www.youtube.com/channel/UCuOHzqOC54YR_Db4G5p1hXA/live
+#EXTINF:-1 tvg-id="" tvg-name="KANAL 23" tvg-logo="" group-title="Genel",KANAL 23
+https://www.youtube.com/channel/UCoMuDxqgBl0jmbPGS5Oh4eA/live
+#EXTINF:-1 tvg-id="" tvg-name="Damar FM" tvg-logo="" group-title="Genel",Damar FM
+https://www.youtube.com/watch?v=lK4A0o0YThY
+#EXTINF:-1 tvg-id="" tvg-name="ARIA TV Canada" tvg-logo="" group-title="Genel",ARIA TV Canada
+https://www.youtube.com/user/AriaTVCanada/live
+#EXTINF:-1 tvg-id="" tvg-name="Number1 FM" tvg-logo="" group-title="Genel",Number1 FM
+https://www.youtube.com/watch?v=y2nDGnS_Skw
+#EXTINF:-1 tvg-id="" tvg-name="Ronahi TV" tvg-logo="" group-title="Genel",Ronahi TV
+https://www.youtube.com/watch?v=jRcTKhHzRFg
+#EXTINF:-1 tvg-id="" tvg-name="PAL Nostalji" tvg-logo="" group-title="Genel",PAL Nostalji
+https://www.youtube.com/watch?v=q3Be18Z6Na0
+#EXTINF:-1 tvg-id="" tvg-name="BBC Persian" tvg-logo="" group-title="Genel",BBC Persian
+https://www.youtube.com/watch?v=FCKruF2LZNs
+#EXTINF:-1 tvg-id="" tvg-name="Bozüyük Belediyesi" tvg-logo="" group-title="Genel",Bozüyük Belediyesi
+https://www.youtube.com/watch?v=euIegZ-PrZ8
+#EXTINF:-1 tvg-id="" tvg-name="İstanbul FM" tvg-logo="" group-title="Genel",İstanbul FM
+https://www.youtube.com/watch?v=VWvzIv7tWrs
+#EXTINF:-1 tvg-id="" tvg-name="ELIF TV" tvg-logo="" group-title="Genel",ELIF TV
+http://yayin3.canliyayin.org/eliftv
+#EXTINF:-1 tvg-id="" tvg-name="Vahdet TV - Hadi TV 3 Türkçe ve Azerice 24" tvg-logo="" group-title="Genel",Vahdet TV - Hadi TV 3 Türkçe ve Azerice 24
+https://www.youtube.com/user/SchiaMedia/live
+#EXTINF:-1 tvg-id="" tvg-name="Davet Radyo | Canlı Yayın Davet FM" tvg-logo="" group-title="Genel",Davet Radyo | Canlı Yayın Davet FM
+https://www.youtube.com/watch?v=yWe62d34f5Y
+#EXTINF:-1 tvg-id="" tvg-name="Kral Alternatif" tvg-logo="" group-title="Genel",Kral Alternatif
+https://www.youtube.com/watch?v=uLD2WjvOujo
+#EXTINF:-1 tvg-id="" tvg-name="Denge Radyo" tvg-logo="" group-title="Genel",Denge Radyo
+https://www.youtube.com/watch?v=8eNog4QvFnY
+#EXTINF:-1 tvg-id="" tvg-name="Viyana TV" tvg-logo="" group-title="Genel",Viyana TV
+http://nrttn172.kesintisizyayin.com:29010/nrttn/nrttn/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kral POP TV" tvg-logo="" group-title="Genel",Kral POP TV
+https://www.youtube.com/watch?v=7YzYxQPVsck
+#EXTINF:-1 tvg-id="" tvg-name="Haber Global" tvg-logo="" group-title="Genel",Haber Global
+https://www.youtube.com/watch?v=VupTz_pA9wM
+#EXTINF:-1 tvg-id="" tvg-name="ORTAHISAR Mahzen Cave Hotel' den Ortahisar Kale Manzarası" tvg-logo="" group-title="Genel",ORTAHISAR Mahzen Cave Hotel' den Ortahisar Kale Manzarası
+https://www.youtube.com/watch?v=0ug8r9hXB7U
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Kulüp" tvg-logo="" group-title="Genel",Radyo Kulüp
+http://cdn-radyokulup.yayin.com.tr/radyokulup/radyokulup/chunklist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MEDYA HABER TV" tvg-logo="" group-title="Genel",MEDYA HABER TV
+https://www.youtube.com/watch?v=gFzzH-ZYrL0
+#EXTINF:-1 tvg-id="" tvg-name="Folkart Time Kamera" tvg-logo="" group-title="Genel",Folkart Time Kamera
+https://www.youtube.com/watch?v=wzTTwL_FgvA
+#EXTINF:-1 tvg-id="" tvg-name="ISPARTA TV" tvg-logo="" group-title="Genel",ISPARTA TV
+https://www.youtube.com/channel/UCZPfEL8ksa0Mv2OSwa6FWdw/live
+#EXTINF:-1 tvg-id="" tvg-name="İHA HABER SAATİ" tvg-logo="" group-title="Genel",İHA HABER SAATİ
+https://www.youtube.com/user/ihacomtr/live
+#EXTINF:-1 tvg-id="" tvg-name="SÜRMELİ FM" tvg-logo="" group-title="Genel",SÜRMELİ FM
+https://www.youtube.com/watch?v=f3-t4s1o5K4
+#EXTINF:-1 tvg-id="" tvg-name="Tgrt FM" tvg-logo="" group-title="Genel",Tgrt FM
+https://www.youtube.com/user/tgrtfm/live
+#EXTINF:-1 tvg-id="" tvg-name="Pal FM" tvg-logo="" group-title="Genel",Pal FM
+https://www.youtube.com/watch?v=l1OXa9CQx6I
+#EXTINF:-1 tvg-id="" tvg-name="ATV Azerbaycan" tvg-logo="" group-title="Genel",ATV Azerbaycan
+https://www.youtube.com/watch?v=muPVXYmpDB0
+#EXTINF:-1 tvg-id="" tvg-name="STERK TV" tvg-logo="" group-title="Genel",STERK TV
+https://www.youtube.com/watch?v=ug48u7N4Ti4
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Best Of Radyo" tvg-logo="" group-title="Genel",Number1 Best Of Radyo
+https://www.youtube.com/watch?v=9Bxdp9OGJLY&list=TLGGgJSK0Sy0nrUyNjAxMjAxOA&index=4
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk Slow Radyo" tvg-logo="" group-title="Genel",Number1 Türk Slow Radyo
+https://www.youtube.com/watch?v=B0lCeKNoUkw
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Piryolu" tvg-logo="" group-title="Genel",Radyo Piryolu
+https://www.youtube.com/watch?v=FPjiHlv1yD4
+#EXTINF:-1 tvg-id="" tvg-name="Medine TV" tvg-logo="" group-title="Genel",Medine TV
+https://www.youtube.com/channel/UCou5J1Vnhxnx-IeAqFItN0g/live
+#EXTINF:-1 tvg-id="" tvg-name="Radyo 2000" tvg-logo="" group-title="Genel",Radyo 2000
+https://www.youtube.com/watch?v=hp0tYTKwqxc
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk 90'lar Radyosu" tvg-logo="" group-title="Genel",Number1 Türk 90'lar Radyosu
+https://www.youtube.com/watch?v=-IM_bEDDjz0
+#EXTINF:-1 tvg-id="" tvg-name="Iran International" tvg-logo="" group-title="Genel",Iran International
+https://www.youtube.com/watch?v=uRhGY5vRLw0
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Office" tvg-logo="" group-title="Genel",Number1 Office
+https://www.youtube.com/watch?v=rR8px2Hffh4
+#EXTINF:-1 tvg-id="" tvg-name="MPL TV" tvg-logo="" group-title="Genel",MPL TV
+https://www.youtube.com/watch?v=WKTbYH-q-A8
+#EXTINF:-1 tvg-id="" tvg-name="Star TV" tvg-logo="" group-title="Genel",Star TV
+https://www.youtube.com/user/STARTVSTAR/live
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Spor" tvg-logo="" group-title="Genel",Radyo Spor
+https://www.youtube.com/watch?v=gKQK-hwKpOk
+#EXTINF:-1 tvg-id="" tvg-name="PAL Orient" tvg-logo="" group-title="Genel",PAL Orient
+https://www.youtube.com/watch?v=VmgzI-9aio0
+#EXTINF:-1 tvg-id="" tvg-name="EKOTURK TV" tvg-logo="" group-title="Genel",EKOTURK TV
+https://www.youtube.com/watch?v=0iGSChxOSLY
+#EXTINF:-1 tvg-id="" tvg-name="YOL TV" tvg-logo="" group-title="Genel",YOL TV
+https://www.youtube.com/user/yolmedya/live
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Dejavu" tvg-logo="" group-title="Genel",Radyo Dejavu
+https://www.youtube.com/watch?v=EaYltgBbgu0
