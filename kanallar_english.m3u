@@ -401,8 +401,6 @@ http://k4.usastreams.com/videotour/videotour/playlist.m3u8
 https://le02.euddn.net/6487956abb8faf0706d8c4c2465f54cb3625b812fec8e13d11668907ff00f44b004ea22691a9216c71ebda22b7e6e57c8b923aeee9e1e6aa447947c014b7a3babd73ab865562f4ae463ce0c617da65805296ed52a0af64d7d881781d282ea970de7a1ab524c1ea73e271a8df71d43212f4850e2d81241308886184db1abf516f2d6d0b9965402fc7c960e27fa968eabb077474e7493c278ebae58d614923fb2f5c76c2865cb681763ffd765a39a629ce/smil:rk_live_1.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Meteor [TKRR]" tvg-logo="https://imgs.ct.ws/meteor.png" group-title="Genel",Meteor [TKRR]
 https://videos.pexels.com/video-files/856309/856309-hd_1920_1080_30fps.mp4?=.mpg
-#EXTINF:-1 tvg-id="" tvg-name="09.Kanal 7 Türknet" tvg-logo="" group-title="Genel",09.Kanal 7 Türknet
-https://yurhnwtpys.turknet.ercdn.net/cvmbjbpmdx/kanal7/kanal7.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="13.MTRSPT1" tvg-logo="" group-title="Genel",13.MTRSPT1
 https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg02873-kravemedia-mtrspt1-distrotv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="EWTN Poland (1080p)" tvg-logo="https://imgs.ct.ws/ewtneu.png" group-title="Genel",EWTN Poland (1080p)
@@ -519,8 +517,6 @@ https://halktv-live.daioncdn.net/halktv/halktv.m3u8
 https://content.uplynk.com/channel/39919d3f7a074eefa8bf579214e952f9.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Ybn.abc news" tvg-logo="" group-title="Genel",Ybn.abc news
 https://raw.githubusercontent.com/ChiSheng9/iptv/master/TV24.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Show Türk" tvg-logo="https://assets.uzunmuhalefet.com/logos/7b1e3f67-3dd8-427f-8d3c-f0d1b80e7961.png" group-title="Ulusal - Yurt Dışı",Show Türk
-https://streams.uzunmuhalefet.com/stream/16e43b9b-e175-482c-a105-2253c06515c9.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Ontario" tvg-logo="https://imgs.ct.ws/ontariotv.png" group-title="Genel",Ontario
 https://lin13.isilive.ca/live/_definst_/ontla/committee_2-en/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Guneydogu TV (720p) [TR]" tvg-logo="https://imgs.ct.ws/gndtv.png" group-title="Genel",Guneydogu TV (720p) [TR]
@@ -603,8 +599,6 @@ https://eu1.servers10.com:8081/8230/index.m3u8
 http://138.68.138.119:8080/live/5a8993709ea19/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Нижний Новгород 24" tvg-logo="https://i.imgur.com/ZWgPVIC.png" group-title="Russia",Нижний Новгород 24
 https://live-vestinn.cdnvideo.ru/vestinn/nn24-khl/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Türkiye Bayrağı [TKRR]" tvg-logo="https://imgs.ct.ws/trb2.png" group-title="Genel",Türkiye Bayrağı [TKRR]
-https://videos.pexels.com/video-files/17275616/17275616-uhd_1440_2560_30fps.mp4?=.mpg
 #EXTINF:-1 tvg-id="" tvg-name="Entertainment Tonight (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Entertainment_Tonight_2021.svg/960px-Entertainment_Tonight_2021.svg.png" group-title="Entertainment;News",Entertainment Tonight (1080p)
 https://enterbcef94b.airspace-cdn.cbsivideo.com/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Vía Televisión (720P) [Not 24/7]" tvg-logo="https://i.imgur.com/FiptbGQ.png" group-title="General",Vía Televisión (720P) [Not 24/7]
@@ -715,8 +709,6 @@ https://s.emisoras.tv:8081/penielkids/index.m3u8
 https://cdn3.wowza.com/1/RERMR282dnU5eE5Z/OHY0dVFs/hls/live/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Majestad Televisión (480p) [Not 24/7]" tvg-logo="https://i.imgur.com/BJhrvtL.png" group-title="Religious",Majestad Televisión (480p) [Not 24/7]
 https://livetv.305streamhd.com:3667/live/majestadtvlive.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="17. Haber Türk" tvg-logo="" group-title="Genel",17. Haber Türk
-https://rmtftbjlne.turknet.ercdn.net/bpeytmnqyp/haberturktv/haberturktv_1080p.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="CCV (480p)" tvg-logo="https://imgs.ct.ws/ccv.png" group-title="Genel",CCV (480p)
 https://5a1178b42cc03.streamlock.net/8212/8212/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radio TV Basse-Terre (720p)" tvg-logo="https://i.imgur.com/1gGz3Uw.jpg" group-title="General",Radio TV Basse-Terre (720p)
@@ -883,8 +875,6 @@ https://vidrame.pro/vr/get/c700c6f4/master.txt?=.mp4
 https://lotus.stingray.com/manifest/ose-104ads-montreal/samsungtvplus/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="[KS] Katma Değer Şaban (archive)" tvg-logo="https://imgs.ct.ws/kds.png" group-title="Genel",[KS] Katma Değer Şaban (archive)
 https://ia803205.us.archive.org/34/items/katma-deger-saban_movie/Katma%20De%C4%9Fer%20%C5%9Eaban%20_%20Eski%20T%C3%BCrk%20Filmi%20Tek%20Par%C3%A7a%20%28Kemal%20Sunal%29.ia.mp4
-#EXTINF:-1 tvg-id="" tvg-name="Haber Türk" tvg-logo="https://i.ibb.co/wdwm0fn/haberturk.png" group-title="Genel",Haber Türk
-https://ensonhaber-live.ercdn.net/haberturk/haberturk.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Tele Louange (1080p)" tvg-logo="https://imgs.ct.ws/telelouange.png" group-title="Genel",Tele Louange (1080p)
 https://5790d294af2dc.streamlock.net/8124/8124/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Tea TV (720p)" tvg-logo="https://imgs.ct.ws/teatv2.png" group-title="Genel",Tea TV (720p)
@@ -1463,8 +1453,6 @@ https://live.imamhossaintv.com/live/ih3.m3u8
 http://tezaur.mlbfan.org/tezaur/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Anons [PUHU]" tvg-logo="https://imgs.ct.ws/anons.png" group-title="Genel",Anons [PUHU]
 https://dygvideo.dygdigital.com/api/redirect?PublisherId=29&ReferenceId=PUHU_834762_32B05878&SecretKey=NtvApiSecret2014*&.mp4
-#EXTINF:-1 tvg-id="" tvg-name="ASPOR türknet" tvg-logo="" group-title="Genel",ASPOR türknet
-https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Carac 2 (1080p)" tvg-logo="https://www.bejart.ch/wp-content/uploads//carac-400x304.png" group-title="Entertainment",Carac 2 (1080p)
 https://edge.vedge.infomaniak.com/livecast/ik:onefmmd/.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Fuji TV NEXT (544p)" tvg-logo="https://i.imgur.com/j95aeSA.png" group-title="Entertainment",Fuji TV NEXT (544p)
@@ -1521,8 +1509,6 @@ https://59253971be783.streamlock.net/KissKissTV/KissKissTV.stream/playlist.m3u8
 https://dwamdstream110.akamaized.net/hls/live/2017971/dwstream110/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TEVEKA (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/IAtKJZk.png" group-title="General",TEVEKA (1080p) [Not 24/7]
 https://www.teveka.net:8443/show/teveka/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Türkler Geliyor Adaletin Kılıcı 2020 (archive)" tvg-logo="https://imgs.ct.ws/trklergeliyoradaletinklc2020.png" group-title="Genel",Türkler Geliyor Adaletin Kılıcı 2020 (archive)
-https://archive.org/download/TurklerGeliyor/T%C3%BCrkler%20Geliyor%20Adaletin%20K%C4%B1l%C4%B1c%C4%B1.ia.mp4
 #EXTINF:-1 tvg-id="" tvg-name="[KS] İnatçı (archive)" tvg-logo="https://imgs.ct.ws/inatci.png" group-title="Genel",[KS] İnatçı (archive)
 https://archive.org/serve/inatci_movie/%C4%B0nat%C3%A7%C4%B1%20-%20HD%20T%C3%BCrk%20Filmi%20%28Kemal%20Sunal%29.ia.mp4
 #EXTINF:-1 tvg-id="" tvg-name="Görevimiz Tehlike 3 2006 (vidrame)" tvg-logo="https://imgs.ct.ws/gort3.png" group-title="Genel",Görevimiz Tehlike 3 2006 (vidrame)
@@ -1685,8 +1671,6 @@ https://live.mnb.mn/hls/mnb_sport.stream.m3u8
 https://linear-188.frequency.stream/dist/glewedtv/188/hls/master/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Şevkat Yerimdar (archive)" tvg-logo="https://imgs.ct.ws/iptv.png" group-title="Genel",Şevkat Yerimdar (archive)
 https://ia801900.us.archive.org/15/items/sevkat-yerimdar_movie/%C5%9Eevkat%20Yerimdar%20HD%20_%20T%C3%BCrk%20Filmi%20Tek%20Par%C3%A7a%20%28HD%29.mp4
-#EXTINF:-1 tvg-id="" tvg-name="PowerTürk Slow [MZ]" tvg-logo="https://imgs.ct.ws/powerturkslow.png" group-title="Genel",PowerTürk Slow [MZ]
-https://listen.powerapp.com.tr/pturkslow/slow.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Mahzen 2009 (vidrame)" tvg-logo="https://imgs.ct.ws/iptv.png" group-title="Genel",Mahzen 2009 (vidrame)
 https://vidrame.pro/vr/get/5e843c08/1080.txt?=.mp4
 #EXTINF:-1 tvg-id="" tvg-name="Amerikan Pastası 1 1999 (vidrame)" tvg-logo="https://imgs.ct.ws/amerikanpastas1.png" group-title="Genel",Amerikan Pastası 1 1999 (vidrame)
@@ -1777,8 +1761,6 @@ https://amg00447-qwesttv-qwestjazz-cineverse-ve12d.amagi.tv/playlist/amg00447-qw
 https://livefa.marjaeyattv.com/mtv_ar/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Maná Tserkov  Onlayn (1080p)" tvg-logo="https://imgs.ct.ws/mantserkovonlayn.png" group-title="Genel",Maná Tserkov  Onlayn (1080p)
 https://w2.manasat.com/tserkov-online/smil:tserkov-online.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Türk Bayrağı [TKRR]" tvg-logo="https://imgs.ct.ws/trb1.png" group-title="Genel",Türk Bayrağı [TKRR]
-https://videos.pexels.com/video-files/2283469/2283469-uhd_2560_1440_25fps.mp4?=.mpg
 #EXTINF:-1 tvg-id="" tvg-name="Icaro TV (720p)" tvg-logo="https://imgs.ct.ws/icarotv.png" group-title="Genel",Icaro TV (720p)
 https://59d7d6f47d7fc.streamlock.net/icarotv/icarotv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="5TV Corrientes (480p) [Not 24/7]" tvg-logo="https://i.imgur.com/mSn7ACs.png" group-title="General",5TV Corrientes (480p) [Not 24/7]
@@ -2151,8 +2133,6 @@ https://chlivemta1.akamaized.net/hls/live/2010556/mta3alarabia/playlist.m3u8
 https://lotus.stingray.com/manifest/ose-202ads-montreal/samsungtvplus/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Đồng Nai 1 (360p) [Not 24/7]" tvg-logo="https://i.imgur.com/oQyioVa.png" group-title="General;News",Đồng Nai 1 (360p) [Not 24/7]
 http://118.107.85.4:1935/live/smil:DNTV1.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="SAT 7 Türk [TR]" tvg-logo="https://imgs.ct.ws/sat7trk.png" group-title="Genel",SAT 7 Türk [TR]
-https://live.artidijitalmedya.com/artidijital_sat7turk/sat7turk/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Hi-YAH! (1080p)" tvg-logo="https://i.imgur.com/sOYAnTB.png" group-title="Entertainment",Hi-YAH! (1080p)
 https://linear-59.frequency.stream/dist/plex/59/hls/master/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Canal Institucional (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/CKnf3Ua.png" group-title="General",Canal Institucional (720p) [Not 24/7]
@@ -2219,8 +2199,6 @@ http://176.126.166.43:1935/live/312musik/playlist.m3u8
 https://ott-balancer.tvri.go.id/live/eds/TVRIWorld/hls/TVRIWorld.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Main Street Television Film TV" tvg-logo="https://imgs.ct.ws/mainstreet.png" group-title="Genel",Main Street Television Film TV
 https://2-fss-2.streamhoster.com/pl_118/204972-1954106-1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TURKMENELi TV" tvg-logo="" group-title="Genel",TURKMENELi TV
-https://135962.global.ssl.fastly.net/5ff366a512987e2c0a3dabfe/live_14378e1002eb11ef9cb025207067897a/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="EWTN el Canal Católico (720p)" tvg-logo="https://imgs.ct.ws/ewtnc.png" group-title="Genel",EWTN el Canal Católico (720p)
 https://cdn3.wowza.com/1/SmVrQmZCUXZhVDgz/b3J3MFJv/hls/live/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="HSE (1080p)" tvg-logo="https://imgs.ct.ws/hsetv.png" group-title="Genel",HSE (1080p)
@@ -2289,8 +2267,6 @@ https://7mbd4ogkr3gx-hls-live.wmncdn.net/harvesttvlive1/bbb19eae240ec100af921d51
 https://w1.manasat.com/tvmana-1/smil:tvmana-1.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Mpt2 TV" tvg-logo="https://imgs.ct.ws/mpt2tv.png" group-title="Genel",Mpt2 TV
 https://2-fss-1.streamhoster.com/pl_122/amlst:201814-2122456/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="13.Tv2 Türknet" tvg-logo="" group-title="Genel",13.Tv2 Türknet
-https://ackaxsqacw.turknet.ercdn.net/ozfkfbbjba/teve2/teve2.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KK TV Angola (1080p)" tvg-logo="https://imgs.ct.ws/kktvangola.png" group-title="Genel",KK TV Angola (1080p)
 https://w1.manasat.com/ktv-angola/smil:ktv-angola.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="A1 TV (1080p)" tvg-logo="https://imgs.ct.ws/a1tv.png" group-title="Genel",A1 TV (1080p)
@@ -2313,8 +2289,6 @@ https://streams2.sofast.tv/sofastplayout/WiseM3U8_1/master.m3u8
 https://a-cdn.klowdtv.com/live3/law_720p/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="VSiN (720p)" tvg-logo="https://imgs.ct.ws/vsin.png" group-title="Genel",VSiN (720p)
 https://vsin-sgrewind.streamguys1.com/scte/live-2k/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="PowerTürk Taptaze [MZ]" tvg-logo="https://imgs.ct.ws/powerttt.png" group-title="Genel",PowerTürk Taptaze [MZ]
-https://listen.powerapp.com.tr/pturktaptaze/taptaze.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Gunslingers TR Altyazılı 2025 (vidrame)" tvg-logo="https://imgs.ct.ws/guns2025.png" group-title="Genel",Gunslingers TR Altyazılı 2025 (vidrame)
 https://vidrame.pro/vr/get/4905f4de/1080.txt?=.mp4
 #EXTINF:-1 tvg-id="" tvg-name="Scripps News (720p)" tvg-logo="https://imgs.ct.ws/scrippsnews.png" group-title="Genel",Scripps News (720p)
@@ -2549,8 +2523,6 @@ https://archive.org/download/davaro-turk-filmi-full-4-k-ultra-hd-kemal-sunal-s-e
 https://srv5.zcast.com.br/tvcommaceio/tvcommaceio/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Elbeshara GTV (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/b0Wx7pE.png" group-title="Religious",Elbeshara GTV (1080p) [Not 24/7]
 http://media3.smc-host.com:1935/elbesharagtv.com/gtv.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TYT Türk" tvg-logo="https://assets.uzunmuhalefet.com/logos/b3857c25-e816-48b9-8348-a13ee436dba9.png" group-title="Ulusal",TYT Türk
-https://streams.uzunmuhalefet.com/stream/7ca72bbc-449a-4521-80e2-b891f1964493.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Telemundo West (720p)" tvg-logo="https://imgs.ct.ws/telemundowest.png" group-title="Genel",Telemundo West (720p)
 https://content.uplynk.com/channel/b6a96ed39d694ae1b738faa98cf7dd3f.m3u8?delay=10800&format=.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="22. Kanal 24" tvg-logo="" group-title="Genel",22. Kanal 24
@@ -2745,8 +2717,6 @@ https://streaming.tvnepal.com:19360/capitaltv/capitaltv.m3u8
 https://stream.4fun.tv:8888/hls/4f.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radio Realpolitik (720p)" tvg-logo="https://i.imgur.com/L9KCdTX.png" group-title="Music",Radio Realpolitik (720p)
 https://vivo.solumedia.com:19360/realpolitik/realpolitik.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Kent Türk TV (1080p) [TR]" tvg-logo="https://imgs.ct.ws/kenttrk.png" group-title="Genel",Kent Türk TV (1080p) [TR]
-https://live.artidijitalmedya.com/artidijital_kentturktv/kentturktv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="DTV Den Bosch (1080p)" tvg-logo="https://i.imgur.com/aFBNbsy.png" group-title="General",DTV Den Bosch (1080p)
 https://rrr.sz.xlcdn.com/?account=dtvmaasland&file=dtv2&output=playlist.m3u8&protocol=https&service=wowza&type=live
 #EXTINF:-1 tvg-id="" tvg-name="Distrito TV (1080p)" tvg-logo="https://imgs.ct.ws/dtv.png" group-title="Genel",Distrito TV (1080p)
@@ -2859,8 +2829,6 @@ https://telmaco-cdn.akamaized.net/starcgr/default/index.m3u8
 http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gx06
 #EXTINF:-1 tvg-id="" tvg-name="Nova 24 TV Ⓨ" tvg-logo="https://i.imgur.com/M2207Vh.png" group-title="Slovenia",Nova 24 TV Ⓨ
 https://www.youtube.com/@Nova24TVSlovenija/live
-#EXTINF:-1 tvg-id="" tvg-name="Cnn türk" tvg-logo="" group-title="Genel",Cnn türk
-https://helga.iptv2022.com/cnn_turk/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="[KS] Doktor Civanım (archive)" tvg-logo="https://imgs.ct.ws/doktorcivanim.png" group-title="Genel",[KS] Doktor Civanım (archive)
 https://archive.org/serve/doktor-civanim_movie/Doktor%20Civan%C4%B1m%20_%20Kemal%20Sunal%20_%20Filmi%20Tek%20Par%C3%A7a%20%28Restorasyonlu%29.ia.mp4
 #EXTINF:-1 tvg-id="" tvg-name="Al-Iman TV (720p)" tvg-logo="https://i.imgur.com/Qj1EFf1.png" group-title="Religious",Al-Iman TV (720p)
@@ -2917,8 +2885,6 @@ https://5ca49f2417d90.streamlock.net/mnau/livestream/playlist.m3u8
 http://livevideo.vedge.infomaniak.com/livecast/ik:bblackclassik/manifest.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="03.TJK TV" tvg-logo="" group-title="Genel",03.TJK TV
 https://tjktv.ercdn.net/tjktv.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan (226p) [Not 24/7]" tvg-logo="https://i.imgur.com/zKWfwAw.png" group-title="General",Türkmenistan (226p) [Not 24/7]
-https://alpha.tv.online.tm/legacyhls/ch007.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="11.Kozoom" tvg-logo="" group-title="Genel",11.Kozoom
 https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01743-sportstribal-kozoom-sportstribal/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BFM Business (1080p)" tvg-logo="https://i.imgur.com/psqIHn4.png" group-title="Business",BFM Business (1080p)
@@ -2953,8 +2919,6 @@ https://amg00721-amg00721c6-freelivesports-emea-9595.playouts.now.amagi.tv/ts-eu
 https://chlivemta.akamaized.net/hls/live/2010555/mtaafrica2/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="DerryTV 23" tvg-logo="https://i.imgur.com/MRR6UL3.png" group-title="Education;General",DerryTV 23
 https://livestream.telvue.com/derrynh2/f7b44cfafd5c52223d5498196c8a2e7b.sdp/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Afroturk TV (1080p)" tvg-logo="https://i.imgur.com/fWlLvRA.png" group-title="General",Afroturk TV (1080p)
-https://edge.socialsmart.tv/naturaltv/bant1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Metropoli Medios TV (720p)" tvg-logo="https://i.imgur.com/yID5T2S.jpg" group-title="Music",Metropoli Medios TV (720p)
 https://eu1.servers10.com:8081/8214/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Travelxp" tvg-logo="" group-title="Genel",Travelxp
@@ -3019,8 +2983,6 @@ http://159.203.148.226/live/farra.m3u8
 http://118.107.85.4:1935/live/smil:DNTV2.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Channel Ginga (1080p)" tvg-logo="https://i.imgur.com/zfvyspc.png" group-title="General",Channel Ginga (1080p)
 http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=cs29
-#EXTINF:-1 tvg-id="" tvg-name="MTürk TV (1080p) [TR]" tvg-logo="https://imgs.ct.ws/mturk.png" group-title="Genel",MTürk TV (1080p) [TR]
-https://edge1.socialsmart.tv/muglaturk/bant1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="360 Tv -A-" tvg-logo="" group-title="Genel",360 Tv -A-
 https://turkmedya-live.ercdn.net/tv360/tv360_1080p.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Louga TV (480p)" tvg-logo="https://i.ibb.co/xXZ5kFy/unnamed.jpg" group-title="General",Louga TV (480p)
@@ -3351,8 +3313,6 @@ https://aasthaott.akamaized.net/110923/smil:bhajan.smil/chunklist_b264000.m3u8
 https://5db313b643fd8.streamlock.net/SUPERSIXLombardia/SUPERSIXLombardia/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BS Fuji TV (544p)" tvg-logo="https://i.imgur.com/aDdwjjc.png" group-title="General",BS Fuji TV (544p)
 http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=bs06
-#EXTINF:-1 tvg-id="" tvg-name="PowerTürk Akustik [MZ]" tvg-logo="https://imgs.ct.ws/powerturkakustik.png" group-title="Genel",PowerTürk Akustik [MZ]
-https://listen.powerapp.com.tr/pturkakustik/akustik.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ABN Urdu (540p)" tvg-logo="https://i.imgur.com/Y9ScPIl.png" group-title="Religious",ABN Urdu (540p)
 https://mediaserver.abnvideos.com/streams/abnurdu.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Josué TV (1080p)" tvg-logo="https://i.imgur.com/LNWGe1D.jpg" group-title="Religious",Josué TV (1080p)
@@ -3423,8 +3383,6 @@ https://videos.pexels.com/video-files/31544195/13444111_2560_1440_24fps.mp4?=.mp
 https://live.obslivestream.com/controversiatv/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Alkarma TV Family (1080p)" tvg-logo="https://imgs.ct.ws/alkarma.png" group-title="Genel",Alkarma TV Family (1080p)
 https://58cc65c534c67.streamlock.net/alkarmatv.com/alkarmaNA2.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="CNN TÜRK" tvg-logo="" group-title="Genel",CNN TÜRK
-https://www.youtube.com/user/cnnturk/live
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Fenomen" tvg-logo="" group-title="Genel",Radyo Fenomen
 https://www.youtube.com/watch?v=S1OGVL2G42U
 #EXTINF:-1 tvg-id="" tvg-name="SHOWMAX" tvg-logo="" group-title="Genel",SHOWMAX
@@ -3451,16 +3409,12 @@ https://www.youtube.com/watch?v=3e6rjaj43go
 https://www.youtube.com/watch?v=EaTRD-DpZSc
 #EXTINF:-1 tvg-id="" tvg-name="NEWSCHANNEL" tvg-logo="" group-title="Genel",NEWSCHANNEL
 https://www.youtube.com/watch?v=0BF6WYNTexc
-#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk Rock" tvg-logo="" group-title="Genel",Number1 Türk Rock
-https://www.youtube.com/watch?v=tEEYm4dgvBk
 #EXTINF:-1 tvg-id="" tvg-name="NRT 2 TV HD" tvg-logo="" group-title="Genel",NRT 2 TV HD
 https://www.youtube.com/watch?v=mn5ZaLcjX6Q
 #EXTINF:-1 tvg-id="" tvg-name="TRT Kurdi" tvg-logo="" group-title="Genel",TRT Kurdi
 https://www.youtube.com/user/trtses6/live
 #EXTINF:-1 tvg-id="" tvg-name="Number1 Lougne" tvg-logo="" group-title="Genel",Number1 Lougne
 https://www.youtube.com/watch?v=BNjH1YSeZQ4
-#EXTINF:-1 tvg-id="" tvg-name="Show Radyo" tvg-logo="" group-title="Genel",Show Radyo
-https://www.youtube.com/watch?v=-EYr2pNuq7w
 #EXTINF:-1 tvg-id="" tvg-name="Baba Radyo" tvg-logo="" group-title="Genel",Baba Radyo
 https://www.youtube.com/watch?v=pHQ4OtJzjZA
 #EXTINF:-1 tvg-id="" tvg-name="NTV Radyo (Stüdyodan Canlı Yayın)" tvg-logo="" group-title="Genel",NTV Radyo (Stüdyodan Canlı Yayın)
@@ -3475,20 +3429,14 @@ https://www.youtube.com/watch?v=ER650YeSyNs
 https://www.youtube.com/watch?v=ZPngde18c2g
 #EXTINF:-1 tvg-id="" tvg-name="Diyar TV" tvg-logo="" group-title="Genel",Diyar TV
 https://www.youtube.com/channel/UC9vGf6Hq29MA5B-XQ5ZL6CA/live
-#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk FM" tvg-logo="" group-title="Genel",Number1 Türk FM
-https://www.youtube.com/watch?v=KYCdfRX932g
 #EXTINF:-1 tvg-id="" tvg-name="DMAX (NTV Spor)" tvg-logo="" group-title="Genel",DMAX (NTV Spor)
 https://www.youtube.com/watch?v=uxgKogFymQU
-#EXTINF:-1 tvg-id="" tvg-name="Radyo Alaturka" tvg-logo="" group-title="Genel",Radyo Alaturka
-https://www.youtube.com/watch?v=qcUyCIerSXE
 #EXTINF:-1 tvg-id="" tvg-name="ARB Aran" tvg-logo="" group-title="Genel",ARB Aran
 https://www.youtube.com/watch?v=5koR5ATxuQA
 #EXTINF:-1 tvg-id="" tvg-name="TJK TV" tvg-logo="" group-title="Genel",TJK TV
 https://www.youtube.com/channel/UCNLO4lpteIloZ4IKb9L2DoA/live
 #EXTINF:-1 tvg-id="" tvg-name="VOA Farsi" tvg-logo="" group-title="Genel",VOA Farsi
 https://www.youtube.com/user/PNNVideo/live
-#EXTINF:-1 tvg-id="" tvg-name="CRI Türk FM" tvg-logo="" group-title="Genel",CRI Türk FM
-https://www.youtube.com/watch?v=ggEPY5hWuRo
 #EXTINF:-1 tvg-id="" tvg-name="Kadirlim TV" tvg-logo="" group-title="Genel",Kadirlim TV
 https://www.youtube.com/watch?v=wUio08Gqn_Q
 #EXTINF:-1 tvg-id="" tvg-name="A Para" tvg-logo="" group-title="Genel",A Para
@@ -3535,8 +3483,6 @@ https://www.youtube.com/user/Xezermedia/live
 https://www.youtube.com/watch?v=JrhvBq81fRw
 #EXTINF:-1 tvg-id="" tvg-name="NUR TV" tvg-logo="" group-title="Genel",NUR TV
 https://www.youtube.com/watch?v=uClHBOM10YI
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENELI TV HD" tvg-logo="" group-title="Genel",TÜRKMENELI TV HD
-https://www.youtube.com/watch?v=7f-T-B1TbZc
 #EXTINF:-1 tvg-id="" tvg-name="Haber 61 TV" tvg-logo="" group-title="Genel",Haber 61 TV
 http://win8.yayin.com.tr/haber61tv/smil:haber61tv.smil/iptvdelisi.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Şehir Ekranı" tvg-logo="" group-title="Genel",Şehir Ekranı
@@ -3571,8 +3517,6 @@ https://www.youtube.com/watch?v=HMOi_XdQudM
 https://www.youtube.com/watch?v=g4mLF-SJbVs
 #EXTINF:-1 tvg-id="" tvg-name="Medya FM" tvg-logo="" group-title="Genel",Medya FM
 https://www.youtube.com/watch?v=42xJF0avtLY
-#EXTINF:-1 tvg-id="" tvg-name="Kral FM" tvg-logo="" group-title="Genel",Kral FM
-https://www.youtube.com/watch?v=zLVvQ3-eTvs
 #EXTINF:-1 tvg-id="" tvg-name="Number1 Deephouse Radyo" tvg-logo="" group-title="Genel",Number1 Deephouse Radyo
 https://www.youtube.com/watch?v=5Dr89A4SJxE
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Huzur MALATYA" tvg-logo="" group-title="Genel",Radyo Huzur MALATYA
@@ -3581,8 +3525,6 @@ https://www.youtube.com/user/tatlisozhaber/live
 https://www.youtube.com/watch?v=wjeRqkfUR9Q
 #EXTINF:-1 tvg-id="" tvg-name="TRT 2" tvg-logo="" group-title="Genel",TRT 2
 https://www.youtube.com/channel/UC2r8FIjCvkYbcbxVe5koa_g/live
-#EXTINF:-1 tvg-id="" tvg-name="FTV Türk" tvg-logo="" group-title="Genel",FTV Türk
-https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master_1660.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NTV" tvg-logo="" group-title="Genel",NTV
 https://www.youtube.com/watch?v=oruk-T3_xSw
 #EXTINF:-1 tvg-id="" tvg-name="Real TV az" tvg-logo="" group-title="Genel",Real TV az
@@ -3607,8 +3549,6 @@ https://www.youtube.com/user/TAYTV2013/live
 https://www.youtube.com/watch?v=U44XKDvHnxI
 #EXTINF:-1 tvg-id="" tvg-name="Hunat TV Kayseri yt" tvg-logo="" group-title="Genel",Hunat TV Kayseri yt
 https://www.youtube.com/channel/UCs9txwkB_q2Yq-7sEPL0Vkw/live
-#EXTINF:-1 tvg-id="" tvg-name="Show Türk" tvg-logo="" group-title="Genel",Show Türk
-https://www.youtube.com/user/ShowTVShowTV/live
 #EXTINF:-1 tvg-id="" tvg-name="TGRT Belgesel TV" tvg-logo="" group-title="Genel",TGRT Belgesel TV
 https://www.youtube.com/user/tgrtbelgesel/live
 #EXTINF:-1 tvg-id="" tvg-name="Lig Radyo" tvg-logo="" group-title="Genel",Lig Radyo
@@ -3639,12 +3579,8 @@ https://www.youtube.com/watch?v=Xn_fzuVxe3I
 https://www.youtube.com/watch?v=Ql26_DO7OyQ
 #EXTINF:-1 tvg-id="" tvg-name="Az TV Azerbaycan" tvg-logo="" group-title="Genel",Az TV Azerbaycan
 https://www.youtube.com/watch?v=025yUxCHen8
-#EXTINF:-1 tvg-id="" tvg-name="Radyo 7" tvg-logo="" group-title="Genel",Radyo 7
-https://www.youtube.com/watch?v=5RaO6jzgWmU
 #EXTINF:-1 tvg-id="" tvg-name="ARTI TV" tvg-logo="" group-title="Genel",ARTI TV
 https://www.youtube.com/watch?v=XTWfbdSTxb4
-#EXTINF:-1 tvg-id="" tvg-name="Alem FM" tvg-logo="" group-title="Genel",Alem FM
-https://www.youtube.com/watch?v=DJDjfs5bHxg
 #EXTINF:-1 tvg-id="" tvg-name="Ülke TV" tvg-logo="" group-title="Genel",Ülke TV
 https://www.youtube.com/user/ulketv/live
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Ritim" tvg-logo="" group-title="Genel",Radyo Ritim
@@ -3681,8 +3617,6 @@ https://www.youtube.com/user/trttv1/live
 https://www.youtube.com/channel/UCxh0ragCDTF1tbA5_GFKopQ/live
 #EXTINF:-1 tvg-id="" tvg-name="Lâlegül FM" tvg-logo="" group-title="Genel",Lâlegül FM
 https://www.youtube.com/watch?v=R7mGDY9PJLc
-#EXTINF:-1 tvg-id="" tvg-name="Aztürk FM" tvg-logo="" group-title="Genel",Aztürk FM
-https://www.youtube.com/watch?v=zX34TFNby4U
 #EXTINF:-1 tvg-id="" tvg-name="Aksaray Belediyesi TV" tvg-logo="" group-title="Genel",Aksaray Belediyesi TV
 https://www.youtube.com/watch?v=eMVeXnW5In0
 #EXTINF:-1 tvg-id="" tvg-name="Cagri Radyo" tvg-logo="" group-title="Genel",Cagri Radyo
@@ -3707,8 +3641,6 @@ https://www.youtube.com/watch?v=6Cp15xLfuSA
 https://www.youtube.com/watch?v=tEGKUNhAO0A
 #EXTINF:-1 tvg-id="" tvg-name="Number1 Hearth" tvg-logo="" group-title="Genel",Number1 Hearth
 https://www.youtube.com/watch?v=ZI_tlALWf6k
-#EXTINF:-1 tvg-id="" tvg-name="Habertürk TV" tvg-logo="" group-title="Genel",Habertürk TV
-https://www.youtube.com/user/TVhaberturk/live
 #EXTINF:-1 tvg-id="" tvg-name="Number1 Sezen Aksu Radyosu" tvg-logo="" group-title="Genel",Number1 Sezen Aksu Radyosu
 https://www.youtube.com/watch?v=DJFXxTRkVl0
 #EXTINF:-1 tvg-id="" tvg-name="Kanal Antalya" tvg-logo="" group-title="Genel",Kanal Antalya
@@ -3735,8 +3667,6 @@ https://www.youtube.com/watch?v=euIegZ-PrZ8
 https://www.youtube.com/watch?v=VWvzIv7tWrs
 #EXTINF:-1 tvg-id="" tvg-name="ELIF TV" tvg-logo="" group-title="Genel",ELIF TV
 http://yayin3.canliyayin.org/eliftv
-#EXTINF:-1 tvg-id="" tvg-name="Vahdet TV - Hadi TV 3 Türkçe ve Azerice 24" tvg-logo="" group-title="Genel",Vahdet TV - Hadi TV 3 Türkçe ve Azerice 24
-https://www.youtube.com/user/SchiaMedia/live
 #EXTINF:-1 tvg-id="" tvg-name="Davet Radyo | Canlı Yayın Davet FM" tvg-logo="" group-title="Genel",Davet Radyo | Canlı Yayın Davet FM
 https://www.youtube.com/watch?v=yWe62d34f5Y
 #EXTINF:-1 tvg-id="" tvg-name="Kral Alternatif" tvg-logo="" group-title="Genel",Kral Alternatif
@@ -3773,16 +3703,12 @@ https://www.youtube.com/watch?v=muPVXYmpDB0
 https://www.youtube.com/watch?v=ug48u7N4Ti4
 #EXTINF:-1 tvg-id="" tvg-name="Number1 Best Of Radyo" tvg-logo="" group-title="Genel",Number1 Best Of Radyo
 https://www.youtube.com/watch?v=9Bxdp9OGJLY&list=TLGGgJSK0Sy0nrUyNjAxMjAxOA&index=4
-#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk Slow Radyo" tvg-logo="" group-title="Genel",Number1 Türk Slow Radyo
-https://www.youtube.com/watch?v=B0lCeKNoUkw
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Piryolu" tvg-logo="" group-title="Genel",Radyo Piryolu
 https://www.youtube.com/watch?v=FPjiHlv1yD4
 #EXTINF:-1 tvg-id="" tvg-name="Medine TV" tvg-logo="" group-title="Genel",Medine TV
 https://www.youtube.com/channel/UCou5J1Vnhxnx-IeAqFItN0g/live
 #EXTINF:-1 tvg-id="" tvg-name="Radyo 2000" tvg-logo="" group-title="Genel",Radyo 2000
 https://www.youtube.com/watch?v=hp0tYTKwqxc
-#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk 90'lar Radyosu" tvg-logo="" group-title="Genel",Number1 Türk 90'lar Radyosu
-https://www.youtube.com/watch?v=-IM_bEDDjz0
 #EXTINF:-1 tvg-id="" tvg-name="Iran International" tvg-logo="" group-title="Genel",Iran International
 https://www.youtube.com/watch?v=uRhGY5vRLw0
 #EXTINF:-1 tvg-id="" tvg-name="Number1 Office" tvg-logo="" group-title="Genel",Number1 Office
@@ -3795,8 +3721,6 @@ https://www.youtube.com/user/STARTVSTAR/live
 https://www.youtube.com/watch?v=gKQK-hwKpOk
 #EXTINF:-1 tvg-id="" tvg-name="PAL Orient" tvg-logo="" group-title="Genel",PAL Orient
 https://www.youtube.com/watch?v=VmgzI-9aio0
-#EXTINF:-1 tvg-id="" tvg-name="EKOTURK TV" tvg-logo="" group-title="Genel",EKOTURK TV
-https://www.youtube.com/watch?v=0iGSChxOSLY
 #EXTINF:-1 tvg-id="" tvg-name="YOL TV" tvg-logo="" group-title="Genel",YOL TV
 https://www.youtube.com/user/yolmedya/live
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Dejavu" tvg-logo="" group-title="Genel",Radyo Dejavu

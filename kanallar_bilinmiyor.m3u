@@ -117,8 +117,6 @@ acestream://e4582d9e880b0f9d45618211777649020b418eef
 acestream://6086a7a92bdc2c6549cf6b727707b339b6ac95ce
 #EXTINF:-1 tvg-id="" tvg-name="RADIO 51" tvg-logo="" group-title="Genel",RADIO 51
 acestream://c5678fe7b08de1c040b4565c5c1c623af2209b2e
-#EXTINF:-1 tvg-id="" tvg-name="TURKMENISTAN SPORT HD" tvg-logo="" group-title="Genel",TURKMENISTAN SPORT HD
-acestream://c3f5acd35086090c5fc815b961006630248b7dc0
 #EXTINF:-1 tvg-id="" tvg-name="GS Channel" tvg-logo="https://i.imgur.com/ExfxCRv.png" group-title="Italy",GS Channel
 https://rst.saiuzwebnetwork.it:8081/retereggio/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KDC TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/7b433dd9-3f59-4f33-86b6-e607b483cd49.png" group-title="Diğer",KDC TV
@@ -253,8 +251,6 @@ http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gx02&isp=7
 https://live-ch1.cjonstyle.net/cjmalllive/stream2/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ABC 27 Tallahassee FL (WTXL) (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/2/27/WWAY_logo.png" group-title="News",ABC 27 Tallahassee FL (WTXL) (720p)
 https://aegis-cloudfront-1.tubi.video/e739361e-fa12-4cac-92f3-e0dbf332cd88/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TURKMEN OWAZY HD" tvg-logo="" group-title="Genel",TURKMEN OWAZY HD
-acestream://649ef3e48b891e1593a035c11e85455b4a8fb6c0
 #EXTINF:-1 tvg-id="" tvg-name="Sky News Arabia Vertical (1080p)" tvg-logo="https://i.imgur.com/FjtzQQs.png" group-title="News",Sky News Arabia Vertical (1080p)
 https://live-stream.skynewsarabia.com/c-vertical-channel/vertical-stream/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ЧЕХИЯ - ПРАГА [HD]" tvg-logo="" group-title="Genel",ЧЕХИЯ - ПРАГА [HD]
@@ -389,12 +385,8 @@ acestream://05f4b81a5b278b0afb2cf8486d01e4742768a278
 https://200912.global.ssl.fastly.net/646b335e2291a2022444bb7c/live_22f84390fe1411ed919df3da85a483cc/rewind-14400.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KBS Korea Ⓨ" tvg-logo="https://kbsworldimage.kbs.co.kr/images/layout/logo/logo_korea_n.png" group-title="Korea",KBS Korea Ⓨ
 https://www.youtube.com/c/kbsworldtv/live
-#EXTINF:-1 tvg-id="" tvg-name="TURKMENISTAN" tvg-logo="" group-title="Genel",TURKMENISTAN
-acestream://f72a2f3a87d4a4bf9adb71221757178e4708f54f
 #EXTINF:-1 tvg-id="" tvg-name="TV5Monde Info (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/AJx5Fy2.png" group-title="News",TV5Monde Info (1080p) [Geo-blocked]
 https://ott.tv5monde.com/Content/HLS/Live/channel(info)/variant.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Habertürk" tvg-logo="https://assets.uzunmuhalefet.com/logos/98474191-bf00-43a0-b189-03f970e4566c.png" group-title="Haber",Habertürk
-https://streams.uzunmuhalefet.com/stream/0c0bc91d-ce3a-49cc-9054-1cff110967c4.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RETRO TV | SD (CZ)" tvg-logo="" group-title="Genel",RETRO TV | SD (CZ)
 acestream://9f43c4ea0df0fe3ad843ee6644c81e654e1cc152
 #EXTINF:-1 tvg-id="" tvg-name="Love TV" tvg-logo="https://i.imgur.com/B8iaejQ.png" group-title="North Macedonia",Love TV
@@ -415,8 +407,6 @@ acestream://3814644abb0f3d653b37b70a884b75e321c2a189
 acestream://a328b31c2d14fa57e703338da43b0b3baac8b31b
 #EXTINF:-1 tvg-id="" tvg-name="Haber Rize" tvg-logo="https://assets.uzunmuhalefet.com/logos/62ab4e54-81c6-4f26-9f41-382d4fa486e4.png" group-title="Yerel",Haber Rize
 https://streams.uzunmuhalefet.com/stream/bf3a9fab-0ebe-4ae1-b35f-55a15579334d.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Number 1 Türk" tvg-logo="https://assets.uzunmuhalefet.com/logos/528ca8db-dba9-4db0-ba1a-949a8aab2eb7.png" group-title="Müzik",Number 1 Türk
-https://streams.uzunmuhalefet.com/stream/1eb6107d-6e37-479a-a81d-7999287bc876.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NEWS 24 BALKAN" tvg-logo="" group-title="Genel",NEWS 24 BALKAN
 acestream://e1f574260ee0032a4b53977df6cc932a969efe06
 #EXTINF:-1 tvg-id="" tvg-name="Ulusal Kanal" tvg-logo="https://assets.uzunmuhalefet.com/logos/c75d260b-10d6-42c6-b69e-bf04f773cc9b.png" group-title="Haber",Ulusal Kanal
@@ -473,8 +463,6 @@ https://guaranteenews.in:8443/live/gnews/index.m3u8
 https://www.desde-paraguay.com/mega.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="PTS Taigi (公視台語台) Ⓨ Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/zh/thumb/8/8a/PTS_Taigi.svg/640px-PTS_Taigi.svg.png" group-title="Taiwan",PTS Taigi (公視台語台) Ⓨ Ⓖ
 https://www.youtube.com/watch?v=6KlRR_DGhmI
-#EXTINF:-1 tvg-id="" tvg-name="TURKMEN SPORT" tvg-logo="" group-title="Genel",TURKMEN SPORT
-acestream://9a99d84b3106d09f11d9c31027b814e74dec9440
 #EXTINF:-1 tvg-id="" tvg-name="Folk Club TV" tvg-logo="https://i.imgur.com/vkGFSl8.png" group-title="North Macedonia",Folk Club TV
 http://tv1.intv.mk:1935/live2/folkklub/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Number 1 Damar" tvg-logo="https://assets.uzunmuhalefet.com/logos/ef919dd3-2189-445e-aa3c-3f5422309528.png" group-title="Müzik",Number 1 Damar
@@ -595,8 +583,6 @@ acestream://a045bb7671d6a6d3b3afdbeb8b3de53b9f9a53f6
 https://cd-live-stream.news.cctvplus.com/live/smil:CHANNEL1.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="GEM Film" tvg-logo="https://i.imgur.com/nrFz3LU.png" group-title="Movies",GEM Film
 https://ca-rt.onetv.app/gemfilm/index-0.m3u8?token=onetv202
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKMEN SPORT" tvg-logo="" group-title="Genel",TÜRKMEN SPORT
-acestream://7dc7f53608599ed959a53ebe39798cb400308f0c
 #EXTINF:-1 tvg-id="" tvg-name="RADIO51" tvg-logo="" group-title="Genel",RADIO51
 acestream://db760b4a093f2fc7c13740b97832cbb8dc1410c2
 #EXTINF:-1 tvg-id="" tvg-name="Tonghua TV (1080p)" tvg-logo="https://www.tvchinese.net/uploads/tv/thtv1.jpg" group-title="News",Tonghua TV (1080p)
@@ -629,8 +615,6 @@ https://streams.uzunmuhalefet.com/stream/9d03a7a3-71c8-48e0-a1bc-229971315929.m3
 https://mumbai-edge.smartplaytv.in/NTVTelugu/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ВСЕВОЛОЖСК - МКР ЮЖНЫЙ 1 [FHD]" tvg-logo="" group-title="Genel",ВСЕВОЛОЖСК - МКР ЮЖНЫЙ 1 [FHD]
 acestream://8d7d88baf7a6aa04425cb5de202399cb2d00916e
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENISTAN TV" tvg-logo="" group-title="Genel",TÜRKMENISTAN TV
-acestream://b98d3cd6fa90d8a056e72b68b543a19dd72c2dbc
 #EXTINF:-1 tvg-id="" tvg-name="EAWAZ TV (CA)" tvg-logo="" group-title="Genel",EAWAZ TV (CA)
 acestream://62bfa93af356a6c2c1244ae037a001d962711a6d
 #EXTINF:-1 tvg-id="" tvg-name="TVA VICENZA" tvg-logo="" group-title="Genel",TVA VICENZA
@@ -645,8 +629,6 @@ https://streams.uzunmuhalefet.com/stream/26e3e3a2-8847-4e4b-b4e1-f2b234494e1d.m3
 https://stream.swamiji.tv/YogaIPTV/smil:YogaStreamAU.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Aleph News (720p)" tvg-logo="https://i.imgur.com/qPRQZMI.png" group-title="News",Aleph News (720p)
 https://stream-aleph.m.ro/Aleph/ngrp:Alephnewsmain.stream_all/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TURKMENISTAN SPORT" tvg-logo="" group-title="Genel",TURKMENISTAN SPORT
-acestream://9bec6a4c3398e44d20a5df038ceceb92b5999a15
 #EXTINF:-1 tvg-id="" tvg-name="CGTN Arabic (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/AkFFrS7.png" group-title="News",CGTN Arabic (1080p) [Not 24/7]
 https://arabic-livews.cgtn.com/hls/LSveq57bErWLinBnxosqjisZ220802LSTefTAS9zc9mpU08y3np9TH220802cd/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Reggio Tv" tvg-logo="https://i.imgur.com/merrg2C.png" group-title="Italy",Reggio Tv
@@ -733,8 +715,6 @@ acestream://3679476091a65f48d08c9b35227f636b07d59b7a
 https://stream.ads.ottera.tv/playlist.m3u8?network_id=535
 #EXTINF:-1 tvg-id="" tvg-name="QVC" tvg-logo="https://i.imgur.com/Ea7iUX2.png" group-title="Italy",QVC
 https://qrg.akamaized.net/hls/live/2017383/lsqvc1it/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENISTAN SPORT" tvg-logo="" group-title="Genel",TÜRKMENISTAN SPORT
-acestream://96bc2590eefae84a4536123294370aa4e8aa285c
 #EXTINF:-1 tvg-id="" tvg-name="REDE MÃO AMIGA" tvg-logo="" group-title="Genel",REDE MÃO AMIGA
 acestream://fcb76adfdc9f627ad5b197bc096d6b766fd1d1b5
 #EXTINF:-1 tvg-id="" tvg-name="ADULT IPTV COMPILATION (18+)" tvg-logo="" group-title="Genel",ADULT IPTV COMPILATION (18+)
@@ -839,8 +819,6 @@ acestream://ebe92d57b8ab445d6bcae0a589fc35b48c2188e8
 https://liveh12.vtvprime.vn/hls/DAVINVY/04.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BLOOMBERG QUICKTAKE EN" tvg-logo="" group-title="Genel",BLOOMBERG QUICKTAKE EN
 acestream://252c7a85da972ff7ad54f70645319486c249ab82
-#EXTINF:-1 tvg-id="" tvg-name="SDM Türkçe Müzik" tvg-logo="https://assets.uzunmuhalefet.com/logos/3a7dc46d-f3ef-42cd-8a41-c1cc5630f62f.png" group-title="Diğer",SDM Türkçe Müzik
-https://streams.uzunmuhalefet.com/stream/75d2663b-69e0-466c-9bae-336a8208e3c2.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="CNBC INDONESIA 1" tvg-logo="" group-title="Genel",CNBC INDONESIA 1
 acestream://8f11539889aeb45c0e0391826b74a9e636507dc6
 #EXTINF:-1 tvg-id="" tvg-name="МОРДОВИЯ 24" tvg-logo="" group-title="Genel",МОРДОВИЯ 24
@@ -1391,8 +1369,6 @@ http://cdn2.ujjina.com:1935/iptvovacion1/liveovacion1tv/playlist.m3u8
 acestream://e28de68ec4702421fc73a882e02e3876003bfcf6
 #EXTINF:-1 tvg-id="" tvg-name="MULTIMEDIOS MONTERREY" tvg-logo="" group-title="Genel",MULTIMEDIOS MONTERREY
 acestream://9d368e79ca7a0bbde42cdc542c40eace8df5f1de
-#EXTINF:-1 tvg-id="" tvg-name="Türkmeneli TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/96a7e85f-a0e4-4ff9-b7fe-0ee1f43c831f.png" group-title="Yerel",Türkmeneli TV
-https://streams.uzunmuhalefet.com/stream/a0b3f486-60ca-4956-925b-a5d2b4c8f5ee.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Rtp Tv" tvg-logo="https://i.imgur.com/I1hYI0C.png" group-title="Italy",Rtp Tv
 http://flash2.xdevel.com/rtptv/rtptv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TVídeoNews (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/vstHOYx.png" group-title="News",TVídeoNews (720p) [Not 24/7]
@@ -1641,8 +1617,6 @@ https://streaming.astrakhan.ru/astrakhan24/playlist.m3u8
 https://router.xdevel.com/video0s975360-67/stream/playlist_dvr.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Naftemporiki TV (1080p)" tvg-logo="https://i.imgur.com/9OFdMud.png" group-title="News",Naftemporiki TV (1080p)
 https://telmaco.ascdn.broadpeak.io/nafteboriki/default/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKMEN OWAZY" tvg-logo="" group-title="Genel",TÜRKMEN OWAZY
-acestream://2c66be58d9f21a52d55a6c559507b51c8fcc4fc7
 #EXTINF:-1 tvg-id="" tvg-name="Genç TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/62b08979-f113-4cd8-a086-f26bb441ac14.png" group-title="Kıbrıs",Genç TV
 https://streams.uzunmuhalefet.com/stream/d1e7e32f-d06d-42db-997c-acdb9b0971f5.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="НАДИЯ/НОВЫЙ КАНАЛ (ХАРЬКОВ.ОБЛ.)" tvg-logo="" group-title="Genel",НАДИЯ/НОВЫЙ КАНАЛ (ХАРЬКОВ.ОБЛ.)
@@ -1681,8 +1655,6 @@ https://cdn-edge1.streamcomedia.com/abr_tngr969fm/abr-tngr969fm_streams/playlist
 acestream://2570e4e2d3ca7efc81c4fd53aec3439221a6f678
 #EXTINF:-1 tvg-id="" tvg-name="Kolkata TV (1080p)" tvg-logo="https://dtil.tmsimg.com/assets/s143271_ld_h15_aa.png?lock=720x540" group-title="News",Kolkata TV (1080p)
 https://cdn.ottlive.co.in/kolkatatv/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="4 Türk Pop" tvg-logo="https://assets.uzunmuhalefet.com/logos/447891c4-97c1-4692-99be-7adc74dbfe58.png" group-title="Müzik",4 Türk Pop
-https://streams.uzunmuhalefet.com/stream/031834d1-2c3c-4e76-9f54-bb8a6471bcb2.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="SKY NATURE HD [DE]" tvg-logo="" group-title="Genel",SKY NATURE HD [DE]
 acestream://4753b8da0e2bf2cc7983d738358d26f001e23297
 #EXTINF:-1 tvg-id="" tvg-name="Casa Sanremo Tv" tvg-logo="https://i.imgur.com/WL3SFTs.png" group-title="Italy",Casa Sanremo Tv
@@ -1825,8 +1797,6 @@ acestream://99b767947b78d879d6b387b0ac7954846bbdd2f2
 https://live-hls-apps-ajm2-fa.getaj.net/AJM2/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Line TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/93e3b940-950f-4cfe-bae2-3f96d214bddb.png" group-title="Yerel",Line TV
 https://streams.uzunmuhalefet.com/stream/7994cab9-b6f9-4269-b2f7-f7d99693ab8f.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="AL-ZAHRA TV TURKIC" tvg-logo="" group-title="Genel",AL-ZAHRA TV TURKIC
-acestream://3b751d11c113824918e77d9d45fbd123fd3cb9e9
 #EXTINF:-1 tvg-id="" tvg-name="RDS Social TV" tvg-logo="https://i.imgur.com/TY6FhqI.png" group-title="Italy",RDS Social TV
 https://stream.rdstv.radio/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Guide Love TV (720p)" tvg-logo="https://i.ibb.co/9gS2Y4G/guidelove-logo.png" group-title="Lifestyle",Guide Love TV (720p)
@@ -2035,8 +2005,6 @@ https://d7x8z4yuq42qn.cloudfront.net/index_7.m3u8
 acestream://99476daee69437cd7bce3b9c7628ed06b7caa8dc
 #EXTINF:-1 tvg-id="" tvg-name="Göpsen TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/2f95410c-911a-4302-8642-e89bef9e1444.png" group-title="Diğer",Göpsen TV
 https://streams.uzunmuhalefet.com/stream/e6dca493-58a7-4f29-a6eb-543dc4b5f933.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ABN Turkey" tvg-logo="https://assets.uzunmuhalefet.com/logos/cbd9f19f-efa2-4416-923c-46cda842668a.png" group-title="Dini",ABN Turkey
-https://streams.uzunmuhalefet.com/stream/93a58e6e-7324-41da-bbc8-32f530063417.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KAYHAN TV" tvg-logo="" group-title="Genel",KAYHAN TV
 acestream://5a94275e4cb3987b60b7698bf9bbdb5fafcd850a
 #EXTINF:-1 tvg-id="" tvg-name="RTV MAASTRICHT" tvg-logo="" group-title="Genel",RTV MAASTRICHT
@@ -2635,8 +2603,6 @@ acestream://65b8b45507447983f4545cddfc3f932a37591ac2
 acestream://422fac8dbdf5e5690eeaea398a8bef1e06495bd2
 #EXTINF:-1 tvg-id="" tvg-name="Budapest Európa TV" tvg-logo="" group-title="Hungary",Budapest Európa TV
 https://cloudfront44.lexanetwork.com:1344/freerelay/bpetv.sdp/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Metro Türk TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/6fa9818b-db39-4f73-b661-16d7713c2b52.png" group-title="Yerel",Metro Türk TV
-https://streams.uzunmuhalefet.com/stream/8b4092d1-99d9-4816-9934-3b042fab5547.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TRAVEL GUIDE TV" tvg-logo="" group-title="Genel",TRAVEL GUIDE TV
 acestream://5fe248c3849102c3f647962394165bd5a994e84c
 #EXTINF:-1 tvg-id="" tvg-name="ПСКОВ - ПЛОЩАДЬ ЛЕНИНА [FHD]" tvg-logo="" group-title="Genel",ПСКОВ - ПЛОЩАДЬ ЛЕНИНА [FHD]
@@ -2743,8 +2709,6 @@ acestream://ed81c333815247536edfcdb2755147e8c4144d62
 https://content.uplynk.com/channel/1f93c13275024afb9e0ead299624073d.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ТВЕРЬ - КОМПЬЮТЕРИЯ 2" tvg-logo="" group-title="Genel",ТВЕРЬ - КОМПЬЮТЕРИЯ 2
 acestream://aca46d9a5131799562bad299a6ca945d54dd6bcc
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENISTAN" tvg-logo="" group-title="Genel",TÜRKMENISTAN
-acestream://6fe8b2f0523af719a5371f217daa2a9e1c085c75
 #EXTINF:-1 tvg-id="" tvg-name="Ontario Parliamentary Network" tvg-logo="https://i.imgur.com/xKXs6ER.png" group-title="Legislative",Ontario Parliamentary Network
 https://origin-http-delivery.isilive.ca/live/_definst_/ontla/house-fr/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Alfa Ⓢ" tvg-logo="https://upload.wikimedia.org/wikipedia/fi/9/93/IRR-TV-1.png" group-title="Finland",Alfa Ⓢ
@@ -2825,8 +2789,6 @@ https://live1.ottlive.co.in/spokesman/spokesman/index.m3u8
 http://fms.tvavicenza.it:1935/live/diretta_1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Makan 33 (1080p)" tvg-logo="https://i.imgur.com/RVtQTed.png" group-title="News",Makan 33 (1080p)
 https://kancdn.medonecdn.net/livehls/oil/kancdn-live/live/makan/live.livx/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Rize Türk TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/155aad8b-5fbc-43cd-bad4-7080aa053122.png" group-title="Yerel",Rize Türk TV
-https://streams.uzunmuhalefet.com/stream/918ca36f-3628-44c1-823d-e38b1a004ade.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="GLOBAL TORONTO" tvg-logo="" group-title="Genel",GLOBAL TORONTO
 acestream://5959b209ec39dabeb3b1e9a1c6cd038d3b6d4d42
 #EXTINF:-1 tvg-id="" tvg-name="Cheddar News (1080p)" tvg-logo="https://i.imgur.com/tuP9GW8.png" group-title="News",Cheddar News (1080p)
@@ -3047,8 +3009,6 @@ https://streams.uzunmuhalefet.com/stream/67a60218-8508-451c-88ee-24f2b3970ba7.m3
 https://stream-hls.castr.net/64490fcefe045f1b63012886/live_22d9a1f0c69c11ee9441219c2cc6d61f/index.fmp4.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NTI Canale 271" tvg-logo="https://i.imgur.com/zlmcUe0.jpg" group-title="Italy",NTI Canale 271
 https://www.ntimedia.it/video/S0B/S0B_master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="BabyTV Turkiye (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/4BDJ5FT.png" group-title="Kids",BabyTV Turkiye (1080p) [Geo-blocked]
-https://saran-live.ercdn.net/babytv/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="VRT TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/8ca0d67a-b187-49b6-a0cb-3894c7858e8c.png" group-title="Yerel",VRT TV
 https://streams.uzunmuhalefet.com/stream/0ceeca01-7e60-4392-87c7-cbc0a3559606.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="J Sports 4 (544p)" tvg-logo="https://i.imgur.com/fBcyZNL.png" group-title="Sports",J Sports 4 (544p)
@@ -3065,8 +3025,6 @@ acestream://ae3db86405ebc88ec78677c66fd13ad239fa53af
 https://stream.audioxi.com/CLASSIC
 #EXTINF:-1 tvg-id="" tvg-name="2TV" tvg-logo="" group-title="Genel",2TV
 acestream://6c6253eaf1b134e0bd6e4e4e7b71d45e6f835113
-#EXTINF:-1 tvg-id="" tvg-name="Türkhaber TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/87f43976-ee83-41ac-a187-0c30c434f7c3.png" group-title="Yerel",Türkhaber TV
-https://streams.uzunmuhalefet.com/stream/335a70f2-e7fb-4012-99f9-a4014c305140.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="DRESDEN FERNSEHEN" tvg-logo="" group-title="Genel",DRESDEN FERNSEHEN
 acestream://0db78fcfae718e3f988adb07969d1a213520c650
 #EXTINF:-1 tvg-id="" tvg-name="DANCEHITS 80" tvg-logo="" group-title="Genel",DANCEHITS 80
@@ -3329,8 +3287,6 @@ https://rightsboosterltd-scl-2-eu.rakuten.wurl.tv/playlist.m3u8
 https://ndtvindiaelemarchana.akamaized.net/hls/live/2003679/ndtvindia/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TV MACEIÓ (AL)" tvg-logo="" group-title="Genel",TV MACEIÓ (AL)
 acestream://e66ffbcf647d286e3c5cb755f4dd60b6e71260c8
-#EXTINF:-1 tvg-id="" tvg-name="Al Zahra Turkic" tvg-logo="https://assets.uzunmuhalefet.com/logos/1f737ade-62fd-4bb1-aee2-85ab19eb90c7.png" group-title="Dini",Al Zahra Turkic
-https://streams.uzunmuhalefet.com/stream/8c948503-cf69-4629-b7fd-7921ba357f3d.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="МИЛЛЕТ" tvg-logo="" group-title="Genel",МИЛЛЕТ
 acestream://29c85aa3b4da56dffa3223d7ca4623d0a2ea08e1
 #EXTINF:-1 tvg-id="" tvg-name="DD India Ⓨ" tvg-logo="https://i.imgur.com/45uptR8.png" group-title="India",DD India Ⓨ

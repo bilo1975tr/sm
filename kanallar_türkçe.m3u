@@ -1,6 +1,4 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="" tvg-name="TR:SAT 7 TÜRK" tvg-logo="" group-title="*TÜRK_DİĞER",TR:SAT 7 TÜRK
-http://svs.itworkscdn.net/sat7turklive/sat7turk.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo 2000" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo 2000
 https://sslyayin.netyayin.net:10915/.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Süper 2 Fm" tvg-logo="" group-title="*TÜRK_RADYOLAR",Süper 2 Fm
@@ -15,8 +13,6 @@ https://live.artidijitalmedya.com/artidijital_kaytv/kaytv/chunks.m3u8
 https://radio-trtradyo6.medya.trt.com.tr/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Aşk FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Aşk FM
 https://stream.netradyom.com/radio/8000/radio.mp3
-#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ MUSİKİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ MUSİKİ
-https://trkvz-radyolar.ercdn.net/turkuvazmusiki/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Bekçiler Kralı | Eski Türk Filmi Tek Parça (Kemal Sunal)" tvg-logo="https://img.youtube.com/vi/8d97CGyglS4/hqdefault.jpg" group-title="Filmler",Bekçiler Kralı | Eski Türk Filmi Tek Parça (Kemal Sunal)
 https://www.youtube.com/watch?v=8d97CGyglS4&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="MAZİDEN BİR DEMET" tvg-logo="" group-title="*TÜRK_RADYOLAR",MAZİDEN BİR DEMET
@@ -25,8 +21,6 @@ https://moondigitalmaster.radyotvonline.net/mazidenbirdemet/playlist.m3u8
 https://www.youtube.com/watch?v=0ME6gEQWdSI&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="Kilis SultanRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",Kilis SultanRadyo
 https://sslyayin.netyayin.net/7979/stream
-#EXTINF:-1 tvg-id="" tvg-name="Radio KralTürk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radio KralTürk
-https://live.radyositesihazir.com/8032/stream
 #EXTINF:-1 tvg-id="" tvg-name="POWER DANCE" tvg-logo="" group-title="*TÜRK_RADYOLAR",POWER DANCE
 https://listen.powerapp.com.tr/powerdance/abr/powerdance/128/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Hayat 95.5 FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Hayat 95.5 FM
@@ -49,16 +43,10 @@ https://server23644.streamplus.de/stream.mp3/
 http://37.247.98.8/stream/25/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="GarajRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",GarajRadyo
 https://moondigitaledge.radyotvonline.net/garajradyo/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Power Türk Akustik (1080p)" tvg-logo="" group-title="*TÜRK_MUZIK",Power Türk Akustik (1080p)
-https://livetv.powerapp.com.tr/pturkakustik/akustik.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Balkan türk tv" tvg-logo="" group-title="*TÜRK_YEREL",Balkan türk tv
-https://live.euromediacenter.com/balkanturktv/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="GÖZYAŞI FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",GÖZYAŞI FM
 http://yayin1.canliyayin.org:8700/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Arabeskland" tvg-logo="" group-title="*TÜRK_RADYOLAR",Arabeskland
 https://moondigitaledge.radyotvonline.net/arabeskland/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport
-https://alpha.tv.online.tm/hls/ch004_720/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RADYO NİSBET" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO NİSBET
 https://anadolu.liderhost.com.tr:10875/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Hatay AsyaRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",Hatay AsyaRadyo
@@ -69,8 +57,6 @@ https://playerservices.streamtheworld.com/api/livestream-redirect/METRO_FM128AAC
 https://ip169.ozelip.com:10838/stream
 #EXTINF:-1 tvg-id="" tvg-name="Demokrat FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Demokrat FM
 https://sonic.dcnet.com.tr/8078/stream
-#EXTINF:-1 tvg-id="" tvg-name="Arabesk Turk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Arabesk Turk
-http://yayin.arabeskturk.com:8000/stream?icy=http
 #EXTINF:-1 tvg-id="" tvg-name="RADYO MUSİKİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO MUSİKİ
 http://dijimedya.radyotvonline.net/radyomusiki
 #EXTINF:-1 tvg-id="" tvg-name="Kanlı Nigar | Kemal Sunal Eski Türk Filmi Tek Parça (Restorasyonlu)" tvg-logo="https://img.youtube.com/vi/Mt0f-RqDDVQ/hqdefault.jpg" group-title="Filmler",Kanlı Nigar | Kemal Sunal Eski Türk Filmi Tek Parça (Restorasyonlu)
@@ -81,14 +67,10 @@ https://livetv.powerapp.com.tr/plove/love.smil/playlist.m3u8
 https://kanal7.daioncdn.net/kanal7/kanal7.m3u8?app=f99587ad-1637-494d-8255-da35b09d17a1
 #EXTINF:-1 tvg-id="" tvg-name="ERZİNCAN İNCİTEK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",ERZİNCAN İNCİTEK FM
 http://yayin2.yayindakiler.com:4204/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ ANADOLU" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ ANADOLU
-https://trkvz-radyolar.ercdn.net/turkuvazanadolu/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Hababam Sınıfı | FULL HD" tvg-logo="https://img.youtube.com/vi/hf2-8MRPGu8/hqdefault.jpg" group-title="Filmler",Hababam Sınıfı | FULL HD
 https://www.youtube.com/watch?v=hf2-8MRPGu8&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="GÖZDE FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",GÖZDE FM
 https://gozdefm.80.yayin.com.tr/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="POWERTÜRK AKUSTİK" tvg-logo="" group-title="*TÜRK_RADYOLAR",POWERTÜRK AKUSTİK
-https://listen.powerapp.com.tr/powerturkakustik/abr/powerturkakustik/128/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="MAHSER GUNU" tvg-logo="https://archive.org/services/img/turkcefilmler/full/pct:200/0/default.jpg" group-title="*TÜRK_FILMLER",MAHSER GUNU
 https://ia801300.us.archive.org/35/items/turkcefilmler/Mahser-Gunu.mp4
 #EXTINF:-1 tvg-id="" tvg-name="RADYO VATAN KIBRIS" tvg-logo="http://2.bp.blogspot.com/-s6G793kznKc/Wa6Skz8DjGI/AAAAAAAAVCo/oUmJQjXw0fMHCLdcL_6CDUf-xw9KJmy_QCLcBGAs/s1600/01.jpg" group-title="*TÜRK_RADYOLAR",RADYO VATAN KIBRIS
@@ -99,12 +81,8 @@ https://www.youtube.com/watch?v=IpNb0BwkI2M&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ
 http://www.powerhitz.com/ph.pls
 #EXTINF:-1 tvg-id="" tvg-name="BIZ MUSIC UZB" tvg-logo="" group-title="*TÜRKi_ÜLKELER",BIZ MUSIC UZB
 https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/tracks-v1a1/mono.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TRT TSR Türkiye'nin Sesi Radyosu" tvg-logo="" group-title="*TÜRK_RADYOLAR",TRT TSR Türkiye'nin Sesi Radyosu
-https://radio-trttsr.medya.trt.com.tr/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Şark Bülbülü - TV+ film kategorisinde" tvg-logo="https://img.youtube.com/vi/K3qyeYKjMtk/hqdefault.jpg" group-title="Filmler",Şark Bülbülü - TV+ film kategorisinde
 https://www.youtube.com/watch?v=K3qyeYKjMtk&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="Slow Türk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Slow Türk
-https://radyo.duhnet.tv/ak_dtvh_slowturk
 #EXTINF:-1 tvg-id="" tvg-name="MARAŞ SULTAN RADYO" tvg-logo="" group-title="*TÜRK_RADYOLAR",MARAŞ SULTAN RADYO
 http://yayin.turkhosted.com:4949/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Siyah Fm" tvg-logo="" group-title="*TÜRK_RADYOLAR",Siyah Fm
@@ -145,8 +123,6 @@ https://rmtftbjlne.turknet.ercdn.net/bpeytmnqyp/ht-spor/ht-spor.m3u8
 http://37.247.98.8/stream/34/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="DİYANET TV" tvg-logo="https://i.ibb.co/k9phm3v/diyanettv.png" group-title="*TÜRK_DİĞER",DİYANET TV
 http://eustr73.mediatriple.net/videoonlylive/mtikoimxnztxlive/broadcast_5e3bf95a47e07.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radyo 7" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo 7
-https://moondigitaledge.radyotvonline.net/radyo7/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BLOOMBERG HT" tvg-logo="" group-title="*TÜRK_ULUSAL",BLOOMBERG HT
 https://ciner.daioncdn.net/bloomberght/bloomberght_720p.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="POLIZEI - HD Türk Filmi (Kemal Sunal)" tvg-logo="https://img.youtube.com/vi/RPBofKLiBzU/hqdefault.jpg" group-title="Filmler",POLIZEI - HD Türk Filmi (Kemal Sunal)
@@ -211,14 +187,10 @@ https://live.radyositesihazir.com/8034/stream
 https://www.youtube.com/watch?v=KIVLSPBropw&list=PL5_XGraSO-iH5sDNxOCbncnNBt8_YoJmg
 #EXTINF:-1 tvg-id="" tvg-name="EDİRNE RADYO MOLA" tvg-logo="" group-title="*TÜRK_RADYOLAR",EDİRNE RADYO MOLA
 http://yayin1.yayindakiler.com:2018/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="KRAL FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",KRAL FM
-http://kralwmp.radyotvonline.com/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="RADYO SES" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO SES
 https://oyunzade.yayin.com.tr/stream?type=https&nocache=8205;
 #EXTINF:-1 tvg-id="" tvg-name="OnurRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",OnurRadyo
 https://anadolu.liderhost.com.tr/8094/stream:8094/
-#EXTINF:-1 tvg-id="" tvg-name="RADYO 7" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO 7
-http://46.20.3.250/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="CLASSICLAND" tvg-logo="" group-title="*TÜRK_RADYOLAR",CLASSICLAND
 https://moondigitaledge.radyotvonline.net/classicland/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BIZ TV UZB" tvg-logo="" group-title="*TÜRKi_ÜLKELER",BIZ TV UZB
@@ -255,16 +227,12 @@ http://37.247.98.9/stream/493/;stream.mp3
 http://yayin1.yayindakiler.com:3050/stream/1/
 #EXTINF:-1 tvg-id="" tvg-name="TEZENE" tvg-logo="" group-title="*TÜRK_RADYOLAR",TEZENE
 https://moondigitaledge.radyotvonline.net/tezene/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ALEM FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",ALEM FM
-https://turkmedya.radyotvonline.net/alemfmaac
 #EXTINF:-1 tvg-id="" tvg-name="MAZIDEN BIR DEMET" tvg-logo="" group-title="*TÜRK_RADYOLAR",MAZIDEN BIR DEMET
 http://37.247.98.8/stream/24/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Şendul Şaban - HD Türk Film (Kemal Sunal)" tvg-logo="https://img.youtube.com/vi/RCcO3Zh4ths/hqdefault.jpg" group-title="Filmler",Şendul Şaban - HD Türk Film (Kemal Sunal)
 https://www.youtube.com/watch?v=RCcO3Zh4ths&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="Mavi Boncuk | FULL HD" tvg-logo="https://img.youtube.com/vi/0aPemUexAk4/hqdefault.jpg" group-title="Filmler",Mavi Boncuk | FULL HD
 https://www.youtube.com/watch?v=0aPemUexAk4&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="Turkmen Спорт" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Turkmen Спорт
-http://217.174.225.146/legacyhls/ch004_400/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Mavi Karadeniz - İstanbul" tvg-logo="" group-title="*TÜRK_YEREL",Mavi Karadeniz - İstanbul
 https://live.artidijitalmedya.com/artidijital_mavikaradeniz/mavikaradeniz/chunks.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo 45'lik" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo 45'lik
@@ -275,8 +243,6 @@ https://www.youtube.com/watch?v=KRy20M7uQM4&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ
 https://trkvz-radyolar.ercdn.net/apararadyo/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Asgabat TV" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Asgabat TV
 https://alpha.tv.online.tm/legacyhls/ch006_720/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="SPORT TV Türkmenistan" tvg-logo="" group-title="*TÜRKi_ÜLKELER",SPORT TV Türkmenistan
-http://alpha.tv.online.tm/hls/ch004_720/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ARB Gunes" tvg-logo="" group-title="*TÜRKi_AZERBAYCAN",ARB Gunes
 https://raw.githubusercontent.com/UzunMuhalefet/streams/main/myvideo-az/arb-gunes.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BABYLAND" tvg-logo="" group-title="*TÜRK_RADYOLAR",BABYLAND
@@ -291,8 +257,6 @@ http://yayin.canliyayin.org:8892/stream.nsv
 https://sslyayin.netyayin.net:10970/stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Saklikent FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Saklikent FM
 https://saklikentfm.ozelip.com/8082/stream
-#EXTINF:-1 tvg-id="" tvg-name="Turkmen Sport [SD]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Turkmen Sport [SD]
-http://217.174.225.146/hls/ch004_720/index.m3u8?checkedby:iptvcat.com
 #EXTINF:-1 tvg-id="" tvg-name="Akra FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Akra FM
 https://cdn3.akradyo.net/akracanli2/_definst_/livestream_aac/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Boğaz FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Boğaz FM
@@ -411,16 +375,10 @@ http://yayin.yayindakiler.com:3030/*
 http://mc1.mediatriple.net/videoonlylive/mtdxkkitgbrckilive/broadcast_5ee244263fd6d.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RADYO 44" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO 44
 http://radyo44.80.yayin.com.tr/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Türkmen Owazy" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmen Owazy
-https://alpha.tv.online.tm/legacyhls/ch005_720/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Dream TürkRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",Dream TürkRadyo
-https://live.duhnet.tv//S2/HLS_LIVE/dreamturknp/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="The Call Of The Wild Official Trailer Vahşetin Çağrısı Türkçe Altyazılı Fragman" tvg-logo="https://img.youtube.com/vi/0xq_RPXz-qY/hqdefault.jpg" group-title="Filmler",The Call Of The Wild Official Trailer Vahşetin Çağrısı Türkçe Altyazılı Fragman
 https://www.youtube.com/watch?v=0xq_RPXz-qY&list=PL5_XGraSO-iH5sDNxOCbncnNBt8_YoJmg
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Pop Mix" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Pop Mix
 https://anadolu.liderhost.com.tr:6010/stream.nsv
-#EXTINF:-1 tvg-id="" tvg-name="POWERTÜRK DANS" tvg-logo="" group-title="*TÜRK_RADYOLAR",POWERTÜRK DANS
-https://listen.powerapp.com.tr/powerturkdans/abr/powerturkdans/128/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="POWER DEEP" tvg-logo="" group-title="*TÜRK_RADYOLAR",POWER DEEP
 https://listen.powerapp.com.tr/powerdeep/abr/powerdeep/128/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BİGA FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",BİGA FM
@@ -457,8 +415,6 @@ http://37.247.98.8/stream/30/?/stream.mp3
 http://37.247.98.8/stream/32/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="MUTLU FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",MUTLU FM
 http://mutlufm.canliyayinda.com:2828/;stream.nsv
-#EXTINF:-1 tvg-id="" tvg-name="SPORT TV Türkmenistan" tvg-logo="" group-title="*TÜRKi_ÜLKELER",SPORT TV Türkmenistan
-http://217.174.225.146/legacyhls/ch004.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="PashPash" tvg-logo="" group-title="*TÜRK_RADYOLAR",PashPash
 https://hits.pashpashradio.com:7000/stream.nsv
 #EXTINF:-1 tvg-id="" tvg-name="RADYO 2000 FM İstanbul" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO 2000 FM İstanbul
@@ -503,8 +459,6 @@ https://stream.zeno.fm/xzuwreqpfg0uv
 acestream://2dc3399e0a3838c8dae8d5ee6f70c3314708ae0d
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Banko" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Banko
 https://stream.netradyom.com/listen/radyobanko/radio.mp3
-#EXTINF:-1 tvg-id="" tvg-name="ALEM FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",ALEM FM
-http://scturkmedya.radyotvonline.com/stream/80/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Euro Medya tv" tvg-logo="" group-title="*TÜRK_YEREL",Euro Medya tv
 https://live.euromediacenter.com/tvmor/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="AKRA FM" tvg-logo="http://2.bp.blogspot.com/-ViUmV29x3qY/WbE6pZDf2TI/AAAAAAAAVQI/EPwd45U29D08VuW__i6Ca_ZlDgwugS0bgCLcBGAs/s1600/a.jpg" group-title="*TÜRK_RADYOLAR",AKRA FM
@@ -587,8 +541,6 @@ https://anadolu.liderhost.com.tr/8090/stream:8090/stream
 https://raw.githubusercontent.com/UzunMuhalefet/streams/refs/heads/main/myvideo-az/baku-tv.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Mega 90.4-105.7 FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Mega 90.4-105.7 FM
 http://radyo.yayin.com.tr:4052/stream
-#EXTINF:-1 tvg-id="" tvg-name="SAT 7 TURK" tvg-logo="" group-title="*TÜRK_ULUSAL",SAT 7 TURK
-https://live.artidijitalmedya.com/artidijital_sat7turk/sat7turk/chunks.m3u8?
 #EXTINF:-1 tvg-id="" tvg-name="BARIŞ RADYO" tvg-logo="" group-title="*TÜRK_RADYOLAR",BARIŞ RADYO
 http://yayin2.canliyayin.org:9350/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Mevlana" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Mevlana
@@ -629,8 +581,6 @@ https://live.artidijitalmedya.com/artidijital_lifetv/lifetv/chunks.m3u8
 http://gokkusagiradyo.kesintisizyayin.com:8008/;?1610699628161
 #EXTINF:-1 tvg-id="" tvg-name="HALK TV" tvg-logo="" group-title="*TÜRK_ULUSAL",HALK TV
 https://halktv.daioncdn.net/halktv/halktv_1080p.m3u8?app=c86957d3-74a7-44da-9ad2-dc358c769609
-#EXTINF:-1 tvg-id="" tvg-name="Radyo Alaturka" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Alaturka
-https://yayin.jumboserver.net:9100/stream
 #EXTINF:-1 tvg-id="" tvg-name="BAYRAM FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",BAYRAM FM
 https://sslyayin.netyayin.net/3442/stream
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Kafses" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Kafses
@@ -657,8 +607,6 @@ https://yayin.istanbulfm.com.tr/istanbulfm
 http://live4.radyotvonline.com:9450/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="RADYO VOKAL" tvg-logo="http://3.bp.blogspot.com/-ktn0SoihWsg/Wa6X4OEmFkI/AAAAAAAAVDM/LvsswsAbMlkeIjUTHYbfBkN3HjnAqMs8gCLcBGAs/s1600/v.jpg" group-title="*TÜRK_RADYOLAR",RADYO VOKAL
 http://37.247.98.8/stream/35/
-#EXTINF:-1 tvg-id="" tvg-name="DAMAR TÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",DAMAR TÜRK FM
-https://live.radyositesihazir.com/7000/stream
 #EXTINF:-1 tvg-id="" tvg-name="PAL FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",PAL FM
 https://moondigitalmaster.radyotvonline.net/palfm/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Was Putin's whale Hvaldimir really a spy?" tvg-logo="https://img.youtube.com/vi/gRg0XjrJh3s/hqdefault.jpg" group-title="Filmler",Was Putin's whale Hvaldimir really a spy?
@@ -677,8 +625,6 @@ http://yayin1.canliyayin.org:8210/;stream.mp3
 https://technoplayerserver.net/8078/stream
 #EXTINF:-1 tvg-id="" tvg-name="Radio Beatbox" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radio Beatbox
 http://dijimedya.radyotvonline.net/radiobeatbox
-#EXTINF:-1 tvg-id="" tvg-name="Retro Türk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Retro Türk
-https://playerservices.streamtheworld.com/api/livestream-redirect/RETROTURK128AAC.aac
 #EXTINF:-1 tvg-id="" tvg-name="EGE HAVALARI" tvg-logo="" group-title="*TÜRK_RADYOLAR",EGE HAVALARI
 https://moondigitalmaster.radyotvonline.net/egehavalari/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KRAL - KRAL POP" tvg-logo="https://i.ibb.co/6401NQw/kraltv.png" group-title="*TÜRK_MUZIK",KRAL - KRAL POP
@@ -695,26 +641,16 @@ https://live.artidijitalmedya.com/artidijital_tv41/tv41/playlist.m3u8
 http://gebzefm.radyotvyayini.com:9530/type=mp3
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Home - Radyo Vokal" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Home - Radyo Vokal
 https://moondigitaledge.radyotvonline.net/radyovokal/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ROMANTİK TÜRK" tvg-logo="" group-title="*TÜRK_RADYOLAR",ROMANTİK TÜRK
-http://radyo.yayin.com.tr:6042/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="HabertürkRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",HabertürkRadyo
-https://haberturkradyo.radyotvonline.net/haberturkradyo
 #EXTINF:-1 tvg-id="" tvg-name="RADYO BANKO" tvg-logo="http://4.bp.blogspot.com/-wG1sIh-ybiU/Vgw7_OwW_UI/AAAAAAAAMLo/jD4DjkHNCkU/s1600/radyobanko.jpg" group-title="*TÜRK_RADYOLAR",RADYO BANKO
 http://yayin.netradyom.com:8050/RADYOBANKO
 #EXTINF:-1 tvg-id="" tvg-name="*Radyo 40 - KIRŞEHİR NEŞET ERTAŞ - HasBahCa" tvg-logo="" group-title="*TÜRK_RADYOLAR",*Radyo 40 - KIRŞEHİR NEŞET ERTAŞ - HasBahCa
 http://radyo.yayin.com.tr:4084/stream
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKLAND" tvg-logo="" group-title="*TÜRK_RADYOLAR",TÜRKLAND
-https://moondigitaledge.radyotvonline.net/turkland/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Şaban Pabucu Yarım - HD Türk Filmi (Kemal Sunal)" tvg-logo="https://img.youtube.com/vi/G62FPi5NYsU/hqdefault.jpg" group-title="Filmler",Şaban Pabucu Yarım - HD Türk Filmi (Kemal Sunal)
 https://www.youtube.com/watch?v=G62FPi5NYsU&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="Klas Radyo Samsun" tvg-logo="" group-title="*TÜRK_RADYOLAR",Klas Radyo Samsun
 http://178.32.4.127:9040/stream
 #EXTINF:-1 tvg-id="" tvg-name="Keriz | Kemal Sunal, Perihan Savaş | Türk Filmi | Full HD" tvg-logo="https://img.youtube.com/vi/kVyvF84zEaA/hqdefault.jpg" group-title="Filmler",Keriz | Kemal Sunal, Perihan Savaş | Türk Filmi | Full HD
 https://www.youtube.com/watch?v=kVyvF84zEaA&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="RADYO TÜRK HAREKETİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO TÜRK HAREKETİ
-http://radyo.yayin.com.tr:6056/stream
-#EXTINF:-1 tvg-id="" tvg-name="Power Turk (1080p)" tvg-logo="" group-title="*TÜRK_MUZIK",Power Turk (1080p)
-https://livetv.powerapp.com.tr/powerturkTV/powerturkhd.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Tourism FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Tourism FM
 http://radyo.yayin.com.tr:5990/stream/1/
 #EXTINF:-1 tvg-id="" tvg-name="Gol Kralı | Kemal Sunal Eski Türk Filmi Tek Parça (Restorasyonlu)" tvg-logo="https://img.youtube.com/vi/vNeTCNXJXJA/hqdefault.jpg" group-title="Filmler",Gol Kralı | Kemal Sunal Eski Türk Filmi Tek Parça (Restorasyonlu)
@@ -725,8 +661,6 @@ https://stream2.rtvtakip.com:7016/stream?type=http\\u0026nocache=21
 http://37.247.98.8/stream/27/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="KONYA RADYO EN" tvg-logo="" group-title="*TÜRK_RADYOLAR",KONYA RADYO EN
 http://yayin2.canliyayin.org:7222/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="SHOW RADYO" tvg-logo="http://1.bp.blogspot.com/-bh62s01LLho/VfZ5G1PczCI/AAAAAAAALLQ/sLwypqqtOYY/s1600/showradyo.jpg" group-title="*TÜRK_RADYOLAR",SHOW RADYO
-http://46.20.3.228:80/
 #EXTINF:-1 tvg-id="" tvg-name="Radyo gold" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo gold
 https://ssl120.radyotelekom.com.tr/8340/stream
 #EXTINF:-1 tvg-id="" tvg-name="Radyo 81" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo 81
@@ -761,10 +695,6 @@ https://moondigitaledge.radyotvonline.net/altinsarkilar/playlist.m3u8
 http://46.20.3.198:80
 #EXTINF:-1 tvg-id="" tvg-name="Yakışıklı | Kemal Sunal Eski Türk Filmi Tek Parça" tvg-logo="https://img.youtube.com/vi/2x1k44qhRAg/hqdefault.jpg" group-title="Filmler",Yakışıklı | Kemal Sunal Eski Türk Filmi Tek Parça
 https://www.youtube.com/watch?v=2x1k44qhRAg&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="DREAMTÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",DREAMTÜRK FM
-https://radyo.duhnet.tv/dreamturk
-#EXTINF:-1 tvg-id="" tvg-name="Al-Zahra TV Turkic" tvg-logo="https://i.imgur.com/8uDZB3W.png" group-title="TURKEY",Al-Zahra TV Turkic
-https://live.al-zahratv.com/live/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="90'LAR" tvg-logo="" group-title="*TÜRK_RADYOLAR",90'LAR
 https://moondigitalmaster.radyotvonline.net/90lar/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="FurkanRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",FurkanRadyo
@@ -795,16 +725,10 @@ https://rockfm.rockfm.com.tr:9450/stream
 http://dijimedya.radyotvonline.net/radiofk
 #EXTINF:-1 tvg-id="" tvg-name="Kral Pop Radyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",Kral Pop Radyo
 http://46.20.3.202:80
-#EXTINF:-1 tvg-id="" tvg-name="HAYATA DAİR HERŞEY TÜRK TV" tvg-logo="" group-title="*TÜRK_YEREL",HAYATA DAİR HERŞEY TÜRK TV
-https://live.euromediacenter.com/hdhturk/tracks-v1a1/mono.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="KRAL FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",KRAL FM
-http://46.20.3.204:80/
 #EXTINF:-1 tvg-id="" tvg-name="STAR ARTI" tvg-logo="" group-title="*TÜRK_RADYOLAR",STAR ARTI
 https://ritim.80.yayin.com.tr/stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Garip | Kemal Sunal Eski Türk Filmi Tek Parça" tvg-logo="https://img.youtube.com/vi/w7bwBts_d1U/hqdefault.jpg" group-title="Filmler",Garip | Kemal Sunal Eski Türk Filmi Tek Parça
 https://www.youtube.com/watch?v=w7bwBts_d1U&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="ALEM FM" tvg-logo="http://1.bp.blogspot.com/-TtePoB7CzrE/WZwQ5yTqTBI/AAAAAAAATwg/BjYhvf11XE0nYi_GJwuRnOnw1U_l7issQCLcBGAs/s1600/09.jpg" group-title="*TÜRK_RADYOLAR",ALEM FM
-http://scturkmedya.radyotvonline.com/stream/80/
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Tulu" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Tulu
 http://yayin2.canliyayin.org:8248/*.mp3
 #EXTINF:-1 tvg-id="" tvg-name="SinemaTV 1002" tvg-logo="" group-title="Genel",SinemaTV 1002
@@ -823,8 +747,6 @@ http://duhnet.hipodrom.com/S2/HLS_LIVE/mislitaynp/playlist.m3u8
 https://hayatmix.yayin.com.tr/mp3
 #EXTINF:-1 tvg-id="" tvg-name="Live TV" tvg-logo="" group-title="*TÜRKi_AZERBAYCAN",Live TV
 https://tv.mobyservice.ru/livetv/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="DREAM TURK" tvg-logo="" group-title="*TÜRK_MUZIK",DREAM TURK
-https://live.duhnet.tv//S2/HLS_LIVE/dreamturknp/track_4_1250/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RADYO 71" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO 71
 http://radyo.yayin.com.tr:5924/stream/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="RADYO VOYAGE" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO VOYAGE
@@ -837,8 +759,6 @@ https://host.onlineradyotv.net:2020/stream/adanafm
 https://livecdn.use1-0004.jwplive.com/live/sites/WpgVdplm/media/icNwL50b/live.isml/live.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Vahşetin Çağrısı | Türkçe Altyazılı Fragman | 21 Şubat 2020" tvg-logo="https://img.youtube.com/vi/wGOgfaf3pxI/hqdefault.jpg" group-title="Filmler",Vahşetin Çağrısı | Türkçe Altyazılı Fragman | 21 Şubat 2020
 https://www.youtube.com/watch?v=wGOgfaf3pxI&list=PL5_XGraSO-iH5sDNxOCbncnNBt8_YoJmg
-#EXTINF:-1 tvg-id="" tvg-name="TV4 HD Türkiye" tvg-logo="" group-title="*TÜRK_ULUSAL",TV4 HD Türkiye
-https://turkmedya-live.ercdn.net/tv4/tv4_720p.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="SÜPER FM" tvg-logo="http://1.bp.blogspot.com/-jPoaXwc1edA/WaO-L2ZzWLI/AAAAAAAAUJg/R9MUHCn7vqwWG4BOnWkrI_LkEgzkWZmRACLcBGAs/s1600/18.jpg" group-title="*TÜRK_RADYOLAR",SÜPER FM
 https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Deli Deli Küpeli | Eski Türk Filmi Tek Parça (Kemal Sunal)" tvg-logo="https://img.youtube.com/vi/zRGKIhBg-Rk/hqdefault.jpg" group-title="Filmler",Deli Deli Küpeli | Eski Türk Filmi Tek Parça (Kemal Sunal)
@@ -883,8 +803,6 @@ https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_FM.mp3
 http://radyo.ahiska.net:8063/stream/1/
 #EXTINF:-1 tvg-id="" tvg-name="Davaro - Tek Parça - Kemal Sunal & Şener Şen" tvg-logo="https://img.youtube.com/vi/bcge5mSX090/hqdefault.jpg" group-title="Filmler",Davaro - Tek Parça - Kemal Sunal & Şener Şen
 https://www.youtube.com/watch?v=bcge5mSX090&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="Power Türk Taptaze (1080p)" tvg-logo="" group-title="*TÜRK_MUZIK",Power Türk Taptaze (1080p)
-https://livetv.powerapp.com.tr/pturktaptaze/taptaze.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Yuksel" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Yuksel
 http://yayin2.canliyayin.org:8232/stream
 #EXTINF:-1 tvg-id="" tvg-name="Güllü Geliyor Güllü - Eski Türk Filmi Tek Parça (Restorasyonlu)" tvg-logo="https://img.youtube.com/vi/uY4pUWRnuu4/hqdefault.jpg" group-title="Filmler",Güllü Geliyor Güllü - Eski Türk Filmi Tek Parça (Restorasyonlu)
@@ -939,8 +857,6 @@ http://37.247.98.8/stream/25/
 https://moondigitalmaster.radyotvonline.net/efsane4lu/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="AktifRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",AktifRadyo
 http://herkesmobil.com:9170/aktiffm/stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Radyo Home - Türkülerle Türkiye" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Home - Türkülerle Türkiye
-https://moondigitaledge.radyotvonline.net/turkulerleturkiye/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BİLECİK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",BİLECİK FM
 http://bilecikfm.kesintisizyayin.com:9980/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Joy FM 100.6" tvg-logo="" group-title="*TÜRK_RADYOLAR",Joy FM 100.6
@@ -951,12 +867,8 @@ https://www.youtube.com/watch?v=4J3ulqHkgRM&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ
 http://yayin.turkhosted.com:6006/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="SARI TRAMVAY" tvg-logo="" group-title="*TÜRK_RADYOLAR",SARI TRAMVAY
 https://moondigitaledge.radyotvonline.net/saritramvay/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TURKULERLE TURKIYE" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKULERLE TURKIYE
-http://37.247.98.8/stream/22/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="HemdemRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",HemdemRadyo
 https://yayin.hemdemradyo.com/
-#EXTINF:-1 tvg-id="" tvg-name="Üreten Türkiye tv" tvg-logo="" group-title="*TÜRK_YEREL",Üreten Türkiye tv
-https://live.euromediacenter.com/uretenturkiye/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Derman" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Derman
 https://ssl120.radyotelekom.com.tr/8710/stream/
 #EXTINF:-1 tvg-id="" tvg-name="RADYO FM23 ELAZIG - 128 kbit/s" tvg-logo="https://www.radio.pervii.com/logo/29517.jpg" group-title="*TÜRK_RADYOLAR",RADYO FM23 ELAZIG - 128 kbit/s
@@ -975,10 +887,6 @@ https://moondigitaledge.radyotvonline.net/houseland/playlist.m3u8
 https://moondigitaledge.radyotvonline.net/greekland/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Yalova" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Yalova
 https://studio25.radiolize.com/radio/8200/radio.mp3
-#EXTINF:-1 tvg-id="" tvg-name="JOYTURK - 64 kbit/s" tvg-logo="https://www.radio.pervii.com/logo/106319.jpg" group-title="*TÜRK_RADYOLAR",JOYTURK - 64 kbit/s
-https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Bultürk tv" tvg-logo="" group-title="*TÜRK_YEREL",Bultürk tv
-https://live.euromediacenter.com/saglikchannel/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="The Call of the Wild | Journey to Dawson Clip | 20th Century Studios" tvg-logo="https://img.youtube.com/vi/9xoTR4C-IMk/hqdefault.jpg" group-title="Filmler",The Call of the Wild | Journey to Dawson Clip | 20th Century Studios
 https://www.youtube.com/watch?v=9xoTR4C-IMk&list=PL5_XGraSO-iH5sDNxOCbncnNBt8_YoJmg
 #EXTINF:-1 tvg-id="" tvg-name="Hatay Radyo Akdeniz" tvg-logo="" group-title="*TÜRK_RADYOLAR",Hatay Radyo Akdeniz
@@ -991,8 +899,6 @@ https://www.youtube.com/watch?v=9wOPLOm0Dlc&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ
 https://yayin.sesfm.com.tr:8090/stream
 #EXTINF:-1 tvg-id="" tvg-name="TMB" tvg-logo="" group-title="*TÜRK_DİĞER",TMB
 https://raw.githubusercontent.com/UzunMuhalefet/streams/main/myvideo-az/tmb-tv.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radyo Time Türk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Time Türk
-http://yayin.yayindakiler.com:4195/stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="AYAZ TV" tvg-logo="" group-title="*TÜRKi_AZERBAYCAN",AYAZ TV
 https://janya-ayaztv.vgcdn.net/ptnr-ayaztv/title-Ayaz_TV/v1/vglive-sk-934820/AyazTV_2500k.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="A SPOR RADYO" tvg-logo="" group-title="*TÜRK_RADYOLAR",A SPOR RADYO
@@ -1003,8 +909,6 @@ https://kanal7.daioncdn.net/kanal7/kanal7_1080p.m3u8?&app=f99587ad-1637-494d-825
 https://ssl4.radyotvonline.com/radyohome/mazidenbirdemet.stream_aac/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Keskin FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Keskin FM
 http://yayin1.canliyayin.org:8286/listen.pls
-#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport
-http://217.174.225.146/legacyhls/ch004_720/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Energy" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Energy
 https://trkvz-radyolar.ercdn.net/radyoenergy/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Akdeniz" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Akdeniz
@@ -1045,8 +949,6 @@ https://www.youtube.com/watch?v=BMMfgxm_C4c&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ
 https://moondigitaledge.radyotvonline.net/worldhits/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Bogazliyan FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Bogazliyan FM
 https://radyo.radyoimza.com/8008/stream
-#EXTINF:-1 tvg-id="" tvg-name="London Turkish Radio - 128 kbit/s" tvg-logo="https://www.radio.pervii.com/im/3/1571203993.jpg" group-title="*TÜRK_RADYOLAR",London Turkish Radio - 128 kbit/s
-http://s2.radio.co/s899a861e2/listen
 #EXTINF:-1 tvg-id="" tvg-name="TUNCELİ RADYO MUNZUR" tvg-logo="" group-title="*TÜRK_RADYOLAR",TUNCELİ RADYO MUNZUR
 http://yayin1.yayindakiler.com:3002/live
 #EXTINF:-1 tvg-id="" tvg-name="VAV TV BELGESEL" tvg-logo="https://i.ibb.co/bj1H8LCm/vavtv.png" group-title="*TÜRK_DİĞER",VAV TV BELGESEL
@@ -1055,8 +957,6 @@ https://playlist.fasttvcdn.com/pl/rfrk9821hdy9dayo8wfyha/belgesel-tv/playlist/0.
 https://live.artidijitalmedya.com/artidijital_tivi6/tivi6/chunks.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="YOKSUL (1986) - Kemal Sunal & Yaman Okay | RESTORASYONLU" tvg-logo="https://img.youtube.com/vi/xfn2PgMDYxw/hqdefault.jpg" group-title="Filmler",YOKSUL (1986) - Kemal Sunal & Yaman Okay | RESTORASYONLU
 https://www.youtube.com/watch?v=xfn2PgMDYxw&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="RADYO 7" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO 7
-http://46.20.3.251/stream/169/
 #EXTINF:-1 tvg-id="" tvg-name="Serhat Fm" tvg-logo="" group-title="*TÜRK_RADYOLAR",Serhat Fm
 http://yayin.serhatfm.com:9150/stream
 #EXTINF:-1 tvg-id="" tvg-name="Oh Olsun | FULL HD" tvg-logo="https://img.youtube.com/vi/HBRD_HbCwHE/hqdefault.jpg" group-title="Filmler",Oh Olsun | FULL HD
@@ -1067,16 +967,12 @@ https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM128AAC
 https://www.youtube.com/watch?v=guqpuNWQDhc&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="Tarzan Rıfkı - HD Türk Filmi (Kemal Sunal)" tvg-logo="https://img.youtube.com/vi/WE0tU8cJ1Ps/hqdefault.jpg" group-title="Filmler",Tarzan Rıfkı - HD Türk Filmi (Kemal Sunal)
 https://www.youtube.com/watch?v=WE0tU8cJ1Ps&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="Kral FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Kral FM
-https://dygedge2.radyotvonline.net/kralfm/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BİRLİK HABER TV" tvg-logo="" group-title="*TÜRK_YEREL",BİRLİK HABER TV
 https://live.euromediacenter.com/bhatv/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="EGE HAVALARI" tvg-logo="http://2.bp.blogspot.com/-YRswiKMyLUM/WaOvzMCvuJI/AAAAAAAAUHk/gu89ed7glGssGkDCRPBUtpWEaegSFdJAgCLcBGAs/s1600/ege.jpg" group-title="*TÜRK_RADYOLAR",EGE HAVALARI
 http://37.247.98.8/stream/29/
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Cem 95.5 Mhz." tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Cem 95.5 Mhz.
 https://erzincan.80.yayin.com.tr/stream/1/?icy=http
-#EXTINF:-1 tvg-id="" tvg-name="SAT 7 TURK" tvg-logo="" group-title="*TÜRK_DİĞER",SAT 7 TURK
-https://live.artidijitalmedya.com/artidijital_sat7turk/sat7turk/chunks.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Bizimiller Radyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",Bizimiller Radyo
 http://yayin2.yayindakiler.com:4078/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="KRAL POP" tvg-logo="" group-title="*TÜRK_RADYOLAR",KRAL POP
@@ -1089,8 +985,6 @@ https://playerservices.streamtheworld.com/api/livestream-redirect/VIRGIN_RADIOAA
 https://www.youtube.com/watch?v=zLc3Eh7uO2s&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="MAX FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",MAX FM
 http://live2.radyotvonline.com:8025/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="RADYO TURKUVAZ" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO TURKUVAZ
-https://trkvz-radyolar.ercdn.net/radyoturkuvaz/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Postacı | Kemal Sunal Eski Türk Filmi Tek Parça (Restorasyonlu)" tvg-logo="https://img.youtube.com/vi/w9wgwBM3pQo/hqdefault.jpg" group-title="Filmler",Postacı | Kemal Sunal Eski Türk Filmi Tek Parça (Restorasyonlu)
 https://www.youtube.com/watch?v=w9wgwBM3pQo&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="VAV TV SAGLIK" tvg-logo="https://i.ibb.co/bj1H8LCm/vavtv.png" group-title="*TÜRK_DİĞER",VAV TV SAGLIK
@@ -1117,18 +1011,12 @@ https://raw.githubusercontent.com/UzunMuhalefet/streams/main/myvideo-az/kanal-s.
 https://radyo44.80.yayin.com.tr/steram/
 #EXTINF:-1 tvg-id="" tvg-name="Seyr FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Seyr FM
 https://sslyayin.netyayin.net:10907/stream.nsv
-#EXTINF:-1 tvg-id="" tvg-name="DAMAR TÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",DAMAR TÜRK FM
-https://live.radyositesihazir.com:10997/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="DISCOLAND" tvg-logo="" group-title="*TÜRK_RADYOLAR",DISCOLAND
 https://moondigitaledge.radyotvonline.net/discoland/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TATVAN RADYO 13" tvg-logo="" group-title="*TÜRK_RADYOLAR",TATVAN RADYO 13
 http://yayin1.yayindakiler.com:3050/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Hababam Sınıfı Tatilde | Full HD" tvg-logo="https://img.youtube.com/vi/3Y8nUzSbTrE/hqdefault.jpg" group-title="Filmler",Hababam Sınıfı Tatilde | Full HD
 https://www.youtube.com/watch?v=3Y8nUzSbTrE&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="Radyo Romantik Türk - 128 kbit/s" tvg-logo="https://www.radio.pervii.com/im/2/1594911672.jpg" group-title="*TÜRK_RADYOLAR",Radyo Romantik Türk - 128 kbit/s
-http://radyo.yayin.com.tr:6042/stream/1/
-#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan (406p) [Not 24/7]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan (406p) [Not 24/7]
-https://alpha.tv.online.tm/hls/ch007.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Avanak Apti - HD Türk Filmi (Kemal Sunal)" tvg-logo="https://img.youtube.com/vi/aQuDq8w2MXQ/hqdefault.jpg" group-title="Filmler",Avanak Apti - HD Türk Filmi (Kemal Sunal)
 https://www.youtube.com/watch?v=aQuDq8w2MXQ&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="3 BABA" tvg-logo="" group-title="*TÜRK_RADYOLAR",3 BABA
@@ -1139,8 +1027,6 @@ https://listen.powerapp.com.tr/powergreece/abr/powergreece/128/playlist.m3u8
 http://yayin1.canliyayin.org:8888/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Home - Relax Home" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Home - Relax Home
 https://ssl4.radyotvonline.com/radyohome/relaxhome.stream_aac/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TÜRKÜLERLE TÜRKİYE" tvg-logo="" group-title="*TÜRK_RADYOLAR",TÜRKÜLERLE TÜRKİYE
-https://moondigitalmaster.radyotvonline.net/turkulerleturkiye/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Schladming-Dachstein TV (720p)" tvg-logo="https://i.ibb.co/VjnzhMM/Logo-Schl-Dachstein-TV-HP-JPG.jpg" group-title="Travel",Schladming-Dachstein TV (720p)
 https://m317.video-stream-hosting.de/gzSoftware-live/_definst_/smil:livestream.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Piramit FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Piramit FM
@@ -1185,8 +1071,6 @@ acestream://2aeead5e58ba09558a45d6b38ba0b03923aa195a
 https://datcaonair.ozelip.com/8008/stream
 #EXTINF:-1 tvg-id="" tvg-name="Uludag FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Uludag FM
 https://streamlive1.hearthis.at:8000/9018935.ogg
-#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport
-https://alpha.tv.online.tm/legacyhls/ch004_720/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Biga FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Biga FM
 http://radyo.yayin.com.tr:5896/stream.nsv
 #EXTINF:-1 tvg-id="" tvg-name="ANKARA ÜNİVERSİTESİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",ANKARA ÜNİVERSİTESİ
@@ -1195,24 +1079,18 @@ http://radyo.cc.ankara.edu.tr:8089/;stream/1
 https://yayin.radyovenus.com.tr:3416/*.nsv
 #EXTINF:-1 tvg-id="" tvg-name="MTRK" tvg-logo="" group-title="*TÜRKi_ÜLKELER",MTRK
 https://tvcdn01.oktv.kz/tv/mtrk/tracks-v1a1/mono.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan TV" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan TV
-https://alpha.tv.online.tm/hls/ch007_400/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Armoni FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Armoni FM
 http://radyo.yayindakiler.com:4084/stream
 #EXTINF:-1 tvg-id="" tvg-name="DAMAR FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",DAMAR FM
 http://yayin.damarfm.com:8080/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="HATAY AKDENİZ FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",HATAY AKDENİZ FM
 http://yayin.netyayin.net:7077/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ EFSANE" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ EFSANE
-https://trkvz-radyolar.ercdn.net/turkuvazefsane/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RADYO VOKAL" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO VOKAL
 http://37.247.98.8/stream/35/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="AZ TV Azərbaycan Televiziyası" tvg-logo="https://i.ibb.co/VC7Q18V/azflag.png" group-title="*TÜRKi_AZERBAYCAN",AZ TV Azərbaycan Televiziyası
 https://str.yodacdn.net/azertv/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Yildiz FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Yildiz FM
 http://radyo.yayin.com.tr:4048/stream/1/
-#EXTINF:-1 tvg-id="" tvg-name="Damar Türk FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Damar Türk FM
-https://live.radyositesihazir.com:10997/stream.nsv
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Pause" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Pause
 https://radyopause.ozelip.com.tr:8040/*.nsv
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Gerçek 93.5" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Gerçek 93.5
@@ -1221,8 +1099,6 @@ http://ssl120.radyotelekom.com.tr:8198/listen.pls
 https://live.artidijitalmedya.com/artidijital_kanalfirat/kanalfirat/chunks.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ÖMÜR RADYO" tvg-logo="" group-title="*TÜRK_RADYOLAR",ÖMÜR RADYO
 http://anadolu.liderhost.com.tr/9002/stream
-#EXTINF:-1 tvg-id="" tvg-name="SHOW RADYO" tvg-logo="" group-title="*TÜRK_RADYOLAR",SHOW RADYO
-http://46.20.3.229/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Tutku FM 104.0" tvg-logo="" group-title="*TÜRK_RADYOLAR",Tutku FM 104.0
 https://sslyayin.radyoyayini.com/8012/stream/
 #EXTINF:-1 tvg-id="" tvg-name="Dedemin Radyosu" tvg-logo="" group-title="*TÜRK_RADYOLAR",Dedemin Radyosu
@@ -1231,10 +1107,6 @@ https://anadolu.liderhost.com.tr/9002/stream
 https://flashhaber-live.ercdn.net/flashhaber/flashhaber_1080p.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Urfanatik TV - Şanlıurfa" tvg-logo="" group-title="*TÜRK_YEREL",Urfanatik TV - Şanlıurfa
 https://live.artidijitalmedya.com/artidijital_urfanatiktv/urfanatiktv/chunks.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="SHOW RADYO" tvg-logo="http://3.bp.blogspot.com/-LnYxKXgcQFY/Wa6mEadm0QI/AAAAAAAAVFQ/QtFrAx5ErEc0nbd6THdBL0Bq5spai_e3gCLcBGAs/s1600/s.jpg" group-title="*TÜRK_RADYOLAR",SHOW RADYO
-http://46.20.3.229/
-#EXTINF:-1 tvg-id="" tvg-name="Joy Turk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Joy Turk
-https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURKAAC.aac
 #EXTINF:-1 tvg-id="" tvg-name="MAGİC FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",MAGİC FM
 http://yayin1.yayindakiler.com:3032/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Nur FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Nur FM
@@ -1247,8 +1119,6 @@ http://mmn.mypsx.net:1935/live/mmnhdradioturky/chunklist_w1571985729.m3u8
 https://anadolu.liderhost.com.tr/8094/stream
 #EXTINF:-1 tvg-id="" tvg-name="RADYO İZMİR FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO İZMİR FM
 http://usa4.fastcast4u.com:5414/;stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Türkü FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Türkü FM
-https://yayin.turkhosted.com/4591/stream
 #EXTINF:-1 tvg-id="" tvg-name="Kıyı müzik" tvg-logo="" group-title="*TÜRK_RADYOLAR",Kıyı müzik
 https://kiyi.radioca.st/stream
 #EXTINF:-1 tvg-id="" tvg-name="Tokatçı - HD Türk Filmi (KEMAL SUNAL)" tvg-logo="https://img.youtube.com/vi/GOZ7Waq9VkQ/hqdefault.jpg" group-title="Filmler",Tokatçı - HD Türk Filmi (KEMAL SUNAL)
@@ -1267,8 +1137,6 @@ https://ekoltv-live.ercdn.net/ekolsport/ekolsport.m3u8
 http://radyo.yayin.com.tr:4012/stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="STAR TV" tvg-logo="" group-title="*TÜRK_ULUSAL",STAR TV
 http://dogus.daioncdn.net/startv/startv.m3u8?ce=3&app=a20ac41e-bdc3-4aa1-934d-26b484480ac9
-#EXTINF:-1 tvg-id="" tvg-name="JungerKulturKanal LIVE (c) Hochschule fuer Musik Karlsruhe 2017 - 256 kbit/s" tvg-logo="https://www.radio.pervii.com/im/3/1571203993.jpg" group-title="*TÜRK_RADYOLAR",JungerKulturKanal LIVE (c) Hochschule fuer Musik Karlsruhe 2017 - 256 kbit/s
-http://193.197.85.26:8000/stream/1/
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Ihya" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Ihya
 https://radyo.yayin.com.tr:2727/stream
 #EXTINF:-1 tvg-id="" tvg-name="Öncü TV (1024p) [Not 24/7]" tvg-logo="" group-title="*TÜRK_DİĞER",Öncü TV (1024p) [Not 24/7]
@@ -1299,22 +1167,16 @@ http://radyo.cc.ankara.edu.tr:8089/;stream.mp3
 https://yayin5.radyohizmeti.com:10795/stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Köşeyi Dönen Adam (1978) - Kemal Sunal (HD)" tvg-logo="https://img.youtube.com/vi/Fy-tddSA-5Y/hqdefault.jpg" group-title="Filmler",Köşeyi Dönen Adam (1978) - Kemal Sunal (HD)
 https://www.youtube.com/watch?v=Fy-tddSA-5Y&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
-#EXTINF:-1 tvg-id="" tvg-name="KRAL TÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",KRAL TÜRK FM
-https://yayin.radyoarabesk.com.tr:8000/stream
 #EXTINF:-1 tvg-id="" tvg-name="Radyo 75" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo 75
 https://anadolu.liderhost.com.tr/8126/stream
 #EXTINF:-1 tvg-id="" tvg-name="Salako | FULL HD" tvg-logo="https://img.youtube.com/vi/lSu7Wc5lgXc/hqdefault.jpg" group-title="Filmler",Salako | FULL HD
 https://www.youtube.com/watch?v=lSu7Wc5lgXc&list=PLRiHAPb9-vYrQXHCa8MRbbpOhrh5jZ-__
 #EXTINF:-1 tvg-id="" tvg-name="KK TV" tvg-logo="" group-title="*TÜRKi_ÜLKELER",KK TV
 http://old.kuzeykibris.tv/m3u8/kktv.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Türkmen Owazy (406p) [Not 24/7]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmen Owazy (406p) [Not 24/7]
-https://alpha.tv.online.tm/hls/ch005.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="EASYLAND" tvg-logo="" group-title="*TÜRK_RADYOLAR",EASYLAND
 https://moondigitaledge.radyotvonline.net/easyland/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo ODTÜ" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo ODTÜ
 https://stream.radyoodtu.com.tr/canli
-#EXTINF:-1 tvg-id="" tvg-name="Olay Türk TV - Kayseri" tvg-logo="" group-title="*TÜRK_YEREL",Olay Türk TV - Kayseri
-https://live.artidijitalmedya.com/artidijital_olayturk/olayturk/chunks.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="REKLAMSIZ RADYO" tvg-logo="" group-title="*TÜRK_RADYOLAR",REKLAMSIZ RADYO
 http://hayatmix.net:80/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="X" tvg-logo="" group-title="*TÜRK_RADYOLAR",X
@@ -1323,16 +1185,12 @@ https://stream.xradio.com.tr:8770/stream
 http://yayin.pazarcikfm.com/9092/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Tempo TV - İstanbul" tvg-logo="" group-title="*TÜRK_YEREL",Tempo TV - İstanbul
 https://live.artidijitalmedya.com/artidijital_tempotv/tempotv/chunks.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Seçme Türküler" tvg-logo="" group-title="*TÜRK_RADYOLAR",Seçme Türküler
-https://yayin.radyomadyo.com:8006/stream
 #EXTINF:-1 tvg-id="" tvg-name="SİVAS FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",SİVAS FM
 http://yayin2.canliyayin.org:8180/;stream.nsv
 #EXTINF:-1 tvg-id="" tvg-name="DOST FM Hatay" tvg-logo="" group-title="*TÜRK_RADYOLAR",DOST FM Hatay
 http://yayin.netyayin.net:1515/streype=.mp3
 #EXTINF:-1 tvg-id="" tvg-name="AL-ZAHRA TV" tvg-logo="" group-title="*TÜRKi_AZERBAYCAN",AL-ZAHRA TV
 https://ak.imamhussein.live/alzahratvlive/alzahra.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Power Türk Slow (1080p)" tvg-logo="" group-title="*TÜRK_DİĞER",Power Türk Slow (1080p)
-https://livetv.powerapp.com.tr/pturkslow/slow.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="HAKTAN FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",HAKTAN FM
 http://anadolu.liderhost.com.tr:3696/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="SahilRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",SahilRadyo
@@ -1391,8 +1249,6 @@ https://anadolu.liderhost.com.tr:10871/stream.nsv
 https://www.youtube.com/watch?v=TViuseieQAY&list=PL5_XGraSO-iH5sDNxOCbncnNBt8_YoJmg
 #EXTINF:-1 tvg-id="" tvg-name="HAYATMiX" tvg-logo="" group-title="*TÜRK_RADYOLAR",HAYATMiX
 http://hayatmix.net/yayin.mp3/
-#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport (406p) [Not 24/7]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport (406p) [Not 24/7]
-https://alpha.tv.online.tm/hls/ch004.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="MÜZEYYEN" tvg-logo="" group-title="*TÜRK_RADYOLAR",MÜZEYYEN
 https://moondigitaledge.radyotvonline.net/muzeyyen/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="PAL FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",PAL FM
@@ -1413,16 +1269,10 @@ https://anadolu.liderhost.com.tr:10886/stream.nsv
 https://live.artidijitalmedya.com/artidijital_vuslattv/vuslattv/chunks.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radyo Nostaljinin Sesi" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Nostaljinin Sesi
 http://51.255.235.165:26113/stream.nsv
-#EXTINF:-1 tvg-id="" tvg-name="AVRASYA TÜRK" tvg-logo="" group-title="*TÜRK_RADYOLAR",AVRASYA TÜRK
-https://sslyayin.netyayin.net:10909/stream?icy=http
 #EXTINF:-1 tvg-id="" tvg-name="Hatay Radyo Melodi" tvg-logo="" group-title="*TÜRK_RADYOLAR",Hatay Radyo Melodi
 https://radyomelodi.80.yayin.com.tr/stream.nsv
 #EXTINF:-1 tvg-id="" tvg-name="KURDSAT NEWS" tvg-logo="https://i.ibb.co/cXd3MBV/symkr.png" group-title="*TÜRK_YEREL",KURDSAT NEWS
 https://hlspackager.akamaized.net/live/DB/KURDSAT_NEWS/HLS/KURDSAT_NEWS.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="GOLD TÜRK" tvg-logo="" group-title="*TÜRK_RADYOLAR",GOLD TÜRK
-http://dijimedya.radyotvonline.net/goldturk
-#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ ROMANTİK" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ ROMANTİK
-https://trkvz-radyolar.ercdn.net/turkuvazromantik/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RADYO MEGA" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO MEGA
 http://radyomega.ozelip.com:8210/;stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="PırıltıRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",PırıltıRadyo
@@ -1431,8 +1281,6 @@ https://anadolu.liderhost.com.tr/8092/stream:8092/
 https://sslyayin.radyoyayini.com:7007/stream
 #EXTINF:-1 tvg-id="" tvg-name="AKUSTİKLAND" tvg-logo="" group-title="*TÜRK_RADYOLAR",AKUSTİKLAND
 https://moondigitaledge.radyotvonline.net/akustikland/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ NOSTALJİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ NOSTALJİ
-https://trkvz-radyolar.ercdn.net/turkuvaznostalji/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TELE NEWS" tvg-logo="https://i.ibb.co/LhcxMxJ9/telenews.png" group-title="*TÜRK_HABER",TELE NEWS
 https://cdn-telenews.yayin.com.tr/telenews/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Varyemez | Kemal Sunal, Yasemin Yalçın | Türk Filmi | Full HD" tvg-logo="https://img.youtube.com/vi/16Bv7GAoH4c/hqdefault.jpg" group-title="Filmler",Varyemez | Kemal Sunal, Yasemin Yalçın | Türk Filmi | Full HD
