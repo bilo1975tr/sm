@@ -111,7 +111,7 @@ jobs:
           shopt -s nullglob
           for f in channels.json channels_*.json kanallar_*.m3u; do
             if [ -e "$f" ]; then
-              git add "$f"
+              git add -f "$f"
             fi
           done
           
