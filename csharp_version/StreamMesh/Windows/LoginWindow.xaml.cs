@@ -40,8 +40,9 @@ namespace StreamMesh.Windows
             }
         }
 
-        private void Login_Click(object sender, RoutedEventArgs e)
+        private async void Login_Click(object sender, RoutedEventArgs e)
         {
+            var loginBtn = sender as Button;
             string email = EmailBox.Text.Trim();
             string password = PasswordBox.Password;
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
@@ -54,19 +55,24 @@ namespace StreamMesh.Windows
             string lang1 = Lang1Combo.SelectedItem as string ?? "";
             string lang2 = Lang2Combo.SelectedItem as string ?? "";
             string appLang = AppLangCombo.SelectedItem as string ?? "Türkçe";
+            string refCode = RefCodeBox.Text.Trim();
 
             if (lang1 == "Hiçbiri") lang1 = "";
             if (lang2 == "Hiçbiri") lang2 = "";
 
+            // Disable button during network check
+            if (loginBtn != null) loginBtn.IsEnabled = false;
+
             try
             {
-                UserService.RegisterOrLogin(email, password, country, lang1, lang2, appLang);
+                await UserService.RegisterOrLoginAsync(email, password, country, lang1, lang2, appLang, refCode);
                 IsLoggedIn = true;
                 this.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Giriş sırasında hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (loginBtn != null) loginBtn.IsEnabled = true;
             }
         }
 

@@ -27,19 +27,7 @@ namespace StreamMesh
             // Versiyonu yükle
             try
             {
-                // VERSION dosyası ana dizinde
-                string versionFile = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../VERSION");
-                if (System.IO.File.Exists(versionFile))
-                {
-                    VersionText.Text = "v" + System.IO.File.ReadAllText(versionFile).Trim();
-                }
-                else
-                {
-                    // Alternatif arama (publish klasörü için)
-                    versionFile = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VERSION");
-                    if (System.IO.File.Exists(versionFile))
-                        VersionText.Text = "v" + System.IO.File.ReadAllText(versionFile).Trim();
-                }
+                VersionText.Text = "v" + StreamMesh.Services.UpdateService.GetCurrentVersion();
             }
             catch { VersionText.Text = "v0.0 alfa"; }
 
@@ -59,6 +47,9 @@ namespace StreamMesh
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // Güncelleme kontrolü yap
+            _ = StreamMesh.Services.UpdateService.CheckForUpdatesAsync();
+
             await InventoryService.CheckAndDownloadInventoryAsync();
 
             if (InventoryService.AreComponentsMissing())

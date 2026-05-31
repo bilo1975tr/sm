@@ -30,9 +30,9 @@
             </StackPanel>
             
             <!-- VIP / AD Banner -->
-            <Border x:Name="SponsorBannerBorder" Grid.Column="1" Width="300" Height="70" Background="#1e293b" CornerRadius="8" BorderThickness="1" BorderBrush="#38bdf8" Cursor="Hand" ToolTip="VIP olarak reklamları kaldırabilirsiniz. (BETA Ad Alanı)" MouseLeftButtonDown="SponsorBannerBorder_MouseLeftButtonDown">
+            <Border x:Name="SponsorBannerBorder" Grid.Column="1" Width="380" Height="75" Background="#1e293b" CornerRadius="8" BorderThickness="1" BorderBrush="#38bdf8" Cursor="Hand" ToolTip="Tıkla ve kopyala" MouseLeftButtonDown="SponsorBannerBorder_MouseLeftButtonDown">
                 <Grid>
-                    <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_AdSpace]}" Foreground="#64748b" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="HomeAdText" Text="Arkadaşını Getir VIP Kazan! \nReferans Kodun: YÜKLENİYOR..." Foreground="#64748b" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" FontSize="11" Margin="10,5,10,5" TextWrapping="Wrap" />
                     <TextBlock Text="VIP OL 💎" Foreground="#fbbf24" FontWeight="Bold" FontSize="10" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="5"/>
                 </Grid>
             </Border>
@@ -44,7 +44,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="300"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
                     <StackPanel x:Name="CategoryPanel" Orientation="Horizontal" Grid.Column="0">
@@ -55,21 +55,35 @@
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Series]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                     </StackPanel>
                     
-                    <TextBox x:Name="SearchBox" Grid.Column="1" Height="35" TextChanged="SearchBox_TextChanged" >
-                        <!-- Using Style via App.xaml automatically -->
-                    </TextBox>
-                    <TextBlock Grid.Column="1" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Search]}" Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text.Length, ElementName=SearchBox}" Value="0">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ComboBox x:Name="SortComboBox" Width="140" Height="35" Margin="0,0,10,0" SelectionChanged="SortComboBox_SelectionChanged">
+                            <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True" />
+                            <ComboBoxItem Content="Alfabetik (Z-A)" />
+                            <ComboBoxItem Content="Eklenme (Yeni)" />
+                            <ComboBoxItem Content="Eklenme (Eski)" />
+                            <ComboBoxItem Content="Favoriler Önce" />
+                            <ComboBoxItem Content="Çok İzlenenler" />
+                            <ComboBoxItem Content="Sizin Çok İzledikleriniz" />
+                        </ComboBox>
+                        
+                        <Grid>
+                            <TextBox x:Name="SearchBox" Width="200" Height="35" TextChanged="SearchBox_TextChanged" >
+                                <!-- Using Style via App.xaml automatically -->
+                            </TextBox>
+                            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Search]}" Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=SearchBox}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </StackPanel>
                 </Grid>
             </StackPanel>
         </Border>
@@ -107,7 +121,7 @@
                                     
                                     <!-- Badges and Drag Icon -->
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="5">
-                                        <!-- Multiple Sources Indicator -->
+                                        <!-- Source Badge -->
                                         <Border Background="#f97316" CornerRadius="4" Padding="5,2" Margin="0,0,5,0">
                                             <Border.Style>
                                                 <Style TargetType="Border">
@@ -121,6 +135,43 @@
                                             </Border.Style>
                                             <TextBlock Text="{Binding SourcesCount, StringFormat='+{0} Kaynak'}" FontSize="9" Foreground="White" FontWeight="Bold"/>
                                         </Border>
+                                        
+                                        <!-- Viewers Badge -->
+                                        <Border Background="#e11d48" CornerRadius="4" Padding="5,2" Margin="0,0,5,0" ToolTip="Şu an izleyenler">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasViewers}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="👁" FontSize="10" Foreground="White" Margin="0,0,3,0"/>
+                                                <TextBlock Text="{Binding ViewersCount}" FontSize="9" Foreground="White" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Personal Watch Badge -->
+                                        <Border Background="#3b82f6" CornerRadius="4" Padding="5,2" Margin="0,0,5,0" ToolTip="Sizin izleme sayınız">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasPersonalWatch}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="👤" FontSize="10" Foreground="White" Margin="0,0,3,0"/>
+                                                <TextBlock Text="{Binding PersonalWatchCount}" FontSize="9" Foreground="White" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </Border>
+                                        
                                         <!-- Drag Icon -->
                                         <Border Background="#475569" CornerRadius="4" Padding="5,2" Cursor="SizeAll" ToolTip="Birleştirmek için sürükleyin"
                                                 PreviewMouseLeftButtonDown="DragHandle_MouseLeftButtonDown" PreviewMouseMove="DragHandle_MouseMove">

@@ -120,6 +120,30 @@ namespace StreamMesh.Models
             set { if (_currentEpgTime != value) { _currentEpgTime = value; OnPropertyChanged(); } }
         }
 
+        private int _viewersCount = 0;
+        public int ViewersCount
+        {
+            get => _viewersCount;
+            set { if (_viewersCount != value) { _viewersCount = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasViewers)); } }
+        }
+
+        public bool HasViewers => _viewersCount > 0;
+
+        private int _personalWatchCount = 0;
+        public int PersonalWatchCount
+        {
+            get => _personalWatchCount;
+            set { 
+                if (_personalWatchCount != value) { 
+                    _personalWatchCount = value; 
+                    OnPropertyChanged(); 
+                    OnPropertyChanged(nameof(HasPersonalWatch));
+                } 
+            }
+        }
+
+        public bool HasPersonalWatch => PersonalWatchCount > 0;
+
         public override string ToString()
         {
             return $"{Name} ({GroupTitle})";

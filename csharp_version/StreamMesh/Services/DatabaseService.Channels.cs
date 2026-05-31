@@ -303,7 +303,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels ORDER BY AddedDate DESC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels ORDER BY AddedDate DESC";
                 
                 using (var reader = command.ExecuteReader())
                 {
@@ -323,7 +323,8 @@ namespace StreamMesh.Services
                             IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
-                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime
+                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                         });
                     }
                 }
@@ -338,7 +339,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
                 command.Parameters.AddWithValue("@Url", playlistUrl);
                 
                 using (var reader = command.ExecuteReader())
@@ -359,7 +360,8 @@ namespace StreamMesh.Services
                             IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
-                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime
+                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                         });
                     }
                 }
@@ -410,7 +412,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels WHERE Id = @Id";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels WHERE Id = @Id";
                 command.Parameters.AddWithValue("@Id", id);
                 
                 using (var reader = command.ExecuteReader())
@@ -431,7 +433,8 @@ namespace StreamMesh.Services
                             IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
-                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime
+                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                         };
                     }
                 }
@@ -552,7 +555,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
                 command.Parameters.AddWithValue("@Limit", limit);
                 command.Parameters.AddWithValue("@Offset", offset);
                 
@@ -574,12 +577,33 @@ namespace StreamMesh.Services
                             IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
-                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime
+                            CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                         });
                     }
                 }
             }
             return channels;
+        }
+
+        public void IncrementPersonalWatchCount(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return;
+            try
+            {
+                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+                    command.CommandText = "UPDATE Channels SET PersonalWatchCount = COALESCE(PersonalWatchCount, 0) + 1 WHERE Id = @Id";
+                    command.Parameters.AddWithValue("@Id", id);
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"IncrementPersonalWatchCount error: {id}", ex);
+            }
         }
 
         public void ClearAllChannels()

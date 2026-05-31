@@ -150,6 +150,9 @@ namespace StreamMesh.Views
         {
             if (channel == null) return;
             _currentChannel = channel;
+            
+            _databaseService.IncrementPersonalWatchCount(channel.Id);
+            channel.PersonalWatchCount++;
 
             // Sync OSD Category Combobox with the dragged/played channel to provide continuous context
             if (OsdCategoryBox != null)
@@ -388,6 +391,14 @@ namespace StreamMesh.Views
             });
         }
 
+        private string[] _donationsAndAds = {
+            "Gelişmiş StreamMesh Deneyimi: Reklamsız ve engelsiz p2p yayın izlemek için VIP satın alabilirsiniz.",
+            "Kampanya: Arkadaşın referans kodunla üye olup 3 gün peş peşe veya 1 ay içinde 4 kez giriş yaparsa 1 AYLIK VIP Hediye!",
+            "Yeni Özellik: Sürüş sırasında dikkat! Artık sürükle & bırak ile kanalları birleştirme yayında.",
+            "P2P Avantajı: Aynı IP üzerinden cihazlarınız arasında senkronize yayın izleyin.",
+        };
+        private int _currentAdIndex = 0;
+
         private void ShowOsd()
         {
             if (TopOsd == null || BottomOsd == null) return;
@@ -400,6 +411,18 @@ namespace StreamMesh.Views
             {
                 if (OsdAdBanner.Visibility != Visibility.Visible && !_adBannerTimer.IsEnabled)
                 {
+                    _currentAdIndex = (_currentAdIndex + 1) % _donationsAndAds.Length;
+                    if (AdBannerText != null)
+                    {
+                        var refCode = UserService.CurrentUser.ReferralCode;
+                        string text = _donationsAndAds[_currentAdIndex];
+                        if (text.Contains("Kampanya"))
+                        {
+                             text += $"\nSenin Referans Kodun: {refCode}";
+                        }
+                        AdBannerText.Text = text;
+                    }
+                    
                     OsdAdBanner.Visibility = Visibility.Visible;
                     _adBannerTimer.Start();
                 }
@@ -407,6 +430,7 @@ namespace StreamMesh.Views
             else
             {
                 OsdAdBanner.Visibility = Visibility.Collapsed;
+                _adBannerTimer.Stop();
             }
         }
 

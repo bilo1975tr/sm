@@ -55,7 +55,8 @@ namespace StreamMesh.Services
                         Language TEXT,
                         PlaylistUrl TEXT,
                         IsFavorite INTEGER DEFAULT 0,
-                        IsVerified INTEGER DEFAULT 0
+                        IsVerified INTEGER DEFAULT 0,
+                        PersonalWatchCount INTEGER DEFAULT 0
                     );
                     CREATE TABLE IF NOT EXISTS EpgPrograms (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,6 +71,12 @@ namespace StreamMesh.Services
                 command.ExecuteNonQuery();
 
                 // Add columns to existing DB if necessary
+                try {
+                    var cmdUpdate = connection.CreateCommand();
+                    cmdUpdate.CommandText = "ALTER TABLE Channels ADD COLUMN PersonalWatchCount INTEGER DEFAULT 0;";
+                    cmdUpdate.ExecuteNonQuery();
+                } catch { }
+
                 try {
                     var alterCmd1 = connection.CreateCommand();
                     alterCmd1.CommandText = "ALTER TABLE Channels ADD COLUMN Category TEXT DEFAULT 'TV';";

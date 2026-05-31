@@ -31,9 +31,18 @@ namespace StreamMesh.Views
             _allChannels = _databaseService.GetAllChannels();
             _currentPage = 1;
 
-            if (_databaseService.GetSetting("IsVIP", "false") == "true")
+            if (StreamMesh.Services.P2P.UserService.CurrentUser != null)
             {
-                SponsorBannerBorder.Visibility = Visibility.Collapsed;
+                if (StreamMesh.Services.P2P.UserService.CurrentUser.IsPremium)
+                {
+                    SponsorBannerBorder.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    SponsorBannerBorder.Visibility = Visibility.Visible;
+                    var refCode = StreamMesh.Services.P2P.UserService.CurrentUser.ReferralCode;
+                    HomeAdText.Text = $"Arkadaşını Getir VIP Kazan!\nReferans Kodun: {refCode}";
+                }
             }
             else
             {
@@ -66,6 +75,15 @@ namespace StreamMesh.Views
 
         private List<Channel> _filteredChannels;
 
+        private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_filteredChannels != null)
+            {
+                _currentPage = 1;
+                FilterChannels();
+            }
+        }
+
         private void FilterChannels()
         {
             if (_allChannels == null) return;
@@ -81,7 +99,7 @@ namespace StreamMesh.Views
             {
                 _filteredChannels = _filteredChannels.Where(c => c.IsFavorite).ToList();
             }
-            else if (_selectedCategory != "Tümü")
+            else if (_selectedCategory != "Tümü" && _selectedCategory != "All")
             {
                 // Kategori ismini daha esnek kontrol et (örn: "Belgesel" hem "Belgesel" hem "Belgesel [TV]" için çalışsın)
                 string catUpper = _selectedCategory.ToUpper().Trim();
@@ -89,6 +107,40 @@ namespace StreamMesh.Views
                     c.Category != null && 
                     (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
                 ).ToList();
+            }
+
+            // Apply Sorting
+            if (SortComboBox != null && SortComboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                string sortType = selectedItem.Content.ToString();
+                switch (sortType)
+                {
+                    case "Alfabetik (A-Z)":
+                        _filteredChannels = _filteredChannels.OrderBy(c => c.Name).ToList();
+                        break;
+                    case "Alfabetik (Z-A)":
+                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.Name).ToList();
+                        break;
+                    case "Eklenme (Yeni)":
+                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.CreatedAt).ToList();
+                        break;
+                    case "Eklenme (Eski)":
+                        _filteredChannels = _filteredChannels.OrderBy(c => c.CreatedAt).ToList();
+                        break;
+                    case "Favoriler Önce":
+                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.Name).ToList();
+                        break;
+                    case "Çok İzlenenler":
+                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.ViewersCount).ToList();
+                        break;
+                    case "Sizin Çok İzledikleriniz":
+                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.PersonalWatchCount).ToList();
+                        break;
+                }
+            }
+            else
+            {
+                _filteredChannels = _filteredChannels.OrderBy(c => c.Name).ToList();
             }
 
             _totalPages = (int)Math.Ceiling(_filteredChannels.Count / (double)_pageSize);
@@ -104,6 +156,10 @@ namespace StreamMesh.Views
 
             foreach (var ch in paged)
             {
+                // Rastgele izleyici simülasyonu (Canlı Firebase bağlantısı yapılana kadar)
+                var random = new Random(ch.Id.GetHashCode() + DateTime.Now.Minute);
+                ch.ViewersCount = random.Next(0, 1500) > 1000 ? random.Next(50, 4000) : random.Next(0, 20);
+
                 if (epgDict.TryGetValue(ch.Id, out var curEpg))
                 {
                     ch.CurrentEpgTitle = curEpg.Title;
@@ -118,7 +174,12 @@ namespace StreamMesh.Views
 
             ChannelGrid.ItemsSource = paged;
             TotalCountText.Text = string.Format(LocalizationManager.Instance["Home_Total"], _filteredChannels.Count);
-            PageInfoText.Text = string.Format(LocalizationManager.Instance["Home_Page"], _currentPage, _totalPages);
+            
+            // Eğer Localization içinde Home_Page yoksa null dönebiliyor bu yüzden direkt gösteriyoruz
+            if (PageInfoText != null)
+            {
+                PageInfoText.Text = $"{_currentPage} / {_totalPages}";
+            }
             PrevPageBtn.IsEnabled = _currentPage > 1;
             NextPageBtn.IsEnabled = _currentPage < _totalPages;
         }

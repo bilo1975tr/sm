@@ -127,14 +127,19 @@
 
             <!-- Ad Banner Panel -->
             <Border x:Name="OsdAdBanner" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="20,0,20,100" Padding="15" CornerRadius="12"
-                    Background="#C81e293b" BorderBrush="#38bdf8" BorderThickness="2" Visibility="Collapsed" MaxWidth="600">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="⭐" FontSize="30" VerticalAlignment="Center" Margin="0,0,15,0" />
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="Reklam / Sponsor Alanı" FontWeight="Bold" FontSize="16" Foreground="White" />
-                        <TextBlock Text="Yayın keyfinizi kesintiye uğratmayan, 30 saniye içinde kaybolan sponsor reklam alanı." FontSize="12" Foreground="#cbd5e1" TextWrapping="Wrap" />
+                    Background="#D91e293b" BorderBrush="#38bdf8" BorderThickness="2" Visibility="Collapsed" MaxWidth="700">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" Text="⭐" FontSize="40" VerticalAlignment="Center" Margin="0,0,20,0" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Duyuru &amp; Kampanyalar" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,5" />
+                        <TextBlock x:Name="AdBannerText" Text="Reklam yükleniyor..." FontSize="14" Foreground="#f8fafc" TextWrapping="Wrap" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </Border>
 
             <!-- Bottom Panel -->

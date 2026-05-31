@@ -10,6 +10,8 @@ namespace StreamMesh.Models
         public string Country { get; set; } = "Türkiye";
         public List<string> Languages { get; set; } = new List<string> { "Türkçe" }; // Up to 3 languages
         public string AppLanguage { get; set; } = "Türkçe";
+        public string ReferralCode { get; set; }
+        public string ReferredBy { get; set; }
         public bool IsPremium { get; set; }
         public DateTime PremiumExpiry { get; set; }
         public DateTime LastLoginTime { get; set; }
