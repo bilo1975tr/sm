@@ -19,6 +19,7 @@ namespace StreamMesh.Windows
             this.Title = $"Kanal Düzenle - {channel.Name}";
 
             // Populate Languages
+            LangCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Bilinmiyor" });
             var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
                 .Select(c => c.NativeName)
                 .Distinct()

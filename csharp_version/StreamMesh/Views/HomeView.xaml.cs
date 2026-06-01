@@ -423,16 +423,17 @@ namespace StreamMesh.Views
             if (string.IsNullOrEmpty(lang)) return "";
             string lower = lang.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim();
             
-            if (lower.Contains("türkçe") || lower.Contains("turkce")) return "türkçe";
-            if (lower.Contains("ingilizce") || lower.Contains("english")) return "ingilizce";
-            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german")) return "almanca";
-            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français")) return "fransızca";
-            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español")) return "ispanyolca";
-            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский")) return "rusça";
-            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano")) return "italyanca";
-            if (lower.Contains("arapça") || lower.Contains("arabic")) return "arapça";
-            if (lower.Contains("kurtçe") || lower.Contains("kürtçe") || lower.Contains("kurdish")) return "kürtçe";
-            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri")) return "azerice";
+            if (lower.Contains("türkçe") || lower.Contains("turkce") || lower == "tr" || lower == "tur" || lower.Contains("turkish")) return "türkçe";
+            if (lower.Contains("ingilizce") || lower.Contains("english") || lower == "en" || lower == "eng" || lower == "usa" || lower == "uk") return "ingilizce";
+            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german") || lower == "de" || lower == "ger") return "almanca";
+            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français") || lower == "fr" || lower == "fra") return "fransızca";
+            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español") || lower == "es" || lower == "esp") return "ispanyolca";
+            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский") || lower == "ru" || lower == "rus") return "rusça";
+            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano") || lower == "it" || lower == "ita") return "italyanca";
+            if (lower.Contains("arapça") || lower.Contains("arabic") || lower == "ar" || lower == "ara") return "arapça";
+            if (lower.Contains("kurtçe") || lower.Contains("kürtçe") || lower.Contains("kurdish") || lower == "ku" || lower == "kur") return "kürtçe";
+            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri") || lower == "az" || lower == "aze") return "azerice";
+            if (lower == "bilinmiyor" || lower == "unknown") return "bilinmiyor";
 
             int parenIndex = lower.IndexOf('(');
             if (parenIndex > 0)

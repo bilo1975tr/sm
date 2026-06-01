@@ -30,6 +30,10 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00074] - 2026-06-01
+- **Kapsamlı Dil ve Filtre Normalizasyonu:** `HomeView.xaml.cs` içerisindeki `NormalizeLanguage` metodu baştan aşağı güçlendirilerek `tr`, `en`, `de` gibi 2/3 harfli ISO kodları ve İngilizce dil adlarının (örneğin "turkish", "german", "english") yerel Türkçe karşılıklarına kusursuz eşleşmesi sağlandı; dilleri filtrelememe hatası kökten çözüldü.
+- **"Bilinmiyor" Dil Entegrasyonu:** `LangCombo` (Kanal Düzenleme), `LanguageCombo` (Kaynak Düzenleyici) ve `BulkLanguageCombo` (Gelişmiş Kanal Yöneticisi) pencerelerinde "Bilinmiyor" seçeneği listenin başına/en üstüne yerleştirildi, böylece kullanıcıların diledikleri kanalları bu esnek tag ile düzenlemelerine imkan tanındı.
+
 ### [0.0 alfa 00073] - 2026-06-01
 - **GitHub Sync / .gitignore Çakışması Giderildi:** `channels.json`, `channels_*.json` ve `kanallar_*.m3u` gibi kritik veri tabanı ve çıktı dosyaları `.gitignore` içerisinden tamamen kaldırıldı. Bu sayede, otomatik senkronizasyon araçlarının her çalıştırmada mevcut listeleri silerek sıfırlaması hatası %100 düzeltildi. Listeler artık asıl sürüm kontrolünde güvenli bir şekilde takip edilecek ve her senkronizasyonda veri kaybı oluşmadan birleştirilecektir.
 

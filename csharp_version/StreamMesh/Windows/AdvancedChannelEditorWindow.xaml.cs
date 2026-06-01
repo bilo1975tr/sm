@@ -110,6 +110,7 @@ namespace StreamMesh.Windows
         private void PopulateLanguages()
         {
             BulkLanguageCombo.Items.Add(new ComboBoxItem { Content = "Değiştirme" });
+            BulkLanguageCombo.Items.Add(new ComboBoxItem { Content = "Bilinmiyor" });
             
             var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
                 .Select(c => c.NativeName)
