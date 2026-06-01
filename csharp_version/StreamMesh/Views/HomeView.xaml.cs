@@ -109,6 +109,25 @@ namespace StreamMesh.Views
                 ).ToList();
             }
 
+            // Dil filtresini (profile.Languages) ve dil dengelemeyi/normalizasyonu uygula
+            var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+            if (profile != null && profile.Languages != null && profile.Languages.Count > 0)
+            {
+                var activeLangs = profile.Languages
+                    .Where(l => !string.IsNullOrEmpty(l) && l != "Hiçbiri")
+                    .Select(NormalizeLanguage)
+                    .ToList();
+
+                if (activeLangs.Count > 0)
+                {
+                    _filteredChannels = _filteredChannels.Where(c => 
+                        string.IsNullOrEmpty(c.Language) || 
+                        c.Language == "Bilinmiyor" || 
+                        activeLangs.Contains(NormalizeLanguage(c.Language))
+                    ).ToList();
+                }
+            }
+
             // Apply Sorting
             if (SortComboBox != null && SortComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
@@ -397,6 +416,30 @@ namespace StreamMesh.Views
                 e.Effects = DragDropEffects.None;
             }
             e.Handled = true;
+        }
+
+        private string NormalizeLanguage(string lang)
+        {
+            if (string.IsNullOrEmpty(lang)) return "";
+            string lower = lang.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim();
+            
+            if (lower.Contains("türkçe") || lower.Contains("turkce")) return "türkçe";
+            if (lower.Contains("ingilizce") || lower.Contains("english")) return "ingilizce";
+            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german")) return "almanca";
+            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français")) return "fransızca";
+            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español")) return "ispanyolca";
+            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский")) return "rusça";
+            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano")) return "italyanca";
+            if (lower.Contains("arapça") || lower.Contains("arabic")) return "arapça";
+            if (lower.Contains("kurtçe") || lower.Contains("kürtçe") || lower.Contains("kurdish")) return "kürtçe";
+            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri")) return "azerice";
+
+            int parenIndex = lower.IndexOf('(');
+            if (parenIndex > 0)
+            {
+                lower = lower.Substring(0, parenIndex).Trim();
+            }
+            return lower;
         }
     }
 }
