@@ -13,9 +13,6 @@ dist-ssr
 *.local
 
 # Channels data
-channels.json
-channels_*.json
-kanallar_*.m3u
 firebase_new.json
 delete_payload.json
 

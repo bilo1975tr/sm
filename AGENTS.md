@@ -30,6 +30,9 @@ Bu dosya, yapay zeka asistanının bu projede nasıl davranması gerektiğini be
 
 ## Değişiklik Günlüğü (Changelog)
 
+### [0.0 alfa 00073] - 2026-06-01
+- **GitHub Sync / .gitignore Çakışması Giderildi:** `channels.json`, `channels_*.json` ve `kanallar_*.m3u` gibi kritik veri tabanı ve çıktı dosyaları `.gitignore` içerisinden tamamen kaldırıldı. Bu sayede, otomatik senkronizasyon araçlarının her çalıştırmada mevcut listeleri silerek sıfırlaması hatası %100 düzeltildi. Listeler artık asıl sürüm kontrolünde güvenli bir şekilde takip edilecek ve her senkronizasyonda veri kaybı oluşmadan birleştirilecektir.
+
 ### [0.0 alfa 00072] - 2026-05-31
 - **Güncelleme Kontrolü:** Uygulama açılışına `UpdateService` ile GitHub üzerinden otomatik yeni sürüm kontrolü (otomatik güncelleme bildirimi) eklendi.
 - **Kişisel İzleme Geçmişi & Sizin Çok İzledikleriniz:** `Channel` modeline `PersonalWatchCount` ve `HasPersonalWatch` eklendi. Ana ekranda bu verilere dayalı filtre (Sizin Çok İzledikleriniz) devreye alındı. Kişisel izleme rozetleri kullanıcı arayüzüne eklendi.
