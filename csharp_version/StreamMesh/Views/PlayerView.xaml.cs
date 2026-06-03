@@ -116,7 +116,7 @@ namespace StreamMesh.Views
             if (ChannelListView == null || _allChannels == null) return;
             string searchText = OsdSearchBox?.Text?.ToLower() ?? "";
             int selectedCatIndex = OsdCategoryBox?.SelectedIndex ?? 0;
-            // 0: Tümü, 1: Favoriler, 2: TV, 3: Film, 4: Dizi
+            // 0: Tümü, 1: Favoriler, 2: TV, 3: Film, 4: Dizi, 5: Radyo
 
             var filtered = new List<Channel>();
             foreach (var ch in _allChannels)
@@ -139,6 +139,10 @@ namespace StreamMesh.Views
                 else if (selectedCatIndex == 4) // Dizi
                 {
                     if (ch.Category != null && !ch.Category.ToLower().Contains("dizi") && !ch.Category.ToLower().Contains("series")) continue;
+                }
+                else if (selectedCatIndex == 5) // Radyo
+                {
+                    if (ch.Category != null && !ch.Category.ToLower().Contains("radyo") && !ch.Category.ToLower().Contains("radio")) continue;
                 }
 
                 filtered.Add(ch);
@@ -168,6 +172,7 @@ namespace StreamMesh.Views
                     string cat = channel.Category.ToLower();
                     if (cat.Contains("film") || cat.Contains("movie")) OsdCategoryBox.SelectedIndex = 3;
                     else if (cat.Contains("dizi") || cat.Contains("series")) OsdCategoryBox.SelectedIndex = 4;
+                    else if (cat.Contains("radyo") || cat.Contains("radio")) OsdCategoryBox.SelectedIndex = 5;
                     else OsdCategoryBox.SelectedIndex = 2; // TV
                 }
                 else

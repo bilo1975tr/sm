@@ -53,6 +53,7 @@
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_TV]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Movies]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Series]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Radio]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                     </StackPanel>
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal">

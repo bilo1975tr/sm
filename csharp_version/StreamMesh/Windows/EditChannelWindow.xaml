@@ -60,6 +60,7 @@
                 <ComboBoxItem Content="TV"/>
                 <ComboBoxItem Content="Film"/>
                 <ComboBoxItem Content="Dizi"/>
+                <ComboBoxItem Content="Radyo"/>
             </ComboBox>
 
             <TextBlock Text="Dil (Language):" Foreground="#94a3b8"/>

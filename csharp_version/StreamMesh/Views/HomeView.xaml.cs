@@ -103,10 +103,20 @@ namespace StreamMesh.Views
             {
                 // Kategori ismini daha esnek kontrol et (örn: "Belgesel" hem "Belgesel" hem "Belgesel [TV]" için çalışsın)
                 string catUpper = _selectedCategory.ToUpper().Trim();
-                _filteredChannels = _filteredChannels.Where(c => 
-                    c.Category != null && 
-                    (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
-                ).ToList();
+                if (catUpper.Contains("RADYO") || catUpper.Contains("RADIO"))
+                {
+                    _filteredChannels = _filteredChannels.Where(c => 
+                        c.Category != null && 
+                        (c.Category.ToUpper().Contains("RADYO") || c.Category.ToUpper().Contains("RADIO"))
+                    ).ToList();
+                }
+                else
+                {
+                    _filteredChannels = _filteredChannels.Where(c => 
+                        c.Category != null && 
+                        (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
+                    ).ToList();
+                }
             }
 
             // Dil filtresini (profile.Languages) ve dil dengelemeyi/normalizasyonu uygula

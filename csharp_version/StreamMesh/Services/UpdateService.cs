@@ -110,7 +110,7 @@ namespace StreamMesh.Services
             {
                 LogService.LogError("Version okuma hatasi", ex);
             }
-            return "0.0 alfa 00074"; // Fallback to current version to prevent false updates
+            return "0.0 alfa 00075"; // Fallback to current version to prevent false updates
         }
 
         public static async Task CheckForUpdatesAsync()

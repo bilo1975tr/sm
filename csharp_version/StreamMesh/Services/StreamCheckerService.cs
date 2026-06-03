@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using StreamMesh.Models;
+using LibVLCSharp.Shared;
 
 namespace StreamMesh.Services
 {
@@ -51,6 +52,16 @@ namespace StreamMesh.Services
 
                     var actualUrl = response.RequestMessage.RequestUri.ToString();
                     string contentType = response.Content.Headers.ContentType?.MediaType?.ToLower() ?? "";
+
+                    // Web sayfalarını veya API JSON hatalarını en baştan eleyelim
+                    if (contentType.Contains("text/html") || 
+                        contentType.Contains("application/json") || 
+                        contentType.Contains("application/xhtml+xml"))
+                    {
+                        Debug.WriteLine($"Rejected non-media contentType: {contentType} for {url}");
+                        return false;
+                    }
+
                     bool isM3u8 = actualUrl.Contains(".m3u8") || contentType.Contains("mpegurl") || contentType.Contains("vnd.apple.mpegurl");
 
                     if (isM3u8)
@@ -68,7 +79,12 @@ namespace StreamMesh.Services
                             int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
                             if (bytesRead > 0)
                             {
-                                return true; // Has data flow
+                                if (IsHtmlOrJson(buffer, bytesRead))
+                                {
+                                    Debug.WriteLine($"Rejected fake stream (HTML/JSON sniffed) for {url}");
+                                    return false;
+                                }
+                                return true; // Has real data flow
                             }
                         }
                     }
@@ -79,6 +95,26 @@ namespace StreamMesh.Services
                 // Silent mostly, log only critical
                 Debug.WriteLine($"Stream check failed for {url}: {ex.Message}");
             }
+            return false;
+        }
+
+        private static bool IsHtmlOrJson(byte[] buffer, int bytesRead)
+        {
+            if (bytesRead < 5) return false;
+            try
+            {
+                string text = System.Text.Encoding.UTF8.GetString(buffer, 0, Math.Min(bytesRead, 128)).TrimStart();
+                if (text.StartsWith("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("<html", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("<head", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("<script", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("{", StringComparison.OrdinalIgnoreCase) ||
+                    text.StartsWith("[", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            catch { }
             return false;
         }
 
@@ -144,6 +180,12 @@ namespace StreamMesh.Services
                     {
                         if (!tsResponse.IsSuccessStatusCode) return false;
 
+                        string contentType = tsResponse.Content.Headers.ContentType?.MediaType?.ToLower() ?? "";
+                        if (contentType.Contains("text/html") || contentType.Contains("application/json"))
+                        {
+                            return false;
+                        }
+
                         // Check if the TS block actually provides data flow
                         using (var stream = await tsResponse.Content.ReadAsStreamAsync())
                         {
@@ -151,7 +193,15 @@ namespace StreamMesh.Services
                             using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                             {
                                 int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
-                                return bytesRead > 0;
+                                if (bytesRead > 0)
+                                {
+                                    if (IsHtmlOrJson(buffer, bytesRead))
+                                    {
+                                        return false;
+                                    }
+                                    return true;
+                                }
+                                return false;
                             }
                         }
                     }
@@ -178,6 +228,103 @@ namespace StreamMesh.Services
                 }
             }
             catch { return false; }
+        }
+
+        public async Task<(bool working, string category, string resolution)> AnalyzeStreamWithVlcAsync(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return (false, null, null);
+
+            // YouTube ve Acestream'i ayrı tutalım (onlar için HTTP check yeterli)
+            if (url.Contains("youtube.com") || url.Contains("youtu.be"))
+            {
+                bool isYtWorking = await CheckYouTubeAsync(url);
+                return (isYtWorking, "TV", null);
+            }
+            if (url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
+            {
+                return (true, "TV", null);
+            }
+
+            try
+            {
+                // Init a temporary LibVLC instance safely
+                using (var libVlc = new LibVLC(new string[] { "--quiet", "--no-video-title-show" }))
+                {
+                    using (var media = new Media(libVlc, new Uri(url)))
+                    {
+                        using (var mediaPlayer = new MediaPlayer(media))
+                        {
+                            mediaPlayer.Muted = true;
+                            mediaPlayer.Play();
+
+                            bool hasVideo = false;
+                            bool hasAudio = false;
+                            string resolution = null;
+                            int elapsedMs = 0;
+
+                            // En fazla 3 saniye (veya video/ses tespiti yapılana kadar) bekliyoruz
+                            while (elapsedMs < 3000)
+                            {
+                                await Task.Delay(150);
+                                elapsedMs += 150;
+
+                                if (mediaPlayer.IsPlaying)
+                                {
+                                    var tracks = media.Tracks;
+                                    if (tracks != null && tracks.Length > 0)
+                                    {
+                                        foreach (var track in tracks)
+                                        {
+                                            if (track.TrackType == TrackType.Video)
+                                            {
+                                                hasVideo = true;
+                                                var videoTrack = track.Data.Video;
+                                                if (videoTrack.Width > 0 && videoTrack.Height > 0)
+                                                {
+                                                    resolution = $"{videoTrack.Width}x{videoTrack.Height}";
+                                                }
+                                            }
+                                            else if (track.TrackType == TrackType.Audio)
+                                            {
+                                                hasAudio = true;
+                                            }
+                                        }
+
+                                        if (hasVideo || hasAudio)
+                                        {
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            mediaPlayer.Stop();
+
+                            bool isWorking = hasVideo || hasAudio || mediaPlayer.IsPlaying;
+                            if (!isWorking)
+                            {
+                                return (false, null, null);
+                            }
+
+                            // Sadece ses var ve video track yoksa -> Radyo
+                            string category = "TV";
+                            if (hasAudio && !hasVideo)
+                            {
+                                category = "Radyo";
+                            }
+
+                            return (true, category, resolution);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"LibVLC analysis failed for {url}: {ex.Message}");
+                // Fallback to basic Http check
+                bool httpWorking = await CheckStreamAsync(url);
+                return (httpWorking, "TV", null);
+            }
         }
 
         public async Task<StreamCheckStats> CheckChannelsAsync(List<Channel> channels, bool unverifiedOnly, CancellationToken cancellationToken, Action<StreamCheckStats> progressCallback)
@@ -210,12 +357,15 @@ namespace StreamMesh.Services
                 // Handle merged urls if any (comma separated)
                 var urls = channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                 bool anyWorking = false;
+                string detectedCategory = null;
+                string detectedResolution = null;
                 
                 foreach (var url in urls)
                 {
                     if (channel.SourceType == "ACESTREAM" || url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
                     {
                         anyWorking = true;
+                        detectedCategory = "TV";
                         break;
                     }
                     else if (channel.SourceType == "YOUTUBE" || url.Contains("youtube.com") || url.Contains("youtu.be"))
@@ -223,14 +373,18 @@ namespace StreamMesh.Services
                         if (await CheckYouTubeAsync(url))
                         {
                             anyWorking = true;
+                            detectedCategory = "TV";
                             break;
                         }
                     }
                     else
                     {
-                        if (await CheckStreamAsync(url))
+                        var (working, cat, res) = await AnalyzeStreamWithVlcAsync(url);
+                        if (working)
                         {
                             anyWorking = true;
+                            detectedCategory = cat;
+                            detectedResolution = res;
                             break;
                         }
                     }
@@ -242,8 +396,25 @@ namespace StreamMesh.Services
                     else if (isYt) stats.YouTubeWorking++;
                     else if (isM3u) stats.M3u8Working++;
 
+                    if (detectedCategory == "Radyo")
+                    {
+                        channel.Category = "Radyo";
+                    }
+                    else if (string.IsNullOrEmpty(channel.Category) || channel.Category == "TV")
+                    {
+                        if (!string.IsNullOrEmpty(detectedCategory))
+                        {
+                            channel.Category = detectedCategory;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(detectedResolution))
+                    {
+                        LogService.Log($"[StreamChecker] {channel.Name} çözünürlüğü tespit edildi: {detectedResolution}");
+                    }
+
                     channel.IsVerified = true;
-                    db.SaveChannel(channel); // Update verification status
+                    db.SaveChannel(channel); // Update verification status and category
                     
                     // Kullanıcı manuel olarak tüm listeyi test ediyorsa, daha önce onaylı olsa da havuza göndererek günceller,
                     // Eğer sadece 'onaysız' listesi deneniyorsa zaten (!wasVerifiedLocally) bloğuna girer.

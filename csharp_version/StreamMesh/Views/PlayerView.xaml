@@ -239,6 +239,7 @@
                             <ComboBoxItem Content="TV"/>
                             <ComboBoxItem Content="Film"/>
                             <ComboBoxItem Content="Dizi"/>
+                            <ComboBoxItem Content="Radyo"/>
                         </ComboBox>
                     </StackPanel>
 

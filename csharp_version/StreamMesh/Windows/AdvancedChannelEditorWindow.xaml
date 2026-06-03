@@ -81,6 +81,7 @@
                 <ComboBoxItem Content="TV" />
                 <ComboBoxItem Content="Film" />
                 <ComboBoxItem Content="Dizi" />
+                <ComboBoxItem Content="Radyo" />
             </ComboBox>
             
             <TextBlock Text="Dil (Ülke):" Margin="10,0,10,5" Foreground="#94a3b8" />

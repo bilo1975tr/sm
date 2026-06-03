@@ -74,6 +74,7 @@ namespace StreamMesh.Services
             _currentDictionary["Home_TV"] = "TV";
             _currentDictionary["Home_Movies"] = "Film";
             _currentDictionary["Home_Series"] = "Dizi";
+            _currentDictionary["Home_Radio"] = "Radyo";
             _currentDictionary["Home_Search"] = "🔍 Kanal ara...";
             _currentDictionary["Home_Total"] = "Toplam: {0} İçerik";
             _currentDictionary["Home_Page"] = "Sayfa {0} / {1}";
@@ -164,6 +165,7 @@ namespace StreamMesh.Services
                 _currentDictionary["Home_TV"] = "TV";
                 _currentDictionary["Home_Movies"] = "Filme";
                 _currentDictionary["Home_Series"] = "Serien";
+                _currentDictionary["Home_Radio"] = "Radio";
                 _currentDictionary["Home_Search"] = "🔍 Kanal Suchen...";
                 _currentDictionary["Home_Total"] = "Gesamt: {0} Inhalt";
                 _currentDictionary["Home_Page"] = "Seite {0} / {1}";
@@ -252,6 +254,7 @@ namespace StreamMesh.Services
                 _currentDictionary["Home_TV"] = "TV";
                 _currentDictionary["Home_Movies"] = "Movies";
                 _currentDictionary["Home_Series"] = "Series";
+                _currentDictionary["Home_Radio"] = "Radio";
                 _currentDictionary["Home_Search"] = "🔍 Search channel...";
                 _currentDictionary["Home_Total"] = "Total: {0} Content";
                 _currentDictionary["Home_Page"] = "Page {0} / {1}";
