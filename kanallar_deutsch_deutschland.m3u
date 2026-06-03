@@ -1,0 +1,39 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="WDR 1 Live (720p)" tvg-logo="https://i.imgur.com/RbqDMYx.png" group-title="Undefined",WDR 1 Live (720p)
+https://wdrfs247.akamaized.net/hls/live/681509/wdr_msl4_fs247/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BR Fernsehen Nord (720p) [Geo-blocked]" tvg-logo="https://i.imgur.com/xzJDNs5.png" group-title="Undefined",BR Fernsehen Nord (720p) [Geo-blocked]
+https://brlive-lh.akamaihd.net/i/bfsnord_germany@119898/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Dortmund (720p) [Geo-blocked]" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Wdr_fernsehen_logo_2016.svg/512px-Wdr_fernsehen_logo_2016.svg.png" group-title="Undefined",WDR Fernsehen Dortmund (720p) [Geo-blocked]
+https://wdrlokalzeit.akamaized.net/hls/live/2018022-b/wdrlz_dortmund/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Deluxe Lounge HD" tvg-logo="https://i.imgur.com/DnMzWiG.png" group-title="Music",Deluxe Lounge HD
+https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/9a087b26-8be4-11eb-a7de-bacfe1f83627/0/master.m3u8?country=DE&optout=0&uid=749544ec3d9a45d48c600d03cac91dfd&vendor=philips
+#EXTINF:-1 tvg-id="" tvg-name="Das Erste (720p)" tvg-logo="https://i.imgur.com/tGHLJSF.png" group-title="Undefined",Das Erste (720p)
+https://derste247liveint.akamaized.net/hls/live/662735/daserste_int/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Ran 1 (1080p)" tvg-logo="https://i.imgur.com/zRg2BEa.png" group-title="Undefined",Ran 1 (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/ran1_high/playlist.m3u8
+#EXTINF:-1 tvg-id="DE - Universal TV" tvg-name="universal tv" tvg-logo="" group-title="Manuel Eklenenler",universal tv
+acestream://7f8a688bbe9367c1ecbe733116a6aefb1bd22bb6
+#EXTINF:-1 tvg-id="" tvg-name="OK Wernigerode (1080p)" tvg-logo="" group-title="Genel",OK Wernigerode (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-wernigerode_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Deluxe Rap (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/s3h67hx.png" group-title="Undefined",Deluxe Rap (1080p) [Geo-blocked]
+https://sdn-global-live-streaming-packager-cache.3qsdn.com/65183/65183_264_live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Köln (720p) [Geo-blocked]" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Wdr_fernsehen_logo_2016.svg/512px-Wdr_fernsehen_logo_2016.svg.png" group-title="Undefined",WDR Fernsehen Köln (720p) [Geo-blocked]
+https://wdrlokalzeit.akamaized.net/hls/live/2023550-b/wdrlz_koeln/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Deluxe Dance (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/Qu7t15Y.png" group-title="Undefined",Deluxe Dance (1080p) [Geo-blocked]
+https://sdn-global-live-streaming-packager-cache.3qsdn.com/64733/64733_264_live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="SR Fernsehen (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/SR_Fernsehen.svg/512px-SR_Fernsehen.svg.png" group-title="Undefined",SR Fernsehen (720p)
+https://srfs.akamaized.net/hls/live/689649/srfsgeo/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Juwelo (720p)" tvg-logo="https://cdn.hd-plus.de/senderlogos/bright-cropped/24491-2.png" group-title="Undefined",Juwelo (720p)
+https://sdn-global-live-streaming-packager-cache.3qsdn.com/7441/7441_264_live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RT DE (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/v1PIbB2.png" group-title="News",RT DE (1080p) [Not 24/7]
+https://rt-ger.rttv.com/dvr/rtdeutsch/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RBW (1080p)" tvg-logo="https://i.imgur.com/A0UKdix.png" group-title="Undefined",RBW (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/rbw_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="OK WERNIGERODE (1080P)" tvg-logo="" group-title="Genel",OK WERNIGERODE (1080P)
+acestream://b3d993123ce88e23569a5652518f4fee33f454bc
+#EXTINF:-1 tvg-id="" tvg-name="Tagesschau 24 (720p)" tvg-logo="https://i.imgur.com/LH0Gctv.png" group-title="Undefined",Tagesschau 24 (720p)
+https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Deluxe Music (720p)" tvg-logo="https://i.imgur.com/XWWTrKW.png" group-title="Music",Deluxe Music (720p)
+https://sdn-global-live-streaming-packager-cache.3qsdn.com/13456/13456_264_live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="OK Wernigerode (1080p)" tvg-logo="" group-title="Genel",OK Wernigerode (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/mp4:ok-wernigerode_high/playlist.m3u8

@@ -1,0 +1,24 @@
+[
+  {
+    "Category": "TV",
+    "CreatedAt": "2026-05-19T15:22:46",
+    "EpgId": "",
+    "EpgUrl": "",
+    "GroupTitle": "feed",
+    "HasMultipleSources": false,
+    "HasPersonalWatch": false,
+    "HasViewers": false,
+    "Id": "d10c21ea220c45b98ef27d99da9157ee",
+    "IsFavorite": false,
+    "IsVerified": true,
+    "Language": "Vai (Latin, Liberia)",
+    "LogoUrl": "https://assets.uzunmuhalefet.com/logos/b9b9c9e4-aa99-4083-aaee-b8fb4db77b9c.png",
+    "Name": "İHA 1",
+    "PersonalWatchCount": 0,
+    "PlaylistUrl": "https://streams.uzunmuhalefet.com/lists/tr.m3u",
+    "SourceType": "M3U",
+    "SourcesCount": 1,
+    "Url": "https://streams.uzunmuhalefet.com/stream/b8da99f4-56ae-4756-b733-b8a8a6099f39.m3u8",
+    "ViewersCount": 0
+  }
+]
