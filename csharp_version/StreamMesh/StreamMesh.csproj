@@ -27,6 +27,12 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\VERSION" Link="VERSION">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="CopyLibVLCToPublish" AfterTargets="Publish">
     <ItemGroup>
       <LibVLCFiles Include="$(TargetDir)libvlc\**\*.*" />
