@@ -254,7 +254,7 @@ namespace StreamMesh.Services
                     {
                         using (var mediaPlayer = new MediaPlayer(media))
                         {
-                            mediaPlayer.Muted = true;
+                            mediaPlayer.Volume = 0;
                             mediaPlayer.Play();
 
                             bool hasVideo = false;
