@@ -1,462 +1,158 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="" tvg-name="MovieDome Family (Germany)" tvg-logo="" group-title="Genel",MovieDome Family (Germany)
-https://moviedomefamily-samsung.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="noa4 Hamburg HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/noa4.png" group-title="Lokal",noa4 Hamburg HD
+#EXTINF:-1 tvg-id="" tvg-name="Noa 4 Hamburg (1080p)" tvg-logo="" group-title="Genel",Noa 4 Hamburg (1080p)
 https://hls1.wtnet.de/noa4hh/apple/wifi6500.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Campusradio Münster (Radio Q)" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radioq.png" group-title="Deutschland",Campusradio Münster (Radio Q)
-https://rqstream.radioq.de/stream/192.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Anixe HD [DE]" tvg-logo="" group-title="Genel",Anixe HD [DE]
-acestream://8638ff6c4b98625233842d362ad43eea1e7bbacb
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 10 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 10 [DE]
-acestream://e6cce13cb4005ec3c7d77db47865385927a7ab7e
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 1 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 1 HD [DE]
-acestream://501141c649a2b78c4965cbf3257224181cc55072
-#EXTINF:-1 tvg-id="" tvg-name="NDR 2" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/ndr2.png" group-title="Deutschland",NDR 2
-https://dispatcher.rndfnk.com/ndr/ndr2/niedersachsen/mp3/128/stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Netzkino" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Netzkino
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/7d7cd4fb-818d-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="KiKA" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/kika.png" group-title="Kinder / Jugend",KiKA
+#EXTINF:-1 tvg-id="" tvg-name="L-TV (720p)" tvg-logo="" group-title="Genel",L-TV (720p)
+https://live2.telvi.de/hls/l-tv_s1.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="KiKA (1080p) [Geo-blocked]" tvg-logo="" group-title="Genel",KiKA (1080p) [Geo-blocked]
 https://kikageohls.akamaized.net/hls/live/2022693/livetvkika_de/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ORF 2 HD [DE]" tvg-logo="" group-title="Genel",ORF 2 HD [DE]
-acestream://f5d3ea421c4c067b5c90161a8ae4d93482fb9edd
-#EXTINF:-1 tvg-id="" tvg-name="Health TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Health TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/7b02f9f3-72bd-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport 2 HD [DE]" tvg-logo="" group-title="Genel",Eurosport 2 HD [DE]
-acestream://ac675c82d6dfd4a201532c18b42e48dacb7c32c6
 #EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Thrillers Germany (1080p)" tvg-logo="" group-title="Genel",Rakuten TV Thrillers Germany (1080p)
 https://thriller-rakuten-tv-de.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6481/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Regio TV Bodensee" tvg-logo="https://i.imgur.com/olVCZTJ.png" group-title="GERMAN LOCAL",Regio TV Bodensee
+#EXTINF:-1 tvg-id="" tvg-name="Regio TV Bodensee (1080p)" tvg-logo="" group-title="Genel",Regio TV Bodensee (1080p)
 https://regiotv-b.iptv-playoutcenter.de/regiotv-b/regiotv-b.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="People Are Awesome" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",People Are Awesome
-https://cda1577223674f46aaebd66cf2cfe1ca.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/Samsung-ch_PeopleAreAwesome/playlist.m3u8?ads.wurl_channel=386&ads.wurl_name=PeopleAreAwesome&ads.psid=%7BPSID%7D&ads.targetopt=%7BTARGETOPT%7D&ads.app_domain=%7BAPP_DOMAIN%7D&ads.app_name=%7BAPP_NAME%7D&ads.coppa=0&ads.consent=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Nat Geo Wild [DE]" tvg-logo="" group-title="Genel",Nat Geo Wild [DE]
-acestream://394354a04edd738876b8b2ecab15d4765d33b37f
-#EXTINF:-1 tvg-id="" tvg-name="Channel NewsAsia" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/channelnewsasia.png" group-title="International;Nachrichten",Channel NewsAsia
-https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index_5.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="AXN HD [DE]" tvg-logo="" group-title="Genel",AXN HD [DE]
-acestream://f835867c82063fc133d84cf37e89e6545e6e3ad4
-#EXTINF:-1 tvg-id="" tvg-name="Bergblick Free" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Bergblick Free
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/8197afc7-299b-11ec-b414-948e0b8da07d/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Hip Trips" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Hip Trips
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/ba4f2c5b-6faf-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="ORF SPORT+ HD [DE]" tvg-logo="" group-title="Genel",ORF SPORT+ HD [DE]
-acestream://0dfa37340ca0300a41f7a78bd3a0f024c3296974
-#EXTINF:-1 tvg-id="" tvg-name="One Terra" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",One Terra
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/214f1a50-818f-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Just cooking" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Just cooking
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/af5d5f11-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="NDR Schleswig-Holstein HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/ndrhd.png" group-title="Regional",NDR Schleswig-Holstein HD
+#EXTINF:-1 tvg-id="" tvg-name="NDR Schleswig-Holstein (720p)" tvg-logo="" group-title="Genel",NDR Schleswig-Holstein (720p)
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_sh/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Motorvision" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Motorvision
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/e9c2413e-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="DE - RTL" tvg-name="RTL" tvg-logo="" group-title="Genel",RTL
-acestream://bc9610c2cb92a71a5c17f357d66719fa1c054ced
-#EXTINF:-1 tvg-id="" tvg-name="TVO" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/tvo.png" group-title="Lokal",TVO
+#EXTINF:-1 tvg-id="" tvg-name="TV Oberfranken (TVO) (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",TV Oberfranken (TVO) (1080p) [Not 24/7]
 https://tvoberfranken.iptv-playoutcenter.de/tvoberfranken/tvoberfranken.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Bergblick Free" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Bergblick Free
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/5ad84e6a-299b-11ec-b414-948e0b8da07d/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="DEFA TV (720p)" tvg-logo="" group-title="Genel",DEFA TV (720p)
 https://wdrmediagroup-defatv-1-eu.rakuten.wurl.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="MDR HD [DE]" tvg-logo="" group-title="Genel",MDR HD [DE]
-acestream://0e8dc460b1f03ff33ab4ad004ddc666f237ecbe3
-#EXTINF:-1 tvg-id="" tvg-name="Radio SRF 4 News" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosrf4news.png" group-title="Schweiz",Radio SRF 4 News
-http://stream.srg-ssr.ch/m/drs4news/mp3_128
-#EXTINF:-1 tvg-id="Sky Cinema Family.de" tvg-name="Sky Cinema Family" tvg-logo="" group-title="Genel",Sky Cinema Family
-acestream://e0fa0d9e3345ba8e88758b53bb6d6cdc157e073d
-#EXTINF:-1 tvg-id="" tvg-name="radio TOP 40" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiotop40.png" group-title="Deutschland",radio TOP 40
-http://stream.radiotop40.de/live/mp3-192
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 8 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 8 [DE]
-acestream://8f4f572005ca2557743474087aa622693ba9b5fe
-#EXTINF:-1 tvg-id="" tvg-name="Sky Cinema Classics [DE]" tvg-logo="" group-title="Genel",Sky Cinema Classics [DE]
-acestream://38ae2c654cc4727c33e6fbab63850edef4f7e636
-#EXTINF:-1 tvg-id="" tvg-name="FS1 Salzburg" tvg-logo="https://i.imgur.com/P5pc813.png" group-title="Austria",FS1 Salzburg
-http://stream.fs1.tv:8080/hls/webstream.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Beauty TV" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Beauty TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/a9232731-6fb0-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Deluxe Lounge HD" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Deluxe Lounge HD
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/ce7c5fb8-6fae-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Rocket Beans TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Rocket Beans TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/55cfd35a-818e-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Ocko TV" tvg-logo="https://i.imgur.com/jKPRYdM.png" group-title="MUSIK",Ocko TV
-https://ocko-live-dash.ssl.cdn.cra.cz/cra_live2/ocko.stream.1.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Das Erste HD [DE]" tvg-logo="" group-title="Genel",Das Erste HD [DE]
-acestream://c33404e81c7499e9c962e8a672c6cb4d534e431c
+#EXTINF:-1 tvg-id="" tvg-name="HSE24 Trend (576p)" tvg-logo="" group-title="Genel",HSE24 Trend (576p)
+https://hse24trend.akamaized.net/hls/live/2006597/hse24trend/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Finest TV (288p) [Not 24/7]" tvg-logo="" group-title="Genel",Finest TV (288p) [Not 24/7]
+https://media.finest.tv/hls/live.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Niederbayern TV Deggendorf & Straubing (1080p)" tvg-logo="" group-title="Genel",Niederbayern TV Deggendorf & Straubing (1080p)
 https://stream03.welocal.stream/stream/fhd-nbydeggendorf_99148/ngrp:stream_all/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="DISCOVERY CHANNEL [DE]" tvg-logo="" group-title="Genel",DISCOVERY CHANNEL [DE]
-acestream://f40d450991da3daa22b7a5007603a139def6d951
 #EXTINF:-1 tvg-id="" tvg-name="NDR Hamburg (720p)" tvg-logo="" group-title="Genel",NDR Hamburg (720p)
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_hh/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Radio Weser TV Bremen (576p)" tvg-logo="" group-title="Genel",Radio Weser TV Bremen (576p)
 https://5857499ee635b.streamlock.net/radiowesertv-live/mp4:livestreamTV/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="RTL Living [DE]" tvg-logo="" group-title="Genel",RTL Living [DE]
-acestream://2b5eeabe7f7495f83608b15686cc83765e2dcc38
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 7 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 7 [DE]
-acestream://eec3f8107e008cec3679f76e078deeefd1348a3e
-#EXTINF:-1 tvg-id="" tvg-name="Servus TV [DE]" tvg-logo="" group-title="Genel",Servus TV [DE]
-acestream://988f4d88d74ec0d2b3584f6c7e067fcbdb501115
-#EXTINF:-1 tvg-id="" tvg-name="Ö3-VisualRadio" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/hitradiooe3.png" group-title="Musik",Ö3-VisualRadio
-https://studiocam-oe3.mdn.ors.at/out/u/studiocam_oe3/q6a/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="EchtJetzt TV (720p)" tvg-logo="" group-title="Genel",EchtJetzt TV (720p)
+https://bibeltv03.iptv-playoutcenter.de/bibeltv03/bibeltv03.stream_all/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Vevo Schlager Pop (1080p)" tvg-logo="" group-title="Genel",Vevo Schlager Pop (1080p)
 https://amg00056-amg00056c15-rakuten-it-3241.playouts.now.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Ostseewelle HIT-RADIO" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/ostseewelle.png" group-title="Deutschland",Ostseewelle HIT-RADIO
-http://mp3.ostseewelle.c.nmdn.net/ostseewellelive/livestream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="oldenburg eins" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/oldenburgeins.png" group-title="Deutschland",oldenburg eins
-http://radio.oeins.de:8000/oeins
-#EXTINF:-1 tvg-id="" tvg-name="DIE NEUE 107.7" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/dieneue1077.png" group-title="Deutschland",DIE NEUE 107.7
-http://dieneue1077.cast.addradio.de/dieneue1077/simulcast/high/stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="OK Merseburg-Querfurt (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",OK Merseburg-Querfurt (1080p) [Not 24/7]
 http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-merseburg_high/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Royalworld Germany (720p)" tvg-logo="" group-title="Genel",Royalworld Germany (720p)
 https://amogonetworx-royalworld-2-de.rakuten.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Filstalwelle (1080p)" tvg-logo="" group-title="Genel",Filstalwelle (1080p)
+https://h055.video-stream-hosting.de/filstalwelle-live/_definst_/mp4:livestream/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Welt der Wunder TV (576p)" tvg-logo="" group-title="Genel",Welt der Wunder TV (576p)
 https://wdw.iptv-playoutcenter.de/wdw/wdw1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 2 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 2 [DE]
-acestream://e360a96fb4bbe1cb8a7862a6514c4c284eeec466
-#EXTINF:-1 tvg-id="" tvg-name="EAT CLUB TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",EAT CLUB TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/cea5d138-7d4c-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Itsin TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Itsin TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/9e62b7df-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="WDR Südwestfalen HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Südwestfalen HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Siegen (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Siegen (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018020-b/wdrlz_siegen/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Sky Bundesliga 1 HD [DE]" tvg-logo="" group-title="Genel",Sky Bundesliga 1 HD [DE]
-acestream://38d8789a448dd0eaf99e0274b555974e4e8f3f3b
-#EXTINF:-1 tvg-id="" tvg-name="Bachstiftung" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Bachstiftung
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/c10782d7-72bd-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="OK Stendal (1080p)" tvg-logo="" group-title="Genel",OK Stendal (1080p)
 http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-stendal_high/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Lindenstrasse (720p)" tvg-logo="" group-title="Genel",Lindenstrasse (720p)
 https://ad2ef2da.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X0FSRFBsdXNMaW5kZW5zdHJhZV9ITFM/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="CLASSICA [DE]" tvg-logo="" group-title="Genel",CLASSICA [DE]
-acestream://0dc1a5dc724bbe0b3b3e9c4c5c5f5041e1a0c772
-#EXTINF:-1 tvg-id="" tvg-name="Radio Tirol" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiotirol.png" group-title="Österreich",Radio Tirol
-https://orf-live.ors-shoutcast.at/tir-q2a
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport 1 HD [DE]" tvg-logo="" group-title="Genel",Eurosport 1 HD [DE]
-acestream://b8cad4710b1c3b2b84a82c1ece40c08517b8f766
-#EXTINF:-1 tvg-id="" tvg-name="KroneHit TV" tvg-logo="https://i.imgur.com/tLwBOtU.jpg" group-title="MUSIK",KroneHit TV
-http://bitcdn-kronehit.bitmovin.com/v2/hls/chunklist_b1628000.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Crime Series Germany (1080p)" tvg-logo="" group-title="Genel",Rakuten TV Crime Series Germany (1080p)
 https://b6244e915ee04a5aa758e863a55a6a3d.mediatailor.eu-west-1.amazonaws.com/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6217/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Arirang TV" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/arirangtv.png" group-title="International",Arirang TV
-https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/chunklist_b2256000_sleng.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Nickelodeon" tvg-logo="" group-title="Genel",Nickelodeon
 https://ma.anixa.tv/clips/stream/nickelodeon/playlist.php
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 3 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 3 [DE]
-acestream://8b3c5f9ec938c3d3950bc4c989428d266bd4bd5b
-#EXTINF:-1 tvg-id="" tvg-name="OK Kiel" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/kieltv.png" group-title="Lokal",OK Kiel
+#EXTINF:-1 tvg-id="" tvg-name="OK Kiel (576p)" tvg-logo="" group-title="Genel",OK Kiel (576p)
 https://live-cdn.oksh.de/play/hls/kieltv/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Grjngo" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Grjngo
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/6dcd8085-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="NDR Info Spezial" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/ndrinfospezial.png" group-title="Deutschland",NDR Info Spezial
-https://dispatcher.rndfnk.com/ndr/ndrinfospezial/live/mp3/128/stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Ländle Tv" tvg-logo="https://i.imgur.com/g2Hdysr.jpg" group-title="AUSTRIA",Ländle Tv
-https://streaming13.huberwebmedia.at/LiveApp/streams/985585225397790082777809.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="AbsintheTV" tvg-logo="" group-title="DE_GERMAN_TVPLUS",AbsintheTV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/49373638-6d42-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=AT&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="WDR Düsseldorf HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Düsseldorf HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Düsseldorf (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Düsseldorf (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018023-b/wdrlz_duesseldorf/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Sky Cinema Special HD [DE]" tvg-logo="" group-title="Genel",Sky Cinema Special HD [DE]
-acestream://dd70fe2057d698d528f627c578733814b74557c5
-#EXTINF:-1 tvg-id="" tvg-name="Yle Teema & Fem" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/yleteemafem.png" group-title="International",Yle Teema & Fem
-https://yletvworld.akamaized.net/hls/live/622547/yletvteemafemw/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radio Taormina Sicilia" tvg-logo="https://i.imgur.com/SrhtocV.png" group-title="MUSIK",Radio Taormina Sicilia
-https://stream2.xdevel.com/video1s3-7/stream/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 9 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 9 [DE]
-acestream://7993cecc31917793e2bfa2fe98faa9fe1ab62d47
 #EXTINF:-1 tvg-id="" tvg-name="KulturMD (1080p)" tvg-logo="" group-title="Genel",KulturMD (1080p)
 http://58bd5b7a98e04.streamlock.net/medienasa-live/kulturmd_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radio 51 Lombardia" tvg-logo="https://i.imgur.com/yz3LSXo.png" group-title="MUSIK",Radio 51 Lombardia
-http://wms.shared.streamshow.it/canale51/canale51/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Bibel TV Musik" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/bibeltv.png" group-title="Religion",Bibel TV Musik
-http://bibeltv03.iptv-playoutcenter.de/bibeltv03/bibeltv03.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="W24 TV" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/w24.png" group-title="AUSTRIA",W24 TV
-https://ms01.w24.at/W24/smil:liveevent.smil/chunklist_w89103916_b2176000_slger.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Spirit TV" tvg-logo="https://i.imgur.com/jR24flK.png" group-title="MUSIK",Spirit TV
-https://cdnlive.myspirit.tv/LS-ATL-43240-2/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="NDR Niedersachsen HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/ndrhd.png" group-title="Regional",NDR Niedersachsen HD
-https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_nds/master_720.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Campusradio Paderborn (L'UniCo)" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/lunico.png" group-title="Deutschland",Campusradio Paderborn (L'UniCo)
-http://icecast.l-uni.co:8001/lunico_high_mp3
-#EXTINF:-1 tvg-id="" tvg-name="SWR3-VisualRadio" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/swr3.png" group-title="Musik",SWR3-VisualRadio
+#EXTINF:-1 tvg-id="" tvg-name="SWR 3 Visual Radio (720p)" tvg-logo="" group-title="Genel",SWR 3 Visual Radio (720p)
 https://swrswr3vr-hls.akamaized.net/hls/live/2018683/swr3vr/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="iSTUFF (720p) [Not 24/7]" tvg-logo="" group-title="Genel",iSTUFF (720p) [Not 24/7]
 https://relay2.cdn.fem-net.de/hls/loop/istuff_live/istuff_live-720p.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 7 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 7 [DE]
-acestream://b18657f64507cc859cd7edef1aef90feb053e791
-#EXTINF:-1 tvg-id="" tvg-name="Tirol TV" tvg-logo="https://i.imgur.com/0jHWmjL.png" group-title="AUSTRIA",Tirol TV
-https://streaming14.huberwebmedia.at/LiveApp/streams/livestream.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Ö1 Campus" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/oe1.png" group-title="Österreich",Ö1 Campus
-https://orf-live.ors-shoutcast.at/campus-q2a
-#EXTINF:-1 tvg-id="" tvg-name="Regio TV Stuttgart" tvg-logo="https://i.imgur.com/OFGHhRE.png" group-title="GERMAN LOCAL",Regio TV Stuttgart
+#EXTINF:-1 tvg-id="" tvg-name="RAN1 (1080p)" tvg-logo="" group-title="Genel",RAN1 (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/ran1_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Regio TV Stuttgart (1080p)" tvg-logo="" group-title="Genel",Regio TV Stuttgart (1080p)
 https://regiotv-s.iptv-playoutcenter.de/regiotv-s/regiotv-s.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="ATV.de" tvg-name="ATV" tvg-logo="" group-title="Genel",ATV
-acestream://7d50d90895f44e97039eca21ae6bc17172acc9ef
-#EXTINF:-1 tvg-id="" tvg-name="Reload Radio" tvg-logo="https://i.imgur.com/WCWvj2M.png" group-title="MUSIK",Reload Radio
-http://web.onair-radio.eu:1935/video/video/chunklist_w1235825277.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="KABEL EINS DOKU [DE]" tvg-logo="" group-title="Genel",KABEL EINS DOKU [DE]
-acestream://a6ec87fb4e5373035603be4ddebe1733df35d840
 #EXTINF:-1 tvg-id="" tvg-name="Naruto Germany (1080p)" tvg-logo="" group-title="Genel",Naruto Germany (1080p)
 https://palatinmedia-naruto-rakuten.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="HorizonSports" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",HorizonSports
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/7bdd63bf-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="HR HD [DE]" tvg-logo="" group-title="Genel",HR HD [DE]
-acestream://8385abc4f836cc502de197789426ba1d7eba089b
-#EXTINF:-1 tvg-id="" tvg-name="RTL Crime [DE]" tvg-logo="" group-title="Genel",RTL Crime [DE]
-acestream://ce203f49c4daacdf27df5825beeea4613c0404fa
-#EXTINF:-1 tvg-id="" tvg-name="DAZN 1 Bar HD [DE]" tvg-logo="" group-title="Genel",DAZN 1 Bar HD [DE]
-acestream://897e73c9d578848f596585314ecb9ae067c0e229
-#EXTINF:-1 tvg-id="" tvg-name="radio SAW" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosaw.png" group-title="Deutschland",radio SAW
-http://stream.radiosaw.de
-#EXTINF:-1 tvg-id="" tvg-name="planet radio" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/planetradio.png" group-title="Deutschland",planet radio
-http://mp3.planetradio.de/planetradio/hqlivestream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="NDR Fernsehen International (720p)" tvg-logo="" group-title="Genel",NDR Fernsehen International (720p)
+https://ndrint.akamaized.net/hls/live/2020766/ndr_int/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="OK Flensburg (576p)" tvg-logo="" group-title="Genel",OK Flensburg (576p)
 https://live-cdn.oksh.de/play/hls/flensburgtv/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="100'5 DAS HITRADIO" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/1005dashitradio.png" group-title="Deutschland",100'5 DAS HITRADIO
-https://stream.dashitradio.de/dashitradio/mp3-128/stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="NRWision HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/nrwision.png" group-title="Lokal",NRWision HD
-https://fms.nrwision.de/live/livestreamHD.stream_source/chunklist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Sachsen Eins (1080p)" tvg-logo="" group-title="Genel",Sachsen Eins (1080p)
 https://sachsen1.iptv-playoutcenter.de/sachsen1/sachsen1.stream_1/playlist.m3u8
 #EXTINF:-1 tvg-id="Top Sci-Fi.de" tvg-name="Top Sci-Fi (1080p)" tvg-logo="" group-title="Genel",Top Sci-Fi (1080p)
 https://amg00609-amg00609c5-rakuten-uk-3764.playouts.now.amagi.tv/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Orange 94.0" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/orange94.0.png" group-title="Österreich",Orange 94.0
-https://securestream.o94.at/live.mp3
-#EXTINF:-1 tvg-id="" tvg-name="3sat HD [DE]" tvg-logo="" group-title="Genel",3sat HD [DE]
-acestream://d52b8a34de386a2371de539afb31495e78cc5304
+#EXTINF:-1 tvg-id="" tvg-name="OK Wernigerode (1080p)" tvg-logo="" group-title="Genel",OK Wernigerode (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-wernigerode_high/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="OK Magdeburg (1080p)" tvg-logo="" group-title="Genel",OK Magdeburg (1080p)
 http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-magdeburg_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="auto motor und sport" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",auto motor und sport
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/2930c6bf-72bd-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Radio Horeb" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiohoreb.png" group-title="Deutschland",Radio Horeb
-http://rs16.stream24.org:8000/horeb.mp3
-#EXTINF:-1 tvg-id="" tvg-name="Saarland Fernsehen 1" tvg-logo="https://i.imgur.com/Nvw7SaN.png" group-title="GERMAN LOCAL",Saarland Fernsehen 1
-http://saarland1.iptv-playoutcenter.de/saarland1/saarland1.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radio Niederösterreich" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radioniederoesterreich.png" group-title="Österreich",Radio Niederösterreich
-https://orf-live.ors-shoutcast.at/noe-q2a
-#EXTINF:-1 tvg-id="" tvg-name="Radio 90.1" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radio901.png" group-title="Deutschland",Radio 90.1
-http://mp3.radiomg.c.nmdn.net/radiomg/livestream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Radio Weser TV Bremen (576p)" tvg-logo="" group-title="Genel",Radio Weser TV Bremen (576p)
+https://5857499ee635b.streamlock.net/radiowesertv-live/_definst_/mp4:livestreamTV/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Rakuten TV German Cinema (1080p)" tvg-logo="" group-title="Genel",Rakuten TV German Cinema (1080p)
 https://a5dc66582aa040269fd99d7d7a6ac23b.mediatailor.eu-west-1.amazonaws.com/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6200/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="AbsintheTV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",AbsintheTV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/6c1f8405-6dec-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="noa4 Norderstedt HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/noa4.png" group-title="Lokal",noa4 Norderstedt HD
+#EXTINF:-1 tvg-id="" tvg-name="Noa 4 Norderstedt (1080p)" tvg-logo="" group-title="Genel",Noa 4 Norderstedt (1080p)
 https://hls1.wtnet.de/noa4/apple/wifi6500.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Adventure Earth (720p)" tvg-logo="" group-title="Genel",Adventure Earth (720p)
 https://autentic-adventure-earth-1-eu.rakuten.wurl.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="arte HD [DE]" tvg-logo="" group-title="Genel",arte HD [DE]
-acestream://101c4c7e056242758b112382c4e314472795ae37
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 2 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 2 HD [DE]
-acestream://ab0d54995bdcea2d8f9f588ef631ebbfb3f5a9ab
 #EXTINF:-1 tvg-id="" tvg-name="Amasia (720p)" tvg-logo="" group-title="Genel",Amasia (720p)
 https://splendid-film-amasia-1-eu.rakuten.wurl.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Moconomy" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Moconomy
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/73dbe7a8-1fe3-11ec-b414-948e0b8da07d/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
+#EXTINF:-1 tvg-id="" tvg-name="Sender Neu Jerusalem (576p)" tvg-logo="" group-title="Genel",Sender Neu Jerusalem (576p)
+https://bild-und-ton.stream/snj-de/snj-de.smil/.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Tennis Channel Germany (720p)" tvg-logo="" group-title="Genel",Tennis Channel Germany (720p)
 https://tennischanneldeu-rakuten.amagi.tv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Saarland Fernsehen 1 (1080p)" tvg-logo="" group-title="Genel",Saarland Fernsehen 1 (1080p)
 https://saarland1.iptv-playoutcenter.de/saarland1/saarland1.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="RTL Passion [DE]" tvg-logo="" group-title="Genel",RTL Passion [DE]
-acestream://34c1fa7c1f94f22c9afc0bb79e563bbb4f87a450
-#EXTINF:-1 tvg-id="" tvg-name="art-tv-ch" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",art-tv-ch
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/32de2750-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="KIKA HD [DE]" tvg-logo="" group-title="Genel",KIKA HD [DE]
-acestream://a9bcce53543a2574e3b3d2869e52d61b0dc1944b
 #EXTINF:-1 tvg-id="" tvg-name="Travelxp Germany (720p)" tvg-logo="" group-title="Genel",Travelxp Germany (720p)
 https://travelxp-travelxp-2-de.rakuten.wurl.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="R9 TV" tvg-logo="https://i.imgur.com/Wu6SMvb.png" group-title="AUSTRIA",R9 TV
-https://ms01.w24.at/R9/smil:liveeventR9.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radio Steiermark" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosteiermark.png" group-title="Österreich",Radio Steiermark
-https://orf-live.ors-shoutcast.at/stm-q2a
 #EXTINF:-1 tvg-id="" tvg-name="Parlamentsfernsehen 1 (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",Parlamentsfernsehen 1 (1080p) [Not 24/7]
 https://cldf-hlsgw.r53.cdn.tv1.eu/1000153copo/hk1.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="harmony.fm" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/harmonyfm.png" group-title="Deutschland",harmony.fm
-https://mp3.harmonyfm.de/harmonyfm/hqlivestream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="OK Dessau (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",OK Dessau (1080p) [Not 24/7]
 http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-dessau_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="art-tv-ch" tvg-logo="" group-title="DE_GERMAN_TVPLUS",art-tv-ch
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/195bc34d-80c1-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="WDR Aachen HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Aachen HD
+#EXTINF:-1 tvg-id="" tvg-name="DASDING 90.8 (720p)" tvg-logo="" group-title="Genel",DASDING 90.8 (720p)
+https://swrdasdingvr-hls.akamaized.net/hls/live/2018681/dasdingvr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Aachen (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Aachen (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018019-b/wdrlz_aachen/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Charlie" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Charlie
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/bad234c1-7cd6-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="E! [DE]" tvg-logo="" group-title="Genel",E! [DE]
-acestream://70cd3b5f96fb8d415099263226309aab3c616459
-#EXTINF:-1 tvg-id="" tvg-name="N24 DOKU [DE]" tvg-logo="" group-title="Genel",N24 DOKU [DE]
-acestream://fe26522084777de964511c79dbf87c2d8383403c
-#EXTINF:-1 tvg-id="" tvg-name="ORF III [DE]" tvg-logo="" group-title="Genel",ORF III [DE]
-acestream://41ac7892b8fde95d5110d83d7324044145c7f86a
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 10 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 10 HD [DE]
-acestream://6058a4c0f2569bd81c687aa7dfb48b8a9569fb29
-#EXTINF:-1 tvg-id="" tvg-name="One [DE]" tvg-logo="" group-title="Genel",One [DE]
-acestream://aefc08723a06f1be68a1588ba9b8d9e69b2352ca
-#EXTINF:-1 tvg-id="" tvg-name="Fabella" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Fabella
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/fca9f5ec-818e-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Sky Cinema Premieren HD [DE]" tvg-logo="" group-title="Genel",Sky Cinema Premieren HD [DE]
-acestream://3306fb30138814e54a46cd8dc1ef1c864e8b3b53
 #EXTINF:-1 tvg-id="" tvg-name="RFH (1080p)" tvg-logo="" group-title="Genel",RFH (1080p)
 https://h056.video-stream-hosting.de/medienasa-live/_definst_/mp4:RFH_high/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Bibel TV Impuls" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/bibeltv.png" group-title="Religion",Bibel TV Impuls
+#EXTINF:-1 tvg-id="" tvg-name="Bibel TV Impuls (720p)" tvg-logo="" group-title="Genel",Bibel TV Impuls (720p)
 https://bibeltv02.iptv-playoutcenter.de/bibeltv02/bibeltv02.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 4 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 4 HD [DE]
-acestream://1fb794b1503c5955b75ea0106ee6360b80d78849
-#EXTINF:-1 tvg-id="" tvg-name="Fantasja" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Fantasja
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/51fe53a4-7cd7-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Romance TV [DE]" tvg-logo="" group-title="Genel",Romance TV [DE]
-acestream://ef3fd5fc5d6d15b2875fc5c3204710dd848ffcc6
 #EXTINF:-1 tvg-id="" tvg-name="Baden TV (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",Baden TV (1080p) [Not 24/7]
 http://badentv-stream2.siebnich.info/rtplive/btv.stream/live.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="BILD HD [DE]" tvg-logo="" group-title="Genel",BILD HD [DE]
-acestream://598900f86da2a7b2f9b17972b2070e8de4bf4e19
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 1 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 1 [DE]
-acestream://22df9a5fae8cae52fec925c2bb44b74f96a4200c
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 9 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 9 [DE]
-acestream://a435581e6cba56972e48cf4519d1b2af735eec2f
-#EXTINF:-1 tvg-id="" tvg-name="FailArmy" tvg-logo="" group-title="DE_GERMAN_TVPLUS",FailArmy
-https://799e1e65b6954f11b65eba4ce0d6b8ae.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/Samsung-de_FailArmy/playlist.m3u8?ads.wurl_channel=151&ads.wurl_name=FailArmy&ads.psid=%7BPSID%7D&ads.targetopt=%7BTARGETOPT%7D&ads.app_domain=%7BAPP_DOMAIN%7D&ads.app_name=%7BAPP_NAME%7D&ads.coppa=0&ads.consent=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="Fluss Monster (1080p)" tvg-logo="" group-title="Genel",Fluss Monster (1080p)
 https://rivermonstergermany-rakuten.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Focus TV" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Focus TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/f67c7d68-80c1-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="JUKEBOX [DE]" tvg-logo="" group-title="Genel",JUKEBOX [DE]
-acestream://b4b6a6a7d42a995fd6d3a3ac576f5987016954f3
-#EXTINF:-1 tvg-id="" tvg-name="TV Würzburg" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wuerzburgtv.png" group-title="Lokal",TV Würzburg
+#EXTINF:-1 tvg-id="" tvg-name="TV Mainfranken (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",TV Mainfranken (1080p) [Not 24/7]
 https://tvtouringw.iptv-playoutcenter.de/tvtouringw/tvtouringw.stream_1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Starke Frauen (1080p)" tvg-logo="" group-title="Genel",Starke Frauen (1080p)
 https://mainstreamstarkefrauen-rakuten.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Minute Shorts" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Minute Shorts
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/f71977c5-2887-11ec-b414-948e0b8da07d/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Fantasja" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Fantasja
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/db0bd9b5-818e-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Focus TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Focus TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/5cf0bda5-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="RTLZWEI.de" tvg-name="RTL 2" tvg-logo="" group-title="Genel",RTL 2
-acestream://ece97e99e4272351c3656922509b138c760858de
-#EXTINF:-1 tvg-id="" tvg-name="auto motor und sport" tvg-logo="" group-title="DE_GERMAN_TVPLUS",auto motor und sport
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/31209ff0-72bd-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Saarland Fernsehen 2" tvg-logo="https://i.imgur.com/Nvw7SaN.png" group-title="GERMAN LOCAL",Saarland Fernsehen 2
-http://saarland2.iptv-playoutcenter.de/saarland2/saarland2.stream_2/playlist.m3u8
-#EXTINF:-1 tvg-id="DE - ProSieben" tvg-name="ProSieben" tvg-logo="" group-title="Genel",ProSieben
-acestream://0f40f5793250117fbc0dc7a824cdcd531a8de41c
-#EXTINF:-1 tvg-id="" tvg-name="Heimatkanal [DE]" tvg-logo="" group-title="Genel",Heimatkanal [DE]
-acestream://062258a94106b737b3f938ac1c53e193d674b0c3
-#EXTINF:-1 tvg-id="" tvg-name="Cartoon Network [DE]" tvg-logo="" group-title="Genel",Cartoon Network [DE]
-acestream://2c4fd2b35d296135d8c52ee9eaa6ab5beae405b5
-#EXTINF:-1 tvg-id="" tvg-name="Deluxe Deutschpop" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Deluxe Deutschpop
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/abf23997-4164-11ec-9c7c-2cf753b8a203/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="BBC Top Gear Germany (1080p)" tvg-logo="" group-title="Genel",BBC Top Gear Germany (1080p)
 https://amg00793-amg00793c44-rakuten-de-5538.playouts.now.amagi.tv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KaufBei TV" tvg-logo="" group-title="Genel",KaufBei TV
 https://elephant.t62a.com/hls/8103/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="SPIEGEL.TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",SPIEGEL.TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/ffe8ca04-818d-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="tv.ingolstadt" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/tvingolstadt.png" group-title="Lokal",tv.ingolstadt
+#EXTINF:-1 tvg-id="" tvg-name="TV Ingolstadt (1080p)" tvg-logo="" group-title="Genel",TV Ingolstadt (1080p)
 https://stream01.welocal.stream/stream/fhd-tvingolstadt_44349/ngrp:stream_all/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radio SRF Musikwelle" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosrfmusikwelle.png" group-title="Schweiz",Radio SRF Musikwelle
-http://stream.srg-ssr.ch/m/drsmw/mp3_128
-#EXTINF:-1 tvg-id="" tvg-name="SonnenklarTV HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/sonnenklartv.png" group-title="Teleshopping",SonnenklarTV HD
+#EXTINF:-1 tvg-id="" tvg-name="Sonnenklar TV (1080p)" tvg-logo="" group-title="Genel",Sonnenklar TV (1080p)
 http://euvia.cdn.ses-ps.com/HLS-Live/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="DW English (720p)" tvg-logo="" group-title="Genel",DW English (720p)
-https://liveh12.vtvprime.vn/hls/DW/03.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="spot on news" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",spot on news
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/d6ab5034-7b34-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="WDR Bergisches Land HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Bergisches Land HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Wuppertal (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Wuppertal (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018028-b/wdrlz_wuppertal/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Charlie" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Charlie
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/4f5c84a7-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="OK Wernigerode" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/okwernigerode.png" group-title="Lokal",OK Wernigerode
-http://58bd5b7a98e04.streamlock.net/medienasa-live/_definst_/mp4:ok-wernigerode_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Fabella" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Fabella
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/66c16518-7cd7-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="Vevo Pop Germany (1080p)" tvg-logo="" group-title="Genel",Vevo Pop Germany (1080p)
 https://amg00056-amg00056c7-rakuten-de-3245.playouts.now.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="W24 TV" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/w24.png" group-title="International",W24 TV
-https://ms01.w24.at/W24/smil:liveevent.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Sophia TV Italy (720p)" tvg-logo="" group-title="Genel",Sophia TV Italy (720p)
 https://bild-und-ton.stream/sophiatv-it/smil:sophia-tv-it.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="NITRO [DE]" tvg-logo="" group-title="Genel",NITRO [DE]
-acestream://089f1b59317a99c1ce10259c4897714028752ae7
-#EXTINF:-1 tvg-id="" tvg-name="WDR Ostwestfalen HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Ostwestfalen HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Bielefeld (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Bielefeld (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018026-b/wdrlz_bielefeld/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="LooLoo Kids TV (1080p)" tvg-logo="" group-title="Genel",LooLoo Kids TV (1080p)
 https://amg02757-amg02757c3-rakuten-de-6135.playouts.now.amagi.tv/playlist/amg02757-loolookids-llkdefast-rakutende/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="teltOwkanal (1080p)" tvg-logo="" group-title="Genel",teltOwkanal (1080p)
 https://h056.video-stream-hosting.de/easycast8-live/_definst_/mp4:livestreamhd8/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="EAT CLUB TV" tvg-logo="" group-title="DE_GERMAN_TVPLUS",EAT CLUB TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/f7858cd7-7d4c-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Radio SRF 2 Kultur" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosrf2kultur.png" group-title="Schweiz",Radio SRF 2 Kultur
-http://stream.srg-ssr.ch/m/drs2/mp3_128
-#EXTINF:-1 tvg-id="" tvg-name="MotorRacing" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",MotorRacing
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/70e4f9cb-80c2-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="BR Fernsehen HD [DE]" tvg-logo="" group-title="Genel",BR Fernsehen HD [DE]
-acestream://55b69cac18cbeb14c00705d06bc3396f7f6b7070
+#EXTINF:-1 tvg-id="" tvg-name="Chemnitz Fernsehen (1080p)" tvg-logo="" group-title="Genel",Chemnitz Fernsehen (1080p)
+https://chemnitz.iptv-playoutcenter.de/chemnitz/chemnitzfernsehen.stream_1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Hell's Kitchen Germany (1080p)" tvg-logo="" group-title="Genel",Hell's Kitchen Germany (1080p)
 https://hellskitchengermany-rakuten.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="MovieDome (Germany)" tvg-logo="" group-title="Genel",MovieDome (Germany)
-https://moviedome-samsung.amagi.tv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Sophia TV Français (720p)" tvg-logo="" group-title="Genel",Sophia TV Français (720p)
 https://bild-und-ton.stream/sophiatv-fr/smil:sophia-tv-fr.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Nat Geographic HD [DE]" tvg-logo="" group-title="Genel",Nat Geographic HD [DE]
-acestream://45f110711ddffc71167cb09c8c7992689694f5d6
-#EXTINF:-1 tvg-id="" tvg-name="Deutsches Musik Fernsehen" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/deutschesmusikfernsehen.png" group-title="Musik",Deutsches Musik Fernsehen
+#EXTINF:-1 tvg-id="" tvg-name="DMF (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",DMF (1080p) [Not 24/7]
 https://d-m-f.iptv-playoutcenter.de/dmf/dmf1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ProSieben Maxx HD [DE]" tvg-logo="" group-title="Genel",ProSieben Maxx HD [DE]
-acestream://40d73c46051360ce2ba7b329725440dc74d485f2
-#EXTINF:-1 tvg-id="" tvg-name="ORF 1 HD [DE]" tvg-logo="" group-title="Genel",ORF 1 HD [DE]
-acestream://c9d6412050226de0968cea19a383b50dc1966363
 #EXTINF:-1 tvg-id="" tvg-name="Top Serien (1080p)" tvg-logo="" group-title="Genel",Top Serien (1080p)
 https://amg00609-palatinmediafil-cractiontv-rakuten-dhjcp.amagi.tv/hls/amagi_hls_data_rakutenAA-cractiontv-rakuten/CDN/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="KINOWELT TV [DE]" tvg-logo="" group-title="Genel",KINOWELT TV [DE]
-acestream://80d1cd89eab70d595ef742db18752bb1dd44c80d
-#EXTINF:-1 tvg-id="" tvg-name="ROCKLAND.FM" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/rocklandfm.png" group-title="Deutschland",ROCKLAND.FM
-http://stream.rockland-digital.de
-#EXTINF:-1 tvg-id="" tvg-name="Sky Cinema Action HD [DE]" tvg-logo="" group-title="Genel",Sky Cinema Action HD [DE]
-acestream://8f3b3a4b42b8ad785eab4c426d0ce7bb891f4398
-#EXTINF:-1 tvg-id="" tvg-name="KABEL EINS CLASSICS [DE]" tvg-logo="" group-title="Genel",KABEL EINS CLASSICS [DE]
-acestream://5cc17edcbf6ada7b83c3be3e146a7738a8f44b42
-#EXTINF:-1 tvg-id="" tvg-name="Radio Wien" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiowien.png" group-title="Österreich",Radio Wien
-https://orf-live.ors-shoutcast.at/wie-q2a
-#EXTINF:-1 tvg-id="" tvg-name="HISTORY HD [DE]" tvg-logo="" group-title="Genel",HISTORY HD [DE]
-acestream://1f187d3fe31f3203cc6b5e4f5b4e423bb8c96ccb
-#EXTINF:-1 tvg-id="" tvg-name="OK Stendal" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/okstendal.png" group-title="Lokal",OK Stendal
-http://58bd5b7a98e04.streamlock.net/medienasa-live/_definst_/mp4:ok-stendal_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 5 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 5 HD [DE]
-acestream://428b92f3c71cd3cbf66ef6193808b39d16a52730
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 5 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 5 [DE]
-acestream://81284e9a279ee23cbc4a7400bd9531f127d20fe5
-#EXTINF:-1 tvg-id="" tvg-name="Hitradio Ö3" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/hitradiooe3.png" group-title="Österreich",Hitradio Ö3
-https://orf-live.ors-shoutcast.at/oe3-q2a
-#EXTINF:-1 tvg-id="" tvg-name="Sky Atlantic HD [DE]" tvg-logo="" group-title="Genel",Sky Atlantic HD [DE]
-acestream://02458900124e0b55dabfa346f4397e0296b4facd
-#EXTINF:-1 tvg-id="" tvg-name="Disney HD [DE]" tvg-logo="" group-title="Genel",Disney HD [DE]
-acestream://ba06199060bece6beb9abba7007d4fd7844342e2
-#EXTINF:-1 tvg-id="" tvg-name="MDR+ 2" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/mdr.png" group-title="Extra",MDR+ 2
-https://mdrevent2wwhls.akamaized.net/hls/live/2025367/mdrevent2ww/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radio SRF 3" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosrf3.png" group-title="Schweiz",Radio SRF 3
-http://stream.srg-ssr.ch/m/drs3/mp3_128
-#EXTINF:-1 tvg-id="DE - SAT.1" tvg-name="Sat.1" tvg-logo="" group-title="Genel",Sat.1
-acestream://58616a92d5b871848dd6e66321da89062140c024
-#EXTINF:-1 tvg-id="" tvg-name="DAZN 2 Bar HD [DE]" tvg-logo="" group-title="Genel",DAZN 2 Bar HD [DE]
-acestream://12ea555d431dbe51fc8e4ca745aec09fe22a4865
-#EXTINF:-1 tvg-id="" tvg-name="Radio SRF Virus" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosrfvirus.png" group-title="Schweiz",Radio SRF Virus
-http://stream.srg-ssr.ch/m/drsvirus/mp3_128
-#EXTINF:-1 tvg-id="" tvg-name="SIXX HD [DE]" tvg-logo="" group-title="Genel",SIXX HD [DE]
-acestream://80ccf9375ef9b8a71d77d21e3bfca7a794eca1fb
-#EXTINF:-1 tvg-id="" tvg-name="MDR+ 5" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/mdr.png" group-title="Extra",MDR+ 5
-https://mdrevent5wwhls.akamaized.net/hls/live/2025370/mdrevent5ww/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="HGTV [DE]" tvg-logo="" group-title="Genel",HGTV [DE]
-acestream://a9b9a780684a361339c14b43c58cb1c511dc4d9e
-#EXTINF:-1 tvg-id="" tvg-name="Radio Paloma" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiopaloma.png" group-title="Deutschland",Radio Paloma
-http://pool.radiopaloma.de/RADIOPALOMA.mp3
-#EXTINF:-1 tvg-id="" tvg-name="HIT RADIO FFH" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/hitradioffh.png" group-title="Deutschland",HIT RADIO FFH
-http://mp3.ffh.de/radioffh/hqlivestream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Allgäu TV (1080p)" tvg-logo="" group-title="Genel",Allgäu TV (1080p)
+https://stream01.welocal.stream/stream/fhd-allgaeutv_25679/ngrp:stream_all/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bibel TV Musik (720p)" tvg-logo="" group-title="Genel",Bibel TV Musik (720p)
+https://bibeltv03.iptv-playoutcenter.de/bibeltv03/bibeltv03.stream_1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Dresden Fernsehen (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",Dresden Fernsehen (1080p) [Not 24/7]
+https://dresden.iptv-playoutcenter.de/dresden/dresdenfernsehen.stream_1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="WDR 1 Live (720p)" tvg-logo="" group-title="Genel",WDR 1 Live (720p)
 https://wdrfsww247.akamaized.net/hls/live/2009628/wdr_msl4_fs247ww/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Motorvision Classic" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Motorvision Classic
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/d6737a9b-7c29-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="sportdigital" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",sportdigital
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/2d920251-818e-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="HSE24 [DE]" tvg-logo="" group-title="Genel",HSE24 [DE]
-acestream://82500d4980c5de415ac20bc3fccc74435108f312
+#EXTINF:-1 tvg-id="" tvg-name="HSE (1080p)" tvg-logo="" group-title="Genel",HSE (1080p)
+https://hse24.akamaized.net/hls/live/2006663/hse24/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Augsburg TV (1080p)" tvg-logo="" group-title="Genel",Augsburg TV (1080p)
 https://stream02.welocal.stream/stream/fhd-augsburgtv_104951/ngrp:stream_all/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ems TV Lingen (720p)" tvg-logo="" group-title="Genel",ems TV Lingen (720p)
@@ -465,221 +161,99 @@ https://h058.video-stream-hosting.de/ev1tv-live/_definst_/mp4:stream1.stream/pla
 http://badentv-stream2.siebnich.info/rtplive/btv.stream/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Niederbayern TV Landshut (1080p)" tvg-logo="" group-title="Genel",Niederbayern TV Landshut (1080p)
 https://stream03.welocal.stream/stream/fhd-nbylandshut_75262/ngrp:stream_all/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="WDR Duisburg HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Duisburg HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Duisburg (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Duisburg (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018024-b/wdrlz_duisburg/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 7 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 7 HD [DE]
-acestream://ac839cda9709255c21a98af455731f037e77a9e4
 #EXTINF:-1 tvg-id="" tvg-name="MDF.1 (1080p)" tvg-logo="" group-title="Genel",MDF.1 (1080p)
 http://58bd5b7a98e04.streamlock.net/medienasa-live/mdf1_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Metal Only" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/metalonly.png" group-title="Deutschland",Metal Only
-http://metal-only.streampanel.cloud/stream
-#EXTINF:-1 tvg-id="" tvg-name="WDR Münsterland HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Münsterland HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Münster (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Münster (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018025-b/wdrlz_muensterland/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Sky 1 [DE]" tvg-logo="" group-title="Genel",Sky 1 [DE]
-acestream://88c50cf8bf78a18d89c9efb3805d5a12e04c31b9
-#EXTINF:-1 tvg-id="" tvg-name="Crime + Investigation [DE]" tvg-logo="" group-title="Genel",Crime + Investigation [DE]
-acestream://3e42a89d66c2afff75ca7641a52f92a61e5f5250
-#EXTINF:-1 tvg-id="" tvg-name="WDR Bonn HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Bonn HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Bonn (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Bonn (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018021-b/wdrlz_bonn/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="FilmGold Germany (1080p)" tvg-logo="" group-title="Genel",FilmGold Germany (1080p)
 https://mainstreamfilmgold-rakuten.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="RTV (AT)" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/rtvat.png" group-title="International",RTV (AT)
-http://iptv.rtv-ooe.at/stream.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Rouge TV" tvg-logo="https://i.imgur.com/PzF6q9I.png" group-title="Schweiz",Rouge TV
-https://rougetv.vedge.infomaniak.com/livecast/rougetv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Sophia TV Español (720p)" tvg-logo="" group-title="Genel",Sophia TV Español (720p)
 https://bild-und-ton.stream/sophiatv-es/smil:sophia-tv-es.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Bachstiftung" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Bachstiftung
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/b169516d-72bd-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="HNC Free (Germany)" tvg-logo="" group-title="Genel",HNC Free (Germany)
-https://hncfree-samsung-de.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Campusradio Bielefeld (Hertz 87.9)" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/hertz879.png" group-title="Deutschland",Campusradio Bielefeld (Hertz 87.9)
-http://stream.radiohertz.de/hertz-hq.mp3
+#EXTINF:-1 tvg-id="" tvg-name="HSE24 Extra (1080p)" tvg-logo="" group-title="Genel",HSE24 Extra (1080p)
+https://hse24extra.akamaized.net/hls/live/2006596/hse24extra/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RBW (1080p)" tvg-logo="" group-title="Genel",RBW (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/rbw_high/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NDR Mecklenburg-Vorpommern (720p)" tvg-logo="" group-title="Genel",NDR Mecklenburg-Vorpommern (720p)
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_mv/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bibel TV (720p)" tvg-logo="" group-title="Genel",Bibel TV (720p)
+https://bibint01.iptv-playoutcenter.de/bibint01/bibint01.stream_all/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Niederbayern TV (720p)" tvg-logo="" group-title="Genel",Niederbayern TV (720p)
 https://stream03.welocal.stream/stream/sat-nby/ngrp:sat-nby.stream_all/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="100'5 Alemannia" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/1005dashitradio.png" group-title="Deutschland",100'5 Alemannia
-https://stream.dashitradio.de/alemannia/mp3-128/stream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="Euronews Deutsch Ⓨ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Euronews_2022.svg/640px-Euronews_2022.svg.png" group-title="Germany",Euronews Deutsch Ⓨ
 https://www.youtube.com/euronewsde/live
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 6 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 6 HD [DE]
-acestream://14317c55fadc80ef2b7fb42b3d53e8ccb3b52cd8
-#EXTINF:-1 tvg-id="" tvg-name="ROCK ANTENNE HEAVY-METAL" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/rockantenne.png" group-title="Deutschland",ROCK ANTENNE HEAVY-METAL
-http://stream.rockantenne.de/heavy-metal
 #EXTINF:-1 tvg-id="" tvg-name="Lausitzwelle (1080p)" tvg-logo="" group-title="Genel",Lausitzwelle (1080p)
 https://h056.video-stream-hosting.de/easycast11-live/_definst_/mp4:livestreamhd2/playlist.m3u8?ref=
 #EXTINF:-1 tvg-id="" tvg-name="Handystar (404p) [Not 24/7]" tvg-logo="" group-title="Genel",Handystar (404p) [Not 24/7]
 https://sparhandytv.cdn.ses-ps.com/live/channel01/hls/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Sky News Extra" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/skynewsextra.png" group-title="International;Nachrichten",Sky News Extra
-https://skynewsau-live.akamaized.net/hls/live/2002690/skynewsau-extra2/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 2 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 2 [DE]
-acestream://57f95543ac41656d473b1a27123fc413388a728c
 #EXTINF:-1 tvg-id="" tvg-name="Sophia TV (720p)" tvg-logo="" group-title="Genel",Sophia TV (720p)
 https://bild-und-ton.stream/sophiatv-en/smil:sophia-tv-en.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RFH (1080p)" tvg-logo="" group-title="Genel",RFH (1080p)
 http://58bd5b7a98e04.streamlock.net/medienasa-live/RFH_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ARD Event 2" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/daserste.png" group-title="Extra",ARD Event 2
-https://ardevent2.akamaized.net/hls/live/681512/ardevent2_geo/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 6 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 6 [DE]
-acestream://c065ab169f75ced1d34fbcab6b84a5fa4ca73e30
-#EXTINF:-1 tvg-id="" tvg-name="hr-fernsehen" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/hr.png" group-title="Regional",hr-fernsehen
-https://hrhlsde.akamaized.net/hls/live/2024526/hrhlsde/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Niederbayern TV Passau (1080p)" tvg-logo="" group-title="Genel",Niederbayern TV Passau (1080p)
 https://stream03.welocal.stream/stream/fhd-nbypassau_49171/ngrp:stream_all/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Deluxe Deutschpop" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Deluxe Deutschpop
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/95d6544c-4164-11ec-9c7c-2cf753b8a203/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Yle TV2" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/yletv2.png" group-title="International",Yle TV2
-https://yletvworld.akamaized.net/hls/live/622541/yletv2w/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="MDR+ 1" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/mdr.png" group-title="Extra",MDR+ 1
-https://mdrevent1wwhls.akamaized.net/hls/live/2025205/mdrevent1ww/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="n-tv HD [DE]" tvg-logo="" group-title="Genel",n-tv HD [DE]
-acestream://b69ee17ee716edaabd5dd32934c71be4d23736a8
-#EXTINF:-1 tvg-id="" tvg-name="Beauty TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Beauty TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/8efed9a2-6fb0-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="MyTime Movie Network Germany (1080p)" tvg-logo="" group-title="Genel",MyTime Movie Network Germany (1080p)
 https://appletree-mytimemoviegerman-rakuten.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="egoFM" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/egofm.png" group-title="Deutschland",egoFM
-http://mp3ad.egofm.c.nmdn.net/ps-egofm_192/livestream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="MDR+ 3" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/mdr.png" group-title="Extra",MDR+ 3
-https://mdrevent3wwhls.akamaized.net/hls/live/2025368/mdrevent3ww/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="OK Salzwedel (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",OK Salzwedel (1080p) [Not 24/7]
 http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-salzwedel_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Canal Alpha Jura" tvg-logo="https://i.imgur.com/eQ8xHK9.jpg" group-title="Schweiz",Canal Alpha Jura
-http://canalalphaju.vedge.infomaniak.com/livecast/canalalphaju/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 8 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 8 [DE]
-acestream://ce4ae0c3491acd4272340029139ba25642e2516b
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 1 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 1 [DE]
-acestream://a7319ebd54cb1db9a9db1574929ca8d305a323d3
 #EXTINF:-1 tvg-id="" tvg-name="DW English (720p)" tvg-logo="" group-title="Genel",DW English (720p)
 https://stream8.cinerama.uz/1418/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="PUNKTum Fernsehen (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",PUNKTum Fernsehen (1080p) [Not 24/7]
 http://58bd5b7a98e04.streamlock.net/medienasa-live/punktum_high/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ANTENNE THÜRINGEN" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/antennethueringen.png" group-title="Deutschland",ANTENNE THÜRINGEN
-http://stream.antennethueringen.de/live/mp3-192
-#EXTINF:-1 tvg-id="" tvg-name="Nick Jr. [DE]" tvg-logo="" group-title="Genel",Nick Jr. [DE]
-acestream://f4a0f154bced3325981b2453bb2456ad24e9ed40
-#EXTINF:-1 tvg-id="" tvg-name="münchen.tv" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/muenchentv.png" group-title="Lokal",münchen.tv
+#EXTINF:-1 tvg-id="" tvg-name="München TV (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",München TV (1080p) [Not 24/7]
 https://muenchentv.iptv-playoutcenter.de/muenchentv/muenchentv.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="SAT1 GOLD [DE]" tvg-logo="" group-title="Genel",SAT1 GOLD [DE]
-acestream://80db6eb9c3c0da5ddf03e2912e502a1ff8927f8b
-#EXTINF:-1 tvg-id="" tvg-name="DMAX HD [DE]" tvg-logo="" group-title="Genel",DMAX HD [DE]
-acestream://ff3ec08b3af26c5c545c45e82cda6f4382780512
+#EXTINF:-1 tvg-id="" tvg-name="Erz-TV Stollberg (576p)" tvg-logo="" group-title="Genel",Erz-TV Stollberg (576p)
+https://5acade5fc0c29.streamlock.net/kabeljournal/live2020.stream/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Saarland Fernsehen 2 (720p) [Not 24/7]" tvg-logo="" group-title="Genel",Saarland Fernsehen 2 (720p) [Not 24/7]
 https://saarland2.iptv-playoutcenter.de/saarland2/saarland2.stream_2/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Euro Indie Music Chart" tvg-logo="https://i.imgur.com/eurtz6A.png" group-title="MUSIK",Euro Indie Music Chart
-http://178.33.224.197:1935/euroindiemusic/euroindiemusic/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 8 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 8 HD [DE]
-acestream://11c5823d4196a90b509f03df1fe78e13cfbbb175
-#EXTINF:-1 tvg-id="" tvg-name="Deluxe Lounge HD" tvg-logo="" group-title="DE_GERMAN_TVPLUS",Deluxe Lounge HD
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/ec8e5c43-6fae-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="U1 Tirol" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/u1tirol.png" group-title="Österreich",U1 Tirol
-https://live.u1-radio.at/stream.mp3
-#EXTINF:-1 tvg-id="" tvg-name="FM4" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/fm4.png" group-title="Österreich",FM4
-https://orf-live.ors-shoutcast.at/fm4-q2a
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 9 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 9 HD [DE]
-acestream://86495fe134ff065d5217497babe6be33f81d37d1
 #EXTINF:-1 tvg-id="" tvg-name="Rock Antenne [Not 24/7]" tvg-logo="" group-title="Genel",Rock Antenne [Not 24/7]
 https://stream.rockantenne.de/rockantenne/stream/mp3
-#EXTINF:-1 tvg-id="" tvg-name="Bibel TV" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/bibeltv.png" group-title="Religion",Bibel TV
-https://bibeltv01.iptv-playoutcenter.de/bibeltv01/bibeltv01.stream_all/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Wicked Tuna Germany (1080p)" tvg-logo="" group-title="Genel",Wicked Tuna Germany (1080p)
 https://amg00353-amg00353c28-rakuten-us-4895.playouts.now.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Boomerang [DE]" tvg-logo="" group-title="Genel",Boomerang [DE]
-acestream://0011f12a7bfa97f90bd1eab99631f0d492e5f94b
 #EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Romance Movies Germany (1080p)" tvg-logo="" group-title="Genel",Rakuten TV Romance Movies Germany (1080p)
 https://romance-rakuten-tv-de.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6475/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="QVC Germany (720p)" tvg-logo="" group-title="Genel",QVC Germany (720p)
 https://qvcde-live.akamaized.net/hls/live/2097104/qvc/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 11 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 11 HD [DE]
-acestream://c21316ad4b7f44eaf6fcfb2c245c46de8b746cc6
-#EXTINF:-1 tvg-id="" tvg-name="FailArmy" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",FailArmy
-https://6e7da950326e49ec84ab577249b1fc21.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/Samsung-ch_FailArmy/playlist.m3u8?ads.wurl_channel=151&ads.wurl_name=FailArmy&ads.psid=%7BPSID%7D&ads.targetopt=%7BTARGETOPT%7D&ads.app_domain=%7BAPP_DOMAIN%7D&ads.app_name=%7BAPP_NAME%7D&ads.coppa=0&ads.consent=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 4 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 4 [DE]
-acestream://1b6b6c0ddc0534236b3bae78f41d2bc27cd11f64
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 5 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 5 [DE]
-acestream://148921c4dda96df445e253d6f26c4d092bf85809
-#EXTINF:-1 tvg-id="" tvg-name="GoldStar TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",GoldStar TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/34373a6d-6fb0-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="TVA" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/tva.png" group-title="Lokal",TVA
+#EXTINF:-1 tvg-id="" tvg-name="TVA (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",TVA (1080p) [Not 24/7]
 https://tvaktuellr.iptv-playoutcenter.de/tvaktuellr/tvaktuellr.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="NDR HD [DE]" tvg-logo="" group-title="Genel",NDR HD [DE]
-acestream://bb98d9459ee9234482f3f445028965fd43656e7f
-#EXTINF:-1 tvg-id="" tvg-name="13th Street HD [DE]" tvg-logo="" group-title="Genel",13th Street HD [DE]
-acestream://e5214fbee923eea9dbf94b3ec7277f51cf74ee70
-#EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 4 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 4 [DE]
-acestream://784da1ced871f6d3f6bf25f29664bfd39f6130a6
-#EXTINF:-1 tvg-id="" tvg-name="LandesWelle Thüringen" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/landeswellethueringen.png" group-title="Deutschland",LandesWelle Thüringen
-http://stream.landeswelle.de/lwt/mp3-192
-#EXTINF:-1 tvg-id="" tvg-name="Taivas TV7" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/taivastv7.png" group-title="International",Taivas TV7
-https://vod.tv7.fi/tv7-fi/_definst_/smil:tv7-fi.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Seenluft24 (1080p)" tvg-logo="" group-title="Genel",Seenluft24 (1080p)
 https://h056.video-stream-hosting.de/easycast7-live/_definst_/mp4:livestreamhd20/playlist.m3u8?ref=
-#EXTINF:-1 tvg-id="" tvg-name="WDR Ruhr HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Ruhr HD
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen Essen (720p) [Geo-blocked]" tvg-logo="" group-title="Genel",WDR Fernsehen Essen (720p) [Geo-blocked]
 https://wdrlokalzeit.akamaized.net/hls/live/2018027-b/wdrlz_essen/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Light Channel (576p) [Not 24/7]" tvg-logo="" group-title="Genel",Light Channel (576p) [Not 24/7]
 http://streamer1.streamhost.org:1935/salive/lctvde/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Red Bull TV DE (1080p)" tvg-logo="" group-title="Genel",Red Bull TV DE (1080p)
 https://769a97d9.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X1JlZEJ1bGxUVl9ITFM/playlist.m3u8
-#EXTINF:-1 tvg-id="DE - Kabel Eins" tvg-name="Kabel Eins" tvg-logo="" group-title="Genel",Kabel Eins
-acestream://289cefc556796bf721502f331804ea775b779153
 #EXTINF:-1 tvg-id="" tvg-name="Volksmusik TV (1080p)" tvg-logo="" group-title="Genel",Volksmusik TV (1080p)
 https://vmtv.iptv-playoutcenter.de/vmtv/vmtv1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="XITE (720p)" tvg-logo="" group-title="Genel",XITE (720p)
 https://xite-rakuten.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ROCK ANTENNE" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/rockantenne.png" group-title="Deutschland",ROCK ANTENNE
-http://mp3channels.webradio.rockantenne.de/rockantenne
-#EXTINF:-1 tvg-id="" tvg-name="ANTENNE BAYERN" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/antennebayern.png" group-title="Deutschland",ANTENNE BAYERN
-http://mp3channels.webradio.antenne.de:80/antenne
-#EXTINF:-1 tvg-id="" tvg-name="Sat1 Emotions [DE]" tvg-logo="" group-title="Genel",Sat1 Emotions [DE]
-acestream://93fa4963d0f2bdfec1f7a7e5be6333f0d2716b97
-#EXTINF:-1 tvg-id="" tvg-name="KRONEHIT" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/kronehit.png" group-title="Österreich",KRONEHIT
-http://onair.krone.at:80/kronehit.mp3
-#EXTINF:-1 tvg-id="" tvg-name="RTL UP [DE]" tvg-logo="" group-title="Genel",RTL UP [DE]
-acestream://e22dbfca8357e8026d2a273c610f14c2645e955a
-#EXTINF:-1 tvg-id="" tvg-name="K-TV" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/ktv.png" group-title="Religion",K-TV
-http://d1pz8zear993v8.cloudfront.net/hlsme/kathtv.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="More Than Sports TV" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",More Than Sports TV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/89ecaaa1-1d2e-11ec-b414-948e0b8da07d/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="NickToons [DE]" tvg-logo="" group-title="Genel",NickToons [DE]
-acestream://8930a64ed631e26e335fc85b546f04ac678f38bf
-#EXTINF:-1 tvg-id="" tvg-name="Oberpfalz TV" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/oberpfalztv.png" group-title="Lokal",Oberpfalz TV
+#EXTINF:-1 tvg-id="" tvg-name="hr-fernsehen (1080p)" tvg-logo="" group-title="Genel",hr-fernsehen (1080p)
+https://hrhls.akamaized.net/hls/live/2024525/hrhls/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WELT (576p)" tvg-logo="" group-title="Genel",WELT (576p)
+https://s6.hopslan.com/n24X/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="OK Wernigerode (1080p)" tvg-logo="" group-title="Genel",OK Wernigerode (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/mp4:ok-wernigerode_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="KaufBei TV (576p)" tvg-logo="" group-title="Genel",KaufBei TV (576p)
+https://api.alpaca.t62a.com/hls/9103/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Oberpfalz TV (1080p)" tvg-logo="" group-title="Genel",Oberpfalz TV (1080p)
 https://oberpfalztv.iptv-playoutcenter.de/oberpfalztv/oberpfalztv.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radio SRF 1" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosrf1.png" group-title="Schweiz",Radio SRF 1
-http://stream.srg-ssr.ch/m/drs1/mp3_128
 #EXTINF:-1 tvg-id="" tvg-name="Krimi (720p)" tvg-logo="" group-title="Genel",Krimi (720p)
 https://4dad3dcf.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X0FSRFBsdXNLcmltaV9ITFM/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NDR Niedersachsen (720p)" tvg-logo="" group-title="Genel",NDR Niedersachsen (720p)
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_nds/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 3 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 3 [DE]
-acestream://7adbca42657ace1fe228142d351d0896974bbe0c
 #EXTINF:-1 tvg-id="" tvg-name="More Than Sports TV (1080p)" tvg-logo="" group-title="Genel",More Than Sports TV (1080p)
 https://mts1.iptv-playoutcenter.de/mts/mts-web/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Franken Fernsehen (Nürnberg) (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",Franken Fernsehen (Nürnberg) (1080p) [Not 24/7]
 https://frankentv.iptv-playoutcenter.de/frankentv/frankentv.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Ö1" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/oe1.png" group-title="Österreich",Ö1
-https://orf-live.ors-shoutcast.at/oe1-q2a
-#EXTINF:-1 tvg-id="" tvg-name="TVM 3" tvg-logo="https://i.imgur.com/ns5Ex9s.png" group-title="MUSIK",TVM 3
-http://livevideo.infomaniak.com/streaming/livecast/tvm3/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="AbsintheTV" tvg-logo="" group-title="DE_GERMAN_TVPLUS",AbsintheTV
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/52cb6c9d-72bd-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=DE&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
-#EXTINF:-1 tvg-id="" tvg-name="Leipzig Fernsehen" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/leipzigfernsehen.png" group-title="Lokal",Leipzig Fernsehen
+#EXTINF:-1 tvg-id="" tvg-name="WDR Fernsehen (720p)" tvg-logo="" group-title="Genel",WDR Fernsehen (720p)
+https://wdr-live.ard-mcdn.de/wdr/live/hls/de/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Leipzig Fernsehen (1080p)" tvg-logo="" group-title="Genel",Leipzig Fernsehen (1080p)
 https://leipzig.iptv-playoutcenter.de/leipzig/leipzigfernsehen.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Motorvision TV [DE]" tvg-logo="" group-title="Genel",Motorvision TV [DE]
-acestream://acd7e3ae185a376e6596e60a414bebbf3321b37f
-#EXTINF:-1 tvg-id="" tvg-name="NDR Mecklenburg-Vorpommern HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/ndrhd.png" group-title="Regional",NDR Mecklenburg-Vorpommern HD
-https://mcdn-ndr.akamaized.net/ndr/hls/ndr_fs/ndr_mv/master_720.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Graham Norton Germany (1080p)" tvg-logo="" group-title="Genel",Graham Norton Germany (1080p)
 https://amg00654-itv-amg00654c37-rakuten-de-7600.playouts.now.amagi.tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="DELUXE MUSIC HD [DE]" tvg-logo="" group-title="Genel",DELUXE MUSIC HD [DE]
-acestream://da8c0764bea30d7fe2321383292bb33ff04a5ede
-#EXTINF:-1 tvg-id="" tvg-name="Magenta Sport 3 HD [DE]" tvg-logo="" group-title="Genel",Magenta Sport 3 HD [DE]
-acestream://d0ca51f6145514ee605c2ef5d5a137e2a08c95b8
-#EXTINF:-1 tvg-id="" tvg-name="Eurosport360 HD 6 [DE]" tvg-logo="" group-title="Genel",Eurosport360 HD 6 [DE]
-acestream://005ac522315699bd93bbf743329eb2f3c347dc3f
-#EXTINF:-1 tvg-id="" tvg-name="Heimatkino" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Heimatkino
-https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/b06bf00f-b250-11eb-a7de-bacfe1f83627/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="TV38 Südost-Niedersachen (1080p)" tvg-logo="" group-title="Genel",TV38 Südost-Niedersachen (1080p)
 https://h057.video-stream-hosting.de/tv38-live/_definst_/smil:livestream.smil/playlist.m3u8?ref=
-#EXTINF:-1 tvg-id="" tvg-name="JazzRadio Berlin" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/jazzradio.png" group-title="Deutschland",JazzRadio Berlin
-http://streaming.radio.co:80/s774887f7b/listen
