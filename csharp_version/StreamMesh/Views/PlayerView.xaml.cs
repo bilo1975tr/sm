@@ -260,7 +260,7 @@ namespace StreamMesh.Views
                     VinylRotation.Angle = 0;
                     
                     LoadRssNewsAsync();
-                    LoadRadioWeatherAsync(channel.Country);
+                    LoadRadioWeatherAsync(channel.Language);
                     _radioTimer.Start();
                 }
                 else
