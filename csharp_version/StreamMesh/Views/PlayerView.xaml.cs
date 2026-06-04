@@ -46,6 +46,15 @@ namespace StreamMesh.Views
         private List<Channel> _allChannels = new List<Channel>();
         private DispatcherTimer _adBannerTimer;
 
+        // Radio Visualizer Elements & Timers
+        private DispatcherTimer _radioTimer;
+        private List<string> _rssNews = new List<string>();
+        private int _currentNewsIndex = 0;
+        private double _currentVinylAngle = 0;
+        private Random _rng = new Random();
+        private WeatherService _weatherService = new WeatherService();
+        private int _rssTickCounter = 0;
+
         public PlayerView()
         {
             InitializeComponent();
@@ -67,6 +76,10 @@ namespace StreamMesh.Views
             _adBannerTimer = new DispatcherTimer();
             _adBannerTimer.Interval = TimeSpan.FromSeconds(30);
             _adBannerTimer.Tick += AdBannerTimer_Tick;
+
+            _radioTimer = new DispatcherTimer();
+            _radioTimer.Interval = TimeSpan.FromMilliseconds(100);
+            _radioTimer.Tick += RadioTimer_Tick;
 
             try
             {
@@ -235,6 +248,27 @@ namespace StreamMesh.Views
                 if (_nextEpg != null) OsdNextEpg.Text = $"Sonraki: {_nextEpg.StartTime:HH:mm} {_nextEpg.Title}";
                 else OsdNextEpg.Text = "Sonraki Program Yok";
                 
+                string category = (channel.Category ?? "").ToLower();
+                bool isRadio = category.Contains("radyo") || category.Contains("radio");
+                
+                if (isRadio)
+                {
+                    RadioOverlayGrid.Visibility = Visibility.Visible;
+                    RadioStationName.Text = channel.Name;
+                    RadioStatusText.Text = "CANLI RADYO YAYINI";
+                    _currentVinylAngle = 0;
+                    VinylRotation.Angle = 0;
+                    
+                    LoadRssNewsAsync();
+                    LoadRadioWeatherAsync(channel.Country);
+                    _radioTimer.Start();
+                }
+                else
+                {
+                    RadioOverlayGrid.Visibility = Visibility.Collapsed;
+                    _radioTimer.Stop();
+                }
+
                 SidebarBorder.Visibility = Visibility.Collapsed;
                 ResetOsdTimer();
                 await PlayChannelAsync(channel);
@@ -405,10 +439,10 @@ namespace StreamMesh.Views
         }
 
         private string[] _donationsAndAds = {
-            "Gelişmiş StreamMesh Deneyimi: Reklamsız ve engelsiz p2p yayın izlemek için VIP satın alabilirsiniz.",
+            "Gelişmiş StreamMesh Deneyimi: Reklamsız ve engelsiz canlı yayın izlemek için VIP satın alabilirsiniz.",
             "Kampanya: Arkadaşın referans kodunla üye olup 3 gün peş peşe veya 1 ay içinde 4 kez giriş yaparsa 1 AYLIK VIP Hediye!",
             "Yeni Özellik: Sürüş sırasında dikkat! Artık sürükle & bırak ile kanalları birleştirme yayında.",
-            "P2P Avantajı: Aynı IP üzerinden cihazlarınız arasında senkronize yayın izleyin.",
+            "Bulut Avantajı: Aynı üyelik üzerinden cihazlarınız arasında senkronize favori kanallarınızı izleyin.",
         };
         private int _currentAdIndex = 0;
 
@@ -484,10 +518,128 @@ namespace StreamMesh.Views
         public void StopPlayback()
         {
             _mediaPlayer?.Stop();
+            _radioTimer?.Stop();
+            if (RadioOverlayGrid != null) RadioOverlayGrid.Visibility = Visibility.Collapsed;
+        }
+
+        private void RadioTimer_Tick(object sender, EventArgs e)
+        {
+            // Rotate vinyl
+            _currentVinylAngle = (_currentVinylAngle + 3) % 360;
+            if (VinylRotation != null)
+            {
+                VinylRotation.Angle = _currentVinylAngle;
+            }
+
+            // Animate spectrum analyzer bars randomly to simulate music playing
+            if (Bar0 != null) Bar0.Height = _rng.Next(10, 48);
+            if (Bar1 != null) { Bar1.Height = _rng.Next(15, 52); Bar1.Fill = new SolidColorBrush(_rng.Next(0, 2) == 0 ? Color.FromRgb(56, 189, 248) : Color.FromRgb(6, 182, 212)); }
+            if (Bar2 != null) Bar2.Height = _rng.Next(20, 50);
+            if (Bar3 != null) Bar3.Height = _rng.Next(10, 45);
+            if (Bar4 != null) Bar4.Height = _rng.Next(5, 35);
+            if (Bar5 != null) Bar5.Height = _rng.Next(15, 52);
+            if (Bar6 != null) Bar6.Height = _rng.Next(25, 48);
+            if (Bar7 != null) Bar7.Height = _rng.Next(30, 55);
+            if (Bar8 != null) Bar8.Height = _rng.Next(10, 44);
+            if (Bar9 != null) Bar9.Height = _rng.Next(12, 50);
+            if (Bar10 != null) Bar10.Height = _rng.Next(18, 48);
+            if (Bar11 != null) Bar11.Height = _rng.Next(5, 30);
+            if (Bar12 != null) Bar12.Height = _rng.Next(10, 40);
+            if (Bar13 != null) Bar13.Height = _rng.Next(8, 35);
+
+            // Change RSS headline news ticker gently every 5 seconds (50 ticks of 100ms)
+            _rssTickCounter++;
+            if (_rssTickCounter >= 50)
+            {
+                _rssTickCounter = 0;
+                if (_rssNews != null && _rssNews.Count > 0)
+                {
+                    _currentNewsIndex = (_currentNewsIndex + 1) % _rssNews.Count;
+                    if (NewsTickerText != null)
+                    {
+                        NewsTickerText.Text = _rssNews[_currentNewsIndex];
+                    }
+                }
+            }
+        }
+
+        private async void LoadRssNewsAsync()
+        {
+            try
+            {
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+                    string url = "https://www.trthaber.com/manset_articles.rss";
+                    string xml = await client.GetStringAsync(url);
+                    
+                    var doc = System.Xml.Linq.XDocument.Parse(xml);
+                    var items = doc.Descendants("item")
+                                   .Select(i => i.Element("title")?.Value)
+                                   .Where(t => !string.IsNullOrEmpty(t))
+                                   .ToList();
+
+                    if (items.Count > 0)
+                    {
+                        _rssNews = items;
+                        _currentNewsIndex = 0;
+                        if (NewsTickerText != null) NewsTickerText.Text = _rssNews[0];
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RSS Load Error: {ex.Message}");
+            }
+
+            // Fallback messages
+            _rssNews = new List<string>
+            {
+                "StreamMesh Haber ve Canlı Radyo sistemine hoş geldiniz!",
+                "Yeni Özellik: Sürükle-bırak ile çift kanalları birbiri üzerine bırakarak hızlıca birleştirebilirsiniz.",
+                "StreamMesh veritabanı doğrudan GitHub Raw CDN üzerinden optimize edilerek çekilir.",
+                "VLC ve AceStream altyapısı ile pikselsiz canlı yayın ve ses kompresör teknolojisi aktif."
+            };
+            _currentNewsIndex = 0;
+            if (NewsTickerText != null) NewsTickerText.Text = _rssNews[0];
+        }
+
+        private async void LoadRadioWeatherAsync(string country)
+        {
+            try
+            {
+                string city = "otomatik";
+                if (!string.IsNullOrEmpty(country) && country != "Türkiye" && country != "Unknown")
+                {
+                    city = country;
+                }
+                
+                var weatherResult = await _weatherService.GetFreeWeatherAsync(city);
+                if (weatherResult != null)
+                {
+                    if (RadioWeatherTemp != null) RadioWeatherTemp.Text = $"{weatherResult.CurrentTemp}°C";
+                    if (RadioWeatherCity != null) RadioWeatherCity.Text = weatherResult.City;
+                    if (RadioWeatherIcon != null) RadioWeatherIcon.Text = weatherResult.IconCode;
+                }
+                else
+                {
+                    if (RadioWeatherTemp != null) RadioWeatherTemp.Text = "18°C";
+                    if (RadioWeatherCity != null) RadioWeatherCity.Text = "İstanbul";
+                    if (RadioWeatherIcon != null) RadioWeatherIcon.Text = "☀️";
+                }
+            }
+            catch
+            {
+                if (RadioWeatherTemp != null) RadioWeatherTemp.Text = "19°C";
+                if (RadioWeatherCity != null) RadioWeatherCity.Text = "İst";
+                if (RadioWeatherIcon != null) RadioWeatherIcon.Text = "☀️";
+            }
         }
 
         public void Dispose()
         {
+            _radioTimer?.Stop();
             _mediaPlayer?.Stop();
             _mediaPlayer?.Dispose();
             _libVLC?.Dispose();

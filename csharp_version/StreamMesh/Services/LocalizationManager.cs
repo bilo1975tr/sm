@@ -52,8 +52,8 @@ namespace StreamMesh.Services
             // Default Turkish
             // -- Login --
             _currentDictionary["Title"] = "StreamMesh - Giriş / Kayıt";
-            _currentDictionary["StreamMeshNetwork"] = "StreamMesh Ağına Katıl";
-            _currentDictionary["LoginDesc"] = "Hesabınız yoksa otomatik oluşturulacaktır (P2P tabanlı)";
+            _currentDictionary["StreamMeshNetwork"] = "StreamMesh Sunucusuna Kaydol";
+            _currentDictionary["LoginDesc"] = "Hesabınız yoksa otomatik oluşturulacaktır (Bulut tabanlı)";
             _currentDictionary["EmailOrUser"] = "E-Posta veya Kullanıcı Adı";
             _currentDictionary["Password"] = "Şifre";
             _currentDictionary["Country"] = "Bulunduğunuz Ülke";
@@ -144,8 +144,8 @@ namespace StreamMesh.Services
             if (languageName == "Almanca")
             {
                 _currentDictionary["Title"] = "StreamMesh - Anmelden / Registrieren";
-                _currentDictionary["StreamMeshNetwork"] = "StreamMesh Netzwerk Beitreten";
-                _currentDictionary["LoginDesc"] = "Wenn Sie kein Konto haben, wird es automatisch erstellt (P2P-basiert)";
+                _currentDictionary["StreamMeshNetwork"] = "StreamMesh Cloud Beitreten";
+                _currentDictionary["LoginDesc"] = "Wenn Sie kein Konto haben, wird es automatisch erstellt (Cloud-basiert)";
                 _currentDictionary["EmailOrUser"] = "E-Mail oder Benutzername";
                 _currentDictionary["Password"] = "Passwort";
                 _currentDictionary["Country"] = "Ihr Land";
@@ -233,8 +233,8 @@ namespace StreamMesh.Services
             else if (languageName == "İngilizce")
             {
                 _currentDictionary["Title"] = "StreamMesh - Login / Register";
-                _currentDictionary["StreamMeshNetwork"] = "Join StreamMesh Network";
-                _currentDictionary["LoginDesc"] = "If you don't have an account, it will be auto-created (P2P based)";
+                _currentDictionary["StreamMeshNetwork"] = "Join StreamMesh Cloud";
+                _currentDictionary["LoginDesc"] = "If you don't have an account, it will be auto-created (Cloud based)";
                 _currentDictionary["EmailOrUser"] = "Email or Username";
                 _currentDictionary["Password"] = "Password";
                 _currentDictionary["Country"] = "Your Country";

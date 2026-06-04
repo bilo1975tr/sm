@@ -52,6 +52,85 @@
         <Image x:Name="VideoImage" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
                Stretch="Uniform" />
 
+        <!-- Radio Mode Canvas / Overlay -->
+        <Grid x:Name="RadioOverlayGrid" Background="#090d16" Visibility="Collapsed">
+            <Grid.Background>
+                <RadialGradientBrush Center="0.5,0.5" RadiusX="0.8" RadiusY="0.8">
+                    <GradientStop Color="#0f172a" Offset="0.0"/>
+                    <GradientStop Color="#020617" Offset="1.0"/>
+                </RadialGradientBrush>
+            </Grid.Background>
+
+            <!-- Weather panel integrated into Radio background -->
+            <Grid Margin="30" VerticalAlignment="Top" HorizontalAlignment="Right" x:Name="RadioWeatherPanel">
+                <Border CornerRadius="12" Background="#cc1e293b" BorderBrush="#38bdf8" BorderThickness="1" Padding="15,10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="RadioWeatherIcon" Text="☀️" FontSize="26" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock x:Name="RadioWeatherTemp" Text="Yükleniyor..." FontSize="18" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock x:Name="RadioWeatherCity" Text="İstanbul" FontSize="11" Foreground="#94a3b8"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Main Centered Content -->
+            <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Glowing Radio Icon and Vinyl Disk -->
+                <Border Grid.Row="0" Width="180" Height="180" CornerRadius="90" BorderBrush="#38bdf8" BorderThickness="4" Background="#111827" Margin="0,0,0,25" x:Name="VinylDisk">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#38bdf8" BlurRadius="30" ShadowDepth="0" Direction="0"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Border Width="140" Height="140" CornerRadius="70" BorderBrush="#4b5563" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="110" Height="110" CornerRadius="55" BorderBrush="#4b5563" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="80" Height="80" CornerRadius="40" BorderBrush="#38bdf8" BorderThickness="2" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#1e293b"/>
+                        <TextBlock Text="📻" FontSize="45" HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="RadioCenterIcon" RenderTransformOrigin="0.5,0.5">
+                            <TextBlock.RenderTransform>
+                                <RotateTransform x:Name="VinylRotation" Angle="0"/>
+                            </TextBlock.RenderTransform>
+                        </TextBlock>
+                    </Grid>
+                </Border>
+
+                <!-- Radio Station Name and Description -->
+                <TextBlock x:Name="RadioStationName" Grid.Row="1" Text="Radyo Kanalı" FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5" TextAlignment="Center"/>
+                <TextBlock x:Name="RadioStatusText" Grid.Row="2" Text="CANLI RADYO YAYINI" FontSize="12" FontWeight="SemiBold" Foreground="#38bdf8" HorizontalAlignment="Center" Margin="0,0,0,20" LetterSpacing="2"/>
+
+                <!-- Dynamic Audio Spectrum Visualizer -->
+                <StackPanel x:Name="VisualizerPanel" Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Height="50" Margin="0,5,0,0">
+                    <Rectangle Fill="#38bdf8" Width="4" Height="15" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar0"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="25" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar1"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="40" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar2"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="30" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar3"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="15" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar4"/>
+                    <Rectangle Fill="#06b6d4" Width="4" Height="20" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar5"/>
+                    <Rectangle Fill="#06b6d4" Width="4" Height="35" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar6"/>
+                    <Rectangle Fill="#06b6d4" Width="4" Height="45" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar7"/>
+                    <Rectangle Fill="#06b6d4" Width="4" Height="30" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar8"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="18" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar9"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="32" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar10"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="42" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar11"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="25" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar12"/>
+                    <Rectangle Fill="#38bdf8" Width="4" Height="12" Margin="2" VerticalAlignment="Bottom" RadiusX="2" RadiusY="2" x:Name="Bar13"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- RSS News Ticker Overlay (at the bottom) -->
+            <Border VerticalAlignment="Bottom" Height="45" Background="#cc0f172a" BorderBrush="#2238bdf8" BorderThickness="0,1,0,0">
+                <Grid x:Name="TickerGrid" ClipToBounds="True">
+                    <TextBlock x:Name="NewsTickerText" Text="Haberler alınıyor..." Foreground="#cbd5e1" FontSize="14" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Grid>
+            </Border>
+        </Grid>
+
         <!-- Overlay OSD Grid - Set to catch all inputs -->
         <Grid x:Name="OsdGrid" IsHitTestVisible="True" Background="#01000000" 
               MouseMove="OsdGrid_MouseMove" MouseDown="OsdGrid_MouseDown" Panel.ZIndex="10">

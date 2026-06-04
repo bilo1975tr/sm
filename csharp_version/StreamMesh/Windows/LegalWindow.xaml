@@ -21,11 +21,11 @@
                 <LineBreak/><LineBreak/>
                 2. StreamMesh uygulaması, sunucularında veya kendi bünyesinde herhangi bir yayın, film veya dizi barındırmamaktadır. Uygulamamız eklenen içeriklerden DOLAYI SORUMLULUK KABUL ETMEMEKTEDİR.
                 <LineBreak/><LineBreak/>
-                3. Kullanıcıların eklediği yayınlar (P2P ağı veya yerel), yayın kaynağı tamamen kesilene ve erişilemez olana kadar listede devam edecektir. Yayınlara merkezden veya başka bir yapay müdahale ile dışarıdan silinme/çıkarılma işlemi YAPILAMAZ. Bu, sistemin P2P doğası gereğidir.
+                3. Kullanıcıların eklediği yayınlar, yayın kaynağı tamamen kesilene ve erişilemez olana kadar listede devam edecektir. Yayınlara merkezden veya başka bir yapay müdahale ile dışarıdan müdahale edilemez, bu tamamen m3u kaynaklarının yapısıyla ilgilidir.
                 <LineBreak/><LineBreak/>
                 <Run FontWeight="Bold" Text="GİZLİLİK VE VERİ GÜVENLİĞİ"/>
                 <LineBreak/><LineBreak/>
-                4. Girdiğiniz şifreler, e-posta adresleri ve kullanım verileriniz GİZLİDİR. Ağda AES-256 şifrelemesi ve SHA-256 doğrulama teknikleri kullanılarak güvende tutulmaktadır ve sadece P2P ağındaki yapılandırma amacıyla kendi şifreli kasanızda muhafaza edilir. Bilgileriniz 3. şahıslara verilmeyecek ve tamamen gizli kalacaktır.
+                4. Girdiğiniz şifreler, e-posta adresleri ve kullanım verileriniz GİZLİDİR. Ağ bağlantılarınızda AES-256 şifrelemesi ve SHA-256 doğrulama teknikleri kullanılarak güvende tutulmaktadır ve sadece bulut senkronizasyonu amacıyla kendi şifreli kasanızda muhafaza edilir. Bilgileriniz 3. şahıslara verilmeyecek ve tamamen gizli kalacaktır.
                 <LineBreak/><LineBreak/>
                 Kabul ederek bu şartları okuduğunuzu ve onayladığınızı beyan etmiş olursunuz.
             </TextBlock>
