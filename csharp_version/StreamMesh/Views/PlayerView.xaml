@@ -102,7 +102,7 @@
 
                 <!-- Radio Station Name and Description -->
                 <TextBlock x:Name="RadioStationName" Grid.Row="1" Text="Radyo Kanalı" FontSize="28" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5" TextAlignment="Center"/>
-                <TextBlock x:Name="RadioStatusText" Grid.Row="2" Text="CANLI RADYO YAYINI" FontSize="12" FontWeight="SemiBold" Foreground="#38bdf8" HorizontalAlignment="Center" Margin="0,0,0,20" LetterSpacing="2"/>
+                <TextBlock x:Name="RadioStatusText" Grid.Row="2" Text="CANLI RADYO YAYINI" FontSize="12" FontWeight="SemiBold" Foreground="#38bdf8" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                 <!-- Dynamic Audio Spectrum Visualizer -->
                 <StackPanel x:Name="VisualizerPanel" Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Height="50" Margin="0,5,0,0">
