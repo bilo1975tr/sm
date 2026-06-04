@@ -71,6 +71,11 @@ namespace StreamMesh
 
         private void Nav_Click(object sender, RoutedEventArgs e)
         {
+            if (sender != NavPlayer)
+            {
+                _playerView?.StopPlayback();
+            }
+
             if (sender == NavHome)
             {
                 if (_homeView == null) _homeView = new HomeView();

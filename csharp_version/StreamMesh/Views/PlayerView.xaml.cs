@@ -153,89 +153,97 @@ namespace StreamMesh.Views
         public async void LoadChannel(Channel channel, List<Channel> playlist = null)
         {
             if (channel == null) return;
-            _currentChannel = channel;
-            
-            _databaseService.IncrementPersonalWatchCount(channel.Id);
-            channel.PersonalWatchCount++;
-
-            // Sync OSD Category Combobox with the dragged/played channel to provide continuous context
-            if (OsdCategoryBox != null)
+            try
             {
-                OsdCategoryBox.SelectionChanged -= OsdCategoryBox_SelectionChanged;
+                _currentChannel = channel;
+                
+                _databaseService.IncrementPersonalWatchCount(channel.Id);
+                channel.PersonalWatchCount++;
 
-                if (playlist != null && playlist.All(c => c.IsFavorite)) 
+                // Sync OSD Category Combobox with the dragged/played channel to provide continuous context
+                if (OsdCategoryBox != null)
                 {
-                    OsdCategoryBox.SelectedIndex = 1; // Favoriler
+                    OsdCategoryBox.SelectionChanged -= OsdCategoryBox_SelectionChanged;
+
+                    if (playlist != null && playlist.All(c => c.IsFavorite)) 
+                    {
+                        OsdCategoryBox.SelectedIndex = 1; // Favoriler
+                    }
+                    else if (channel.Category != null)
+                    {
+                        string cat = channel.Category.ToLower();
+                        if (cat.Contains("film") || cat.Contains("movie")) OsdCategoryBox.SelectedIndex = 3;
+                        else if (cat.Contains("dizi") || cat.Contains("series")) OsdCategoryBox.SelectedIndex = 4;
+                        else if (cat.Contains("radyo") || cat.Contains("radio")) OsdCategoryBox.SelectedIndex = 5;
+                        else OsdCategoryBox.SelectedIndex = 2; // TV
+                    }
+                    else
+                    {
+                        OsdCategoryBox.SelectedIndex = 0;
+                    }
+
+                    OsdCategoryBox.SelectionChanged += OsdCategoryBox_SelectionChanged;
+                    FilterChannels(); // Apply filter based on this new selection
                 }
-                else if (channel.Category != null)
+
+                if (ChannelListView != null)
                 {
-                    string cat = channel.Category.ToLower();
-                    if (cat.Contains("film") || cat.Contains("movie")) OsdCategoryBox.SelectedIndex = 3;
-                    else if (cat.Contains("dizi") || cat.Contains("series")) OsdCategoryBox.SelectedIndex = 4;
-                    else if (cat.Contains("radyo") || cat.Contains("radio")) OsdCategoryBox.SelectedIndex = 5;
-                    else OsdCategoryBox.SelectedIndex = 2; // TV
+                    ChannelListView.SelectedItem = channel;
+                    try { ChannelListView.ScrollIntoView(channel); } catch { }
+                }
+                
+                OsdTitle.Text = channel.Name;
+                OsdCategory.Text = channel.Category ?? "Bilinmiyor";
+
+                if (!string.IsNullOrEmpty(channel.LogoUrl))
+                {
+                    try
+                    {
+                        var converter = new StreamMesh.Converters.LogoCacheConverter();
+                        var localPath = converter.Convert(channel.LogoUrl, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture) as string;
+                        if (!string.IsNullOrEmpty(localPath) && (localPath.StartsWith("http") || System.IO.File.Exists(localPath)))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.UriSource = new Uri(localPath, UriKind.RelativeOrAbsolute);
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.EndInit();
+                            OsdChannelLogo.Source = bitmap;
+                        }
+                        else OsdChannelLogo.Source = null;
+                    }
+                    catch { OsdChannelLogo.Source = null; }
+                }
+                else OsdChannelLogo.Source = null;
+                
+                var epgService = new EpgService();
+                _currentEpg = epgService.GetCurrentEpgForChannel(channel);
+                _nextEpg = epgService.GetNextEpgForChannel(channel);
+
+                if (_currentEpg != null)
+                {
+                    OsdCurrentEpgTime.Text = $"{_currentEpg.StartTime:HH:mm} - {_currentEpg.EndTime:HH:mm}";
+                    OsdCurrentEpgTitle.Text = _currentEpg.Title;
                 }
                 else
                 {
-                    OsdCategoryBox.SelectedIndex = 0;
+                    OsdCurrentEpgTime.Text = "";
+                    OsdCurrentEpgTitle.Text = "EPG Bilgisi Yok";
+                    EpgProgressBar.Value = 0;
                 }
 
-                OsdCategoryBox.SelectionChanged += OsdCategoryBox_SelectionChanged;
-                FilterChannels(); // Apply filter based on this new selection
+                if (_nextEpg != null) OsdNextEpg.Text = $"Sonraki: {_nextEpg.StartTime:HH:mm} {_nextEpg.Title}";
+                else OsdNextEpg.Text = "Sonraki Program Yok";
+                
+                SidebarBorder.Visibility = Visibility.Collapsed;
+                ResetOsdTimer();
+                await PlayChannelAsync(channel);
             }
-
-            if (ChannelListView != null)
+            catch (Exception ex)
             {
-                ChannelListView.SelectedItem = channel;
-                try { ChannelListView.ScrollIntoView(channel); } catch { }
+                LogService.LogError("LoadChannel error", ex);
+                MessageBox.Show($"Kanal yüklenirken hata oluştu: {ex.Message}", "Yükleme Hatası", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            
-            OsdTitle.Text = channel.Name;
-            OsdCategory.Text = channel.Category ?? "Bilinmiyor";
-
-            if (!string.IsNullOrEmpty(channel.LogoUrl))
-            {
-                try
-                {
-                    var converter = new StreamMesh.Converters.LogoCacheConverter();
-                    var localPath = converter.Convert(channel.LogoUrl, typeof(string), null, System.Globalization.CultureInfo.InvariantCulture) as string;
-                    if (!string.IsNullOrEmpty(localPath) && (localPath.StartsWith("http") || System.IO.File.Exists(localPath)))
-                    {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(localPath, UriKind.RelativeOrAbsolute);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        OsdChannelLogo.Source = bitmap;
-                    }
-                    else OsdChannelLogo.Source = null;
-                }
-                catch { OsdChannelLogo.Source = null; }
-            }
-            else OsdChannelLogo.Source = null;
-            
-            var epgService = new EpgService();
-            _currentEpg = epgService.GetCurrentEpgForChannel(channel);
-            _nextEpg = epgService.GetNextEpgForChannel(channel);
-
-            if (_currentEpg != null)
-            {
-                OsdCurrentEpgTime.Text = $"{_currentEpg.StartTime:HH:mm} - {_currentEpg.EndTime:HH:mm}";
-                OsdCurrentEpgTitle.Text = _currentEpg.Title;
-            }
-            else
-            {
-                OsdCurrentEpgTime.Text = "";
-                OsdCurrentEpgTitle.Text = "EPG Bilgisi Yok";
-                EpgProgressBar.Value = 0;
-            }
-
-            if (_nextEpg != null) OsdNextEpg.Text = $"Sonraki: {_nextEpg.StartTime:HH:mm} {_nextEpg.Title}";
-            else OsdNextEpg.Text = "Sonraki Program Yok";
-            
-            SidebarBorder.Visibility = Visibility.Collapsed;
-            ResetOsdTimer();
-            await PlayChannelAsync(channel);
         }
 
         private async System.Threading.Tasks.Task PlayChannelAsync(Channel channel)

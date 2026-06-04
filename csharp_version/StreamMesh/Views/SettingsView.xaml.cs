@@ -776,11 +776,11 @@ namespace StreamMesh.Views
 
                 // Post process: delete broken channels
                 int deletedCount = 0;
-                foreach(var c in channels)
+                if (result.BrokenChannelIds != null)
                 {
-                    if (c.Url != null && c.Url.StartsWith("BROKEN_STREAM_"))
+                    foreach (var id in result.BrokenChannelIds)
                     {
-                        _databaseService.DeleteChannel(c.Id);
+                        _databaseService.DeleteChannel(id);
                         deletedCount++;
                     }
                 }

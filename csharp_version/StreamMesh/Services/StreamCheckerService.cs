@@ -22,6 +22,8 @@ namespace StreamMesh.Services
         
         public int M3u8Total { get; set; }
         public int M3u8Working { get; set; }
+
+        public List<string> BrokenChannelIds { get; set; } = new List<string>();
     }
 
     public class StreamCheckerService
@@ -426,9 +428,8 @@ namespace StreamMesh.Services
                 else
                 {
                     channel.IsVerified = false;
-                    // Mark as broken for post-processing index or delete
-                    channel.Url = "BROKEN_STREAM_" + channel.Url; 
                     db.SaveChannel(channel); 
+                    stats.BrokenChannelIds.Add(channel.Id);
                 }
 
                 stats.Processed++;

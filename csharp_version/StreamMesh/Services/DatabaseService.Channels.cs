@@ -185,18 +185,46 @@ namespace StreamMesh.Services
 
                         if (!string.IsNullOrEmpty(playlistUrl))
                         {
-                            var delCmd = connection.CreateCommand();
-                            delCmd.CommandText = "DELETE FROM Channels WHERE PlaylistUrl = @Url AND Url = @DelUrl";
-                            delCmd.Parameters.AddWithValue("@Url", playlistUrl);
-                            var pDelUrl = delCmd.Parameters.Add("@DelUrl", SqliteType.Text);
-
-                            // Bu kısım artık daha akıllı olabilir ama şimdilik mevcut URL bazlı güvenli silmeyi koruyoruz
-                            foreach (var oldUrl in urlToIdMap.Keys)
+                            // Fetch current channel IDs and their raw URLs from this playlist URL in database
+                            var playlistChannelsInDb = new Dictionary<string, string>();
+                            var getCmd = connection.CreateCommand();
+                            getCmd.CommandText = "SELECT Id, Url FROM Channels WHERE PlaylistUrl = @Url";
+                            getCmd.Parameters.AddWithValue("@Url", playlistUrl);
+                            using (var reader = getCmd.ExecuteReader())
                             {
-                                // Eğer eski URL yeni listede hiç yoksa ve bu playlist'e aitse sil
-                                if (!newUrls.Contains(oldUrl))
+                                while (reader.Read())
                                 {
-                                    pDelUrl.Value = oldUrl;
+                                    string id = reader.GetString(0);
+                                    string url = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                                    playlistChannelsInDb[id] = url;
+                                }
+                            }
+
+                            var delCmd = connection.CreateCommand();
+                            delCmd.CommandText = "DELETE FROM Channels WHERE Id = @Id";
+                            var pDelId = delCmd.Parameters.Add("@Id", SqliteType.Text);
+
+                            foreach (var kvp in playlistChannelsInDb)
+                            {
+                                string channelId = kvp.Key;
+                                string rawUrl = kvp.Value;
+                                
+                                bool hasAnyActiveUrl = false;
+                                if (!string.IsNullOrEmpty(rawUrl))
+                                {
+                                    foreach (var u in rawUrl.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        if (newUrls.Contains(u.Trim()))
+                                        {
+                                            hasAnyActiveUrl = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (!hasAnyActiveUrl)
+                                {
+                                    pDelId.Value = channelId;
                                     delCmd.ExecuteNonQuery();
                                 }
                             }
@@ -324,6 +352,7 @@ namespace StreamMesh.Services
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                         });
                     }
@@ -361,6 +390,7 @@ namespace StreamMesh.Services
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                         });
                     }
@@ -434,6 +464,7 @@ namespace StreamMesh.Services
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                         };
                     }

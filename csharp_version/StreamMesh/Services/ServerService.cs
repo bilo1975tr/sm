@@ -229,7 +229,7 @@ namespace StreamMesh.Services
         {
             if (!string.IsNullOrEmpty(idStr))
             {
-                var channel = _databaseService.GetAllChannels().FirstOrDefault(c => c.Id == idStr);
+                var channel = _databaseService.GetChannelById(idStr);
                 if (channel != null && !string.IsNullOrEmpty(channel.Url))
                 {
                     string url = channel.Url;

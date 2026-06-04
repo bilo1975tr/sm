@@ -12,7 +12,7 @@ namespace StreamMesh.Services
     {
         // Okuma İşlemi (Sınırsız/Kotasız) - GitHub Raw CDN
         // Yazma Havuzu (Yeni Kanallar) - Firebase
-        private static readonly string FirebasePoolUrl = "https://streammesh-p2p-default-rtdb.europe-west1.firebasedatabase.app/new_channels.json";
+        private static readonly string FirebasePoolUrl = AppConfig.GetFirebasePoolUrl();
         
         public static int TotalChannelsPushedToFirebase { get; private set; } = 0;
         public static int LastPulledGitHubChannelCount { get; private set; } = 0;
@@ -88,7 +88,7 @@ namespace StreamMesh.Services
                     if (string.IsNullOrEmpty(originalLang) || originalLang == "Hiçbiri") continue;
                     
                     string safeLang = NormalizeLanguageFilename(originalLang);
-                    string targetUrl = $"https://raw.githubusercontent.com/bilo1975tr/sm/main/channels_{safeLang}.json";
+                    string targetUrl = AppConfig.GetGitHubLanguageUrl(safeLang);
 
                     var response = await client.GetAsync(targetUrl);
                     

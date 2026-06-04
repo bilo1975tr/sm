@@ -19,51 +19,59 @@ namespace StreamMesh
         {
             base.OnStartup(e);
 
-            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-            // Legal Window Check
-            var legalWindow = new StreamMesh.Windows.LegalWindow();
-            legalWindow.ShowDialog();
-
-            if (!legalWindow.Accepted)
+            try
             {
-                MessageBox.Show("Uygulama kullanım şartlarını kabul etmediğiniz için kapatılıyor.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
-                Application.Current.Shutdown();
-                return;
-            }
+                Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-            // Auto Login Check
-            bool loggedIn = StreamMesh.Services.P2P.UserService.AutoLogin();
-            if (!loggedIn)
-            {
-                var loginWindow = new StreamMesh.Windows.LoginWindow();
-                loginWindow.ShowDialog();
+                // Legal Window Check
+                var legalWindow = new StreamMesh.Windows.LegalWindow();
+                legalWindow.ShowDialog();
 
-                if (!loginWindow.IsLoggedIn)
+                if (!legalWindow.Accepted)
                 {
+                    MessageBox.Show("Uygulama kullanım şartlarını kabul etmediğiniz için kapatılıyor.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
                     Application.Current.Shutdown();
                     return;
                 }
-            }
 
-            // Gelişmiş dil yükleme (AutoLogin veya LoginWindow sonrası)
-            var profile = StreamMesh.Services.P2P.UserService.GetProfile();
-            if (profile != null && !string.IsNullOrEmpty(profile.AppLanguage))
+                // Auto Login Check
+                bool loggedIn = StreamMesh.Services.P2P.UserService.AutoLogin();
+                if (!loggedIn)
+                {
+                    var loginWindow = new StreamMesh.Windows.LoginWindow();
+                    loginWindow.ShowDialog();
+
+                    if (!loginWindow.IsLoggedIn)
+                    {
+                        Application.Current.Shutdown();
+                        return;
+                    }
+                }
+
+                // Gelişmiş dil yükleme (AutoLogin veya LoginWindow sonrası)
+                var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                if (profile != null && !string.IsNullOrEmpty(profile.AppLanguage))
+                {
+                    StreamMesh.Services.LocalizationManager.Instance.LoadTranslations(profile.AppLanguage);
+                }
+
+                // Start Local Server
+                StreamMesh.Services.ServerService.Instance.StartServer();
+
+                // Start GitHub Sync
+                StreamMesh.Services.GitHubSyncService.Start();
+
+                // Show MainWindow
+                var mainWindow = new MainWindow();
+                Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                this.MainWindow = mainWindow;
+                mainWindow.Show();
+            }
+            catch (Exception ex)
             {
-                StreamMesh.Services.LocalizationManager.Instance.LoadTranslations(profile.AppLanguage);
+                LogFatalError(ex);
+                Application.Current.Shutdown();
             }
-
-            // Start Local Server
-            StreamMesh.Services.ServerService.Instance.StartServer();
-
-            // Start GitHub Sync
-            StreamMesh.Services.GitHubSyncService.Start();
-
-            // Show MainWindow
-            var mainWindow = new MainWindow();
-            Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            this.MainWindow = mainWindow;
-            mainWindow.Show();
         }
 
         private void LogFatalError(Exception ex)
