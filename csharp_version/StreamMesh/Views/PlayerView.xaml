@@ -53,7 +53,7 @@
                Stretch="Uniform" />
 
         <!-- Radio Mode Canvas / Overlay -->
-        <Grid x:Name="RadioOverlayGrid" Background="#090d16" Visibility="Collapsed">
+        <Grid x:Name="RadioOverlayGrid" Visibility="Collapsed">
             <Grid.Background>
                 <RadialGradientBrush Center="0.5,0.5" RadiusX="0.8" RadiusY="0.8">
                     <GradientStop Color="#0f172a" Offset="0.0"/>
