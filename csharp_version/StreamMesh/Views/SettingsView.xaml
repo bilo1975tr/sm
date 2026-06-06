@@ -104,7 +104,7 @@
                         <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
                         
                         <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_DataMgmt]}" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <Button x:Name="OptimizeLibraryBtn" Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_OptLib]}" Width="220" Height="40" Margin="0,0,10,0"
                                     Click="OptimizeLibraryBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#059669" 
                                     Foreground="White" ToolTip="Çift kanalları birleştirir ve URL listelerini temizler." />
@@ -112,6 +112,16 @@
                                     Click="ClearChannelsButton_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#7f1d1d" 
                                     Foreground="#fca5a5" />
                         </StackPanel>
+
+                        <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
+                        
+                        <TextBlock Text="🎨 Logo Tanımlama ve Eşleştirme" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
+                        <TextBlock Text="Logosu olmayan tüm kanallar için bulut (iptv-org) veritabanından akıllı ve otomatik logo araması yapar." Foreground="#94a3b8" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button x:Name="AutoMatchLogosBtn" Content="Eksik Logoları Otomatik Eşleştir" Width="240" Height="40" Margin="0,0,10,0"
+                                    Click="AutoMatchLogosBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#8b5cf6" Foreground="White" />
+                        </StackPanel>
+                        <TextBlock x:Name="LogoMatchStatusText" Foreground="#cbd5e1" TextWrapping="Wrap" Margin="0,0,0,10"/>
                     </StackPanel>
                 </Border>
             </TabItem>

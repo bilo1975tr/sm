@@ -97,6 +97,51 @@ namespace StreamMesh.Windows
             }
         }
 
+        private async void SearchOnlineLogo_Click(object sender, RoutedEventArgs e)
+        {
+            string query = NewLogoTxt.Text?.Trim();
+            if (string.IsNullOrEmpty(query))
+            {
+                query = NameTxt.Text?.Trim();
+            }
+
+            if (string.IsNullOrEmpty(query)) return;
+
+            try
+            {
+                var results = await StreamMesh.Services.LogoSearchService.SearchLogosAsync(query);
+                if (results != null && results.Count > 0)
+                {
+                    LogoSearchResultsList.ItemsSource = results;
+                    LogoSearchResultsList.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    LogoSearchResultsList.Visibility = Visibility.Collapsed;
+                    MessageBox.Show("Eşleşen herhangi bir logo bulunamadı.", "Logo Arama", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Logo aranırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SelectLogoSearchResult_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.DataContext is StreamMesh.Services.LogoSearchResult result)
+            {
+                string url = result.LogoUrl;
+                if (!string.IsNullOrEmpty(url) && !Logos.Contains(url))
+                {
+                    Logos.Add(url);
+                    NewLogoTxt.Clear();
+                    LogoSearchResultsList.Visibility = Visibility.Collapsed;
+                    MessageBox.Show($"'{result.Name}' logosu listeye eklendi.", "Logo Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+        }
+
         private void RemoveLogo_Click(object sender, RoutedEventArgs e)
         {
             if (sender is FrameworkElement fe && fe.DataContext is string url)

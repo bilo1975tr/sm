@@ -810,5 +810,30 @@ namespace StreamMesh.Views
                 CheckUnverifiedStreamsBtn.IsEnabled = true;
             }
         }
+
+        private async void AutoMatchLogosBtn_Click(object sender, RoutedEventArgs e)
+        {
+            AutoMatchLogosBtn.IsEnabled = false;
+            LogoMatchStatusText.Text = "Eksik logolar taranıyor...";
+
+            try
+            {
+                int matched = await StreamMesh.Services.LogoSearchService.AutoMatchAllMissingLogosAsync((msg) =>
+                {
+                    Dispatcher.Invoke(() => LogoMatchStatusText.Text = msg);
+                });
+
+                MessageBox.Show($"Otomatik logo eşleştirme tamamlandı!\nToplam {matched} kanala yeni logo eklendi.", "İşlem Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                LogoMatchStatusText.Text = $"Hata oluştu: {ex.Message}";
+                MessageBox.Show($"Hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                AutoMatchLogosBtn.IsEnabled = true;
+            }
+        }
     }
 }
