@@ -1,10 +1,13 @@
 using System.Windows;
+using System.Threading;
 using LibVLCSharp.Shared;
 
 namespace StreamMesh
 {
     public partial class App : Application
     {
+        private static Mutex _mutex = null;
+
         public App()
         {
             // Error handling
@@ -17,6 +20,19 @@ namespace StreamMesh
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            const string appName = "StreamMeshApp_SingleInstance_Mutex";
+            bool createdNew;
+
+            _mutex = new Mutex(true, appName, out createdNew);
+
+            if (!createdNew)
+            {
+                // App is already running. Exit this instance.
+                MessageBox.Show("Uygulama zaten farklı bir pencerede veya sistem tepsisinde çalışıyor.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+                Application.Current.Shutdown();
+                return;
+            }
+
             base.OnStartup(e);
 
             try

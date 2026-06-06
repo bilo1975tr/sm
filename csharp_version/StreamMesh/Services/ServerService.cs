@@ -234,50 +234,19 @@ namespace StreamMesh.Services
                 {
                     string url = channel.Url;
 
-                    if (channel.SourceType == "YOUTUBE")
+                    bool isYoutube = url.Contains("youtube.com") || url.Contains("youtu.be");
+                    bool isAceStream = url.StartsWith("acestream://");
+
+                    if (channel.SourceType == "YOUTUBE" || isYoutube)
                     {
                         var directUrl = await _youtubeService.GetSingleMuxedStreamUrlAsync(url);
                         if (!string.IsNullOrEmpty(directUrl)) url = directUrl;
                     }
-                    else if (channel.SourceType == "ACESTREAM")
+                    else if (channel.SourceType == "ACESTREAM" || isAceStream)
                     {
                         await _aceStreamService.StartEngineAsync();
                         string aceUrl = _aceStreamService.GetHttpUrl(url); 
-                        
-                        try
-                        {
-                            await WriteHeadersAsync(stream, 200, "OK", "video/mp4");
-                            
-                            var psi = new System.Diagnostics.ProcessStartInfo
-                            {
-                                FileName = StreamMesh.Services.InventoryService.FFmpegPath,
-                                Arguments = $"-i \"{aceUrl}\" -c:v libx264 -preset superfast -crf 28 -vf \"scale='min(1920,iw)':-2\" -c:a aac -b:a 128k -f mp4 -movflags frag_keyframe+empty_moov pipe:1",
-                                RedirectStandardOutput = true,
-                                UseShellExecute = false,
-                                CreateNoWindow = true
-                            };
-
-                            using (var process = System.Diagnostics.Process.Start(psi))
-                            {
-                                try
-                                {
-                                    await process.StandardOutput.BaseStream.CopyToAsync(stream);
-                                }
-                                finally
-                                {
-                                    if (!process.HasExited)
-                                    {
-                                        try { process.Kill(); } catch { }
-                                    }
-                                }
-                            }
-                            return; 
-                        }
-                        catch (Exception ex)
-                        {
-                            LogService.LogError("FFmpeg Hatası, doğrudan yönlendirmeye düşülüyor: " + ex.Message, ex);
-                            url = aceUrl.Replace("/ace/getstream", "/ace/manifest.m3u8").Replace("127.0.0.1", LocalIp);
-                        }
+                        url = aceUrl.Replace("127.0.0.1", LocalIp);
                     }
 
                     // HTTP 302 Redirect

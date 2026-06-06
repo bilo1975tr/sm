@@ -185,10 +185,6 @@ namespace StreamMesh.Views
 
             foreach (var ch in paged)
             {
-                // Rastgele izleyici simülasyonu (Canlı Firebase bağlantısı yapılana kadar)
-                var random = new Random(ch.Id.GetHashCode() + DateTime.Now.Minute);
-                ch.ViewersCount = random.Next(0, 1500) > 1000 ? random.Next(50, 4000) : random.Next(0, 20);
-
                 if (epgDict.TryGetValue(ch.Id, out var curEpg))
                 {
                     ch.CurrentEpgTitle = curEpg.Title;
