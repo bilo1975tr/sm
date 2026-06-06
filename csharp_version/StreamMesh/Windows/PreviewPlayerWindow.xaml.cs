@@ -130,10 +130,13 @@ namespace StreamMesh.Windows
                     var tracks = _mediaPlayer.Media?.Tracks;
                     if (tracks != null)
                     {
-                        var videoTrack = tracks.FirstOrDefault(t => t.TrackType == TrackType.Video);
-                        if (videoTrack != null)
+                        foreach (var track in tracks)
                         {
-                            ResolutionTxt.Text = $"{videoTrack.Data.Video.Width}x{videoTrack.Data.Video.Height}";
+                            if (track.TrackType == TrackType.Video)
+                            {
+                                ResolutionTxt.Text = $"{track.Data.Video.Width}x{track.Data.Video.Height}";
+                                break;
+                            }
                         }
                     }
                 }
