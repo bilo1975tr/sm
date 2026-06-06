@@ -245,8 +245,13 @@ namespace StreamMesh.Services
                     else if (channel.SourceType == "ACESTREAM" || isAceStream)
                     {
                         await _aceStreamService.StartEngineAsync();
-                        string aceUrl = _aceStreamService.GetHttpUrl(url); 
-                        url = aceUrl.Replace("127.0.0.1", LocalIp);
+                        string contentId = url;
+                        if (contentId.StartsWith("acestream://"))
+                        {
+                            contentId = contentId.Substring("acestream://".Length);
+                        }
+                        // Web player için HLS çıktısını (m3u8) kullanalım
+                        url = $"http://{LocalIp}:6878/ace/manifest.m3u8?id={contentId}";
                     }
 
                     // HTTP 302 Redirect
@@ -483,7 +488,7 @@ namespace StreamMesh.Services
             
             var streamUrl = '/stream?id=' + ch.id;
             
-            if (ch.srcType === 'ACESTREAM' || ch.srcType === 'YOUTUBE') {{
+            if (ch.srcType === 'YOUTUBE') {{
                 fallbackNative(streamUrl, ch.name, ch.srcType);
             }} else {{
                 playNativeOrHls(streamUrl, ch.name, ch.srcType);
