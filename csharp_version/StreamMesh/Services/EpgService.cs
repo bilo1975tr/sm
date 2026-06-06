@@ -195,5 +195,56 @@ namespace StreamMesh.Services
         {
             return _db.GetNextEpgForChannel(channel);
         }
+
+        public async Task StartAutoUpdateTimerAsync()
+        {
+            // Bu metod uygulama boyunca arka planda çalışarak EPG sürelerini kontrol eder.
+            // 24 saatten eski olan veya hiç güncellenmemiş EPG kaynaklarını arka plandan asenkron olarak otomatik günceller.
+            while (true)
+            {
+                try
+                {
+                    var sources = _db.GetEpgSources();
+                    foreach (var url in sources)
+                    {
+                        string lastUpdatedStr = _db.GetSetting($"epg_updated_{url}", "");
+                        bool shouldUpdate = false;
+                        if (string.IsNullOrEmpty(lastUpdatedStr))
+                        {
+                            shouldUpdate = true;
+                        }
+                        else if (DateTime.TryParseExact(lastUpdatedStr, "yyyy-MM-dd HH:mm", null, System.Globalization.DateTimeStyles.None, out DateTime lastUpdated))
+                        {
+                            if ((DateTime.Now - lastUpdated).TotalHours >= 24)
+                            {
+                                shouldUpdate = true;
+                            }
+                        }
+                        else
+                        {
+                            shouldUpdate = true;
+                        }
+
+                        if (shouldUpdate)
+                        {
+                            Console.WriteLine($"[EPG Auto-Update] {url} güncelleniyor (24 saati geçti)...");
+                            bool success = await ParseEpgUrlAsync(url);
+                            if (success)
+                            {
+                                _db.SetSetting($"epg_updated_{url}", DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                                Console.WriteLine($"[EPG Auto-Update] {url} başarıyla güncellendi.");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[EPG Auto-Update] Hata: " + ex.Message);
+                }
+
+                // 4 saat aralıkla kontrol et
+                await Task.Delay(TimeSpan.FromHours(4));
+            }
+        }
     }
 }

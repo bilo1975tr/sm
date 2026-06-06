@@ -67,6 +67,9 @@ namespace StreamMesh.Services
                         EndTime TEXT,
                         SourceUrl TEXT
                     );
+                    CREATE TABLE IF NOT EXISTS DeadLinkHashes (
+                        Hash INTEGER PRIMARY KEY
+                    );
                 ";
                 command.ExecuteNonQuery();
 
@@ -75,6 +78,18 @@ namespace StreamMesh.Services
                     var cmdUpdate = connection.CreateCommand();
                     cmdUpdate.CommandText = "ALTER TABLE Channels ADD COLUMN PersonalWatchCount INTEGER DEFAULT 0;";
                     cmdUpdate.ExecuteNonQuery();
+                } catch { }
+
+                try {
+                    var alterCmdIsLocked = connection.CreateCommand();
+                    alterCmdIsLocked.CommandText = "ALTER TABLE Channels ADD COLUMN IsLocked INTEGER DEFAULT 0;";
+                    alterCmdIsLocked.ExecuteNonQuery();
+                } catch { }
+
+                try {
+                    var alterCmdNotes = connection.CreateCommand();
+                    alterCmdNotes.CommandText = "ALTER TABLE Channels ADD COLUMN Notes TEXT DEFAULT '';";
+                    alterCmdNotes.ExecuteNonQuery();
                 } catch { }
 
                 try {
@@ -130,6 +145,62 @@ namespace StreamMesh.Services
                     indexCmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_epg_channel_time ON EpgPrograms (ChannelName, StartTime, EndTime);";
                     indexCmd.ExecuteNonQuery();
                 } catch { }
+            }
+        }
+
+        public static long GetFnv1aHash(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return 0;
+            ulong hash = 14695981039346656037UL;
+            foreach (char c in text)
+            {
+                hash ^= (ushort)c;
+                hash *= 1099511628211UL;
+            }
+            return (long)hash;
+        }
+
+        public void AddDeadLink(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return;
+            long hash = GetFnv1aHash(url.Trim());
+            try
+            {
+                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                {
+                    connection.Open();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "INSERT OR IGNORE INTO DeadLinkHashes (Hash) VALUES (@Hash)";
+                    cmd.Parameters.AddWithValue("@Hash", hash);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("AddDeadLink error", ex);
+            }
+        }
+
+        public bool IsLinkDead(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+            long hash = GetFnv1aHash(url.Trim());
+            try
+            {
+                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                {
+                    connection.Open();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT 1 FROM DeadLinkHashes WHERE Hash = @Hash";
+                    cmd.Parameters.AddWithValue("@Hash", hash);
+                    var result = cmd.ExecuteScalar();
+                    return result != null;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("IsLinkDead error", ex);
+                return false;
             }
         }
     }

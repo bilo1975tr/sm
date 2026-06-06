@@ -419,6 +419,88 @@ namespace StreamMesh.Windows
             SnapshotBtn.IsEnabled = true;
         }
 
+        private void PreviewChannel_Click(object sender, RoutedEventArgs e)
+        {
+            if (ChannelsList.SelectedItem is ChannelSelectionItem selectionItem && selectionItem.Channel != null)
+            {
+                var previewWin = new PreviewPlayerWindow(selectionItem.Channel);
+                previewWin.Owner = this;
+                previewWin.ShowDialog();
+            }
+            else
+            {
+                MessageBox.Show("Önizlemek için lütfen listeden sağ tıklanan kanalı seçin.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void MergeSelected_Click(object sender, RoutedEventArgs e)
+        {
+            MergeBtn_Click(sender, e);
+        }
+
+        private async void GetStreamInfo_Click(object sender, RoutedEventArgs e)
+        {
+            if (ChannelsList.SelectedItem is ChannelSelectionItem selectionItem && selectionItem.Channel != null)
+            {
+                var channel = selectionItem.Channel;
+                string firstUrl = (channel.Url ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim();
+                if (string.IsNullOrEmpty(firstUrl))
+                {
+                    MessageBox.Show("Analiz edilecek yayın adresi bulunamadı.", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                JobStatusTxt.Text = $"Yayın analiz ediliyor: {channel.Name}...";
+                try
+                {
+                    var checker = new StreamCheckerService();
+                    
+                    bool isYoutube = firstUrl.Contains("youtube.com") || firstUrl.Contains("youtu.be");
+                    if (isYoutube || channel.SourceType == "YOUTUBE")
+                    {
+                        var yt = new YoutubeService();
+                        var resolved = await yt.GetSingleMuxedStreamUrlAsync(firstUrl);
+                        if (!string.IsNullOrEmpty(resolved)) firstUrl = resolved;
+                    }
+                    else if (firstUrl.StartsWith("acestream://") || channel.SourceType == "ACESTREAM")
+                    {
+                        var ace = new AceStreamService();
+                        await ace.StartEngineAsync();
+                        firstUrl = ace.GetHttpUrl(firstUrl);
+                    }
+
+                    var result = await checker.AnalyzeStreamWithVlcAsync(firstUrl);
+                    
+                    string statusText = result.working ? "🔴 Aktif (Çalışıyor)" : "⚫ Pasif (Çevrimdışı)";
+                    string categoryText = result.category ?? "Bilinmiyor";
+                    string resolutionText = result.resolution ?? "Bilinmiyor (Sadece Ses vb.)";
+                    
+                    MessageBox.Show(
+                        $"Kanal: {channel.Name}\n" +
+                        $"Bağlantı Durumu: {statusText}\n" +
+                        $"Kategori: {categoryText}\n" +
+                        $"Çözünürlük: {resolutionText}\n" +
+                        $"Yayın Adresi: {firstUrl}",
+                        "Kanal/Yayın Analiz Raporu",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Analiz hatası: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                finally
+                {
+                    JobStatusTxt.Text = "Bekliyor...";
+                }
+            }
+            else
+            {
+                MessageBox.Show("Lütfen analiz etmek istediğiniz kanalı seçin.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             foreach (var file in _tempSnapshots)

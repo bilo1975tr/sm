@@ -21,6 +21,8 @@ namespace StreamMesh.Models
         private string _currentEpgTime;
         private bool _isFavorite = false;
         private bool _isVerified = false;
+        private bool _isLocked = false;
+        private string _notes = string.Empty;
         private DateTime _createdAt = DateTime.Now;
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -29,6 +31,18 @@ namespace StreamMesh.Models
         {
             get => _isVerified;
             set { if (_isVerified != value) { _isVerified = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsLocked
+        {
+            get => _isLocked;
+            set { if (_isLocked != value) { _isLocked = value; OnPropertyChanged(); } }
+        }
+
+        public string Notes
+        {
+            get => _notes;
+            set { if (_notes != value) { _notes = value; OnPropertyChanged(); } }
         }
 
         public DateTime CreatedAt

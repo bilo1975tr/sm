@@ -57,6 +57,20 @@ namespace StreamMesh
                 var missingWindow = new StreamMesh.Windows.MissingComponentsWindow();
                 missingWindow.ShowDialog();
             }
+
+            // EPG Otomatik Güncelleme Zamanlayıcısını Arka Planda Başlat (24 saatte bir günceller)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var epgService = new EpgService();
+                    await epgService.StartAutoUpdateTimerAsync();
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("EPG background auto update initialization failed", ex);
+                }
+            });
         }
 
         private void OnChannelSelected(Models.Channel channel, List<Models.Channel> playlist)

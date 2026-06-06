@@ -36,6 +36,13 @@
                 </ListBox>
 
                 <ListView x:Name="ChannelsList" Grid.Column="1" Background="#1e293b" Foreground="White" BorderThickness="1" BorderBrush="#334155">
+                    <ListView.ContextMenu>
+                        <ContextMenu Background="#1e293b" Foreground="White">
+                            <MenuItem Header="Kanalı Önizle" Click="PreviewChannel_Click"/>
+                            <MenuItem Header="Seçili Kanalları Birleştir" Click="MergeSelected_Click"/>
+                            <MenuItem Header="Yayın Bilgisi Topla (Stream Info)" Click="GetStreamInfo_Click"/>
+                        </ContextMenu>
+                    </ListView.ContextMenu>
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="40">
@@ -59,6 +66,13 @@
                         <GridViewColumn Header="Ad" Width="220" DisplayMemberBinding="{Binding Channel.Name}" />
                         <GridViewColumn Header="Kategori" Width="80" DisplayMemberBinding="{Binding Channel.Category}" />
                         <GridViewColumn Header="Dil" Width="80" DisplayMemberBinding="{Binding Channel.Language}" />
+                        <GridViewColumn Header="Yayın URL'si (Tam)" Width="280">
+                             <GridViewColumn.CellTemplate>
+                                 <DataTemplate>
+                                     <TextBox Text="{Binding Channel.Url, Mode=OneWay}" Background="Transparent" BorderThickness="0" Foreground="White" IsReadOnly="True" TextWrapping="NoWrap" ToolTip="{Binding Channel.Url}" />
+                                 </DataTemplate>
+                             </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="Bağlantı Sayısı" Width="100">
                              <GridViewColumn.CellTemplate>
                                  <DataTemplate>

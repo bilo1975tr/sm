@@ -16,8 +16,8 @@ namespace StreamMesh.Services
                     connection.Open();
                     var command = connection.CreateCommand();
                     command.CommandText = @"
-                        INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
-                        VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified)
+                        INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified, IsLocked, Notes)
+                        VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified, @IsLocked, @Notes)
                         ON CONFLICT(Id) DO UPDATE SET
                             Name=excluded.Name,
                             EpgId=excluded.EpgId,
@@ -30,7 +30,9 @@ namespace StreamMesh.Services
                             Language=excluded.Language,
                             PlaylistUrl=excluded.PlaylistUrl,
                             IsFavorite=excluded.IsFavorite,
-                            IsVerified=excluded.IsVerified;
+                            IsVerified=excluded.IsVerified,
+                            IsLocked=excluded.IsLocked,
+                            Notes=excluded.Notes;
                     ";
                     command.Parameters.AddWithValue("@Id", channel.Id);
                     command.Parameters.AddWithValue("@Name", channel.Name ?? string.Empty);
@@ -46,6 +48,8 @@ namespace StreamMesh.Services
                     command.Parameters.AddWithValue("@PlaylistUrl", channel.PlaylistUrl ?? string.Empty);
                     command.Parameters.AddWithValue("@IsFavorite", channel.IsFavorite ? 1 : 0);
                     command.Parameters.AddWithValue("@IsVerified", channel.IsVerified ? 1 : 0);
+                    command.Parameters.AddWithValue("@IsLocked", channel.IsLocked ? 1 : 0);
+                    command.Parameters.AddWithValue("@Notes", channel.Notes ?? string.Empty);
                     
                     command.ExecuteNonQuery();
                 }
@@ -106,8 +110,8 @@ namespace StreamMesh.Services
                     {
                         var command = connection.CreateCommand();
                         command.CommandText = @"
-                            INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified)
-                            VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified)
+                            INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified, IsLocked, Notes)
+                            VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified, 0, '')
                             ON CONFLICT(Id) DO UPDATE SET
                                 Name=excluded.Name,
                                 EpgId=excluded.EpgId,
@@ -142,6 +146,22 @@ namespace StreamMesh.Services
 
                         foreach (var channel in channels)
                         {
+                            // Ölü link filtreleme
+                            if (!string.IsNullOrEmpty(channel.Url))
+                            {
+                                var parts = channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                var aliveParts = new List<string>();
+                                foreach (var p in parts)
+                                {
+                                    if (!IsLinkDead(p))
+                                    {
+                                        aliveParts.Add(p.Trim());
+                                    }
+                                }
+                                if (aliveParts.Count == 0) continue; // Tüm linkler ölü ise ekleme
+                                channel.Url = string.Join(",", aliveParts);
+                            }
+
                             string idToUse = null;
                             if (channel.Url != null)
                             {
@@ -201,7 +221,7 @@ namespace StreamMesh.Services
                             }
 
                             var delCmd = connection.CreateCommand();
-                            delCmd.CommandText = "DELETE FROM Channels WHERE Id = @Id";
+                            delCmd.CommandText = "DELETE FROM Channels WHERE Id = @Id AND IsLocked = 0";
                             var pDelId = delCmd.Parameters.Add("@Id", SqliteType.Text);
 
                             foreach (var kvp in playlistChannelsInDb)
@@ -331,7 +351,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels ORDER BY AddedDate DESC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels ORDER BY AddedDate DESC";
                 
                 using (var reader = command.ExecuteReader())
                 {
@@ -353,7 +373,9 @@ namespace StreamMesh.Services
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
                             EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
-                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
+                            IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
                         });
                     }
                 }
@@ -368,7 +390,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
                 command.Parameters.AddWithValue("@Url", playlistUrl);
                 
                 using (var reader = command.ExecuteReader())
@@ -391,7 +413,9 @@ namespace StreamMesh.Services
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
                             EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
-                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
+                            IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
                         });
                     }
                 }
@@ -424,13 +448,20 @@ namespace StreamMesh.Services
             }
         }
 
-        public void DeleteChannel(string id)
+        public void DeleteChannel(string id, bool force = false)
         {
             using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "DELETE FROM Channels WHERE Id = @Id";
+                if (force)
+                {
+                    command.CommandText = "DELETE FROM Channels WHERE Id = @Id";
+                }
+                else
+                {
+                    command.CommandText = "DELETE FROM Channels WHERE Id = @Id AND IsLocked = 0";
+                }
                 command.Parameters.AddWithValue("@Id", id);
                 command.ExecuteNonQuery();
             }
@@ -442,7 +473,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels WHERE Id = @Id";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels WHERE Id = @Id";
                 command.Parameters.AddWithValue("@Id", id);
                 
                 using (var reader = command.ExecuteReader())
@@ -465,7 +496,9 @@ namespace StreamMesh.Services
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
                             EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
-                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
+                            IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
                         };
                     }
                 }
@@ -586,7 +619,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
                 command.Parameters.AddWithValue("@Limit", limit);
                 command.Parameters.AddWithValue("@Offset", offset);
                 
@@ -609,7 +642,9 @@ namespace StreamMesh.Services
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
-                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
+                            PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
+                            IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
                         });
                     }
                 }

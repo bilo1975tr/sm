@@ -57,6 +57,8 @@ namespace StreamMesh.Windows
             GroupTxt.Text = channel.GroupTitle;
             SourceTxt.Text = channel.SourceType;
             FavoriteChk.IsChecked = channel.IsFavorite;
+            LockedChk.IsChecked = channel.IsLocked;
+            NotesTxt.Text = channel.Notes;
         }
 
         private void CancelBtn_Click(object sender, RoutedEventArgs e)
@@ -76,6 +78,8 @@ namespace StreamMesh.Windows
             _channel.GroupTitle = GroupTxt.Text.Trim();
             _channel.SourceType = SourceTxt.Text.Trim();
             _channel.IsFavorite = FavoriteChk.IsChecked ?? false;
+            _channel.IsLocked = LockedChk.IsChecked ?? false;
+            _channel.Notes = NotesTxt.Text?.Trim() ?? string.Empty;
 
             DialogResult = true;
             Close();

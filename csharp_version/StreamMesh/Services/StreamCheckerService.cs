@@ -339,6 +339,11 @@ namespace StreamMesh.Services
             foreach (var channel in channels)
             {
                 if (cancellationToken.IsCancellationRequested) break;
+                if (channel.IsLocked)
+                {
+                    stats.Processed++;
+                    continue;
+                }
                 if (unverifiedOnly && channel.IsVerified) 
                 {
                     stats.Processed++;
@@ -427,9 +432,22 @@ namespace StreamMesh.Services
                 }
                 else
                 {
+                    if (channel.IsLocked)
+                    {
+                        stats.Processed++;
+                        continue;
+                    }
                     channel.IsVerified = false;
                     db.SaveChannel(channel); 
                     stats.BrokenChannelIds.Add(channel.Id);
+
+                    if (!string.IsNullOrEmpty(channel.Url))
+                    {
+                        foreach (var failedUrl in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            db.AddDeadLink(failedUrl);
+                        }
+                    }
                 }
 
                 stats.Processed++;
