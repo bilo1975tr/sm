@@ -121,7 +121,7 @@ namespace StreamMesh.Windows
             Dispatcher.Invoke(() =>
             {
                 StatusTxt.Visibility = Visibility.Collapsed;
-                InfoTxt.Text = $"Canlı yayın oynatılıyor. URL: {(_channel.Url ?? \"\").Split(',')[0]}";
+                InfoTxt.Text = $"Canlı yayın oynatılıyor. URL: {(_channel.Url ?? "").Split(',')[0]}";
 
                 // Genişlik ve yüksekliği okuyalım
                 try
