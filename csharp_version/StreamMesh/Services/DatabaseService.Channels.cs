@@ -185,6 +185,14 @@ namespace StreamMesh.Services
                                 idToUse = channel.Id ?? Guid.NewGuid().ToString("N");
                             }
 
+                            if (!string.IsNullOrEmpty(channel.Url))
+                            {
+                                foreach(var u in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    urlToIdMap[u.Trim()] = idToUse;
+                                }
+                            }
+
                             pId.Value = idToUse;
                             pName.Value = channel.Name ?? string.Empty;
                             pEpgId.Value = channel.EpgId ?? string.Empty;
