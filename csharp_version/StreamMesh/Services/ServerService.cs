@@ -250,8 +250,100 @@ namespace StreamMesh.Services
                         {
                             contentId = contentId.Substring("acestream://".Length);
                         }
-                        // Web player için HLS çıktısını (m3u8) kullanalım
-                        url = $"http://{LocalIp}:6878/ace/manifest.m3u8?id={contentId}";
+
+                        string ffmpegPath = StreamMesh.Services.InventoryService.FFmpegPath;
+                        if (System.IO.File.Exists(ffmpegPath))
+                        {
+                            string inputUrl = $"http://127.0.0.1:6878/ace/getstream?id={contentId}";
+                            
+                            var responseHeaders = new Dictionary<string, string>
+                            {
+                                { "Cache-Control", "no-cache, no-store, must-revalidate" },
+                                { "Pragma", "no-cache" },
+                                { "Expires", "0" },
+                                { "Access-Control-Allow-Origin", "*" }
+                            };
+                            await WriteHeadersAsync(stream, 200, "OK", "video/mp4", responseHeaders);
+
+                            var startInfo = new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = ffmpegPath,
+                                Arguments = $"-i \"{inputUrl}\" -c:v copy -c:a aac -y -f mp4 -movflags empty_moov+omit_tfhd_offset+frag_keyframe+default_base_moof -",
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true,
+                                CreateNoWindow = true
+                            };
+
+                            using (System.Diagnostics.Process ffmpeg = new System.Diagnostics.Process { StartInfo = startInfo })
+                            {
+                                ffmpeg.Start();
+
+                                byte[] buffer = new byte[16384];
+                                var stdout = ffmpeg.StandardOutput.BaseStream;
+                                int bytesRead;
+
+                                while ((bytesRead = await stdout.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                                {
+                                    try
+                                    {
+                                        await stream.WriteAsync(buffer, 0, bytesRead);
+                                        await stream.FlushAsync();
+                                    }
+                                    catch
+                                    {
+                                        break;
+                                    }
+                                }
+
+                                try { ffmpeg.Kill(); } catch {}
+                            }
+                            return;
+                        }
+                        else
+                        {
+                            using (var httpClient = new System.Net.Http.HttpClient())
+                            {
+                                string inputUrl = $"http://127.0.0.1:6878/ace/getstream?id={contentId}";
+                                try
+                                {
+                                    var response = await httpClient.GetAsync(inputUrl, System.Net.Http.HttpCompletionOption.ResponseHeadersRead);
+                                    if (response.IsSuccessStatusCode)
+                                    {
+                                        var responseHeaders = new Dictionary<string, string>
+                                        {
+                                            { "Cache-Control", "no-cache" },
+                                            { "Access-Control-Allow-Origin", "*" }
+                                        };
+                                        await WriteHeadersAsync(stream, 200, "OK", "video/mpeg", responseHeaders);
+                                        using (var srcStream = await response.Content.ReadAsStreamAsync())
+                                        {
+                                            byte[] buffer = new byte[16384];
+                                            int bytesRead;
+                                            while ((bytesRead = await srcStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                                            {
+                                                try
+                                                {
+                                                    await stream.WriteAsync(buffer, 0, bytesRead);
+                                                    await stream.FlushAsync();
+                                                }
+                                                catch
+                                                {
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                        await WriteErrorAsync(stream, 502, "Bad Gateway");
+                                }
+                                catch
+                                {
+                                    await WriteErrorAsync(stream, 502, "Bad Gateway Connection Error");
+                                }
+                            }
+                            return;
+                        }
                     }
 
                     // HTTP 302 Redirect
@@ -488,7 +580,7 @@ namespace StreamMesh.Services
             
             var streamUrl = '/stream?id=' + ch.id;
             
-            if (ch.srcType === 'YOUTUBE') {{
+            if (ch.srcType === 'YOUTUBE' || ch.srcType === 'ACESTREAM') {{
                 fallbackNative(streamUrl, ch.name, ch.srcType);
             }} else {{
                 playNativeOrHls(streamUrl, ch.name, ch.srcType);

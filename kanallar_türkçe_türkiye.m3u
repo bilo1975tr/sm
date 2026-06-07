@@ -1,13 +1,319 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="" tvg-name="ALEM FM" tvg-logo="http://1.bp.blogspot.com/-TtePoB7CzrE/WZwQ5yTqTBI/AAAAAAAATwg/BjYhvf11XE0nYi_GJwuRnOnw1U_l7issQCLcBGAs/s1600/09.jpg" group-title="*TÜRK_RADYOLAR",ALEM FM
-https://turkmedya.radyotvonline.net/alemfmaac
-#EXTINF:-1 tvg-id="" tvg-name="SHOW RADYO" tvg-logo="http://1.bp.blogspot.com/-bh62s01LLho/VfZ5G1PczCI/AAAAAAAALLQ/sLwypqqtOYY/s1600/showradyo.jpg" group-title="*TÜRK_RADYOLAR",SHOW RADYO
-http://46.20.3.228:80/
+#EXTINF:-1 tvg-id="" tvg-name="Dream Türk (720p)" tvg-logo="https://i.imgur.com/vJ8VaZi.png" group-title="Undefined",Dream Türk (720p)
+https://live.duhnet.tv/S2/HLS_LIVE/dreamturknp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CNN TÜRK" tvg-logo="" group-title="Genel",CNN TÜRK
+https://www.youtube.com/user/cnnturk/live
+#EXTINF:-1 tvg-id="" tvg-name="360 TV" tvg-logo="https://i.imgur.com/agn47sQ.png" group-title="Undefined",360 TV
+https://turkmedya-live.ercdn.net/tv360/tv360.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Number 1 Damar (720p)" tvg-logo="https://i.imgur.com/rYtbAGZ.png" group-title="Undefined",Number 1 Damar (720p)
+https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e198784bdc_1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ MUSİKİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ MUSİKİ
+https://trkvz-radyolar.ercdn.net/turkuvazmusiki/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio KralTürk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radio KralTürk
+https://live.radyositesihazir.com/8032/stream
+#EXTINF:-1 tvg-id="" tvg-name="TURKMENISTAN SPORT HD" tvg-logo="" group-title="Genel",TURKMENISTAN SPORT HD
+acestream://c3f5acd35086090c5fc815b961006630248b7dc0
+#EXTINF:-1 tvg-id="" tvg-name="TV 1 (720p)" tvg-logo="https://i.imgur.com/8CtrYVb.png" group-title="Undefined",TV 1 (720p)
+https://edge1.socialsmart.tv/tv1/bant1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Power Türk Akustik (1080p)" tvg-logo="" group-title="*TÜRK_MUZIK",Power Türk Akustik (1080p)
+https://livetv.powerapp.com.tr/pturkakustik/akustik.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Balkan türk tv" tvg-logo="" group-title="*TÜRK_YEREL",Balkan türk tv
+https://live.euromediacenter.com/balkanturktv/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport
 https://alpha.tv.online.tm/hls/ch004_720/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Radyo 7" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo 7
-https://moondigitaledge.radyotvonline.net/radyo7/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="KRAL FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",KRAL FM
-http://kralwmp.radyotvonline.com/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Arabesk Turk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Arabesk Turk
+http://yayin.arabeskturk.com:8000/stream?icy=http
+#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ ANADOLU" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ ANADOLU
+https://trkvz-radyolar.ercdn.net/turkuvazanadolu/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="POWERTÜRK AKUSTİK" tvg-logo="" group-title="*TÜRK_RADYOLAR",POWERTÜRK AKUSTİK
+https://listen.powerapp.com.tr/powerturkakustik/abr/powerturkakustik/128/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT TSR Türkiye'nin Sesi Radyosu" tvg-logo="" group-title="*TÜRK_RADYOLAR",TRT TSR Türkiye'nin Sesi Radyosu
+https://radio-trttsr.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Slow Türk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Slow Türk
+https://radyo.duhnet.tv/ak_dtvh_slowturk
+#EXTINF:-1 tvg-id="" tvg-name="TV Den (576p) [Not 24/7]" tvg-logo="https://i.imgur.com/Uhg95Ze.png" group-title="Undefined",TV Den (576p) [Not 24/7]
+http://canli.tvden.com.tr/hls/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TURKMEN OWAZY HD" tvg-logo="" group-title="Genel",TURKMEN OWAZY HD
+acestream://649ef3e48b891e1593a035c11e85455b4a8fb6c0
+#EXTINF:-1 tvg-id="" tvg-name="Radyo 7" tvg-logo="" group-title="Genel",Radyo 7
+https://www.youtube.com/watch?v=5RaO6jzgWmU
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk Rock" tvg-logo="" group-title="Genel",Number1 Türk Rock
+https://www.youtube.com/watch?v=tEEYm4dgvBk
+#EXTINF:-1 tvg-id="" tvg-name="TURKMENISTAN" tvg-logo="" group-title="Genel",TURKMENISTAN
+acestream://f72a2f3a87d4a4bf9adb71221757178e4708f54f
+#EXTINF:-1 tvg-id="" tvg-name="İHA 2" tvg-logo="https://assets.uzunmuhalefet.com/logos/b9b9c9e4-aa99-4083-aaee-b8fb4db77b9c.png" group-title="feed",İHA 2
+https://streams.uzunmuhalefet.com/stream/4c2ed2e8-2b2a-4a02-97cc-1e3e190f1c77.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Habertürk" tvg-logo="https://assets.uzunmuhalefet.com/logos/98474191-bf00-43a0-b189-03f970e4566c.png" group-title="Haber",Habertürk
+https://streams.uzunmuhalefet.com/stream/0c0bc91d-ce3a-49cc-9054-1cff110967c4.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Number 1 Türk" tvg-logo="https://assets.uzunmuhalefet.com/logos/528ca8db-dba9-4db0-ba1a-949a8aab2eb7.png" group-title="Müzik",Number 1 Türk
+https://streams.uzunmuhalefet.com/stream/1eb6107d-6e37-479a-a81d-7999287bc876.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TURKMEN SPORT" tvg-logo="" group-title="Genel",TURKMEN SPORT
+acestream://9a99d84b3106d09f11d9c31027b814e74dec9440
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk FM" tvg-logo="" group-title="Genel",Number1 Türk FM
+https://www.youtube.com/watch?v=KYCdfRX932g
+#EXTINF:-1 tvg-id="" tvg-name="TRT Spor Yildiz (720p) [Geo-blocked]" tvg-logo="https://i.imgur.com/MJPoj3j.png" group-title="Sports",TRT Spor Yildiz (720p) [Geo-blocked]
+https://tv-trtspor2.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Show Türk" tvg-logo="https://assets.uzunmuhalefet.com/logos/7b1e3f67-3dd8-427f-8d3c-f0d1b80e7961.png" group-title="Ulusal - Yurt Dışı",Show Türk
+https://streams.uzunmuhalefet.com/stream/16e43b9b-e175-482c-a105-2253c06515c9.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Alaturka" tvg-logo="" group-title="Genel",Radyo Alaturka
+https://www.youtube.com/watch?v=qcUyCIerSXE
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKMEN SPORT" tvg-logo="" group-title="Genel",TÜRKMEN SPORT
+acestream://7dc7f53608599ed959a53ebe39798cb400308f0c
+#EXTINF:-1 tvg-id="" tvg-name="SAT 7 TURK" tvg-logo="" group-title="*TÜRK_DİĞER",SAT 7 TURK
+https://live.artidijitalmedya.com/artidijital_sat7turk/sat7turk/chunks.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENISTAN TV" tvg-logo="" group-title="Genel",TÜRKMENISTAN TV
+acestream://b98d3cd6fa90d8a056e72b68b543a19dd72c2dbc
+#EXTINF:-1 tvg-id="" tvg-name="TURKMENISTAN SPORT" tvg-logo="" group-title="Genel",TURKMENISTAN SPORT
+acestream://9bec6a4c3398e44d20a5df038ceceb92b5999a15
+#EXTINF:-1 tvg-id="" tvg-name="Türkiye Bayrağı [TKRR]" tvg-logo="https://imgs.ct.ws/trb2.png" group-title="Genel",Türkiye Bayrağı [TKRR]
+https://videos.pexels.com/video-files/17275616/17275616-uhd_1440_2560_30fps.mp4?=.mpg
+#EXTINF:-1 tvg-id="" tvg-name="Turkmen Спорт" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Turkmen Спорт
+http://217.174.225.146/legacyhls/ch004_400/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Show Radyo" tvg-logo="http://1.bp.blogspot.com/-bh62s01LLho/VfZ5G1PczCI/AAAAAAAALLQ/sLwypqqtOYY/s1600/showradyo.jpg" group-title="Genel",Show Radyo
+https://www.youtube.com/watch?v=-EYr2pNuq7w
+#EXTINF:-1 tvg-id="" tvg-name="CRI Türk FM" tvg-logo="" group-title="Genel",CRI Türk FM
+https://www.youtube.com/watch?v=ggEPY5hWuRo
+#EXTINF:-1 tvg-id="" tvg-name="SPORT TV Türkmenistan" tvg-logo="" group-title="*TÜRKi_ÜLKELER",SPORT TV Türkmenistan
+http://alpha.tv.online.tm/hls/ch004_720/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENISTAN SPORT" tvg-logo="" group-title="Genel",TÜRKMENISTAN SPORT
+acestream://96bc2590eefae84a4536123294370aa4e8aa285c
+#EXTINF:-1 tvg-id="" tvg-name="TEVE 2" tvg-logo="https://i.ibb.co/1Z22dCY/teve2.png" group-title="*TÜRK_ULUSAL",TEVE 2
+https://live.duhnet.tv/S2/HLS_LIVE/teve2np/track_4_1000/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="17. Haber Türk" tvg-logo="" group-title="Genel",17. Haber Türk
+https://rmtftbjlne.turknet.ercdn.net/bpeytmnqyp/haberturktv/haberturktv_1080p.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT EBA Ortaokul (720p)" tvg-logo="https://i.imgur.com/IUha5eQ.jpg" group-title="Undefined",TRT EBA Ortaokul (720p)
+https://tv-e-okul01.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Turkmen Sport [SD]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Turkmen Sport [SD]
+http://217.174.225.146/hls/ch004_720/index.m3u8?checkedby:iptvcat.com
+#EXTINF:-1 tvg-id="" tvg-name="Semerkand TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/UVGGrQd.png" group-title="Undefined",Semerkand TV (720p) [Not 24/7]
+https://b01c02nl.mediatriple.net/videoonlylive/mtisvwurbfcyslive/broadcast_58d915bd40efc.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="On4 TV (1080p)" tvg-logo="https://i.imgur.com/qGRa1KI.png" group-title="Undefined",On4 TV (1080p)
+https://edge1.socialsmart.tv/on4/bant1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Haber Türk" tvg-logo="https://i.ibb.co/wdwm0fn/haberturk.png" group-title="Genel",Haber Türk
+https://ensonhaber-live.ercdn.net/haberturk/haberturk.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkmen Owazy" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmen Owazy
+https://alpha.tv.online.tm/legacyhls/ch005_720/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Dream TürkRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",Dream TürkRadyo
+https://live.duhnet.tv//S2/HLS_LIVE/dreamturknp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENELI TV HD" tvg-logo="" group-title="Genel",TÜRKMENELI TV HD
+https://www.youtube.com/watch?v=7f-T-B1TbZc
+#EXTINF:-1 tvg-id="" tvg-name="POWERTÜRK DANS" tvg-logo="" group-title="*TÜRK_RADYOLAR",POWERTÜRK DANS
+https://listen.powerapp.com.tr/powerturkdans/abr/powerturkdans/128/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Haber61 TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/2a2XUKl.png" group-title="News",Haber61 TV (720p) [Not 24/7]
+https://cdn-haber61tv.yayin.com.tr/haber61tv/smil:haber61tv.smil/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="SPORT TV Türkmenistan" tvg-logo="" group-title="*TÜRKi_ÜLKELER",SPORT TV Türkmenistan
+http://217.174.225.146/legacyhls/ch004.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Euro D (720p)" tvg-logo="https://i.imgur.com/x9kHsXo.png" group-title="Undefined",Euro D (720p)
+https://live.duhnet.tv/S2/HLS_LIVE/eurodnp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kardelen TV (1080p)" tvg-logo="https://i.imgur.com/0RATxcN.png" group-title="Undefined",Kardelen TV (1080p)
+https://edge1.socialsmart.tv/kardelentv/bant1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bloomberg TV EMEA Live Event (720p)" tvg-logo="https://i.imgur.com/OuogLHx.png" group-title="Business",Bloomberg TV EMEA Live Event (720p)
+https://bloomberg.com/media-manifest/streams/eu-event.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT Kurdî (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/TRT_Kurd%C3%AE_logo.svg/512px-TRT_Kurd%C3%AE_logo.svg.png" group-title="Undefined",TRT Kurdî (720p)
+https://tv-trtkurdi.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Can TV (720p)" tvg-logo="https://i.imgur.com/oIMtuwB.png" group-title="Undefined",Can TV (720p)
+http://canbroadcast.com:7000/canlican/tv.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkmeneli TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/96a7e85f-a0e4-4ff9-b7fe-0ee1f43c831f.png" group-title="Yerel",Türkmeneli TV
+https://streams.uzunmuhalefet.com/stream/a0b3f486-60ca-4956-925b-a5d2b4c8f5ee.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Diyanet TV (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Diyanet_TV_logo.svg/512px-Diyanet_TV_logo.svg.png" group-title="Undefined",Diyanet TV (720p)
+https://eustr73.mediatriple.net/videoonlylive/mtikoimxnztxlive/broadcast_5e3bf95a47e07.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ASPOR türknet" tvg-logo="" group-title="Genel",ASPOR türknet
+https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkler Geliyor Adaletin Kılıcı 2020 (archive)" tvg-logo="https://imgs.ct.ws/trklergeliyoradaletinklc2020.png" group-title="Genel",Türkler Geliyor Adaletin Kılıcı 2020 (archive)
+https://archive.org/download/TurklerGeliyor/T%C3%BCrkler%20Geliyor%20Adaletin%20K%C4%B1l%C4%B1c%C4%B1.ia.mp4
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Alaturka" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Alaturka
+https://yayin.jumboserver.net:9100/stream
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKMEN OWAZY" tvg-logo="" group-title="Genel",TÜRKMEN OWAZY
+acestream://2c66be58d9f21a52d55a6c559507b51c8fcc4fc7
+#EXTINF:-1 tvg-id="" tvg-name="Show Türk" tvg-logo="" group-title="Genel",Show Türk
+https://www.youtube.com/user/ShowTVShowTV/live
 #EXTINF:-1 tvg-id="" tvg-name="DAMAR TÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",DAMAR TÜRK FM
 https://live.radyositesihazir.com/7000/stream
+#EXTINF:-1 tvg-id="" tvg-name="4 Türk Pop" tvg-logo="https://assets.uzunmuhalefet.com/logos/447891c4-97c1-4692-99be-7adc74dbfe58.png" group-title="Müzik",4 Türk Pop
+https://streams.uzunmuhalefet.com/stream/031834d1-2c3c-4e76-9f54-bb8a6471bcb2.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Retro Türk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Retro Türk
+https://playerservices.streamtheworld.com/api/livestream-redirect/RETROTURK128AAC.aac
+#EXTINF:-1 tvg-id="" tvg-name="TürkHaber (720p)" tvg-logo="https://i.imgur.com/2AcRKdL.png" group-title="News",TürkHaber (720p)
+https://edge1.socialsmart.tv/turkhaber/bant1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT Avaz (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/TRT_Avaz_logo.svg/512px-TRT_Avaz_logo.svg.png" group-title="Undefined",TRT Avaz (720p)
+https://tv-trtavaz.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ROMANTİK TÜRK" tvg-logo="" group-title="*TÜRK_RADYOLAR",ROMANTİK TÜRK
+http://radyo.yayin.com.tr:6042/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="HabertürkRadyo" tvg-logo="" group-title="*TÜRK_RADYOLAR",HabertürkRadyo
+https://haberturkradyo.radyotvonline.net/haberturkradyo
+#EXTINF:-1 tvg-id="" tvg-name="PowerTürk Slow [MZ]" tvg-logo="https://imgs.ct.ws/powerturkslow.png" group-title="Genel",PowerTürk Slow [MZ]
+https://listen.powerapp.com.tr/pturkslow/slow.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKLAND" tvg-logo="" group-title="*TÜRK_RADYOLAR",TÜRKLAND
+https://moondigitaledge.radyotvonline.net/turkland/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RADYO TÜRK HAREKETİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO TÜRK HAREKETİ
+http://radyo.yayin.com.tr:6056/stream
+#EXTINF:-1 tvg-id="" tvg-name="Power Turk (1080p)" tvg-logo="" group-title="*TÜRK_MUZIK",Power Turk (1080p)
+https://livetv.powerapp.com.tr/powerturkTV/powerturkhd.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AL-ZAHRA TV TURKIC" tvg-logo="" group-title="Genel",AL-ZAHRA TV TURKIC
+acestream://3b751d11c113824918e77d9d45fbd123fd3cb9e9
+#EXTINF:-1 tvg-id="" tvg-name="Türk Bayrağı [TKRR]" tvg-logo="https://imgs.ct.ws/trb1.png" group-title="Genel",Türk Bayrağı [TKRR]
+https://videos.pexels.com/video-files/2283469/2283469-uhd_2560_1440_25fps.mp4?=.mpg
+#EXTINF:-1 tvg-id="" tvg-name="DREAMTÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",DREAMTÜRK FM
+https://radyo.duhnet.tv/dreamturk
+#EXTINF:-1 tvg-id="" tvg-name="Al-Zahra TV Turkic" tvg-logo="https://i.imgur.com/8uDZB3W.png" group-title="TURKEY",Al-Zahra TV Turkic
+https://live.al-zahratv.com/live/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="HAYATA DAİR HERŞEY TÜRK TV" tvg-logo="" group-title="*TÜRK_YEREL",HAYATA DAİR HERŞEY TÜRK TV
+https://live.euromediacenter.com/hdhturk/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DREAM TURK" tvg-logo="" group-title="*TÜRK_MUZIK",DREAM TURK
+https://live.duhnet.tv//S2/HLS_LIVE/dreamturknp/track_4_1250/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ABN Turkey" tvg-logo="https://assets.uzunmuhalefet.com/logos/cbd9f19f-efa2-4416-923c-46cda842668a.png" group-title="Dini",ABN Turkey
+https://streams.uzunmuhalefet.com/stream/93a58e6e-7324-41da-bbc8-32f530063417.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV4" tvg-logo="https://www.turkmedya.com.tr/assets/img/source/jpg/tv4.jpg?v=1115" group-title="*TÜRK_ULUSAL",TV4
+https://turkmedya-live.ercdn.net/tv4/tv4_720p.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kanal 32 (480p) [Not 24/7]" tvg-logo="https://www.lyngsat.com/logo/tv/kk/kanal-32-tr.png" group-title="Undefined",Kanal 32 (480p) [Not 24/7]
+https://edge1.socialsmart.tv/kanal32/bant1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Power Türk Taptaze (1080p)" tvg-logo="" group-title="*TÜRK_MUZIK",Power Türk Taptaze (1080p)
+https://livetv.powerapp.com.tr/pturktaptaze/taptaze.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Malatya Vuslat TV (720p)" tvg-logo="https://i.imgur.com/FUaWv4s.png" group-title="General",Malatya Vuslat TV (720p)
+https://live.artidijitalmedya.com/artidijital_vuslattv/vuslattv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Aztürk FM" tvg-logo="" group-title="Genel",Aztürk FM
+https://www.youtube.com/watch?v=zX34TFNby4U
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Home - Türkülerle Türkiye" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Home - Türkülerle Türkiye
+https://moondigitaledge.radyotvonline.net/turkulerleturkiye/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TURKULERLE TURKIYE" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKULERLE TURKIYE
+http://37.247.98.8/stream/22/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Üreten Türkiye tv" tvg-logo="" group-title="*TÜRK_YEREL",Üreten Türkiye tv
+https://live.euromediacenter.com/uretenturkiye/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT Belgesel (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/TRT_Belgesel_logo_%282019-%29.svg/512px-TRT_Belgesel_logo_%282019-%29.svg.png" group-title="Undefined",TRT Belgesel (720p)
+https://tv-trtbelgesel.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TURKMENELi TV" tvg-logo="" group-title="Genel",TURKMENELi TV
+https://135962.global.ssl.fastly.net/5ff366a512987e2c0a3dabfe/live_14378e1002eb11ef9cb025207067897a/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="JOYTURK - 64 kbit/s" tvg-logo="https://www.radio.pervii.com/logo/106319.jpg" group-title="*TÜRK_RADYOLAR",JOYTURK - 64 kbit/s
+https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURK.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Kral FM" tvg-logo="" group-title="Genel",Kral FM
+https://www.youtube.com/watch?v=zLVvQ3-eTvs
+#EXTINF:-1 tvg-id="" tvg-name="Bultürk tv" tvg-logo="" group-title="*TÜRK_YEREL",Bultürk tv
+https://live.euromediacenter.com/saglikchannel/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Time Türk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Time Türk
+http://yayin.yayindakiler.com:4195/stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="13.Tv2 Türknet" tvg-logo="" group-title="Genel",13.Tv2 Türknet
+https://ackaxsqacw.turknet.ercdn.net/ozfkfbbjba/teve2/teve2.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport
+http://217.174.225.146/legacyhls/ch004_720/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="PowerTürk Taptaze [MZ]" tvg-logo="https://imgs.ct.ws/powerttt.png" group-title="Genel",PowerTürk Taptaze [MZ]
+https://listen.powerapp.com.tr/pturktaptaze/taptaze.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Habertürk TV" tvg-logo="" group-title="Genel",Habertürk TV
+https://www.youtube.com/user/TVhaberturk/live
+#EXTINF:-1 tvg-id="" tvg-name="London Turkish Radio - 128 kbit/s" tvg-logo="https://www.radio.pervii.com/im/3/1571203993.jpg" group-title="*TÜRK_RADYOLAR",London Turkish Radio - 128 kbit/s
+http://s2.radio.co/s899a861e2/listen
+#EXTINF:-1 tvg-id="" tvg-name="TV4 (720p)" tvg-logo="https://i.imgur.com/UpsQsbd.png" group-title="Undefined",TV4 (720p)
+https://turkmedya-live.ercdn.net/tv4/tv4.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Number 1 Ask (720p)" tvg-logo="https://i.imgur.com/slwbux7.png" group-title="Undefined",Number 1 Ask (720p)
+https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e18f9cea15_1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kanal Hayat (1080p)" tvg-logo="https://i.imgur.com/eikZj19.png" group-title="Undefined",Kanal Hayat (1080p)
+https://tbn02a.ltnschedule.com/hls/nx21i.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Metro Türk TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/6fa9818b-db39-4f73-b661-16d7713c2b52.png" group-title="Yerel",Metro Türk TV
+https://streams.uzunmuhalefet.com/stream/8b4092d1-99d9-4816-9934-3b042fab5547.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RADYO TURKUVAZ" tvg-logo="" group-title="*TÜRK_RADYOLAR",RADYO TURKUVAZ
+https://trkvz-radyolar.ercdn.net/radyoturkuvaz/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TYT Türk" tvg-logo="https://assets.uzunmuhalefet.com/logos/b3857c25-e816-48b9-8348-a13ee436dba9.png" group-title="Ulusal",TYT Türk
+https://streams.uzunmuhalefet.com/stream/7ca72bbc-449a-4521-80e2-b891f1964493.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT 2 (720p)" tvg-logo="https://i.imgur.com/iOCQdyD.png" group-title="Undefined",TRT 2 (720p)
+https://tv-trt2.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT Spor (720p) [Geo-blocked]" tvg-logo="https://i.imgur.com/pCjzh5A.png" group-title="Sports",TRT Spor (720p) [Geo-blocked]
+https://tv-trtspor1.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT Türk (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/TRT_T%C3%BCrk_logo.svg/512px-TRT_T%C3%BCrk_logo.svg.png" group-title="Undefined",TRT Türk (720p)
+https://tv-trtturk.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vahdet TV - Hadi TV 3 Türkçe ve Azerice 24" tvg-logo="" group-title="Genel",Vahdet TV - Hadi TV 3 Türkçe ve Azerice 24
+https://www.youtube.com/user/SchiaMedia/live
+#EXTINF:-1 tvg-id="TR - TRT1" tvg-name="Trt 1" tvg-logo="https://i.ibb.co/d6c87Km/trt122.png" group-title="Genel",Trt 1
+https://tv-trt1.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bloomberg TV Europe (720p)" tvg-logo="https://i.imgur.com/OuogLHx.png" group-title="Business",Bloomberg TV Europe (720p)
+https://bloomberg.com/media-manifest/streams/eu.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DAMAR TÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",DAMAR TÜRK FM
+https://live.radyositesihazir.com:10997/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Romantik Türk - 128 kbit/s" tvg-logo="https://www.radio.pervii.com/im/2/1594911672.jpg" group-title="*TÜRK_RADYOLAR",Radyo Romantik Türk - 128 kbit/s
+http://radyo.yayin.com.tr:6042/stream/1/
+#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan (406p) [Not 24/7]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan (406p) [Not 24/7]
+https://alpha.tv.online.tm/hls/ch007.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKMENISTAN" tvg-logo="" group-title="Genel",TÜRKMENISTAN
+acestream://6fe8b2f0523af719a5371f217daa2a9e1c085c75
+#EXTINF:-1 tvg-id="" tvg-name="TÜRKÜLERLE TÜRKİYE" tvg-logo="" group-title="*TÜRK_RADYOLAR",TÜRKÜLERLE TÜRKİYE
+https://moondigitalmaster.radyotvonline.net/turkulerleturkiye/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kent Türk TV (1080p) [TR]" tvg-logo="https://imgs.ct.ws/kenttrk.png" group-title="Genel",Kent Türk TV (1080p) [TR]
+https://live.artidijitalmedya.com/artidijital_kentturktv/kentturktv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Number 1 Dance (720p)" tvg-logo="https://i.imgur.com/ZM4PSyq.png" group-title="Undefined",Number 1 Dance (720p)
+https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e2aa8acf44_1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Sat7 Türk (720p)" tvg-logo="https://i.imgur.com/cKQIK4i.png" group-title="Undefined",Sat7 Türk (720p)
+https://svs.itworkscdn.net/sat7turklive/sat7turk.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rize Türk TV" tvg-logo="https://assets.uzunmuhalefet.com/logos/155aad8b-5fbc-43cd-bad4-7080aa053122.png" group-title="Yerel",Rize Türk TV
+https://streams.uzunmuhalefet.com/stream/918ca36f-3628-44c1-823d-e38b1a004ade.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport
+https://alpha.tv.online.tm/legacyhls/ch004_720/index.m3u8
+#EXTINF:-1 tvg-id="TR - TRT World" tvg-name="TRT WORLD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/TRT_World.svg/960px-TRT_World.svg.png" group-title="*TÜRK_ULUSAL",TRT WORLD
+https://tv-trtworld.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan TV" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan TV
+https://alpha.tv.online.tm/hls/ch007_400/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TRT Müzik (720p)" tvg-logo="https://i.imgur.com/JgUzRH8.png" group-title="Undefined",TRT Müzik (720p)
+https://tv-trtmuzik.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ EFSANE" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ EFSANE
+https://trkvz-radyolar.ercdn.net/turkuvazefsane/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Syria TV (1080p)" tvg-logo="https://i.imgur.com/RMaLsmi.png" group-title="Undefined",Syria TV (1080p)
+https://svs.itworkscdn.net/syriatvlive/syriatv.smil/playlist_dvr.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Cnn türk" tvg-logo="" group-title="Genel",Cnn türk
+https://helga.iptv2022.com/cnn_turk/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Damar Türk FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Damar Türk FM
+https://live.radyositesihazir.com:10997/stream.nsv
+#EXTINF:-1 tvg-id="" tvg-name="TRT Haber (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/TRT_Haber_Eyl%C3%BCl_2020_Logo.svg/512px-TRT_Haber_Eyl%C3%BCl_2020_Logo.svg.png" group-title="News",TRT Haber (720p)
+https://tv-trthaber.medya.trt.com.tr/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Alem FM" tvg-logo="http://1.bp.blogspot.com/-TtePoB7CzrE/WZwQ5yTqTBI/AAAAAAAATwg/BjYhvf11XE0nYi_GJwuRnOnw1U_l7issQCLcBGAs/s1600/09.jpg" group-title="Genel",Alem FM
+https://www.youtube.com/watch?v=DJDjfs5bHxg
+#EXTINF:-1 tvg-id="" tvg-name="Joy Turk" tvg-logo="" group-title="*TÜRK_RADYOLAR",Joy Turk
+https://playerservices.streamtheworld.com/api/livestream-redirect/JOY_TURKAAC.aac
+#EXTINF:-1 tvg-id="" tvg-name="DHA (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/VZhag2x.png" group-title="Undefined",DHA (720p) [Not 24/7]
+https://603c568fccdf5.streamlock.net/live/dhaweb1_C5efC/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan (226p) [Not 24/7]" tvg-logo="https://i.imgur.com/zKWfwAw.png" group-title="General",Türkmenistan (226p) [Not 24/7]
+https://alpha.tv.online.tm/legacyhls/ch007.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Türkü FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",Türkü FM
+https://yayin.turkhosted.com/4591/stream
+#EXTINF:-1 tvg-id="" tvg-name="Afroturk TV (1080p)" tvg-logo="https://i.imgur.com/fWlLvRA.png" group-title="General",Afroturk TV (1080p)
+https://edge.socialsmart.tv/naturaltv/bant1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="JungerKulturKanal LIVE (c) Hochschule fuer Musik Karlsruhe 2017 - 256 kbit/s" tvg-logo="https://www.radio.pervii.com/im/3/1571203993.jpg" group-title="*TÜRK_RADYOLAR",JungerKulturKanal LIVE (c) Hochschule fuer Musik Karlsruhe 2017 - 256 kbit/s
+http://193.197.85.26:8000/stream/1/
+#EXTINF:-1 tvg-id="" tvg-name="BabyTV Turkiye (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/4BDJ5FT.png" group-title="Kids",BabyTV Turkiye (1080p) [Geo-blocked]
+https://saran-live.ercdn.net/babytv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MTürk TV (1080p) [TR]" tvg-logo="https://imgs.ct.ws/mturk.png" group-title="Genel",MTürk TV (1080p) [TR]
+https://edge1.socialsmart.tv/muglaturk/bant1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="KRAL TÜRK FM" tvg-logo="" group-title="*TÜRK_RADYOLAR",KRAL TÜRK FM
+https://yayin.radyoarabesk.com.tr:8000/stream
+#EXTINF:-1 tvg-id="" tvg-name="Türkmen Owazy (406p) [Not 24/7]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmen Owazy (406p) [Not 24/7]
+https://alpha.tv.online.tm/hls/ch005.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Olay Türk TV - Kayseri" tvg-logo="" group-title="*TÜRK_YEREL",Olay Türk TV - Kayseri
+https://live.artidijitalmedya.com/artidijital_olayturk/olayturk/chunks.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Seçme Türküler" tvg-logo="" group-title="*TÜRK_RADYOLAR",Seçme Türküler
+https://yayin.radyomadyo.com:8006/stream
+#EXTINF:-1 tvg-id="" tvg-name="Power Türk Slow (1080p)" tvg-logo="" group-title="*TÜRK_DİĞER",Power Türk Slow (1080p)
+https://livetv.powerapp.com.tr/pturkslow/slow.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk Slow Radyo" tvg-logo="" group-title="Genel",Number1 Türk Slow Radyo
+https://www.youtube.com/watch?v=B0lCeKNoUkw
+#EXTINF:-1 tvg-id="" tvg-name="Trakya Türk TV" tvg-logo="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ7Ersc4Zk1PvJpFhRW-XbEyqotwyqYyfHgSg&s" group-title="Manuel Eklenenler",Trakya Türk TV
+https://live.euromediacenter.com/trakyaturk/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BABA RADYO" tvg-logo="http://3.bp.blogspot.com/-wpKS7JMOgrw/VfplgO4WOXI/AAAAAAAALiI/0g6esI2ODdo/s1600/babaradyo.jpg" group-title="*TÜRK_RADYOLAR",BABA RADYO
+http://37.247.98.7/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Meltem TV" tvg-logo="https://i.imgur.com/C3m6w5S.png" group-title="Undefined",Meltem TV
+https://vhxyrsly.rocketcdn.com/meltemtv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Number1 Türk 90'lar Radyosu" tvg-logo="" group-title="Genel",Number1 Türk 90'lar Radyosu
+https://www.youtube.com/watch?v=-IM_bEDDjz0
+#EXTINF:-1 tvg-id="" tvg-name="Türkmenistan Sport (406p) [Not 24/7]" tvg-logo="" group-title="*TÜRKi_ÜLKELER",Türkmenistan Sport (406p) [Not 24/7]
+https://alpha.tv.online.tm/hls/ch004.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TBMM TV (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TBMM_TV_logo.svg/512px-TBMM_TV_logo.svg.png" group-title="Undefined",TBMM TV (720p)
+https://meclistv-live.ercdn.net/meclistv/meclistv.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AVRASYA TÜRK" tvg-logo="" group-title="*TÜRK_RADYOLAR",AVRASYA TÜRK
+https://sslyayin.netyayin.net:10909/stream?icy=http
+#EXTINF:-1 tvg-id="" tvg-name="Al Zahra Turkic" tvg-logo="https://assets.uzunmuhalefet.com/logos/1f737ade-62fd-4bb1-aee2-85ab19eb90c7.png" group-title="Dini",Al Zahra Turkic
+https://streams.uzunmuhalefet.com/stream/8c948503-cf69-4629-b7fd-7921ba357f3d.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="GOLD TÜRK" tvg-logo="" group-title="*TÜRK_RADYOLAR",GOLD TÜRK
+http://dijimedya.radyotvonline.net/goldturk
+#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ ROMANTİK" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ ROMANTİK
+https://trkvz-radyolar.ercdn.net/turkuvazromantik/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="PowerTürk Akustik [MZ]" tvg-logo="https://imgs.ct.ws/powerturkakustik.png" group-title="Genel",PowerTürk Akustik [MZ]
+https://listen.powerapp.com.tr/pturkakustik/akustik.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TURKUVAZ NOSTALJİ" tvg-logo="" group-title="*TÜRK_RADYOLAR",TURKUVAZ NOSTALJİ
+https://trkvz-radyolar.ercdn.net/turkuvaznostalji/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="EKOTURK TV" tvg-logo="" group-title="Genel",EKOTURK TV
+https://www.youtube.com/watch?v=0iGSChxOSLY

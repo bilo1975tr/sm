@@ -41,7 +41,8 @@
 
             <TabItem Header="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_TabResource]}">
                 <Border Background="#1e293b" Padding="20" CornerRadius="12" BorderBrush="#334155" BorderThickness="1" Margin="0,10,0,0">
-                    <StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
                         <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_AddStream]}" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_LinkType]}" VerticalAlignment="Center" Width="120" Foreground="#94a3b8"/>
@@ -123,12 +124,14 @@
                         </StackPanel>
                         <TextBlock x:Name="LogoMatchStatusText" Foreground="#cbd5e1" TextWrapping="Wrap" Margin="0,0,0,10"/>
                     </StackPanel>
+                    </ScrollViewer>
                 </Border>
             </TabItem>
 
             <TabItem Header="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_TabEpg]}">
                 <Border Background="#1e293b" Padding="20" CornerRadius="12" BorderBrush="#334155" BorderThickness="1" Margin="0,10,0,0">
-                    <StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
                         <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_AddEpg]}" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_EpgUrl]}" VerticalAlignment="Center" Width="150" Foreground="#94a3b8"/>
@@ -176,12 +179,14 @@
                                 Click="ClearEpgsButton_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#7f1d1d" 
                                 Foreground="#fca5a5" />
                     </StackPanel>
+                    </ScrollViewer>
                 </Border>
             </TabItem>
 
             <TabItem Header="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_TabApp], FallbackValue='Uygulama'}">
                 <Border Background="#1e293b" Padding="20" CornerRadius="12" BorderBrush="#334155" BorderThickness="1" Margin="0,10,0,0">
-                    <StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
                         <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_AppLang], FallbackValue='Uygulama Dili'}" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
                         <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_AppLangDesc], FallbackValue='Uygulamanın arayüz dilini buradan değiştirebilirsiniz.'}" Foreground="#94a3b8" Margin="0,0,0,10"/>
                         
@@ -253,20 +258,34 @@
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
+                    </ScrollViewer>
                 </Border>
             </TabItem>
 
             <TabItem Header="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_TabNetwork]}">
                 <Border Background="#1e293b" Padding="20" CornerRadius="12" BorderBrush="#334155" BorderThickness="1" Margin="0,10,0,0">
-                    <StackPanel>
-                        <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_NetLocal]}" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
-                        <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_NetDesc]}" Foreground="#94a3b8" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,20">
-                            <Button x:Name="ServerControlBtn" Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_StartServer]}" Width="150" Height="35" Click="ServerControlBtn_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                            <TextBlock x:Name="ServerStatusText" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Status_Off]}" VerticalAlignment="Center" Foreground="#fca5a5" Margin="15,0,0,0"/>
-                            <TextBox x:Name="ServerUrlBox" Width="250" Height="35" Margin="15,0,0,0" IsReadOnly="True" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_NetLocal]}" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
+                            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_NetDesc]}" Foreground="#94a3b8" Margin="0,0,0,10"/>
+                            <StackPanel Margin="0,5,0,20">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                    <Button x:Name="ServerControlBtn" Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_StartServer]}" Width="150" Height="35" Click="ServerControlBtn_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                                    <TextBlock x:Name="ServerStatusText" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Status_Off]}" VerticalAlignment="Center" Foreground="#fca5a5" Margin="15,0,0,0"/>
+                                </StackPanel>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="M3U Oynatma Listesi:" Width="150" VerticalAlignment="Center" Foreground="#94a3b8"/>
+                                    <TextBox x:Name="ServerUrlBox" Width="400" Height="35" IsReadOnly="True" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="Web Oynatıcı Adresi:" Width="150" VerticalAlignment="Center" Foreground="#94a3b8"/>
+                                    <TextBox x:Name="WebPlayerUrlBox" Width="400" Height="35" IsReadOnly="True" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155"/>
+                                </StackPanel>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+                    </ScrollViewer>
                 </Border>
             </TabItem>
 

@@ -367,6 +367,7 @@ namespace StreamMesh.Views
                     ServerStatusText.Text = "Durum: Çalışıyor";
                     ServerStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(34, 197, 94)); // Green
                     ServerUrlBox.Text = $"http://{ip}:{port}/playlist.m3u";
+                    WebPlayerUrlBox.Text = $"http://{ip}:{port}/";
                 }
                 else
                 {
@@ -374,6 +375,7 @@ namespace StreamMesh.Views
                     ServerStatusText.Text = "Durum: Kapalı";
                     ServerStatusText.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(252, 165, 165)); // Red
                     ServerUrlBox.Text = "";
+                    WebPlayerUrlBox.Text = "";
                 }
             });
         }
