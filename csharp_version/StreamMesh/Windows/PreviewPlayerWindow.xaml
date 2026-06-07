@@ -4,7 +4,7 @@
         xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
         Title="Kanal Önizleme" Height="440" Width="660"
         Background="#0f172a" Foreground="#f8fafc"
-        WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip" Icon="/logo.ico">
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using StreamMesh.Services.P2P;
 
 namespace StreamMesh.Services
 {
@@ -19,6 +20,34 @@ namespace StreamMesh.Services
         private static readonly string CacheFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos_cache.json");
         private static readonly HttpClient HttpClientInstance = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         private static List<LogoSearchResult> _cachedLogos = null;
+
+        private static string GetCountryCodeFromLanguageOrCountry(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+            string norm = name.ToLowerInvariant().Trim();
+            if (norm.Contains("türk") || norm.Contains("turk") || norm.Contains("tr")) return "tr";
+            if (norm.Contains("alm") || norm.Contains("ger") || norm.Contains("de")) return "de";
+            if (norm.Contains("ing") || norm.Contains("eng") || norm.Contains("en") || norm.Contains("us") || norm.Contains("gb") || norm.Contains("united kingdom") || norm.Contains("united states")) return "us";
+            if (norm.Contains("fra") || norm.Contains("fre") || norm.Contains("fr")) return "fr";
+            if (norm.Contains("ita") || norm.Contains("it")) return "it";
+            if (norm.Contains("esp") || norm.Contains("spa") || norm.Contains("es")) return "es";
+            if (norm.Contains("rus") || norm.Contains("ru")) return "ru";
+            if (norm.Contains("aze") || norm.Contains("az")) return "az";
+            if (norm.Contains("ara") || norm.Contains("ar")) return "ar";
+            if (norm.Contains("hol") || norm.Contains("dut") || norm.Contains("nl")) return "nl";
+            
+            if (name.Length == 2) return norm;
+            return null;
+        }
+
+        private static string CleanLogoFileNameToChannelName(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return string.Empty;
+            string name = Path.GetFileNameWithoutExtension(fileName);
+            name = name.Replace('-', ' ').Replace('_', ' ');
+            name = System.Text.RegularExpressions.Regex.Replace(name, @"\s+", " ").Trim();
+            return name;
+        }
 
         public static async Task EnsureLoadedAsync()
         {
@@ -47,34 +76,140 @@ namespace StreamMesh.Services
 
             try
             {
-                var responseJson = await HttpClientInstance.GetStringAsync("https://iptv-org.github.io/api/channels.json");
-                using (JsonDocument doc = JsonDocument.Parse(responseJson))
+                var countryCodes = new HashSet<string>();
+
+                try
                 {
-                    var temp = new List<LogoSearchResult>();
-                    foreach (var element in doc.RootElement.EnumerateArray())
+                    var profile = UserService.CurrentUser;
+                    if (profile != null)
                     {
-                        if (element.TryGetProperty("name", out JsonElement nameProp) &&
-                            element.TryGetProperty("logo", out JsonElement logoProp))
+                        var codeCountry = GetCountryCodeFromLanguageOrCountry(profile.Country);
+                        if (codeCountry != null) countryCodes.Add(codeCountry);
+
+                        if (profile.Languages != null)
                         {
-                            string n = nameProp.GetString();
-                            string l = logoProp.GetString();
-                            if (!string.IsNullOrEmpty(n) && !string.IsNullOrEmpty(l))
+                            foreach (var lang in profile.Languages)
                             {
-                                temp.Add(new LogoSearchResult { Name = n, LogoUrl = l });
+                                var codeLang = GetCountryCodeFromLanguageOrCountry(lang);
+                                if (codeLang != null) countryCodes.Add(codeLang);
                             }
                         }
                     }
-                    _cachedLogos = temp.DistinctBy(x => x.Name).ToList();
+                }
+                catch { }
+
+                if (countryCodes.Count == 0)
+                {
+                    countryCodes.Add("tr");
                 }
 
-                string serialized = JsonSerializer.Serialize(_cachedLogos);
-                await File.WriteAllTextAsync(CacheFilePath, serialized);
+                var tempLogos = new List<LogoSearchResult>();
+
+                foreach (var code in countryCodes)
+                {
+                    // 1. tv-logo/tv-logos Source
+                    try
+                    {
+                        string tvLogosApiUrl = $"https://api.github.com/repos/tv-logo/tv-logos/contents/countries/{code}";
+                        var request = new HttpRequestMessage(HttpMethod.Get, tvLogosApiUrl);
+                        request.Headers.Add("User-Agent", "StreamMeshApp/1.0");
+
+                        var response = await HttpClientInstance.SendAsync(request);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string json = await response.Content.ReadAsStringAsync();
+                            using (var doc = JsonDocument.Parse(json))
+                            {
+                                foreach (var item in doc.RootElement.EnumerateArray())
+                                {
+                                    if (item.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "file" &&
+                                        item.TryGetProperty("name", out var nameProp) &&
+                                        item.TryGetProperty("download_url", out var downloadUrlProp))
+                                    {
+                                        string name = CleanLogoFileNameToChannelName(nameProp.GetString());
+                                        string url = downloadUrlProp.GetString();
+                                        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(url))
+                                        {
+                                            tempLogos.Add(new LogoSearchResult { Name = name, LogoUrl = url });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError($"LogoSearchService: tv-logos fetch for code {code} failed", ex);
+                    }
+
+                    // 2. Fourqui/tv Source
+                    try
+                    {
+                        string fourquiApiUrl = $"https://api.github.com/repos/Fourqui/tv/contents/countries/{code}";
+                        var request = new HttpRequestMessage(HttpMethod.Get, fourquiApiUrl);
+                        request.Headers.Add("User-Agent", "StreamMeshApp/1.0");
+
+                        var response = await HttpClientInstance.SendAsync(request);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            string json = await response.Content.ReadAsStringAsync();
+                            using (var doc = JsonDocument.Parse(json))
+                            {
+                                foreach (var item in doc.RootElement.EnumerateArray())
+                                {
+                                    if (item.TryGetProperty("type", out var typeProp) && typeProp.GetString() == "file" &&
+                                        item.TryGetProperty("name", out var nameProp) &&
+                                        item.TryGetProperty("download_url", out var downloadUrlProp))
+                                    {
+                                        string name = CleanLogoFileNameToChannelName(nameProp.GetString());
+                                        string url = downloadUrlProp.GetString();
+                                        if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(url))
+                                        {
+                                            tempLogos.Add(new LogoSearchResult { Name = name, LogoUrl = url });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError($"LogoSearchService: Fourqui/tv fetch for code {code} failed", ex);
+                    }
+                }
+
+                if (tempLogos.Count > 0)
+                {
+                    _cachedLogos = tempLogos
+                        .GroupBy(x => x.Name.ToLowerInvariant())
+                        .Select(g => g.First())
+                        .ToList();
+
+                    try
+                    {
+                        string serialized = JsonSerializer.Serialize(_cachedLogos);
+                        await File.WriteAllTextAsync(CacheFilePath, serialized);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError("LogoSearchService: Write cache failed", ex);
+                    }
+                }
+                else
+                {
+                    if (File.Exists(CacheFilePath))
+                    {
+                        var cachedText = await File.ReadAllTextAsync(CacheFilePath);
+                        _cachedLogos = JsonSerializer.Deserialize<List<LogoSearchResult>>(cachedText);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                LogService.LogError("LogoSearchService: Download channels.json failed", ex);
-                if (_cachedLogos == null) _cachedLogos = new List<LogoSearchResult>();
+                LogService.LogError("LogoSearchService: EnsureLoadedAsync completely failed", ex);
             }
+
+            if (_cachedLogos == null) _cachedLogos = new List<LogoSearchResult>();
         }
 
         public static async Task<List<LogoSearchResult>> SearchLogosAsync(string channelName)
@@ -93,7 +228,7 @@ namespace StreamMesh.Services
                 })
                 .OrderByDescending(x => x.Score)
                 .Select(x => x.Item)
-                .Take(12)
+                .Take(40)
                 .ToList();
 
             return results;
@@ -174,7 +309,8 @@ namespace StreamMesh.Services
         private static string NormalizeChannelNameForLogo(string name)
         {
             if (string.IsNullOrEmpty(name)) return string.Empty;
-            name = name.Replace(" hd", "").Replace(" sd", "").Replace(" fhd", "").Replace(" hq", "").Replace(" tr", "");
+            name = name.ToLowerInvariant();
+            name = name.Replace(" hd", "").Replace(" sd", "").Replace(" fhd", "").Replace(" uhd", "").Replace(" hq", "");
             name = System.Text.RegularExpressions.Regex.Replace(name, @"[^a-zA-Z0-9]", "");
             return name;
         }

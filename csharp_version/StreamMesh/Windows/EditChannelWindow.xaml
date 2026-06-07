@@ -113,7 +113,7 @@
                         Background="#3b82f6" Foreground="White" BorderThickness="0" Cursor="Hand" ToolTip="Online logo ara..."/>
             </Grid>
 
-            <ListBox x:Name="LogoSearchResultsList" Height="90" Background="#0f172a" BorderThickness="1" BorderBrush="#1e293b" Visibility="Collapsed" Margin="0,0,0,10">
+            <ListBox x:Name="LogoSearchResultsList" Height="180" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="#0f172a" BorderThickness="1" BorderBrush="#1e293b" Visibility="Collapsed" Margin="0,0,0,10">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <WrapPanel Orientation="Horizontal" Width="340"/>
