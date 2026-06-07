@@ -1,3 +1,125 @@
 #EXTM3U
 #EXTINF:-1 tvg-id="" tvg-name="90'LAR" tvg-logo="http://1.bp.blogspot.com/-atSLBDwDRvM/WZvt7gcYrzI/AAAAAAAATuA/2nbrjNajwJoGapc_PuuM6X50ElJq4_Z-gCLcBGAs/s1600/90.jpg" group-title="*TÜRK_RADYOLAR",90'LAR
 http://37.247.98.8/stream/166/
+#EXTINF:-1 tvg-id="" tvg-name="Paramparça | Ozan Çobanoğlu 4K Gerilim Filmi İzle" tvg-logo="https://img.youtube.com/vi/j-VkPJQpBw0/hqdefault.jpg" group-title="Filmler",Paramparça | Ozan Çobanoğlu 4K Gerilim Filmi İzle
+https://www.youtube.com/watch?v=j-VkPJQpBw0&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="HARİKA BİR KOMEDİ - Bizim Hoca: Sıkıntı Yok | 4K Yerli Film İzle" tvg-logo="https://img.youtube.com/vi/IDdeF2cYM_E/hqdefault.jpg" group-title="Filmler",HARİKA BİR KOMEDİ - Bizim Hoca: Sıkıntı Yok | 4K Yerli Film İzle
+https://www.youtube.com/watch?v=IDdeF2cYM_E&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="İnşaat 2 | Şevket Çoruh - Emre Kınay 4K Komedi Filmi" tvg-logo="https://img.youtube.com/vi/Dtxa8sj69Mg/hqdefault.jpg" group-title="Filmler",İnşaat 2 | Şevket Çoruh - Emre Kınay 4K Komedi Filmi
+https://www.youtube.com/watch?v=Dtxa8sj69Mg&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Tamam Mıyız? | Aras Bulut İynemli - Aslı Enver 4K Yerli Dram Filmi" tvg-logo="https://img.youtube.com/vi/zr0r9hFPsp8/hqdefault.jpg" group-title="Filmler",Tamam Mıyız? | Aras Bulut İynemli - Aslı Enver 4K Yerli Dram Filmi
+https://www.youtube.com/watch?v=zr0r9hFPsp8&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Oflu Hoca Trakya'da | Çetin Altay 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/bocfqb_IzZU/hqdefault.jpg" group-title="Filmler",Oflu Hoca Trakya'da | Çetin Altay 4K Yerli Film
+https://www.youtube.com/watch?v=bocfqb_IzZU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="EGE HAVALARI" tvg-logo="http://2.bp.blogspot.com/-YRswiKMyLUM/WaOvzMCvuJI/AAAAAAAAUHk/gu89ed7glGssGkDCRPBUtpWEaegSFdJAgCLcBGAs/s1600/ege.jpg" group-title="*TÜRK_RADYOLAR",EGE HAVALARI
+http://37.247.98.8/stream/29/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Dabbe 5: Zehr-i Cin | 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/IqLrzwEA9OQ/hqdefault.jpg" group-title="Filmler",Dabbe 5: Zehr-i Cin | 4K Yerli Film
+https://www.youtube.com/watch?v=IqLrzwEA9OQ&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Sağ Salim | 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/fh8AsEIUfjw/hqdefault.jpg" group-title="Filmler",Sağ Salim | 4K Yerli Film
+https://www.youtube.com/watch?v=fh8AsEIUfjw&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Nadide Hayat | Demek Akbağ 4K Komedi Filmi" tvg-logo="https://img.youtube.com/vi/lFSwThX6V7c/hqdefault.jpg" group-title="Filmler",Nadide Hayat | Demek Akbağ 4K Komedi Filmi
+https://www.youtube.com/watch?v=lFSwThX6V7c&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="SÜPER FM" tvg-logo="http://1.bp.blogspot.com/-jPoaXwc1edA/WaO-L2ZzWLI/AAAAAAAAUJg/R9MUHCn7vqwWG4BOnWkrI_LkEgzkWZmRACLcBGAs/s1600/18.jpg" group-title="*TÜRK_RADYOLAR",SÜPER FM
+https://playerservices.streamtheworld.com/api/livestream-redirect/SUPER_FM.mp3
+#EXTINF:-1 tvg-id="" tvg-name="RADYO VOKAL" tvg-logo="http://3.bp.blogspot.com/-ktn0SoihWsg/Wa6X4OEmFkI/AAAAAAAAVDM/LvsswsAbMlkeIjUTHYbfBkN3HjnAqMs8gCLcBGAs/s1600/v.jpg" group-title="*TÜRK_RADYOLAR",RADYO VOKAL
+http://37.247.98.8/stream/35/
+#EXTINF:-1 tvg-id="" tvg-name="Gürbüz: Hadi Allah'a Emanet | 4K Yerli Komedi Filmi" tvg-logo="https://img.youtube.com/vi/IUKuVEmnDBo/hqdefault.jpg" group-title="Filmler",Gürbüz: Hadi Allah'a Emanet | 4K Yerli Komedi Filmi
+https://www.youtube.com/watch?v=IUKuVEmnDBo&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Aşk Tutulması | Fahriye Evcen - Tolgahan Sayışman 4K Yerli Romantik Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/INOethgcWBs/hqdefault.jpg" group-title="Filmler",Aşk Tutulması | Fahriye Evcen - Tolgahan Sayışman 4K Yerli Romantik Komedi Filmi İzle
+https://www.youtube.com/watch?v=INOethgcWBs&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Sonsuz Aşk | Fahriye Evcen - Murat Yıldırım Aşk Filmi 4K" tvg-logo="https://img.youtube.com/vi/UwE0iNjXGts/hqdefault.jpg" group-title="Filmler",Sonsuz Aşk | Fahriye Evcen - Murat Yıldırım Aşk Filmi 4K
+https://www.youtube.com/watch?v=UwE0iNjXGts&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="TV 100" tvg-logo="https://i.ibb.co/zZnBCWt/tv100.png" group-title="HABER",TV 100
+https://tv100.daioncdn.net/tv100/tv100_1080p.m3u8?app=web
+#EXTINF:-1 tvg-id="" tvg-name="Can Feda | Burak Özçivit -  Kerem Bürsin 4K" tvg-logo="https://img.youtube.com/vi/45zYH9ZmJIo/hqdefault.jpg" group-title="Filmler",Can Feda | Burak Özçivit -  Kerem Bürsin 4K
+https://www.youtube.com/watch?v=45zYH9ZmJIo&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Çakallarla Dans 3: Sıfır Sıkıntı | 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/L86xnOTB1tA/hqdefault.jpg" group-title="Filmler",Çakallarla Dans 3: Sıfır Sıkıntı | 4K Yerli Film
+https://www.youtube.com/watch?v=L86xnOTB1tA&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="4N1K | Burak Yörük 4K Yerli Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/rUT3jcZG_R0/hqdefault.jpg" group-title="Filmler",4N1K | Burak Yörük 4K Yerli Komedi Filmi İzle
+https://www.youtube.com/watch?v=rUT3jcZG_R0&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Cinnet | 4K Korku Filmi İzle" tvg-logo="https://img.youtube.com/vi/-jLpDKjY08U/hqdefault.jpg" group-title="Filmler",Cinnet | 4K Korku Filmi İzle
+https://www.youtube.com/watch?v=-jLpDKjY08U&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Dabbe 4: Cin Çarpması | 4K Yerli Korku Filmi Full İzle" tvg-logo="https://img.youtube.com/vi/N8_tfJpryNs/hqdefault.jpg" group-title="Filmler",Dabbe 4: Cin Çarpması | 4K Yerli Korku Filmi Full İzle
+https://www.youtube.com/watch?v=N8_tfJpryNs&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Sağ Salim 2: Sil Baştan | 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/PUayQRK6cDU/hqdefault.jpg" group-title="Filmler",Sağ Salim 2: Sil Baştan | 4K Yerli Film
+https://www.youtube.com/watch?v=PUayQRK6cDU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="GECE | Nurgül Yeşilçay ve Mert Fırat 4K Yerli Dram Filmi" tvg-logo="https://img.youtube.com/vi/SO-6ooV6NOY/hqdefault.jpg" group-title="Filmler",GECE | Nurgül Yeşilçay ve Mert Fırat 4K Yerli Dram Filmi
+https://www.youtube.com/watch?v=SO-6ooV6NOY&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Vicdan | Nurgül Yeşilçay 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/o00ZUjMtYt0/hqdefault.jpg" group-title="Filmler",Vicdan | Nurgül Yeşilçay 4K Yerli Film
+https://www.youtube.com/watch?v=o00ZUjMtYt0&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="BÖLÜK | Kaan Yıldırım 4K Asker Dram Filmi İzle" tvg-logo="https://img.youtube.com/vi/ccEIqKh7F4Q/hqdefault.jpg" group-title="Filmler",BÖLÜK | Kaan Yıldırım 4K Asker Dram Filmi İzle
+https://www.youtube.com/watch?v=ccEIqKh7F4Q&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Ölümlü Dünya | Feyyaz Yiğit - Doğu Demirkol 4K Yerli Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/TvbVqTTuY_A/hqdefault.jpg" group-title="Filmler",Ölümlü Dünya | Feyyaz Yiğit - Doğu Demirkol 4K Yerli Komedi Filmi İzle
+https://www.youtube.com/watch?v=TvbVqTTuY_A&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="90'LAR" tvg-logo="http://1.bp.blogspot.com/-atSLBDwDRvM/WZvt7gcYrzI/AAAAAAAATuA/2nbrjNajwJoGapc_PuuM6X50ElJq4_Z-gCLcBGAs/s1600/90.jpg" group-title="*TÜRK_RADYOLAR",90'LAR
+http://37.247.98.8/stream/166/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Aşk Sana Benzer | Fahriye Evcen - Burak Özçivit 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/HVhr-4u-9dU/hqdefault.jpg" group-title="Filmler",Aşk Sana Benzer | Fahriye Evcen - Burak Özçivit 4K Yerli Film
+https://www.youtube.com/watch?v=HVhr-4u-9dU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="CEM YILMAZ'IN KOMEDİ FİLMİ - Her Şey Çok Güzel Olacak | 4K Yerli Komedi Filmi" tvg-logo="https://img.youtube.com/vi/oWJ2Olu9Sdc/hqdefault.jpg" group-title="Filmler",CEM YILMAZ'IN KOMEDİ FİLMİ - Her Şey Çok Güzel Olacak | 4K Yerli Komedi Filmi
+https://www.youtube.com/watch?v=oWJ2Olu9Sdc&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="RADYO VİVA" tvg-logo="http://2.bp.blogspot.com/-T1bR-4TrGQ8/Wa6UbnQV7XI/AAAAAAAAVC8/Ik0lf_17Zwc-PKivSqFFvyot16qrBwcngCLcBGAs/s1600/v.jpg" group-title="*TÜRK_RADYOLAR",RADYO VİVA
+https://ssl4.radyotvonline.com/radyohome/radyovivahome.stream_aac/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="İZLEYENİN ATEŞİ YÜKSELİYOR 🔥😈 - CEZA | 4K Macera Filmi" tvg-logo="https://img.youtube.com/vi/94jea2UB3tg/hqdefault.jpg" group-title="Filmler",İZLEYENİN ATEŞİ YÜKSELİYOR 🔥😈 - CEZA | 4K Macera Filmi
+https://www.youtube.com/watch?v=94jea2UB3tg&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Kardeşim Benim | Murat Boz - Burak Özçivit 4K Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/gGxS4LgpWoQ/hqdefault.jpg" group-title="Filmler",Kardeşim Benim | Murat Boz - Burak Özçivit 4K Komedi Filmi İzle
+https://www.youtube.com/watch?v=gGxS4LgpWoQ&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Oflu Hoca'nın Şifresi 2 | Çetin Altay 4K Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/pc9Di2OxYCs/hqdefault.jpg" group-title="Filmler",Oflu Hoca'nın Şifresi 2 | Çetin Altay 4K Komedi Filmi İzle
+https://www.youtube.com/watch?v=pc9Di2OxYCs&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Oflu Hoca'nın Şifresi | 4K Yerli Komedi Filmi Full İzle" tvg-logo="https://img.youtube.com/vi/zPvrYtXfetE/hqdefault.jpg" group-title="Filmler",Oflu Hoca'nın Şifresi | 4K Yerli Komedi Filmi Full İzle
+https://www.youtube.com/watch?v=zPvrYtXfetE&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="STAR (backup)" tvg-logo="https://i.ibb.co/DYyDzGV/star22tv.png" group-title="*TÜRK_ULUSAL",STAR (backup)
+http://dygvideo.dygdigital.com/live/hls/puhustardai?m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kadın İşi Banka Soygunu | Meltem Cumbul 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/4RBboWxVI9o/hqdefault.jpg" group-title="Filmler",Kadın İşi Banka Soygunu | Meltem Cumbul 4K Yerli Film
+https://www.youtube.com/watch?v=4RBboWxVI9o&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Radyo Eksen" tvg-logo="" group-title="*TÜRK_RADYOLAR",Radyo Eksen
+https://dygedge.radyotvonline.net/radyoeksen/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Dönüşüm | 4K Gerilim ve Korku Filmi" tvg-logo="https://img.youtube.com/vi/B_8OT7EtqNU/hqdefault.jpg" group-title="Filmler",Dönüşüm | 4K Gerilim ve Korku Filmi
+https://www.youtube.com/watch?v=B_8OT7EtqNU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Can Feda | Burak Özçivit -  Kerem Bürsin Savaş Filmi" tvg-logo="https://img.youtube.com/vi/yVhvKAlhGnU/hqdefault.jpg" group-title="Filmler",Can Feda | Burak Özçivit -  Kerem Bürsin Savaş Filmi
+https://www.youtube.com/watch?v=yVhvKAlhGnU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="RADYO VOYAGE" tvg-logo="http://1.bp.blogspot.com/-mWVC6ikbolk/Wa6YecF5PHI/AAAAAAAAVDU/1SdYSZJlvsI3pzVkeCyS8iFOHOsBhp_jgCLcBGAs/s1600/v.jpg" group-title="*TÜRK_RADYOLAR",RADYO VOYAGE
+http://voyagewmp.radyotvonline.com/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Ay Lav Yu Tuu | Sermiyan Midyat 4K Yerli Komedi Filmi" tvg-logo="https://img.youtube.com/vi/vW4o5qXkCKU/hqdefault.jpg" group-title="Filmler",Ay Lav Yu Tuu | Sermiyan Midyat 4K Yerli Komedi Filmi
+https://www.youtube.com/watch?v=vW4o5qXkCKU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Dönerse Senindir | Murat Boz - İrem Sak 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/-GmS95idPH0/hqdefault.jpg" group-title="Filmler",Dönerse Senindir | Murat Boz - İrem Sak 4K Yerli Film
+https://www.youtube.com/watch?v=-GmS95idPH0&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="KANAL 7" tvg-logo="https://assets.uzunmuhalefet.com/logos/9af5ca05-f788-4ca3-9fd3-92c89d555c2b.png" group-title="*TÜRK_ULUSAL",KANAL 7
+https://kanal7.daioncdn.net/kanal7/kanal7_1080p.m3u8?&app=f99587ad-1637-494d-8255-da35b09d17a1
+#EXTINF:-1 tvg-id="" tvg-name="vahşetin çağrısı Türkçe dublaj fragman izle" tvg-logo="https://img.youtube.com/vi/mrAUtSFUr3Y/hqdefault.jpg" group-title="Filmler",vahşetin çağrısı Türkçe dublaj fragman izle
+https://www.youtube.com/watch?v=mrAUtSFUr3Y&list=PL5_XGraSO-iH5sDNxOCbncnNBt8_YoJmg
+#EXTINF:-1 tvg-id="" tvg-name="Aşk Uykusu | Gökçe Bahadır 4K Dram Filmi Full İzle" tvg-logo="https://img.youtube.com/vi/IircWSOksOU/hqdefault.jpg" group-title="Filmler",Aşk Uykusu | Gökçe Bahadır 4K Dram Filmi Full İzle
+https://www.youtube.com/watch?v=IircWSOksOU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Bizim Hoca: Bezdum Da | 4K KOMEDİ FİLMİ" tvg-logo="https://img.youtube.com/vi/vADNqaDKwgU/hqdefault.jpg" group-title="Filmler",Bizim Hoca: Bezdum Da | 4K KOMEDİ FİLMİ
+https://www.youtube.com/watch?v=vADNqaDKwgU&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Dabbe 3 : Bir Cin Vakası | 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/wAgAs1YRHnE/hqdefault.jpg" group-title="Filmler",Dabbe 3 : Bir Cin Vakası | 4K Yerli Film
+https://www.youtube.com/watch?v=wAgAs1YRHnE&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Stajyer Mafya | Hilmi Cem İntepe 4K Yerli Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/GLIEgutEbvY/hqdefault.jpg" group-title="Filmler",Stajyer Mafya | Hilmi Cem İntepe 4K Yerli Komedi Filmi İzle
+https://www.youtube.com/watch?v=GLIEgutEbvY&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="SLOW HOME" tvg-logo="http://2.bp.blogspot.com/-luIJxok76vI/Wa6oIrOmFnI/AAAAAAAAVFo/XqhtFlhKmXwf9VMxXm9WXUmQTIX1NDTnQCLcBGAs/s1600/s.jpg" group-title="*TÜRK_RADYOLAR",SLOW HOME
+http://37.247.98.8/stream/27/;stream.mp3
+#EXTINF:-1 tvg-id="" tvg-name="Çakallarla Dans 5 | Uraz Kaygılaroğlu 4K Yerli Komedi Filmi" tvg-logo="https://img.youtube.com/vi/QrS3c2u6K70/hqdefault.jpg" group-title="Filmler",Çakallarla Dans 5 | Uraz Kaygılaroğlu 4K Yerli Komedi Filmi
+https://www.youtube.com/watch?v=QrS3c2u6K70&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Kuzenler Firarda 2 | 4K Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/gVswo-yFwZE/hqdefault.jpg" group-title="Filmler",Kuzenler Firarda 2 | 4K Komedi Filmi İzle
+https://www.youtube.com/watch?v=gVswo-yFwZE&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Biz Size Döneriz | Fırat Albayram - Ceyda Kasabalı 4K Komedi Filmi İzle" tvg-logo="https://img.youtube.com/vi/mY1WK7vo5kY/hqdefault.jpg" group-title="Filmler",Biz Size Döneriz | Fırat Albayram - Ceyda Kasabalı 4K Komedi Filmi İzle
+https://www.youtube.com/watch?v=mY1WK7vo5kY&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Yalan Dolan | Şafak Sezer 4K Komedi Filmi" tvg-logo="https://img.youtube.com/vi/Gf5Wah609wI/hqdefault.jpg" group-title="Filmler",Yalan Dolan | Şafak Sezer 4K Komedi Filmi
+https://www.youtube.com/watch?v=Gf5Wah609wI&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Euro D" tvg-logo="https://i.ibb.co/THj0Jrg/eurod22.png" group-title="*TÜRK_ULUSAL",Euro D
+https://live.duhnet.tv/S2/HLS_LIVE/eurodnp/track_3_750/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DOST TV" tvg-logo="https://upload.wikimedia.org/wikipedia/en/f/f6/Dost_TV.jpg" group-title="*TÜRK_DİĞER",DOST TV
+http://dost.stream.emsal.im/tv/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="360" tvg-logo="https://i.ibb.co/s3gJCGL/360.png" group-title="ULUSAL",360
+https://turkmedya-live.ercdn.net/tv360/tv360_720p.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BÖLÜK | Kaan Yıldırım 4K Dram Filmi İzle" tvg-logo="https://img.youtube.com/vi/rGQ_P5LjFWc/hqdefault.jpg" group-title="Filmler",BÖLÜK | Kaan Yıldırım 4K Dram Filmi İzle
+https://www.youtube.com/watch?v=rGQ_P5LjFWc&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="FASHION TV" tvg-logo="https://i.ibb.co/LYbF1Wt/fashionok.png" group-title="*TÜRK_YEREL",FASHION TV
+https://live.euromediacenter.com/fashionworld/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Deliormanlı | 4K Full İzle" tvg-logo="https://img.youtube.com/vi/NklCfE3vxj4/hqdefault.jpg" group-title="Filmler",Deliormanlı | 4K Full İzle
+https://www.youtube.com/watch?v=NklCfE3vxj4&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="Acı Aşk | Halit Ergenç - Cansu Dere Yerli 4K Dram Filmi İzle" tvg-logo="https://img.youtube.com/vi/ZZDLJBxjqy4/hqdefault.jpg" group-title="Filmler",Acı Aşk | Halit Ergenç - Cansu Dere Yerli 4K Dram Filmi İzle
+https://www.youtube.com/watch?v=ZZDLJBxjqy4&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="İlk Aşk | Halit Ergenç - Neslihan Atagül 4K Yerli Film" tvg-logo="https://img.youtube.com/vi/QL61F6zMmr4/hqdefault.jpg" group-title="Filmler",İlk Aşk | Halit Ergenç - Neslihan Atagül 4K Yerli Film
+https://www.youtube.com/watch?v=QL61F6zMmr4&list=PLp8Jgm5V2Q8jVgTxTSeaJkzyL5RxHux6h
+#EXTINF:-1 tvg-id="" tvg-name="NTV" tvg-logo="https://i.ibb.co/gRR1zpm/ntv.png" group-title="HABER",NTV
+https://dogus.daioncdn.net/ntv/ntv_720p.m3u8
