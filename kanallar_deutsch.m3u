@@ -1,79 +1,37 @@
 #EXTM3U
 #EXTINF:-1 tvg-id="" tvg-name="KiKa Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Kika_2012.svg/640px-Kika_2012.svg.png" group-title="Germany",KiKa Ⓖ
 https://kikageohls.akamaized.net/hls/live/2022693/livetvkika_de/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TV 1 (720p)" tvg-logo="https://i.imgur.com/8CtrYVb.png" group-title="Undefined",TV 1 (720p)
-https://edge1.socialsmart.tv/tv1/bant1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="WDR Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Wdr_fernsehen_logo_2016.svg/640px-Wdr_fernsehen_logo_2016.svg.png" group-title="Germany",WDR Ⓖ
 https://wdrfs247.akamaized.net/hls/live/681509/wdr_msl4_fs247/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TV Den (576p) [Not 24/7]" tvg-logo="https://i.imgur.com/Uhg95Ze.png" group-title="Undefined",TV Den (576p) [Not 24/7]
-http://canli.tvden.com.tr/hls/live.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NDR Schleswig-Holstein Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Logo_NDR_Fernsehen_2017.svg/578px-Logo_NDR_Fernsehen_2017.svg.png" group-title="Germany",NDR Schleswig-Holstein Ⓖ
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_sh/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="BEİN SPORTS 1" tvg-logo="https://i.hizliresim.com/l6muq8p.png" group-title="💫BEİNSPORTS DERBİ ÖZEL💫",BEİN SPORTS 1
-http://nexusconnects.org:80/play/live.php?mac=00:1B:79:47:72:00&stream=988849&extension=ts&play_token=zYB5znYiYr
 #EXTINF:-1 tvg-id="" tvg-name="NDR Hamburg Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Logo_NDR_Fernsehen_2017.svg/578px-Logo_NDR_Fernsehen_2017.svg.png" group-title="Germany",NDR Hamburg Ⓖ
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_hh/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TMB TV" tvg-logo="https://i.imgur.com/28AyWHe.png" group-title="Undefined",TMB TV
-https://raw.githubusercontent.com/UzunMuhalefet/streams/refs/heads/main/myvideo-az/tmb-azerbaycan.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Das Erste Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Das_Erste_2014.svg/640px-Das_Erste_2014.svg.png" group-title="Germany",Das Erste Ⓖ
 https://daserste-live.ard-mcdn.de/daserste/live/hls/de/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Vav TV" tvg-logo="https://i.imgur.com/jw0gB8L.png" group-title="Undefined",Vav TV
-https://playlist.fasttvcdn.com/pl/rfrk9821hdy9dayo8wfyha/kltr-sanat-tv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TR:Trt Diyanet Çocuk" tvg-logo="https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/7e733bf8-6c0e-4d6e-b18a-5864e571894b.png" group-title="DeaTHLesS-TV",TR:Trt Diyanet Çocuk
-https://tv-trtdiyanetcocuk.medya.trt.com.tr/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NDR International" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Logo_NDR_Fernsehen_2017.svg/578px-Logo_NDR_Fernsehen_2017.svg.png" group-title="Germany",NDR International
 https://ndrint.akamaized.net/hls/live/2020766/ndr_int/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Zarok TV (720p)" tvg-logo="https://i.imgur.com/o0eevnb.png" group-title="Undefined",Zarok TV (720p)
-https://zindikurmanci.zaroktv.com.tr/hls/stream.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="DELUXE MUSIC RAP" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Deluxe_Rap_Logo_2023.svg/666px-Deluxe_Rap_Logo_2023.svg.png" group-title="Germany",DELUXE MUSIC RAP
 https://sdn-global-live-streaming-packager-cache.3qsdn.com/65183/65183_264_live.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Satranç TV (480p) [Not 24/7]" tvg-logo="https://i.imgur.com/TXDV1ty.png" group-title="Undefined",Satranç TV (480p) [Not 24/7]
-http://139.162.182.79/live/test/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ETV Manisa (1080p) [Not 24/7]" tvg-logo="https://i.ibb.co/QKXtdkz/sOd3INg.png" group-title="Undefined",ETV Manisa (1080p) [Not 24/7]
-https://edge1.socialsmart.tv/manisaetv/bant1/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="DELUXE MUSIC DANCE BY KONTOR" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Deluxe_Dance_by_Kontor_Logo_2023.svg/666px-Deluxe_Dance_by_Kontor_Logo_2023.svg.png" group-title="Germany",DELUXE MUSIC DANCE BY KONTOR
 https://sdn-global-live-streaming-packager-cache.3qsdn.com/64733/64733_264_live.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Power Turk (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/9OPoXQG.png" group-title="Undefined",Power Turk (1080p) [Not 24/7]
-https://livetv.powerapp.com.tr/powerturkTV/powerturkhd.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="SR Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/SR_Fernsehen_Logo_2023.svg/538px-SR_Fernsehen_Logo_2023.svg.png" group-title="Germany",SR Ⓖ
 https://srfs.akamaized.net/hls/live/689649/srfsgeo/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="ES TV (720p)" tvg-logo="https://i.imgur.com/epAEBrp.png" group-title="Undefined",ES TV (720p)
-https://live.artidijitalmedya.com/artidijital_estv/estv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="BR Nord Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Logo_BR_Fernsehen_2021.svg/768px-Logo_BR_Fernsehen_2021.svg.png" group-title="Germany",BR Nord Ⓖ
 https://mcdn.br.de/br/fs/bfs_nord/hls/de/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Power TV (1080p)" tvg-logo="https://i.imgur.com/XSL1gd7.png" group-title="Undefined",Power TV (1080p)
-https://livetv.powerapp.com.tr/powerTV/powerhd.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="TRT 3 (720p)" tvg-logo="https://i.imgur.com/JrWFwBd.png" group-title="Undefined",TRT 3 (720p)
-https://tv-trt3.live.trt.com.tr/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="BEINSPORT3YEDEK" tvg-logo="https://i.hizliresim.com/l6muq8p.png" group-title="💫BEİNSPORTS DERBİ ÖZEL💫",BEINSPORT3YEDEK
-http://taliptv01.xyz:8080/play/live.php?mac=00:1A:79:4D:06:6C&stream=2216&extension=ts&play_token=7qOBBgdbE3
-#EXTINF:-1 tvg-id="" tvg-name="BEİN SPORTS 1" tvg-logo="https://i.hizliresim.com/l6muq8p.png" group-title="💫BEİNSPORTS DERBİ ÖZEL💫",BEİN SPORTS 1
-http://nexusconnects.org:80/play/live.php?mac=00:1B:79:47:72:00&stream=988851&extension=ts&play_token=i9P5KZaJhe
-#EXTINF:-1 tvg-id="" tvg-name="BRTV (720p) [Geo-blocked]" tvg-logo="https://i.imgur.com/U3qlEAp.png" group-title="Undefined",BRTV (720p) [Geo-blocked]
-https://live.artidijitalmedya.com/artidijital_brtv/brtv/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Sat7 Türk (1080p)" tvg-logo="https://i.imgur.com/cKQIK4i.png" group-title="Undefined",Sat7 Türk (1080p)
-https://live.artidijitalmedya.com/artidijital_sat7turk/sat7turk/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="HR Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/HR-Fernsehen_Logo_2023.svg/640px-HR-Fernsehen_Logo_2023.svg.png" group-title="Germany",HR Ⓖ
 https://hrhls.akamaized.net/hls/live/2024525/hrhls/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NDR Mecklenburg-Vorpommern Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Logo_NDR_Fernsehen_2017.svg/578px-Logo_NDR_Fernsehen_2017.svg.png" group-title="Germany",NDR Mecklenburg-Vorpommern Ⓖ
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_mv/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Trabzon Buyuksehir Belediyesi TV (1080p)" tvg-logo="https://tbbweb.tv/img/logo.png" group-title="Undefined",Trabzon Buyuksehir Belediyesi TV (1080p)
 https://tv191.radyotelekom.com.tr:3612/stream/play.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Sun RTV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/64tph9N.png" group-title="Undefined",Sun RTV (720p) [Not 24/7]
-https://live.artidijitalmedya.com/artidijital_sunrtv/sunrtv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Euronews Deutsch Ⓨ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Euronews_2022.svg/640px-Euronews_2022.svg.png" group-title="Germany",Euronews Deutsch Ⓨ
 https://www.youtube.com/euronewsde/live
-#EXTINF:-1 tvg-id="" tvg-name="Mercan TV (576p) [Not 24/7]" tvg-logo="https://i.imgur.com/3CWV8bS.png" group-title="Undefined",Mercan TV (576p) [Not 24/7]
-https://live.artidijitalmedya.com/artidijital_mercantv/mercantv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Tagesschau24" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Tagesschau24-2012.svg/640px-Tagesschau24-2012.svg.png" group-title="Germany",Tagesschau24
 https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="DELUXE MUSIC" tvg-logo="https://i.imgur.com/E65GQN9.png" group-title="Germany",DELUXE MUSIC
 https://sdn-global-live-streaming-packager-cache.3qsdn.com/13456/13456_264_live.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ARD Alpha Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/ARD_alpha.svg/640px-ARD_alpha.svg.png" group-title="Germany",ARD Alpha Ⓖ
 https://mcdn.br.de/br/fs/ard_alpha/hls/de/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Ton TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/f0Soeob.png" group-title="Undefined",Ton TV (720p) [Not 24/7]
-https://live.artidijitalmedya.com/artidijital_tontv/tontv/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="NDR Niedersachsen Ⓖ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Logo_NDR_Fernsehen_2017.svg/578px-Logo_NDR_Fernsehen_2017.svg.png" group-title="Germany",NDR Niedersachsen Ⓖ
 https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_nds/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Urfa Natik TV (720p)" tvg-logo="https://i.imgur.com/8KO0uxn.png" group-title="Undefined",Urfa Natik TV (720p)
-https://live.artidijitalmedya.com/artidijital_urfanatiktv/urfanatiktv/playlist.m3u8
