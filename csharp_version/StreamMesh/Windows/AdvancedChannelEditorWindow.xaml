@@ -16,9 +16,18 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBox x:Name="SearchTxt" Width="200" Height="30" VerticalContentAlignment="Center" TextChanged="SearchTxt_TextChanged" />
-                <Button Content="Ara (Benzer Bul)" Width="100" Height="30" Margin="10,0,0,0" Background="#38bdf8" Foreground="White" BorderThickness="0" Click="SearchBtn_Click" />
-                <Button Content="Akıllı Grupla (%90)" Width="120" Height="30" Margin="10,0,0,0" Background="#8b5cf6" Foreground="White" BorderThickness="0" Click="SmartGroupBtn_Click" ToolTip="Kanalları kalite eklerini yok sayarak isme göre gruplar" />
+                <TextBox x:Name="SearchTxt" Width="140" Height="30" VerticalContentAlignment="Center" TextChanged="SearchTxt_TextChanged" />
+                <Button Content="Ara (Benzer Bul)" Width="100" Height="30" Margin="5,0,0,0" Background="#38bdf8" Foreground="White" BorderThickness="0" Click="SearchBtn_Click" />
+                <Button Content="Akıllı Grupla (%90)" Width="110" Height="30" Margin="5,0,0,0" Background="#8b5cf6" Foreground="White" BorderThickness="0" Click="SmartGroupBtn_Click" ToolTip="Kanalları kalite eklerini yok sayarak isme göre gruplar" />
+                
+                <TextBlock Text="Kategori:" Foreground="#94a3b8" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                <ComboBox x:Name="FilterCategoryCombo" Width="100" Height="30" VerticalContentAlignment="Center" SelectionChanged="FilterCategoryCombo_SelectionChanged">
+                    <ComboBoxItem Content="Tümü" IsSelected="True" />
+                    <ComboBoxItem Content="TV" />
+                    <ComboBoxItem Content="Film" />
+                    <ComboBoxItem Content="Dizi" />
+                    <ComboBoxItem Content="Radyo" />
+                </ComboBox>
             </StackPanel>
             
             <Grid Grid.Row="1">
@@ -41,6 +50,8 @@
                             <MenuItem Header="Kanalı Önizle" Click="PreviewChannel_Click"/>
                             <MenuItem Header="Seçili Kanalları Birleştir" Click="MergeSelected_Click"/>
                             <MenuItem Header="Yayın Bilgisi Topla (Stream Info)" Click="GetStreamInfo_Click"/>
+                            <Separator Background="#334155"/>
+                            <MenuItem Header="Seçili Kanalı Sil" Click="DeleteSelected_Click" Foreground="#ef4444"/>
                         </ContextMenu>
                     </ListView.ContextMenu>
                 <ListView.View>
@@ -101,7 +112,8 @@
             <TextBlock Text="Dil (Ülke):" Margin="10,0,10,5" Foreground="#94a3b8" />
             <ComboBox x:Name="BulkLanguageCombo" Margin="10,0,10,10" Height="35" IsEditable="True" />
             
-            <Button Content="Seçilileri Güncelle" Margin="10,10,10,20" Height="35" Background="#10b981" Foreground="White" BorderThickness="0" Click="BulkUpdateBtn_Click" Cursor="Hand" />
+            <Button Content="Seçilileri Güncelle" Margin="10,10,10,10" Height="35" Background="#10b981" Foreground="White" BorderThickness="0" Click="BulkUpdateBtn_Click" Cursor="Hand" />
+            <Button Content="Seçilileri Kalıcı Olarak Sil" Margin="10,0,10,20" Height="35" Background="#ef4444" Foreground="White" BorderThickness="0" Click="BulkDeleteBtn_Click" Cursor="Hand" ToolTip="Seçili tüm kanalları yerel veritabanından kalıcı olarak siler." />
             <Separator Background="#334155" Margin="10,0" />
             
             <TextBlock Text="Birleştirme (Merge)" FontSize="16" FontWeight="Bold" Margin="10,20,10,10" Foreground="#f59e0b" />

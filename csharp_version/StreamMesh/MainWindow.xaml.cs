@@ -71,6 +71,21 @@ namespace StreamMesh
                     LogService.LogError("EPG background auto update initialization failed", ex);
                 }
             });
+
+            // Haftalık Film, Dizi ve Canlı Yayın Listelerinin Arka Planda Güncellenmesi
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // Biraz gecikmeyle başlatıyoruz uygulama açılışında yük yaratmasın diye
+                    await Task.Delay(TimeSpan.FromSeconds(20));
+                    await MovieUpdaterService.Instance.RunWeeklyUpdateIfNeededAsync();
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("Weekly background auto updater failure", ex);
+                }
+            });
         }
 
         private void OnChannelSelected(Models.Channel channel, List<Models.Channel> playlist)

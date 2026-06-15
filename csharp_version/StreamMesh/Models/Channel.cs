@@ -158,6 +158,164 @@ namespace StreamMesh.Models
 
         public bool HasPersonalWatch => PersonalWatchCount > 0;
 
+        // Akıllı Film Detay Çözümlemesi (Read-Only Properties)
+        public string CleanName
+        {
+            get
+            {
+                if (Category != "Film") return Name;
+                return ParsedMovieDetails.CleanName;
+            }
+        }
+
+        public string ImdbRating
+        {
+            get
+            {
+                if (Category != "Film") return string.Empty;
+                return ParsedMovieDetails.ImdbRating;
+            }
+        }
+
+        public string MovieYear
+        {
+            get
+            {
+                if (Category != "Film") return string.Empty;
+                return ParsedMovieDetails.MovieYear;
+            }
+        }
+
+        public string MovieGenre
+        {
+            get
+            {
+                if (Category != "Film") return string.Empty;
+                return ParsedMovieDetails.MovieGenre;
+            }
+        }
+
+        public bool HasImdb => !string.IsNullOrEmpty(ImdbRating);
+        public bool HasMovieYear => !string.IsNullOrEmpty(MovieYear);
+        public bool HasMovieGenre => !string.IsNullOrEmpty(MovieGenre);
+
+        // Performans için önbellekleme (lazy cache)
+        private string _lastNameForParsing = null;
+        private MovieDetails _cachedDetails = null;
+
+        private MovieDetails ParsedMovieDetails
+        {
+            get
+            {
+                if (_lastNameForParsing == Name && _cachedDetails != null)
+                    return _cachedDetails;
+
+                _lastNameForParsing = Name;
+                _cachedDetails = ParseNameDetails(Name);
+                return _cachedDetails;
+            }
+        }
+
+        private class MovieDetails
+        {
+            public string CleanName { get; set; }
+            public string ImdbRating { get; set; }
+            public string MovieYear { get; set; }
+            public string MovieGenre { get; set; }
+        }
+
+        private MovieDetails ParseNameDetails(string rawName)
+        {
+            var details = new MovieDetails
+            {
+                CleanName = rawName ?? string.Empty,
+                ImdbRating = "",
+                MovieYear = "",
+                MovieGenre = ""
+            };
+
+            if (string.IsNullOrEmpty(rawName)) return details;
+
+            string workingName = rawName;
+
+            // 1. IMDb Puanı Bulma
+            // Örnekler: (★ 8.2), (imdb: 8.2), (8.2) gibi ifadelere bakabiliriz.
+            var imdbRegex = new System.Text.RegularExpressions.Regex(@"\((?:[★\*]\s*|imdb\s*[:\-\s]?\s*)?(\d+(?:\.\d+)?)\)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var imdbMatch = imdbRegex.Match(workingName);
+            if (imdbMatch.Success)
+            {
+                details.ImdbRating = imdbMatch.Groups[1].Value;
+                workingName = workingName.Replace(imdbMatch.Value, "");
+            }
+
+            // 2. Yıl Bulma (1900-2029 arası 4 basamaklı sayılar, parantez içinde)
+            var yearRegex = new System.Text.RegularExpressions.Regex(@"\((19\d{2}|20\d{2})\)");
+            var yearMatch = yearRegex.Match(workingName);
+            if (yearMatch.Success)
+            {
+                details.MovieYear = yearMatch.Groups[1].Value;
+                workingName = workingName.Replace(yearMatch.Value, "");
+            }
+            else
+            {
+                // Parantezsiz yıl da olabilir (en sonda boşluktan sonra)
+                var yearRegexNoParen = new System.Text.RegularExpressions.Regex(@"\b(19\d{2}|20\d{2})\b");
+                var yearMatchNoParen = yearRegexNoParen.Match(workingName);
+                if (yearMatchNoParen.Success)
+                {
+                    details.MovieYear = yearMatchNoParen.Groups[1].Value;
+                    workingName = workingName.Replace(yearMatchNoParen.Value, "");
+                }
+            }
+
+            // 3. Film Türü Bulma (Parantez içi harf/karakter içeren kelimeler, örn: (Komedi-Suç) veya (Aksiyon/Macera))
+            var genreKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "komedi", "suç", "aksiyon", "macera", "drama", "dram", "gerilim", "bilim kurgu", "bilim-kurgu", 
+                "fantastik", "korku", "gizem", "romantik", "animasyon", "belgesel", "aile", "savaş", "tarih", 
+                "western", "müzikal", "biyografi", "komedi-suç", "suç-komedi", "aksiyon-macera", "yerli", "yabancı", "türkçe"
+            };
+
+            var genreRegex = new System.Text.RegularExpressions.Regex(@"\(([A-Za-zÇŞĞÜÖİçşğüöı\s\-\/\+]+)\)");
+            var genreMatches = genreRegex.Matches(workingName);
+            foreach (System.Text.RegularExpressions.Match match in genreMatches)
+            {
+                string val = match.Groups[1].Value.Trim();
+                bool isGenre = false;
+                if (genreKeywords.Contains(val))
+                {
+                    isGenre = true;
+                }
+                else
+                {
+                    var parts = val.Split(new[] { '-', '/', ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var p in parts)
+                    {
+                        if (genreKeywords.Contains(p))
+                        {
+                            isGenre = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (isGenre)
+                {
+                    details.MovieGenre = val;
+                    workingName = workingName.Replace(match.Value, "");
+                    break;
+                }
+            }
+
+            // 4. Temizlenmiş İsim
+            string clean = workingName;
+            clean = System.Text.RegularExpressions.Regex.Replace(clean, @"\s+", " ");
+            clean = clean.Trim(' ', ':', '-', '(', ')');
+            details.CleanName = string.IsNullOrWhiteSpace(clean) ? rawName : clean;
+
+            return details;
+        }
+
         public override string ToString()
         {
             return $"{Name} ({GroupTitle})";

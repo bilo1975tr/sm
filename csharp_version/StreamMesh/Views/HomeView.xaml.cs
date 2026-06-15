@@ -49,6 +49,15 @@ namespace StreamMesh.Views
                 SponsorBannerBorder.Visibility = Visibility.Visible;
             }
 
+            bool isMovie = _selectedCategory != null && 
+                           (_selectedCategory.ToUpper().Contains("FİLM") || 
+                            _selectedCategory.ToUpper().Contains("FILM") || 
+                            _selectedCategory.ToUpper().Contains("MOVIE"));
+            if (isMovie && MovieFiltersPanel != null)
+            {
+                PopulateMovieFilters();
+            }
+
             FilterChannels();
         }
 
@@ -116,6 +125,58 @@ namespace StreamMesh.Views
                         c.Category != null && 
                         (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
                     ).ToList();
+                }
+            }
+
+            // Film özel filtrelerini uygula
+            bool isMovieCat = _selectedCategory != null && 
+                              (_selectedCategory.ToUpper().Contains("FİLM") || 
+                               _selectedCategory.ToUpper().Contains("FILM") || 
+                               _selectedCategory.ToUpper().Contains("MOVIE"));
+            
+            if (isMovieCat)
+            {
+                // 1. Film Türü Filtresi
+                if (MovieGenreComboBox != null && MovieGenreComboBox.SelectedItem is ComboBoxItem genreItem)
+                {
+                    string selectedGenre = genreItem.Content.ToString();
+                    if (selectedGenre != "Hepsi")
+                    {
+                        _filteredChannels = _filteredChannels.Where(c => c.MovieGenre != null && c.MovieGenre.Equals(selectedGenre, StringComparison.OrdinalIgnoreCase)).ToList();
+                    }
+                }
+
+                // 2. Yapım Yılı Filtresi
+                if (MovieYearComboBox != null && MovieYearComboBox.SelectedItem is ComboBoxItem yearItem)
+                {
+                    string selectedYear = yearItem.Content.ToString();
+                    if (selectedYear != "Hepsi")
+                    {
+                        _filteredChannels = _filteredChannels.Where(c => c.MovieYear != null && c.MovieYear.Equals(selectedYear, StringComparison.OrdinalIgnoreCase)).ToList();
+                    }
+                }
+
+                // 3. Minimum IMDb Puanı Filtresi (IMDb süzgeci)
+                if (MovieImdbComboBox != null && MovieImdbComboBox.SelectedItem is ComboBoxItem imdbItem)
+                {
+                    string selectedImdbText = imdbItem.Content.ToString();
+                    if (selectedImdbText != "Hepsi")
+                    {
+                        double minImdb = 0.0;
+                        if (selectedImdbText.Contains("8.5")) minImdb = 8.5;
+                        else if (selectedImdbText.Contains("8.0")) minImdb = 8.0;
+                        else if (selectedImdbText.Contains("7.0")) minImdb = 7.0;
+                        else if (selectedImdbText.Contains("6.0")) minImdb = 6.0;
+
+                        _filteredChannels = _filteredChannels.Where(c => 
+                        {
+                            if (double.TryParse(c.ImdbRating, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double rating))
+                            {
+                                return rating >= minImdb;
+                            }
+                            return false;
+                        }).ToList();
+                    }
                 }
             }
 
@@ -225,7 +286,107 @@ namespace StreamMesh.Views
                 // Set active style
                 btn.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#38bdf8")); // Primary color
                 _selectedCategory = btn.Content.ToString();
+
+                bool isMovie = _selectedCategory.ToUpper().Contains("FİLM") || 
+                               _selectedCategory.ToUpper().Contains("FILM") || 
+                               _selectedCategory.ToUpper().Contains("MOVIE");
+
+                if (MovieFiltersPanel != null)
+                {
+                    MovieFiltersPanel.Visibility = isMovie ? Visibility.Visible : Visibility.Collapsed;
+                    if (isMovie)
+                    {
+                        PopulateMovieFilters();
+                    }
+                }
                 
+                _currentPage = 1;
+                FilterChannels();
+            }
+        }
+
+        private bool _isPopulatingFilters = false;
+        private void PopulateMovieFilters()
+        {
+            if (_allChannels == null || _isPopulatingFilters) return;
+            _isPopulatingFilters = true;
+
+            try
+            {
+                var movieChannels = _allChannels.Where(c => c.Category == "Film").ToList();
+
+                // Türleri çekelim
+                var genres = movieChannels
+                    .Where(c => !string.IsNullOrEmpty(c.MovieGenre))
+                    .Select(c => c.MovieGenre.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(g => g)
+                    .ToList();
+
+                if (MovieGenreComboBox != null)
+                {
+                    var selectedItem = MovieGenreComboBox.SelectedItem as ComboBoxItem;
+                    string previousSelectedGenre = selectedItem != null ? selectedItem.Content.ToString() : "Hepsi";
+
+                    MovieGenreComboBox.Items.Clear();
+                    var defaultItem = new ComboBoxItem { Content = "Hepsi" };
+                    MovieGenreComboBox.Items.Add(defaultItem);
+                    MovieGenreComboBox.SelectedItem = defaultItem;
+
+                    foreach (var genre in genres)
+                    {
+                        var item = new ComboBoxItem { Content = genre };
+                        MovieGenreComboBox.Items.Add(item);
+                        if (genre.Equals(previousSelectedGenre, StringComparison.OrdinalIgnoreCase))
+                        {
+                            MovieGenreComboBox.SelectedItem = item;
+                        }
+                    }
+                }
+
+                // Yılları çekelim
+                var years = movieChannels
+                    .Where(c => !string.IsNullOrEmpty(c.MovieYear))
+                    .Select(c => c.MovieYear.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderByDescending(y => y)
+                    .ToList();
+
+                if (MovieYearComboBox != null)
+                {
+                    var selectedItem = MovieYearComboBox.SelectedItem as ComboBoxItem;
+                    string previousSelectedYear = selectedItem != null ? selectedItem.Content.ToString() : "Hepsi";
+
+                    MovieYearComboBox.Items.Clear();
+                    var defaultItem = new ComboBoxItem { Content = "Hepsi" };
+                    MovieYearComboBox.Items.Add(defaultItem);
+                    MovieYearComboBox.SelectedItem = defaultItem;
+
+                    foreach (var year in years)
+                    {
+                        var item = new ComboBoxItem { Content = year };
+                        MovieYearComboBox.Items.Add(item);
+                        if (year.Equals(previousSelectedYear, StringComparison.OrdinalIgnoreCase))
+                        {
+                            MovieYearComboBox.SelectedItem = item;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("PopulateMovieFilters failed", ex);
+            }
+            finally
+            {
+                _isPopulatingFilters = false;
+            }
+        }
+
+        private void MovieFilters_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isPopulatingFilters)
+            {
                 _currentPage = 1;
                 FilterChannels();
             }

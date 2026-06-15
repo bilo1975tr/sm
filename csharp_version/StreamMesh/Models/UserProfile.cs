@@ -15,5 +15,7 @@ namespace StreamMesh.Models
         public bool IsPremium { get; set; }
         public DateTime PremiumExpiry { get; set; }
         public DateTime LastLoginTime { get; set; }
+        public bool WeeklyMovieAndChannelUpdateEnabled { get; set; } = true;
+        public DateTime LastMovieAndChannelUpdateTime { get; set; } = DateTime.MinValue;
     }
 }

@@ -86,6 +86,28 @@
                         </Grid>
                     </StackPanel>
                 </Grid>
+
+                <!-- Film Filtreleri (Sadece Film Kategorisi Seçildiğinde Görünür) -->
+                <StackPanel x:Name="MovieFiltersPanel" Orientation="Horizontal" Margin="0,15,0,0" Visibility="Collapsed">
+                    <TextBlock Text="🎬 Film Türü:" VerticalAlignment="Center" Foreground="#94a3b8" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="MovieGenreComboBox" Width="160" Height="32" Margin="0,0,20,0" SelectionChanged="MovieFilters_SelectionChanged">
+                        <ComboBoxItem Content="Hepsi" IsSelected="True" />
+                    </ComboBox>
+
+                    <TextBlock Text="📅 Yapım Yılı:" VerticalAlignment="Center" Foreground="#94a3b8" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="MovieYearComboBox" Width="120" Height="32" Margin="0,0,20,0" SelectionChanged="MovieFilters_SelectionChanged">
+                        <ComboBoxItem Content="Hepsi" IsSelected="True" />
+                    </ComboBox>
+
+                    <TextBlock Text="⭐ En Düşük IMDb:" VerticalAlignment="Center" Foreground="#94a3b8" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="MovieImdbComboBox" Width="110" Height="32" SelectionChanged="MovieFilters_SelectionChanged">
+                        <ComboBoxItem Content="Hepsi" IsSelected="True"/>
+                        <ComboBoxItem Content="8.5+ IMDb"/>
+                        <ComboBoxItem Content="8.0+ IMDb"/>
+                        <ComboBoxItem Content="7.0+ IMDb"/>
+                        <ComboBoxItem Content="6.0+ IMDb"/>
+                    </ComboBox>
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -182,8 +204,34 @@
                                 </Grid>
                             </Border>
                             <StackPanel Grid.Row="1" Margin="10">
-                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14" TextTrimming="CharacterEllipsis" Foreground="White" />
-                                <TextBlock Text="{Binding GroupTitle}" Foreground="#94a3b8" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding CleanName}" FontWeight="Bold" FontSize="14" TextTrimming="CharacterEllipsis" Foreground="White" />
+                                
+                                <!-- Normal GroupTitle -->
+                                <TextBlock Text="{Binding GroupTitle}" Foreground="#94a3b8" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Category}" Value="Film">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                
+                                <!-- Film Türü -->
+                                <TextBlock Text="{Binding MovieGenre}" Foreground="#38bdf8" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" FontWeight="SemiBold">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Category}" Value="Film">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 
                                 <!-- EPG Area -->
                                 <StackPanel Margin="0,5,0,0" MinHeight="25">
@@ -208,9 +256,37 @@
                                     <Border Background="#38bdf8" CornerRadius="4" Padding="5,2" Margin="0,0,5,0">
                                         <TextBlock Text="{Binding Category}" FontSize="9" Foreground="White" FontWeight="Bold"/>
                                     </Border>
-                                    <Border Background="#22c55e" CornerRadius="4" Padding="5,2" Margin="0,0,5,0">
-                                        <TextBlock Text="{Binding Language}" FontSize="9" Foreground="White" FontWeight="Bold"/>
+                                    
+                                    <!-- IMDb Rozeti -->
+                                    <Border Background="#eab308" CornerRadius="4" Padding="5,2" Margin="0,0,5,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasImdb}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding ImdbRating, StringFormat='★ {0}'}" FontSize="9" Foreground="Black" FontWeight="Bold"/>
                                     </Border>
+
+                                    <!-- Yapım Yılı Rozeti -->
+                                    <Border Background="#a855f7" CornerRadius="4" Padding="5,2" Margin="0,0,5,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasMovieYear}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding MovieYear}" FontSize="9" Foreground="White" FontWeight="Bold"/>
+                                    </Border>
+
                                     <Button Content="⚙️ Düzenle" Width="60" Height="20" Background="#475569" Foreground="White" FontSize="10" BorderThickness="0" Click="EditButton_Click" CommandParameter="{Binding}" />
                                 </StackPanel>
                             </StackPanel>

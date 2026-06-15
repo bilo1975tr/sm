@@ -125,21 +125,42 @@ namespace StreamMesh.Windows
             BulkLanguageCombo.SelectedIndex = 0;
         }
 
-        private void SearchTxt_TextChanged(object sender, TextChangedEventArgs e)
+        private void RefreshChannelsList()
         {
+            if (_allChannels == null) return;
+
             string query = SearchTxt.Text.ToLower().Trim();
-            if (query.Length < 2) 
+            string selectedCat = (FilterCategoryCombo?.SelectedItem as ComboBoxItem)?.Content.ToString();
+            if (string.IsNullOrEmpty(selectedCat)) selectedCat = "Tümü";
+
+            var filtered = _allChannels.AsEnumerable();
+
+            // 1. Kategori Filtresi
+            if (selectedCat != "Tümü")
             {
-                _currentList = _allChannels.Take(200).Select(c => new ChannelSelectionItem { Channel = c, IsSelected = false }).ToList();
-                ChannelsList.ItemsSource = _currentList;
-                return;
+                filtered = filtered.Where(c => c.Category != null && c.Category.Equals(selectedCat, StringComparison.OrdinalIgnoreCase));
             }
 
-            // Normal text search
-            var filtered = _allChannels.Where(c => c.Name != null && c.Name.ToLower().Contains(query)).Take(200).ToList();
-            
-            _currentList = filtered.Select(c => new ChannelSelectionItem { Channel = c, IsSelected = false }).ToList();
+            // 2. Arama Sorgusu (Min 2 karakter koşulu kaldırıldı/veya esnetildi ama text search için hızlı filtreleme)
+            if (query.Length >= 2)
+            {
+                filtered = filtered.Where(c => c.Name != null && c.Name.ToLower().Contains(query));
+            }
+
+            var list = filtered.Take(200).Select(c => new ChannelSelectionItem { Channel = c, IsSelected = false }).ToList();
+
+            _currentList = list;
             ChannelsList.ItemsSource = _currentList;
+        }
+
+        private void FilterCategoryCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            RefreshChannelsList();
+        }
+
+        private void SearchTxt_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            RefreshChannelsList();
         }
 
         private void SearchBtn_Click(object sender, RoutedEventArgs e)
@@ -147,11 +168,20 @@ namespace StreamMesh.Windows
             string query = SearchTxt.Text.ToLower().Trim();
             if (string.IsNullOrEmpty(query)) return;
 
+            string selectedCat = (FilterCategoryCombo?.SelectedItem as ComboBoxItem)?.Content.ToString();
+            if (string.IsNullOrEmpty(selectedCat)) selectedCat = "Tümü";
+
+            var baseChannels = _allChannels.AsEnumerable();
+            if (selectedCat != "Tümü")
+            {
+                baseChannels = baseChannels.Where(c => c.Category != null && c.Category.Equals(selectedCat, StringComparison.OrdinalIgnoreCase));
+            }
+
             // Simple string matching / Fuzzy replacement
-            var filtered = _allChannels
+            var filtered = baseChannels
                 .Where(c => c.Name != null)
                 .Select(c => new { Channel = c, Score = Math.Max(CalculateSimilarity(query, c.Name.ToLower()), c.Name.ToLower().Contains(query) ? 1.0 : 0.0) })
-                .Where(x => x.Score >= 0.5) // At least 50% similar or contains (which gives 1.0)
+                .Where(x => x.Score >= 0.5) // At least 50% similar or contains
                 .OrderByDescending(x => x.Score)
                 .Take(200)
                 .Select(x => x.Channel)
@@ -159,6 +189,50 @@ namespace StreamMesh.Windows
 
             _currentList = filtered.Select(c => new ChannelSelectionItem { Channel = c, IsSelected = false }).ToList();
             ChannelsList.ItemsSource = _currentList;
+        }
+
+        private void DeleteSelected_Click(object sender, RoutedEventArgs e)
+        {
+            if (ChannelsList.SelectedItem is ChannelSelectionItem selectionItem && selectionItem.Channel != null)
+            {
+                var result = MessageBox.Show($"'{selectionItem.Channel.Name}' isimli kanalı silmek istediğinize emin misiniz?", "Kanalı Sil", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    _databaseService.DeleteChannel(selectionItem.Channel.Id);
+                    _allChannels.Remove(selectionItem.Channel);
+                    RefreshChannelsList();
+                    MessageBox.Show("Kanal başarıyla silindi.", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Silmek için lütfen listeden bir kanal seçin.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void BulkDeleteBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentList == null) return;
+
+            var selected = _currentList.Where(x => x.IsSelected).Select(x => x.Channel).ToList();
+            if (selected.Count == 0)
+            {
+                MessageBox.Show("Lütfen silmek istediğiniz kanalları seçin.", "Uyan", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Seçili {selected.Count} kanalı tamamen ve kalıcı olarak silmek istediğinize emin misiniz?", "Toplu Kanal Sil", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Yes)
+            {
+                foreach (var ch in selected)
+                {
+                    _databaseService.DeleteChannel(ch.Id);
+                    _allChannels.Remove(ch);
+                }
+
+                RefreshChannelsList();
+                MessageBox.Show("Seçilen kanallar başarıyla silindi.", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private string CleanChannelName(string name)
