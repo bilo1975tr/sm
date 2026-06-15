@@ -137,8 +137,6 @@ acestream://b8cad4710b1c3b2b84a82c1ece40c08517b8f766
 http://bitcdn-kronehit.bitmovin.com/v2/hls/chunklist_b1628000.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Crime Series Germany (1080p)" tvg-logo="" group-title="Genel",Rakuten TV Crime Series Germany (1080p)
 https://b6244e915ee04a5aa758e863a55a6a3d.mediatailor.eu-west-1.amazonaws.com/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6217/master.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Arirang TV" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/arirangtv.png" group-title="International",Arirang TV
-https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/chunklist_b2256000_sleng.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Nickelodeon" tvg-logo="" group-title="Genel",Nickelodeon
 https://ma.anixa.tv/clips/stream/nickelodeon/playlist.php
 #EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 3 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 3 [DE]
@@ -189,8 +187,6 @@ https://streaming14.huberwebmedia.at/LiveApp/streams/livestream.m3u8
 https://orf-live.ors-shoutcast.at/campus-q2a
 #EXTINF:-1 tvg-id="" tvg-name="Regio TV Stuttgart" tvg-logo="https://i.imgur.com/OFGHhRE.png" group-title="GERMAN LOCAL",Regio TV Stuttgart
 https://regiotv-s.iptv-playoutcenter.de/regiotv-s/regiotv-s.stream_1/playlist.m3u8
-#EXTINF:-1 tvg-id="ATV.de" tvg-name="ATV" tvg-logo="" group-title="Genel",ATV
-acestream://7d50d90895f44e97039eca21ae6bc17172acc9ef
 #EXTINF:-1 tvg-id="" tvg-name="Reload Radio" tvg-logo="https://i.imgur.com/WCWvj2M.png" group-title="MUSIK",Reload Radio
 http://web.onair-radio.eu:1935/video/video/chunklist_w1235825277.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KABEL EINS DOKU [DE]" tvg-logo="" group-title="Genel",KABEL EINS DOKU [DE]
@@ -205,8 +201,6 @@ acestream://8385abc4f836cc502de197789426ba1d7eba089b
 acestream://ce203f49c4daacdf27df5825beeea4613c0404fa
 #EXTINF:-1 tvg-id="" tvg-name="DAZN 1 Bar HD [DE]" tvg-logo="" group-title="Genel",DAZN 1 Bar HD [DE]
 acestream://897e73c9d578848f596585314ecb9ae067c0e229
-#EXTINF:-1 tvg-id="" tvg-name="radio SAW" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/radiosaw.png" group-title="Deutschland",radio SAW
-http://stream.radiosaw.de
 #EXTINF:-1 tvg-id="" tvg-name="planet radio" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/planetradio.png" group-title="Deutschland",planet radio
 http://mp3.planetradio.de/planetradio/hqlivestream.mp3
 #EXTINF:-1 tvg-id="" tvg-name="OK Flensburg (576p)" tvg-logo="" group-title="Genel",OK Flensburg (576p)
@@ -249,6 +243,8 @@ acestream://101c4c7e056242758b112382c4e314472795ae37
 acestream://ab0d54995bdcea2d8f9f588ef631ebbfb3f5a9ab
 #EXTINF:-1 tvg-id="" tvg-name="Amasia (720p)" tvg-logo="" group-title="Genel",Amasia (720p)
 https://splendid-film-amasia-1-eu.rakuten.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="ATV.de" tvg-name="ATV" tvg-logo="" group-title="Genel",ATV
+acestream://7d50d90895f44e97039eca21ae6bc17172acc9ef
 #EXTINF:-1 tvg-id="" tvg-name="Moconomy" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",Moconomy
 https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/73dbe7a8-1fe3-11ec-b414-948e0b8da07d/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="Tennis Channel Germany (720p)" tvg-logo="" group-title="Genel",Tennis Channel Germany (720p)
@@ -355,8 +351,6 @@ https://stream01.welocal.stream/stream/fhd-tvingolstadt_44349/ngrp:stream_all/pl
 http://stream.srg-ssr.ch/m/drsmw/mp3_128
 #EXTINF:-1 tvg-id="" tvg-name="SonnenklarTV HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/sonnenklartv.png" group-title="Teleshopping",SonnenklarTV HD
 http://euvia.cdn.ses-ps.com/HLS-Live/index.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="DW English (720p)" tvg-logo="" group-title="Genel",DW English (720p)
-https://liveh12.vtvprime.vn/hls/DW/03.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="spot on news" tvg-logo="" group-title="DE_SWITZERLAND_TVPLUS",spot on news
 https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/d6ab5034-7b34-11eb-908d-533d39655269/0/master.m3u8?uid=%7BPSID%7D&optout=%7BTARGETOPT%7D&country=CH&vendor=samsung&ads%3Aapp_domain=%7BAPP_DOMAIN%7D&ads%3Aapp_name=%7BAPP_NAME%7D&coppa=1&ads%3Atcf=%7BTC_STRING%7D
 #EXTINF:-1 tvg-id="" tvg-name="WDR Bergisches Land HD" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/tv/wdrhd.png" group-title="Regional",WDR Bergisches Land HD
@@ -407,8 +401,6 @@ acestream://c9d6412050226de0968cea19a383b50dc1966363
 https://amg00609-palatinmediafil-cractiontv-rakuten-dhjcp.amagi.tv/hls/amagi_hls_data_rakutenAA-cractiontv-rakuten/CDN/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="KINOWELT TV [DE]" tvg-logo="" group-title="Genel",KINOWELT TV [DE]
 acestream://80d1cd89eab70d595ef742db18752bb1dd44c80d
-#EXTINF:-1 tvg-id="" tvg-name="ROCKLAND.FM" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/rocklandfm.png" group-title="Deutschland",ROCKLAND.FM
-http://stream.rockland-digital.de
 #EXTINF:-1 tvg-id="" tvg-name="Sky Cinema Action HD [DE]" tvg-logo="" group-title="Genel",Sky Cinema Action HD [DE]
 acestream://8f3b3a4b42b8ad785eab4c426d0ce7bb891f4398
 #EXTINF:-1 tvg-id="" tvg-name="KABEL EINS CLASSICS [DE]" tvg-logo="" group-title="Genel",KABEL EINS CLASSICS [DE]
@@ -551,8 +543,6 @@ http://canalalphaju.vedge.infomaniak.com/livecast/canalalphaju/playlist.m3u8
 acestream://ce4ae0c3491acd4272340029139ba25642e2516b
 #EXTINF:-1 tvg-id="" tvg-name="RTL+ SPORT EVENT 1 [DE]" tvg-logo="" group-title="Genel",RTL+ SPORT EVENT 1 [DE]
 acestream://a7319ebd54cb1db9a9db1574929ca8d305a323d3
-#EXTINF:-1 tvg-id="" tvg-name="DW English (720p)" tvg-logo="" group-title="Genel",DW English (720p)
-https://stream8.cinerama.uz/1418/tracks-v1a1/mono.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="PUNKTum Fernsehen (1080p) [Not 24/7]" tvg-logo="" group-title="Genel",PUNKTum Fernsehen (1080p) [Not 24/7]
 http://58bd5b7a98e04.streamlock.net/medienasa-live/punktum_high/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="ANTENNE THÜRINGEN" tvg-logo="https://raw.githubusercontent.com/jnk22/kodinerds-iptv/master/logos/radio/antennethueringen.png" group-title="Deutschland",ANTENNE THÜRINGEN
