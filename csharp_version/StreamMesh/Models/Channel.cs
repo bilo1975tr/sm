@@ -12,7 +12,7 @@ namespace StreamMesh.Models
         private string _logoUrl = string.Empty;
         private string _groupTitle = "Genel";
         private string _category = "TV";
-        private string _language = "English";
+        private string _language = "Bilinmiyor";
         private string _sourceType = "M3U"; // M3U, YOUTUBE, ACESTREAM
         private string _playlistUrl = string.Empty;
         private string _epgId = string.Empty;
@@ -106,7 +106,54 @@ namespace StreamMesh.Models
         public string Language
         {
             get => _language;
-            set { if (_language != value) { _language = value; OnPropertyChanged(); } }
+            set
+            {
+                string normalized = NormalizeLanguage(value);
+                if (_language != normalized)
+                {
+                    _language = normalized;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public static string NormalizeLanguage(string lang)
+        {
+            if (string.IsNullOrWhiteSpace(lang)) return "Bilinmiyor";
+            
+            string lower = lang.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim();
+
+            // Parantez içi temizliği (örn. "Almanca (Almanya)" -> "Almanca" veya "tr (Turkey)" -> "tr")
+            int parenIndex = lower.IndexOf('(');
+            if (parenIndex > 0)
+            {
+                lower = lower.Substring(0, parenIndex).Trim();
+            }
+
+            if (lower.Contains("türkçe") || lower.Contains("turkce") || lower == "tr" || lower == "tur" || lower.Contains("turkish")) return "Türkçe";
+            if (lower.Contains("ingilizce") || lower.Contains("english") || lower == "en" || lower == "eng" || lower == "usa" || lower == "uk") return "İngilizce";
+            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german") || lower == "de" || lower == "ger") return "Almanca";
+            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français") || lower == "fr" || lower == "fra" || lower.Contains("fransizca")) return "Fransızca";
+            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español") || lower == "es" || lower == "esp") return "İspanyolca";
+            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский") || lower == "ru" || lower == "rus" || lower.Contains("rusca")) return "Rusça";
+            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano") || lower == "it" || lower == "ita") return "İtalyanca";
+            if (lower.Contains("arapça") || lower.Contains("arabic") || lower == "ar" || lower == "ara" || lower.Contains("arapca")) return "Arapça";
+            if (lower.Contains("kürtçe") || lower.Contains("kurtçe") || lower.Contains("kurdish") || lower == "ku" || lower == "kur" || lower.Contains("kurtce")) return "Kürtçe";
+            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri") || lower == "az" || lower == "aze") return "Azerice";
+            if (lower == "bilinmiyor" || lower == "unknown" || lower == "none" || lower == "hiçbiri") return "Bilinmiyor";
+
+            // Eğer özel bir dille eşleşmediyse, ilk harfini büyük yapıp döndürelim (örn: Portekizce, Yunanca vb)
+            string cleanVal = lang;
+            int pIdx = cleanVal.IndexOf('(');
+            if (pIdx > 0) cleanVal = cleanVal.Substring(0, pIdx).Trim();
+            
+            if (cleanVal.Length > 0)
+            {
+                return char.ToUpper(cleanVal[0], new System.Globalization.CultureInfo("tr-TR")) + 
+                       (cleanVal.Length > 1 ? cleanVal.Substring(1).ToLower(new System.Globalization.CultureInfo("tr-TR")) : "");
+            }
+
+            return "Bilinmiyor";
         }
 
         public string SourceType
@@ -224,6 +271,36 @@ namespace StreamMesh.Models
             public string MovieGenre { get; set; }
         }
 
+        private static readonly Dictionary<string, string> StandardizedGenres = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "komedi", "Komedi" },
+            { "suç", "Suç" },
+            { "aksiyon", "Aksiyon" },
+            { "macera", "Macera" },
+            { "drama", "Dram" },
+            { "dram", "Dram" },
+            { "gerilim", "Gerilim" },
+            { "bilim kurgu", "Bilim Kurgu" },
+            { "bilim-kurgu", "Bilim Kurgu" },
+            { "bilimkurgu", "Bilim Kurgu" },
+            { "fantastik", "Fantastik" },
+            { "korku", "Korku" },
+            { "gizem", "Gizem" },
+            { "romantik", "Romantik" },
+            { "animasyon", "Animasyon" },
+            { "belgesel", "Belgesel" },
+            { "aile", "Aile" },
+            { "savaş", "Savaş" },
+            { "tarih", "Tarih" },
+            { "western", "Western" },
+            { "müzikal", "Müzikal" },
+            { "biyografi", "Biyografi" },
+            { "yerli", "Yerli" },
+            { "yabancı", "Yabancı" },
+            { "türkçe", "Türkçe" },
+            { "polisiye", "Polisiye" }
+        };
+
         private MovieDetails ParseNameDetails(string rawName)
         {
             var details = new MovieDetails
@@ -239,7 +316,6 @@ namespace StreamMesh.Models
             string workingName = rawName;
 
             // 1. IMDb Puanı Bulma
-            // Örnekler: (★ 8.2), (imdb: 8.2), (8.2) gibi ifadelere bakabiliriz.
             var imdbRegex = new System.Text.RegularExpressions.Regex(@"\((?:[★\*]\s*|imdb\s*[:\-\s]?\s*)?(\d+(?:\.\d+)?)\)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             var imdbMatch = imdbRegex.Match(workingName);
             if (imdbMatch.Success)
@@ -248,8 +324,8 @@ namespace StreamMesh.Models
                 workingName = workingName.Replace(imdbMatch.Value, "");
             }
 
-            // 2. Yıl Bulma (1900-2029 arası 4 basamaklı sayılar, parantez içinde)
-            var yearRegex = new System.Text.RegularExpressions.Regex(@"\((19\d{2}|20\d{2})\)");
+            // 2. Yıl Bulma (1900-2029 arası)
+            var yearRegex = new System.Text.RegularExpressions.Regex(@"\(\s*(19\d{2}|20\d{2})\s*\)");
             var yearMatch = yearRegex.Match(workingName);
             if (yearMatch.Success)
             {
@@ -258,7 +334,6 @@ namespace StreamMesh.Models
             }
             else
             {
-                // Parantezsiz yıl da olabilir (en sonda boşluktan sonra)
                 var yearRegexNoParen = new System.Text.RegularExpressions.Regex(@"\b(19\d{2}|20\d{2})\b");
                 var yearMatchNoParen = yearRegexNoParen.Match(workingName);
                 if (yearMatchNoParen.Success)
@@ -268,43 +343,53 @@ namespace StreamMesh.Models
                 }
             }
 
-            // 3. Film Türü Bulma (Parantez içi harf/karakter içeren kelimeler, örn: (Komedi-Suç) veya (Aksiyon/Macera))
-            var genreKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "komedi", "suç", "aksiyon", "macera", "drama", "dram", "gerilim", "bilim kurgu", "bilim-kurgu", 
-                "fantastik", "korku", "gizem", "romantik", "animasyon", "belgesel", "aile", "savaş", "tarih", 
-                "western", "müzikal", "biyografi", "komedi-suç", "suç-komedi", "aksiyon-macera", "yerli", "yabancı", "türkçe"
-            };
+            // 3. Film Türlerini Bulma
+            var parenRegex = new System.Text.RegularExpressions.Regex(@"\(([^)]+)\)");
+            var cleanGenresList = new List<string>();
 
-            var genreRegex = new System.Text.RegularExpressions.Regex(@"\(([A-Za-zÇŞĞÜÖİçşğüöı\s\-\/\+]+)\)");
-            var genreMatches = genreRegex.Matches(workingName);
-            foreach (System.Text.RegularExpressions.Match match in genreMatches)
+            foreach (System.Text.RegularExpressions.Match match in parenRegex.Matches(workingName))
             {
-                string val = match.Groups[1].Value.Trim();
-                bool isGenre = false;
-                if (genreKeywords.Contains(val))
+                string chunk = match.Groups[1].Value;
+                string cleanedChunk = chunk.ToLowerInvariant();
+                bool hasGenreInChunk = false;
+
+                // Bilim kurgu kontrolü
+                if (cleanedChunk.Contains("bilim kurgu") || cleanedChunk.Contains("bilim-kurgu") || cleanedChunk.Contains("bilimkurgu"))
                 {
-                    isGenre = true;
-                }
-                else
-                {
-                    var parts = val.Split(new[] { '-', '/', ' ', '+' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var p in parts)
+                    if (!cleanGenresList.Contains("Bilim Kurgu"))
                     {
-                        if (genreKeywords.Contains(p))
+                        cleanGenresList.Add("Bilim Kurgu");
+                    }
+                    hasGenreInChunk = true;
+                }
+
+                // Diğer türlerin kontrolü
+                foreach (var kvp in StandardizedGenres)
+                {
+                    if (kvp.Key == "bilim kurgu" || kvp.Key == "bilim-kurgu" || kvp.Key == "bilimkurgu")
+                        continue;
+
+                    var wordPattern = @"\b" + System.Text.RegularExpressions.Regex.Escape(kvp.Key) + @"\b";
+                    if (System.Text.RegularExpressions.Regex.IsMatch(cleanedChunk, wordPattern))
+                    {
+                        if (!cleanGenresList.Contains(kvp.Value))
                         {
-                            isGenre = true;
-                            break;
+                            cleanGenresList.Add(kvp.Value);
                         }
+                        hasGenreInChunk = true;
                     }
                 }
 
-                if (isGenre)
+                // Eğer bu parantezin içinde geçerli bir film türü tespit ettiysek, o parantezi isimden temizleyelim
+                if (hasGenreInChunk)
                 {
-                    details.MovieGenre = val;
                     workingName = workingName.Replace(match.Value, "");
-                    break;
                 }
+            }
+
+            if (cleanGenresList.Count > 0)
+            {
+                details.MovieGenre = string.Join(" / ", cleanGenresList);
             }
 
             // 4. Temizlenmiş İsim

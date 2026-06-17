@@ -145,6 +145,27 @@ namespace StreamMesh.Services
                     indexCmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_epg_channel_time ON EpgPrograms (ChannelName, StartTime, EndTime);";
                     indexCmd.ExecuteNonQuery();
                 } catch { }
+
+                // Cihaz veri tabanındaki mevcut dilleri normalize etme işlemi (SQL performans optimizasyonu)
+                try {
+                    using (var normalizeCmd = connection.CreateCommand())
+                    {
+                        normalizeCmd.CommandText = @"
+                            UPDATE Channels SET Language = 'Türkçe' WHERE Language IN ('tr', 'tur', 'turkish', 'turkce', 'Türkçe', 'Turkish', 'Türkçe (Türkiye)');
+                            UPDATE Channels SET Language = 'Almanca' WHERE Language IN ('de', 'ger', 'german', 'deutsch', 'Deutsch', 'German', 'Almanca', 'Deutsch (Deutschland)');
+                            UPDATE Channels SET Language = 'İngilizce' WHERE Language IN ('en', 'eng', 'english', 'English', 'İngilizce', 'English (United States)');
+                            UPDATE Channels SET Language = 'Fransızca' WHERE Language IN ('fr', 'fra', 'french', 'Fransızca', 'French', 'français (France)');
+                            UPDATE Channels SET Language = 'İspanyolca' WHERE Language IN ('es', 'esp', 'spanish', 'İspanyolca', 'Spanish', 'español (España)');
+                            UPDATE Channels SET Language = 'Rusça' WHERE Language IN ('ru', 'rus', 'russian', 'Rusça', 'Russian', 'русский (Россия)');
+                            UPDATE Channels SET Language = 'İtalyanca' WHERE Language IN ('it', 'ita', 'italian', 'İtalyanca', 'Italian', 'italiano (Italia)');
+                            UPDATE Channels SET Language = 'Arapça' WHERE Language IN ('ar', 'ara', 'arabic', 'Arapça', 'Arabic');
+                            UPDATE Channels SET Language = 'Kürtçe' WHERE Language IN ('ku', 'kur', 'kurdish', 'Kürtçe', 'Kurdish');
+                            UPDATE Channels SET Language = 'Azerice' WHERE Language IN ('az', 'aze', 'azeri', 'Azerice', 'Azerbaijani');
+                            UPDATE Channels SET Language = 'Bilinmiyor' WHERE Language IN ('Bilinmiyor', 'unknown', 'none', 'hiçbiri', 'Unknown', 'None', '', NULL);
+                        ";
+                        normalizeCmd.ExecuteNonQuery();
+                    }
+                } catch { }
             }
         }
 

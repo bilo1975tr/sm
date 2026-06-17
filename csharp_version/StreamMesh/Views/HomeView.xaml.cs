@@ -136,13 +136,16 @@ namespace StreamMesh.Views
             
             if (isMovieCat)
             {
-                // 1. Film Türü Filtresi
+                // 1. Film Türü Filtresi (İçerir mantığıyla süzüyoruz)
                 if (MovieGenreComboBox != null && MovieGenreComboBox.SelectedItem is ComboBoxItem genreItem)
                 {
                     string selectedGenre = genreItem.Content.ToString();
                     if (selectedGenre != "Hepsi")
                     {
-                        _filteredChannels = _filteredChannels.Where(c => c.MovieGenre != null && c.MovieGenre.Equals(selectedGenre, StringComparison.OrdinalIgnoreCase)).ToList();
+                        _filteredChannels = _filteredChannels.Where(c => 
+                            c.MovieGenre != null && 
+                            c.MovieGenre.IndexOf(selectedGenre, StringComparison.OrdinalIgnoreCase) >= 0
+                        ).ToList();
                     }
                 }
 
@@ -315,10 +318,11 @@ namespace StreamMesh.Views
             {
                 var movieChannels = _allChannels.Where(c => c.Category == "Film").ToList();
 
-                // Türleri çekelim
+                // Türleri tekil olarak bölüp çekelim (örnek: "Aksiyon / Dram" -> "Aksiyon", "Dram")
                 var genres = movieChannels
                     .Where(c => !string.IsNullOrEmpty(c.MovieGenre))
-                    .Select(c => c.MovieGenre.Trim())
+                    .SelectMany(c => c.MovieGenre.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries))
+                    .Select(g => g.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .OrderBy(g => g)
                     .ToList();
@@ -587,27 +591,7 @@ namespace StreamMesh.Views
 
         private string NormalizeLanguage(string lang)
         {
-            if (string.IsNullOrEmpty(lang)) return "";
-            string lower = lang.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim();
-            
-            if (lower.Contains("türkçe") || lower.Contains("turkce") || lower == "tr" || lower == "tur" || lower.Contains("turkish")) return "türkçe";
-            if (lower.Contains("ingilizce") || lower.Contains("english") || lower == "en" || lower == "eng" || lower == "usa" || lower == "uk") return "ingilizce";
-            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german") || lower == "de" || lower == "ger") return "almanca";
-            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français") || lower == "fr" || lower == "fra") return "fransızca";
-            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español") || lower == "es" || lower == "esp") return "ispanyolca";
-            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский") || lower == "ru" || lower == "rus") return "rusça";
-            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano") || lower == "it" || lower == "ita") return "italyanca";
-            if (lower.Contains("arapça") || lower.Contains("arabic") || lower == "ar" || lower == "ara") return "arapça";
-            if (lower.Contains("kurtçe") || lower.Contains("kürtçe") || lower.Contains("kurdish") || lower == "ku" || lower == "kur") return "kürtçe";
-            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri") || lower == "az" || lower == "aze") return "azerice";
-            if (lower == "bilinmiyor" || lower == "unknown") return "bilinmiyor";
-
-            int parenIndex = lower.IndexOf('(');
-            if (parenIndex > 0)
-            {
-                lower = lower.Substring(0, parenIndex).Trim();
-            }
-            return lower;
+            return StreamMesh.Models.Channel.NormalizeLanguage(lang).ToLower(new System.Globalization.CultureInfo("tr-TR"));
         }
     }
 }

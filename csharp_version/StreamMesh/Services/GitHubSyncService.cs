@@ -52,7 +52,8 @@ namespace StreamMesh.Services
         private static string NormalizeLanguageFilename(string lang)
         {
             if (string.IsNullOrWhiteSpace(lang)) return "bilinmiyor";
-            var s = lang.ToLowerInvariant();
+            string normalized = Channel.NormalizeLanguage(lang);
+            var s = normalized.ToLower(new System.Globalization.CultureInfo("tr-TR"));
             s = s.Replace("(", "").Replace(")", "");
             var sb = new System.Text.StringBuilder();
             foreach (var c in s)
