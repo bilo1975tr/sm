@@ -22,10 +22,17 @@ namespace StreamMesh.Models
         private bool _isFavorite = false;
         private bool _isVerified = false;
         private bool _isLocked = false;
+        private bool _isPremium = false;
         private string _notes = string.Empty;
         private DateTime _createdAt = DateTime.Now;
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        public bool IsPremium
+        {
+            get => _isPremium;
+            set { if (_isPremium != value) { _isPremium = value; OnPropertyChanged(); } }
+        }
 
         public bool IsVerified
         {
@@ -130,16 +137,24 @@ namespace StreamMesh.Models
                 lower = lower.Substring(0, parenIndex).Trim();
             }
 
-            if (lower.Contains("türkçe") || lower.Contains("turkce") || lower == "tr" || lower == "tur" || lower.Contains("turkish")) return "Türkçe";
-            if (lower.Contains("ingilizce") || lower.Contains("english") || lower == "en" || lower == "eng" || lower == "usa" || lower == "uk") return "İngilizce";
-            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german") || lower == "de" || lower == "ger") return "Almanca";
-            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français") || lower == "fr" || lower == "fra" || lower.Contains("fransizca")) return "Fransızca";
-            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español") || lower == "es" || lower == "esp") return "İspanyolca";
-            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский") || lower == "ru" || lower == "rus" || lower.Contains("rusca")) return "Rusça";
-            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano") || lower == "it" || lower == "ita") return "İtalyanca";
-            if (lower.Contains("arapça") || lower.Contains("arabic") || lower == "ar" || lower == "ara" || lower.Contains("arapca")) return "Arapça";
-            if (lower.Contains("kürtçe") || lower.Contains("kurtçe") || lower.Contains("kurdish") || lower == "ku" || lower == "kur" || lower.Contains("kurtce")) return "Kürtçe";
-            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri") || lower == "az" || lower == "aze") return "Azerice";
+            // Bölge/Kültür veya Boşluk Ayrımı (örn. "tr-tr" -> "tr", "en_us" -> "en")
+            string baseCode = lower;
+            int separatorIndex = lower.IndexOfAny(new char[] { '-', '_', ' ' });
+            if (separatorIndex > 0)
+            {
+                baseCode = lower.Substring(0, separatorIndex).Trim();
+            }
+
+            if (lower.Contains("türk") || lower.Contains("turk") || baseCode == "tr" || baseCode == "tur" || lower.Contains("turkish")) return "Türkçe";
+            if (lower.Contains("ingilizce") || lower.Contains("english") || lower.Contains("ingiliz") || baseCode == "en" || baseCode == "eng" || baseCode == "usa" || baseCode == "uk") return "İngilizce";
+            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german") || baseCode == "de" || baseCode == "ger" || baseCode == "deu") return "Almanca";
+            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français") || baseCode == "fr" || baseCode == "fra" || lower.Contains("fransizca")) return "Fransızca";
+            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español") || baseCode == "es" || baseCode == "esp") return "İspanyolca";
+            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский") || baseCode == "ru" || baseCode == "rus" || lower.Contains("rusca")) return "Rusça";
+            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano") || baseCode == "it" || baseCode == "ita") return "İtalyanca";
+            if (lower.Contains("arapça") || lower.Contains("arabic") || baseCode == "ar" || baseCode == "ara" || lower.Contains("arapca")) return "Arapça";
+            if (lower.Contains("kürtçe") || lower.Contains("kurtçe") || lower.Contains("kurdish") || baseCode == "ku" || baseCode == "kur" || lower.Contains("kurtce")) return "Kürtçe";
+            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri") || baseCode == "az" || baseCode == "aze") return "Azerice";
             if (lower == "bilinmiyor" || lower == "unknown" || lower == "none" || lower == "hiçbiri") return "Bilinmiyor";
 
             // Eğer özel bir dille eşleşmediyse, ilk harfini büyük yapıp döndürelim (örn: Portekizce, Yunanca vb)

@@ -159,22 +159,79 @@ namespace StreamMesh.Services
                             currentChannel.Category = "TV";
                     }
 
-                    if (groupLow.Contains("tr") || groupLow.Contains("türk") || groupLow.Contains("turk"))
+                    // Dil Belirleme (tvg-language, language öznitelikleri veya grup başlığı ile)
+                    string parsedLang = null;
+                    int langStart = trimmedLine.IndexOf("tvg-language=\"");
+                    if (langStart != -1)
                     {
-                        currentChannel.Language = "Türkçe";
+                        langStart += 14;
+                        int langEnd = trimmedLine.IndexOf("\"", langStart);
+                        if (langEnd != -1)
+                        {
+                            parsedLang = trimmedLine.Substring(langStart, langEnd - langStart);
+                        }
                     }
-                    else if (groupLow.Contains("en") || groupLow.Contains("uk") || groupLow.Contains("us") || groupLow.Contains("english"))
+
+                    if (string.IsNullOrEmpty(parsedLang))
                     {
-                        currentChannel.Language = "English";
+                        int langAttrStart = trimmedLine.IndexOf("language=\"");
+                        if (langAttrStart != -1)
+                        {
+                            langAttrStart += 10;
+                            int langAttrEnd = trimmedLine.IndexOf("\"", langAttrStart);
+                            if (langAttrEnd != -1)
+                            {
+                                parsedLang = trimmedLine.Substring(langAttrStart, langAttrEnd - langAttrStart);
+                            }
+                        }
                     }
-                    else if (groupLow.Contains("de") || groupLow.Contains("germ"))
+
+                    if (!string.IsNullOrEmpty(parsedLang))
                     {
-                        currentChannel.Language = "Deutsch";
+                        currentChannel.Language = Channel.NormalizeLanguage(parsedLang);
                     }
                     else
                     {
-                        currentChannel.Language = "Bilinmiyor";
+                        if (groupLow.Contains("tr") || groupLow.Contains("türk") || groupLow.Contains("turk"))
+                        {
+                            currentChannel.Language = "Türkçe";
+                        }
+                        else if (groupLow.Contains("en") || groupLow.Contains("uk") || groupLow.Contains("us") || groupLow.Contains("english"))
+                        {
+                            currentChannel.Language = "İngilizce";
+                        }
+                        else if (groupLow.Contains("de") || groupLow.Contains("germ") || groupLow.Contains("deutsch"))
+                        {
+                            currentChannel.Language = "Almanca";
+                        }
+                        else if (groupLow.Contains("fr") || groupLow.Contains("french") || groupLow.Contains("français") || groupLow.Contains("fransizca"))
+                        {
+                            currentChannel.Language = "Fransızca";
+                        }
+                        else if (groupLow.Contains("es") || groupLow.Contains("spanish") || groupLow.Contains("español"))
+                        {
+                            currentChannel.Language = "İspanyolca";
+                        }
+                        else if (groupLow.Contains("it") || groupLow.Contains("italian") || groupLow.Contains("italiano"))
+                        {
+                            currentChannel.Language = "İtalyanca";
+                        }
+                        else if (groupLow.Contains("ru") || groupLow.Contains("russian") || groupLow.Contains("русский") || groupLow.Contains("rusca"))
+                        {
+                            currentChannel.Language = "Rusça";
+                        }
+                        else if (groupLow.Contains("ar") || groupLow.Contains("arabic") || groupLow.Contains("arapca") || groupLow.Contains("arap"))
+                        {
+                            currentChannel.Language = "Arapça";
+                        }
+                        else
+                        {
+                            currentChannel.Language = "Bilinmiyor";
+                        }
                     }
+
+                    // Her durumda son bir kez normalize et
+                    currentChannel.Language = Channel.NormalizeLanguage(currentChannel.Language);
                 }
                 else if (!trimmedLine.StartsWith("#") && currentChannel != null && !string.IsNullOrWhiteSpace(trimmedLine))
                 {

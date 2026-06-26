@@ -30,6 +30,7 @@ namespace StreamMesh.Windows
 
         private void PopulateLanguages()
         {
+            LanguageCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Hiçbiri" });
             LanguageCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Bilinmiyor" });
             var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
                 .Select(c => c.NativeName)
@@ -41,8 +42,8 @@ namespace StreamMesh.Windows
             {
                 LanguageCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = lang });
             }
-            LanguageCombo.SelectedIndex = cultures.IndexOf("Türkçe (Türkiye)") + 1;
-            if (LanguageCombo.SelectedIndex <= 0) LanguageCombo.SelectedIndex = 0;
+            LanguageCombo.SelectedIndex = cultures.IndexOf("Türkçe (Türkiye)") + 2;
+            if (LanguageCombo.SelectedIndex <= 1) LanguageCombo.SelectedIndex = 1;
         }
 
         private void LoadChannels()
@@ -77,13 +78,15 @@ namespace StreamMesh.Windows
             string targetLang = LanguageCombo.Text?.Trim();
             if (string.IsNullOrEmpty(targetLang)) return;
 
+            string normalizedLang = Channel.NormalizeLanguage(targetLang);
+
             var ids = selectedItems.Select(s => s.Id).ToList();
-            _dbService.BulkUpdateLanguage(ids, targetLang);
+            _dbService.BulkUpdateLanguage(ids, normalizedLang);
             
             // UI Update
-            foreach (var item in selectedItems) item.Language = targetLang;
+            foreach (var item in selectedItems) item.Language = normalizedLang;
             
-            LogService.Log($"Bulk Language Update: {selectedItems.Count} channels set to {targetLang}");
+            LogService.Log($"Bulk Language Update: {selectedItems.Count} channels set to {normalizedLang}");
         }
 
         private void SmartGuessBtn_Click(object sender, RoutedEventArgs e)

@@ -110,6 +110,7 @@ namespace StreamMesh.Windows
         private void PopulateLanguages()
         {
             BulkLanguageCombo.Items.Add(new ComboBoxItem { Content = "Değiştirme" });
+            BulkLanguageCombo.Items.Add(new ComboBoxItem { Content = "Hiçbiri" });
             BulkLanguageCombo.Items.Add(new ComboBoxItem { Content = "Bilinmiyor" });
             
             var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
@@ -331,29 +332,33 @@ namespace StreamMesh.Windows
             string cat = (BulkCategoryCombo.SelectedItem as ComboBoxItem)?.Content.ToString();
             string lang = (BulkLanguageCombo.SelectedItem as ComboBoxItem)?.Content.ToString();
 
-            bool changed = false;
+            bool anyChanged = false;
             foreach (var ch in selected)
             {
+                bool localChanged = false;
                 if (cat != "Değiştirme" && !string.IsNullOrEmpty(cat))
                 {
                     ch.Category = cat;
-                    changed = true;
+                    localChanged = true;
+                    anyChanged = true;
                 }
                 
                 if (lang != "Değiştirme" && !string.IsNullOrEmpty(lang))
                 {
-                    ch.Language = lang;
-                    changed = true;
+                    string normalizedLang = Channel.NormalizeLanguage(lang);
+                    ch.Language = normalizedLang;
+                    localChanged = true;
+                    anyChanged = true;
                 }
                 
-                if (changed) 
+                if (localChanged) 
                 {
                     _databaseService.SaveChannel(ch);
                     if (ch.IsVerified) _ = StreamMesh.Services.GitHubSyncService.PushNewChannelsToFirebasePoolAsync(new List<StreamMesh.Models.Channel> { ch });
                 }
             }
 
-            if (changed)
+            if (anyChanged)
             {
                 MessageBox.Show("Seçili kanallar güncellendi.");
                 ChannelsList.Items.Refresh();
@@ -562,7 +567,8 @@ namespace StreamMesh.Windows
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Analiz hatası: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                    LogService.LogError("Stream analysis error", ex);
+                    MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally
                 {

@@ -19,6 +19,7 @@ namespace StreamMesh.Windows
             this.Title = $"Kanal Düzenle - {channel.Name}";
 
             // Populate Languages
+            LangCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Hiçbiri" });
             LangCombo.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "Bilinmiyor" });
             var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.SpecificCultures)
                 .Select(c => c.NativeName)
@@ -123,7 +124,8 @@ namespace StreamMesh.Windows
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Logo aranırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                StreamMesh.Services.LogService.LogError("Logo search error", ex);
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

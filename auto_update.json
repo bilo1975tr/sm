@@ -1,0 +1,21 @@
+{
+  "tv": [
+    "https://iptv-org.github.io/iptv/index.language.m3u"
+    "https://onureroz.com/indirmeler/turk/all.m3u"
+    "https://onureroz.com/indirmeler/turk/index.m3u"
+    "https://onureroz.com/indirmeler/turk/karma-index.m3u"
+    "https://onureroz.com/indirmeler/turk/tv2.m3u"
+    "https://onureroz.com/indirmeler/index.m3u"
+    "https://onureroz.com/indirmeler/dunya/index.m3u"
+    ""
+  ],
+  "film": [
+    "https://raw.githubusercontent.com/bilo1975tr/sm/main/auto_film_list.m3u"
+  ],
+  "dizi": [
+    "https://raw.githubusercontent.com/bilo1975tr/sm/main/auto_dizi_list.m3u"
+  ],
+  "epg": [
+    "https://raw.githubusercontent.com/bilo1975tr/sm/main/auto_epg.xml"
+  ]
+}

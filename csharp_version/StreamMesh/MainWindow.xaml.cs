@@ -13,6 +13,7 @@ namespace StreamMesh
         private HomeView _homeView;
         private StatsView _statsView;
         private SettingsView _settingsView;
+        private SearchAceStreamView _searchView;
 
         private System.Windows.Forms.NotifyIcon _notifyIcon;
         private bool _isRealClose = false;
@@ -119,6 +120,11 @@ namespace StreamMesh
             {
                 if (_statsView == null) _statsView = new StatsView();
                 MainContent.Content = _statsView;
+            }
+            else if (sender == NavSearch)
+            {
+                if (_searchView == null) _searchView = new SearchAceStreamView();
+                MainContent.Content = _searchView;
             }
             else if (sender == NavSettings)
             {
@@ -229,6 +235,11 @@ namespace StreamMesh
 
         protected override void OnClosed(EventArgs e)
         {
+            try
+            {
+                StreamMesh.Services.FirebaseQueueService.Instance.Stop();
+            }
+            catch { }
             _playerView?.Dispose();
             base.OnClosed(e);
         }

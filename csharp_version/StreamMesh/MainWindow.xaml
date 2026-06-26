@@ -21,6 +21,7 @@
                 
                 <RadioButton Style="{StaticResource NavButtonStyle}" Content="📺" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavLibrary]}" GroupName="NavMenu" x:Name="NavHome" Click="Nav_Click"/>
                 <RadioButton Style="{StaticResource NavButtonStyle}" Content="▶️" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavPlayer]}" GroupName="NavMenu" x:Name="NavPlayer" IsChecked="True" Click="Nav_Click"/>
+                <RadioButton Style="{StaticResource NavButtonStyle}" Content="🔍" ToolTip="Ace Stream Arama" GroupName="NavMenu" x:Name="NavSearch" Click="Nav_Click"/>
                 <RadioButton Style="{StaticResource NavButtonStyle}" Content="📊" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavStats]}" GroupName="NavMenu" x:Name="NavStats" Click="Nav_Click"/>
                 <RadioButton Style="{StaticResource NavButtonStyle}" Content="⚙️" ToolTip="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[NavSettings]}" GroupName="NavMenu" x:Name="NavSettings" Click="Nav_Click"/>
                 

@@ -9,6 +9,7 @@ namespace StreamMesh.Services
     public partial class DatabaseService
     {
         private readonly string _dbPath;
+        private string ConnectionString => $"Data Source={_dbPath}";
 
         public DatabaseService()
         {
@@ -24,14 +25,14 @@ namespace StreamMesh.Services
                 Directory.CreateDirectory(directory);
             }
 
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 
                 // En yüksek hız için WAL (Write-Ahead Logging) ve Senkronizasyon optimizasyonu
                 using (var pragmaCmd = connection.CreateCommand())
                 {
-                    pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
+                    pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;";
                     pragmaCmd.ExecuteNonQuery();
                 }
 
@@ -40,6 +41,15 @@ namespace StreamMesh.Services
                     CREATE TABLE IF NOT EXISTS Settings (
                         Key TEXT PRIMARY KEY,
                         Value TEXT
+                    );
+                    CREATE TABLE IF NOT EXISTS PendingFirebasePushes (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        SafeKey TEXT UNIQUE,
+                        JsonPayload TEXT,
+                        RetryCount INTEGER DEFAULT 0,
+                        CreatedAt TEXT,
+                        LastAttemptAt TEXT,
+                        Status TEXT DEFAULT 'pending'
                     );
                     CREATE TABLE IF NOT EXISTS Channels (
                         Id TEXT PRIMARY KEY,
@@ -56,7 +66,10 @@ namespace StreamMesh.Services
                         PlaylistUrl TEXT,
                         IsFavorite INTEGER DEFAULT 0,
                         IsVerified INTEGER DEFAULT 0,
-                        PersonalWatchCount INTEGER DEFAULT 0
+                        PersonalWatchCount INTEGER DEFAULT 0,
+                        IsLocked INTEGER DEFAULT 0,
+                        Notes TEXT DEFAULT '',
+                        IsPremium INTEGER DEFAULT 0
                     );
                     CREATE TABLE IF NOT EXISTS EpgPrograms (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -141,6 +154,18 @@ namespace StreamMesh.Services
                 } catch { }
 
                 try {
+                    var alterCmdIsPremium = connection.CreateCommand();
+                    alterCmdIsPremium.CommandText = "ALTER TABLE Channels ADD COLUMN IsPremium INTEGER DEFAULT 0;";
+                    alterCmdIsPremium.ExecuteNonQuery();
+                } catch { }
+
+                try {
+                    var alterPendingStatus = connection.CreateCommand();
+                    alterPendingStatus.CommandText = "ALTER TABLE PendingFirebasePushes ADD COLUMN Status TEXT DEFAULT 'pending';";
+                    alterPendingStatus.ExecuteNonQuery();
+                } catch { }
+
+                try {
                     var indexCmd = connection.CreateCommand();
                     indexCmd.CommandText = "CREATE INDEX IF NOT EXISTS idx_epg_channel_time ON EpgPrograms (ChannelName, StartTime, EndTime);";
                     indexCmd.ExecuteNonQuery();
@@ -187,7 +212,7 @@ namespace StreamMesh.Services
             long hash = GetFnv1aHash(url.Trim());
             try
             {
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();
@@ -208,7 +233,7 @@ namespace StreamMesh.Services
             long hash = GetFnv1aHash(url.Trim());
             try
             {
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();

@@ -77,6 +77,9 @@ namespace StreamMesh
                 // Start GitHub Sync
                 StreamMesh.Services.GitHubSyncService.Start();
 
+                // Start Firebase Queue
+                StreamMesh.Services.FirebaseQueueService.Instance.Start();
+
                 // Show MainWindow
                 var mainWindow = new MainWindow();
                 Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
@@ -93,10 +96,15 @@ namespace StreamMesh
         private void LogFatalError(Exception ex)
         {
             if (ex == null) return;
+            try
+            {
+                StreamMesh.Services.LogService.LogError("App Unhandled/Fatal Exception", ex);
+            }
+            catch { }
             string logPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fatal_error.log");
             string message = $"[{DateTime.Now}] CRASH: {ex.Message}\nStack: {ex.StackTrace}\n\n";
             System.IO.File.AppendAllText(logPath, message);
-            MessageBox.Show($"Uygulama başlatılırken kritik bir hata oluştu. Log dosyasına bakınız: fatal_error.log\n\nHata: {ex.Message}", "Kritik Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Kritik Hata", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }

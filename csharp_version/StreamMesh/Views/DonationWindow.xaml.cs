@@ -113,7 +113,56 @@ namespace StreamMesh.Views
         {
             _databaseService.SetSetting("IsVIP", "true");
             CheckCurrentStatus();
-            StatusText.Text = "🎉 Teşekkürler! VIP Üyeliğiniz doğrulandı ve reklamlar kaldırıldı!\nLütfen değişikliğin tam işlemesi için uygulamanın sekmelerini yenileyin.";
+
+            int cents = 100;
+            if (CentAmountBox != null && !string.IsNullOrWhiteSpace(CentAmountBox.Text))
+            {
+                int.TryParse(CentAmountBox.Text.Trim(), out cents);
+            }
+
+            int monthsToAdd = 1;
+            if (cents >= 90 && cents < 150)
+            {
+                monthsToAdd = 1;
+            }
+            else if (cents >= 150 && cents <= 250)
+            {
+                monthsToAdd = 2;
+            }
+            else if (cents > 250)
+            {
+                monthsToAdd = cents / 100;
+                if (monthsToAdd < 2) monthsToAdd = 3; // Ensure logical progression
+            }
+            else
+            {
+                monthsToAdd = 1; // Default fallback for low amount
+            }
+
+            if (StreamMesh.Services.P2P.UserService.CurrentUser == null)
+            {
+                StreamMesh.Services.P2P.UserService.GuestLogin();
+            }
+
+            var user = StreamMesh.Services.P2P.UserService.CurrentUser;
+            if (user != null)
+            {
+                user.IsPremium = true;
+                if (user.PremiumExpiry < DateTime.UtcNow)
+                {
+                    user.PremiumExpiry = DateTime.UtcNow.AddMonths(monthsToAdd);
+                }
+                else
+                {
+                    user.PremiumExpiry = user.PremiumExpiry.AddMonths(monthsToAdd);
+                }
+                StreamMesh.Services.P2P.UserService.SaveProfile(user);
+            }
+
+            // Populate the premium channels into database
+            _databaseService.InsertPremiumChannels();
+
+            StatusText.Text = $"🎉 Teşekkürler! VIP Üyeliğiniz doğrulandı ve {monthsToAdd} Aylık Premium süre tanımlandı!\nÖzel Premium Kanalları listenize başarıyla eklendi.";
             StatusText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#22c55e"));
         }
     }

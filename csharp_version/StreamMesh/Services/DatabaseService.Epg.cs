@@ -10,7 +10,7 @@ namespace StreamMesh.Services
     {
         public void ClearEpg()
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -21,7 +21,7 @@ namespace StreamMesh.Services
 
         public void ClearEpgByUrl(string url)
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -33,7 +33,7 @@ namespace StreamMesh.Services
 
         public void SaveEpgPrograms(List<EpgProgram> programs)
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -72,7 +72,7 @@ namespace StreamMesh.Services
             var names = new List<string>();
             try
                 {
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();
@@ -97,7 +97,7 @@ namespace StreamMesh.Services
         {
             try
                 {
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
@@ -113,7 +113,7 @@ namespace StreamMesh.Services
         {
             try
                 {
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
@@ -133,7 +133,7 @@ namespace StreamMesh.Services
             string nowStr = DateTime.Now.ToString("o");
             var allPlayingPrograms = new List<EpgProgram>();
 
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -218,7 +218,7 @@ namespace StreamMesh.Services
             
             var allPrograms = new List<EpgProgram>();
 
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -278,7 +278,7 @@ namespace StreamMesh.Services
             string epgId = channel.EpgId;
             string cleanName = CleanChannelName(channelName);
 
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -315,6 +315,34 @@ namespace StreamMesh.Services
 
                 return potentials.FirstOrDefault(p => channelName.IndexOf(p.ChannelName, StringComparison.OrdinalIgnoreCase) >= 0);
             }
+        }
+
+        public List<Tuple<string, string>> GetEpgChannelsWithSource()
+        {
+            var list = new List<Tuple<string, string>>();
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT ChannelName, MAX(SourceUrl) FROM EpgPrograms GROUP BY ChannelName ORDER BY ChannelName ASC";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string name = reader.GetString(0);
+                            string url = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                            list.Add(new Tuple<string, string>(name, url));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.Log($"[DatabaseService] GetEpgChannelsWithSource error: {ex.Message}");
+            }
+            return list;
         }
     }
 }

@@ -71,7 +71,8 @@ namespace StreamMesh.Windows
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Giriş sırasında hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                LogService.LogError("Login error", ex);
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (loginBtn != null) loginBtn.IsEnabled = true;
             }
         }
@@ -87,7 +88,8 @@ namespace StreamMesh.Windows
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Misafir girişi sırasında hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                LogService.LogError("Guest login error", ex);
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

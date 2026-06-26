@@ -30,7 +30,11 @@
                 <TextBlock Text="Minimum bağış tutarı: 0.001 USDT" FontSize="12" Foreground="#fbbf24" HorizontalAlignment="Center" Margin="0,0,0,15"/>
 
                 <TextBlock Text="Gönderim Yaptıktan Sonra TxHash (İşlem Kimliği) Girin:" FontSize="13" Foreground="#cbd5e1" Margin="0,0,0,5"/>
-                <TextBox x:Name="TxHashBox" Height="35" Background="#0f172a" Foreground="White" BorderBrush="#38bdf8" BorderThickness="1" Padding="5" ToolTip="Örn: 0x123abc..."/>
+                <TextBox x:Name="TxHashBox" Height="35" Background="#0f172a" Foreground="White" BorderBrush="#38bdf8" BorderThickness="1" Padding="5" ToolTip="Örn: 0x123abc..." Margin="0,0,0,10"/>
+
+                <TextBlock Text="Gönderilen Bağış Tutarı (Cent, Örn: 100 Cent = 1$):" FontSize="13" Foreground="#cbd5e1" Margin="0,0,0,5"/>
+                <TextBox x:Name="CentAmountBox" Text="100" Height="35" Background="#0f172a" Foreground="White" BorderBrush="#38bdf8" BorderThickness="1" Padding="5" ToolTip="90-150 arası 1 ay, 150-250 arası 2 ay premium tanımlar."/>
+
                 <Button x:Name="VerifyDonationBtn" Content="✅ Otomatik Doğrula" Height="40" Margin="0,15,0,0" Background="#22c55e" Foreground="White" FontWeight="Bold" BorderThickness="0" Click="VerifyDonationBtn_Click" Cursor="Hand">
                     <Button.Resources>
                         <Style TargetType="Border">

@@ -5,6 +5,107 @@
         Title="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Title]}" Height="700" Width="440"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#0f172a" Foreground="#f8fafc">
+    <Window.Resources>
+        <!-- Dark Mode ComboBox Style -->
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#1e293b"/>
+            <Setter Property="Foreground" Value="#f8fafc"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#1e293b"/>
+                        <Setter Property="Foreground" Value="#f8fafc"/>
+                        <Setter Property="Padding" Value="10,8"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border x:Name="Bg" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bg" Property="Background" Value="#38bdf8"/>
+                                            <Setter Property="Foreground" Value="#0f172a"/>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bg" Property="Background" Value="#334155"/>
+                                            <Setter Property="Foreground" Value="#38bdf8"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid x:Name="MainGrid" SnapsToDevicePixels="True">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="0"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Toggle Button that covers the entire ComboBox -->
+                            <ToggleButton x:Name="ToggleButton" Grid.ColumnSpan="2" Focusable="False" ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border x:Name="Border" Background="#1e293b" BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="30" />
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Custom arrow -->
+                                                <Path x:Name="Arrow" Grid.Column="1" Fill="#94a3b8" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                            </Grid>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Border" Property="Background" Value="#334155"/>
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="#38bdf8"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            
+                            <!-- Display Area for Selected Item -->
+                            <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="10,3,30,3" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            
+                            <!-- Dropdown Popup -->
+                            <Popup x:Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                <Grid x:Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder" Background="#1e293b" BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
+                                        <ScrollViewer Margin="2" SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasItems" Value="False">
+                                <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid Margin="30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -24,7 +125,7 @@
             <PasswordBox x:Name="PasswordBox" Height="35" Background="#1e293b" Foreground="#f8fafc" BorderBrush="#334155" Padding="10,8" Margin="0,0,0,15"/>
 
             <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Country]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
-            <ComboBox x:Name="CountryCombo" Height="35" Margin="0,0,0,15" Background="#1e293b" Foreground="#0f172a"/>
+            <ComboBox x:Name="CountryCombo" Height="35" Margin="0,0,0,15" Background="#1e293b" Foreground="#f8fafc"/>
 
             <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[KnownLangs]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
             <Grid Margin="0,0,0,15">
@@ -33,12 +134,12 @@
                     <ColumnDefinition Width="10"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <ComboBox x:Name="Lang1Combo" Grid.Column="0" Height="35" Background="#1e293b" Foreground="#0f172a"/>
-                <ComboBox x:Name="Lang2Combo" Grid.Column="2" Height="35" Background="#1e293b" Foreground="#0f172a"/>
+                <ComboBox x:Name="Lang1Combo" Grid.Column="0" Height="35" Background="#1e293b" Foreground="#f8fafc"/>
+                <ComboBox x:Name="Lang2Combo" Grid.Column="2" Height="35" Background="#1e293b" Foreground="#f8fafc"/>
             </Grid>
             
             <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[AppLang]}" Foreground="#94a3b8" Margin="0,0,0,5"/>
-            <ComboBox x:Name="AppLangCombo" Height="35" Background="#1e293b" Foreground="#0f172a" SelectionChanged="AppLangCombo_SelectionChanged" Margin="0,0,0,15"/>
+            <ComboBox x:Name="AppLangCombo" Height="35" Background="#1e293b" Foreground="#f8fafc" SelectionChanged="AppLangCombo_SelectionChanged" Margin="0,0,0,15"/>
             
             <TextBlock Text="Referans Kodu (Varsa)" Foreground="#94a3b8" Margin="0,0,0,5"/>
             <TextBox x:Name="RefCodeBox" Height="35" Margin="0,0,0,15"/>

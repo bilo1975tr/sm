@@ -189,6 +189,14 @@
                         <Button x:Name="ClearEpgsButton" Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_ResetEpgs]}" Width="220" Height="40" HorizontalAlignment="Left"
                                 Click="ClearEpgsButton_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#7f1d1d" 
                                 Foreground="#fca5a5" />
+
+                        <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
+
+                        <TextBlock Text="🔗 EPG Akıllı Eşleştirme Yardımcısı" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
+                        <TextBlock Text="Kanallarınızı yüklü XMLTV EPG programlarındaki kanallarla akıllı veya manuel olarak eşleştirin." Foreground="#94a3b8" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                        <Button x:Name="OpenEpgMatchWindowBtn" Content="EPG Eşleştirme Yardımcısını Aç" Width="240" Height="40" HorizontalAlignment="Left"
+                                Click="OpenEpgMatchWindowBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#8b5cf6" 
+                                Foreground="White" Cursor="Hand" />
                     </StackPanel>
                     </ScrollViewer>
                 </Border>
@@ -224,7 +232,7 @@
                         <TextBlock Text="Bulut senkronizasyonu ve içerik filtrelemede varsayılan olarak bu ülke dili baz alınacaktır." Foreground="#94a3b8" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Country], FallbackValue='Ülke Seçimi'}" VerticalAlignment="Center" Width="150" Foreground="#94a3b8"/>
-                            <ComboBox x:Name="CountryCombo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#0f172a" />
+                            <ComboBox x:Name="CountryCombo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#f8fafc" />
                         </StackPanel>
 
                         <!-- Extra Languages -->
@@ -233,12 +241,12 @@
                         
                         <StackPanel Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="Ek Dil 1" VerticalAlignment="Center" Width="150" Foreground="#94a3b8"/>
-                            <ComboBox x:Name="Lang1Combo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#0f172a"/>
+                            <ComboBox x:Name="Lang1Combo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#f8fafc"/>
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="Ek Dil 2" VerticalAlignment="Center" Width="150" Foreground="#94a3b8"/>
-                            <ComboBox x:Name="Lang2Combo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#0f172a"/>
+                            <ComboBox x:Name="Lang2Combo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#f8fafc"/>
                         </StackPanel>
 
                         <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
@@ -289,12 +297,51 @@
                                     <TextBlock Text="M3U Oynatma Listesi:" Width="150" VerticalAlignment="Center" Foreground="#94a3b8"/>
                                     <TextBox x:Name="ServerUrlBox" Width="400" Height="35" IsReadOnly="True" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155"/>
                                 </StackPanel>
-
+ 
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                     <TextBlock Text="Web Oynatıcı Adresi:" Width="150" VerticalAlignment="Center" Foreground="#94a3b8"/>
                                     <TextBox x:Name="WebPlayerUrlBox" Width="400" Height="35" IsReadOnly="True" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155"/>
                                 </StackPanel>
                             </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Oto Güncelle">
+                <Border Background="#1e293b" Padding="20" CornerRadius="12" BorderBrush="#334155" BorderThickness="1" Margin="0,10,0,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <TextBlock Text="🔄 Otomatik Güncelleme Sistemi" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
+                            <TextBlock Text="Uygulama, GitHub raw CDN üzerinden 'auto_update.json' dosyasını okur. Bu dosyada tanımlanan M3U kanalları, film/dizi kaynakları ve EPG linkleri otomatik olarak güncellenir ve veritabanıyla senkronize edilir." Foreground="#94a3b8" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                            
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                <Button x:Name="PerformAutoUpdateBtn" Content="Bulut Güncellemesini Şimdi Başlat" Width="260" Height="40" Click="PerformAutoUpdateBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Foreground="White" FontWeight="Bold"/>
+                            </StackPanel>
+                            
+                            <TextBlock x:Name="AutoUpdateStatusText" Foreground="#cbd5e1" TextWrapping="Wrap" Margin="0,0,0,20" Text="Bulut listelerini yerel veritabanıyla senkronize etmek için yukarıdaki butona tıklayın."/>
+                            
+                            <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
+                            
+                            <TextBlock Text="📋 Aktif Otomatik Güncelleme Linkleri" FontWeight="Bold" FontSize="16" Foreground="#38bdf8" Margin="0,0,0,10"/>
+                            <TextBlock Text="Aşağıdaki linkler GitHub üzerindeki 'auto_update.json' dosyasından anlık olarak listelenmiştir:" Foreground="#94a3b8" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                            
+                            <ListBox x:Name="AutoUpdateLinksListBox" Background="#0f172a" Foreground="#f8fafc" BorderBrush="#334155" Height="180" Padding="5">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Background="#1e293b" CornerRadius="4" Padding="6,3" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="Bold" Foreground="#38bdf8"/>
+                                            </Border>
+                                            <TextBlock Grid.Column="1" Text="{Binding Url}" Foreground="#e2e8f0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </StackPanel>
                     </ScrollViewer>
                 </Border>

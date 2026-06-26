@@ -49,7 +49,88 @@ namespace StreamMesh.Services
             }
         }
 
-        private static string NormalizeLanguageFilename(string lang)
+        public static string GetIsoLanguageCode(string langName)
+        {
+            if (string.IsNullOrWhiteSpace(langName)) return "bilinmiyor";
+
+            string trimmed = langName.Trim();
+            // Handle special/unknown cases explicitly first
+            if (trimmed.Equals("Hiçbiri", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.Equals("Bilinmiyor", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.Equals("Unknown", StringComparison.OrdinalIgnoreCase))
+            {
+                return "bilinmiyor";
+            }
+
+            // Standardize/Normalize name to match our primary dictionary
+            // E.g. "Türkçe (Türkiye)" -> "Türkçe"
+            string cleanName = trimmed;
+            int parenIdx = cleanName.IndexOf('(');
+            if (parenIdx >= 0)
+            {
+                cleanName = cleanName.Substring(0, parenIdx).Trim();
+            }
+
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Türkçe", "tr" },
+                { "İngilizce", "en" },
+                { "English", "en" },
+                { "Almanca", "de" },
+                { "Deutsch", "de" },
+                { "Fransızca", "fr" },
+                { "Français", "fr" },
+                { "İspanyolca", "es" },
+                { "Español", "es" },
+                { "İtalyanca", "it" },
+                { "Italiano", "it" },
+                { "Rusça", "ru" },
+                { "Pусский", "ru" },
+                { "Arapça", "ar" },
+                { "العربية", "ar" },
+                { "Çince", "zh" },
+                { "中文", "zh" }
+            };
+
+            if (dict.TryGetValue(cleanName, out string isoCode))
+            {
+                return isoCode.ToLowerInvariant();
+            }
+
+            if (dict.TryGetValue(trimmed, out string fullIsoCode))
+            {
+                return fullIsoCode.ToLowerInvariant();
+            }
+
+            // System.Globalization.CultureInfo check
+            try
+            {
+                var cultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.AllCultures);
+                foreach (var culture in cultures)
+                {
+                    if (culture.DisplayName.Equals(trimmed, StringComparison.OrdinalIgnoreCase) ||
+                        culture.EnglishName.Equals(trimmed, StringComparison.OrdinalIgnoreCase) ||
+                        culture.NativeName.Equals(trimmed, StringComparison.OrdinalIgnoreCase) ||
+                        culture.DisplayName.StartsWith(cleanName, StringComparison.OrdinalIgnoreCase) ||
+                        culture.EnglishName.StartsWith(cleanName, StringComparison.OrdinalIgnoreCase) ||
+                        culture.NativeName.StartsWith(cleanName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!string.IsNullOrEmpty(culture.TwoLetterISOLanguageName) && culture.TwoLetterISOLanguageName.Length == 2)
+                        {
+                            return culture.TwoLetterISOLanguageName.ToLowerInvariant();
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore culture resolution errors
+            }
+
+            return "bilinmiyor";
+        }
+
+        private static string GetLegacyLanguageFilename(string lang)
         {
             if (string.IsNullOrWhiteSpace(lang)) return "bilinmiyor";
             string normalized = Channel.NormalizeLanguage(lang);
@@ -63,6 +144,11 @@ namespace StreamMesh.Services
             }
             string result = sb.ToString().Replace("  ", " ").Trim().Replace(" ", "_");
             return string.IsNullOrEmpty(result) ? "bilinmiyor" : result;
+        }
+
+        private static string NormalizeLanguageFilename(string lang)
+        {
+            return GetIsoLanguageCode(lang);
         }
 
         /// <summary>
@@ -88,9 +174,11 @@ namespace StreamMesh.Services
                 {
                     if (string.IsNullOrEmpty(originalLang) || originalLang == "Hiçbiri") continue;
                     
+                    // 1. Try ISO (e.g., tr)
                     string safeLang = NormalizeLanguageFilename(originalLang);
                     string targetUrl = AppConfig.GetGitHubLanguageUrl(safeLang);
 
+                    LogService.Log($"GitHub'dan kanal verisi çekiliyor (ISO: {safeLang})...");
                     var response = await client.GetAsync(targetUrl);
                     
                     if (response.IsSuccessStatusCode)
@@ -98,10 +186,41 @@ namespace StreamMesh.Services
                         var json = await response.Content.ReadAsStringAsync();
                         var remoteChannels = JsonConvert.DeserializeObject<List<Channel>>(json) ?? new List<Channel>();
                         allRemoteChannels.AddRange(remoteChannels);
+                        continue;
+                    }
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        // 2. Try Legacy Name (e.g., türkçe)
+                        string legacyLang = GetLegacyLanguageFilename(originalLang);
+                        if (legacyLang != safeLang)
+                        {
+                            string legacyUrl = AppConfig.GetGitHubLanguageUrl(legacyLang);
+                            LogService.Log($"ISO bulunamadı, Legacy deneniyor: {legacyLang}...");
+                            var legacyResponse = await client.GetAsync(legacyUrl);
+                            if (legacyResponse.IsSuccessStatusCode)
+                            {
+                                var json = await legacyResponse.Content.ReadAsStringAsync();
+                                var remoteChannels = JsonConvert.DeserializeObject<List<Channel>>(json) ?? new List<Channel>();
+                                allRemoteChannels.AddRange(remoteChannels);
+                                continue;
+                            }
+                        }
+                    }
+
+                    // 3. Try channels_bilinmiyor.json if neither succeeded
+                    string unknownUrl = AppConfig.GetGitHubLanguageUrl("bilinmiyor");
+                    LogService.Log($"Yayın dili yüklenemedi, 'bilinmiyor' deneniyor...");
+                    var unknownResponse = await client.GetAsync(unknownUrl);
+                    if (unknownResponse.IsSuccessStatusCode)
+                    {
+                        var json = await unknownResponse.Content.ReadAsStringAsync();
+                        var remoteChannels = JsonConvert.DeserializeObject<List<Channel>>(json) ?? new List<Channel>();
+                        allRemoteChannels.AddRange(remoteChannels);
                     }
                     else
                     {
-                        LogService.Log($"GitHub'da '{safeLang}' için channels JSON bulunamadı veya ulaşılamıyor (Status: {response.StatusCode}).");
+                        LogService.Log($"GitHub'da '{safeLang}', legacy '{GetLegacyLanguageFilename(originalLang)}' ve 'bilinmiyor' için channels JSON bulunamadı.");
                     }
                 }
 
@@ -120,8 +239,13 @@ namespace StreamMesh.Services
             }
         }
 
+        public static void IncrementTotalChannelsPushed(int count)
+        {
+            TotalChannelsPushedToFirebase += count;
+        }
+
         /// <summary>
-        /// Sadece uygulamada YENİ bir kanal bulunduğunda veya doğrulandığında GitHub'a değil Firebase havuzuna yollar.
+        /// Sadece uygulamada YENİ bir kanal bulunduğunda veya doğrulandığında GitHub'a değil Firebase havuzuna kalıcı kuyruk üzerinden yollar.
         /// </summary>
         public static async Task PushNewChannelsToFirebasePoolAsync(List<Channel> newChannels)
         {
@@ -129,58 +253,11 @@ namespace StreamMesh.Services
 
             try
             {
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(10);
-
-                var patchData = new Dictionary<string, Channel>();
-                
-                foreach (var channel in newChannels)
-                {
-                    if (string.IsNullOrEmpty(channel.Url)) continue;
-                    
-                    // URL'den Firebase için güvenli ve eşsiz (MD5) bir ID (Key) oluşturuyoruz
-                    // Bu sayede aynı adrese sahip kanal milyonlarca kullanıcıdan gelse bile Firebase'de üst üste (tek kayıt) yazar, mükerrerliği engeller.
-                    string safeKey = CreateSafeFirebaseKey(channel.Url);
-                    patchData[safeKey] = channel;
-                }
-                
-                if (patchData.Count == 0) return;
-
-                var settings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
-                var json = JsonConvert.SerializeObject(patchData, Formatting.None, settings);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                // Firebase'e yeni kanalları PATCH atıyoruz.
-                var request = new HttpRequestMessage(new HttpMethod("PATCH"), FirebasePoolUrl)
-                {
-                    Content = content
-                };
-                
-                var response = await client.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    TotalChannelsPushedToFirebase += patchData.Count;
-                    LogService.Log($"Firebase havuzuna {patchData.Count} güncel kanal bildirildi (URL Hash ile mükerrerlik önlendi).");
-                }
-                else
-                {
-                    LogService.Log($"Firebase havuza gönderme başarısız: {response.StatusCode}");
-                }
+                await FirebaseQueueService.Instance.EnqueueChannelsAsync(newChannels);
             }
             catch (Exception ex)
             {
-                LogService.LogError("Firebase kanal havuzu gönderme hatası", ex);
-            }
-        }
-
-        private static string CreateSafeFirebaseKey(string input)
-        {
-            using (var md5 = System.Security.Cryptography.MD5.Create())
-            {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(input ?? "");
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-                return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+                LogService.LogError("Firebase kanal havuzu kuyruğa ekleme hatası", ex);
             }
         }
     }

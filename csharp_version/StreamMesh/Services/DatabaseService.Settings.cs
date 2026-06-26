@@ -9,7 +9,7 @@ namespace StreamMesh.Services
     {
         public string GetSetting(string key, string defaultValue = "")
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -22,7 +22,7 @@ namespace StreamMesh.Services
 
         public void SetSetting(string key, string value)
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -63,7 +63,7 @@ namespace StreamMesh.Services
                 
                 try
                 {
-                    using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                    using (var connection = new SqliteConnection(ConnectionString))
                     {
                         connection.Open();
                         var command = connection.CreateCommand();

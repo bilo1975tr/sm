@@ -49,6 +49,9 @@ namespace StreamMesh.Views
             
             SetCurrentLanguageInCombo();
             UpdateComponentStatusUI();
+
+            // Auto Update link listesini yukle
+            LoadAutoUpdateLinks();
         }
 
         private void UpdateComponentStatusUI()
@@ -309,7 +312,8 @@ namespace StreamMesh.Views
 
                 if (channels.Count > 0)
                 {
-                    string resultStr = _databaseService.SaveChannels(channels, url);
+                    M3uStatusText.Text = "Kanallar veritabanına işleniyor...";
+                    string resultStr = await Task.Run(() => _databaseService.SaveChannels(channels, url));
                     LoadM3uSources();
                     M3uStatusText.Text = resultStr;
                     LogService.Log($"{url} başarıyla güncellendi.");
@@ -405,6 +409,13 @@ namespace StreamMesh.Views
         {
             string url = M3uUrlTextBox.Text.Trim();
             if (string.IsNullOrEmpty(url)) return;
+
+            if (AutoUpdateService.IsUrlInAutoUpdate(url))
+            {
+                MessageBox.Show("Bu link otomatik güncelleme listesinde (auto_update.json) zaten mevcut olduğu için manuel olarak eklenemez!", "Uyarı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                M3uStatusText.Text = "Bu kaynak otomatik güncelleme listesinde tanımlıdır.";
+                return;
+            }
 
             // Seçili kategoriyi al
             string categoryHint = (DefaultCategoryCombo.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Otomatik";
@@ -559,7 +570,8 @@ namespace StreamMesh.Views
                 // SONUÇ KAYIT
                 if (channels.Count > 0)
                 {
-                    string resultStr = _databaseService.SaveChannels(channels, url);
+                    M3uStatusText.Text = "Kanallar veritabanına işleniyor...";
+                    string resultStr = await Task.Run(() => _databaseService.SaveChannels(channels, url));
                     
                     // Eğer direct link değilse kaynağı listeye ekle (direct linkler her seferinde farklı Source ID alabilir)
                     if (!channels.Any(c => c.PlaylistUrl.StartsWith("DIRECT_LINK_")))
@@ -596,6 +608,13 @@ namespace StreamMesh.Views
         {
             string url = EpgUrlTextBox.Text.Trim();
             if (string.IsNullOrEmpty(url)) return;
+
+            if (AutoUpdateService.IsUrlInAutoUpdate(url))
+            {
+                MessageBox.Show("Bu link otomatik güncelleme listesinde (auto_update.json) zaten mevcut olduğu için manuel olarak eklenemez!", "Uyarı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                EpgStatusText.Text = "Bu kaynak otomatik güncelleme listesinde tanımlıdır.";
+                return;
+            }
 
             AddEpgButton.IsEnabled = false;
             EpgStatusText.Text = "EPG indiriliyor ve ayrıştırılıyor (Büyük dosyalarda zaman alabilir)...";
@@ -830,8 +849,9 @@ namespace StreamMesh.Views
             }
             catch (Exception ex)
             {
-                LogoMatchStatusText.Text = $"Hata oluştu: {ex.Message}";
-                MessageBox.Show($"Hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                LogService.LogError("AutoMatchLogos error", ex);
+                LogoMatchStatusText.Text = "Hata oluştu";
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -855,8 +875,9 @@ namespace StreamMesh.Views
             }
             catch (Exception ex)
             {
-                MovieUpdateStatusText.Text = $"Hata: {ex.Message}";
-                MessageBox.Show($"Hata: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                LogService.LogError("AutoUpdateMovies error", ex);
+                MovieUpdateStatusText.Text = "Hata oluştu";
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -876,6 +897,68 @@ namespace StreamMesh.Views
                 }
             }
             catch { }
+        }
+
+        private void OpenEpgMatchWindowBtn_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var parentWindow = Window.GetWindow(this);
+                var matchWindow = new EpgMatchWindow();
+                matchWindow.Owner = parentWindow;
+                matchWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("OpenEpgMatchWindow error", ex);
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void LoadAutoUpdateLinks()
+        {
+            try
+            {
+                var config = await AutoUpdateService.FetchConfigAsync();
+                var items = new System.Collections.Generic.List<object>();
+                
+                if (config != null)
+                {
+                    foreach (var url in config.Tv) items.Add(new { Category = "TV", Url = url });
+                    foreach (var url in config.Film) items.Add(new { Category = "Film", Url = url });
+                    foreach (var url in config.Dizi) items.Add(new { Category = "Dizi", Url = url });
+                    foreach (var url in config.Epg) items.Add(new { Category = "EPG", Url = url });
+                }
+
+                Dispatcher.Invoke(() => 
+                {
+                    AutoUpdateLinksListBox.ItemsSource = items;
+                });
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("LoadAutoUpdateLinks failed", ex);
+            }
+        }
+
+        private async void PerformAutoUpdateBtn_Click(object sender, RoutedEventArgs e)
+        {
+            PerformAutoUpdateBtn.IsEnabled = false;
+            AutoUpdateStatusText.Text = "Otomatik güncelleme başlatılıyor...";
+            
+            await AutoUpdateService.PerformAutoUpdateAsync((status) => 
+            {
+                Dispatcher.Invoke(() => 
+                {
+                    AutoUpdateStatusText.Text = status;
+                });
+            });
+
+            PerformAutoUpdateBtn.IsEnabled = true;
+            
+            // Reload settings lists as sources might have been added
+            LoadM3uSources();
+            LoadEpgSources();
         }
     }
 }

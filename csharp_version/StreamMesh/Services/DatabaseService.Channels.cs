@@ -11,13 +11,13 @@ namespace StreamMesh.Services
         {
             try
             {
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
                     command.CommandText = @"
-                        INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified, IsLocked, Notes)
-                        VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified, @IsLocked, @Notes)
+                        INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified, IsLocked, Notes, IsPremium)
+                        VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified, @IsLocked, @Notes, @IsPremium)
                         ON CONFLICT(Id) DO UPDATE SET
                             Name=excluded.Name,
                             EpgId=excluded.EpgId,
@@ -32,7 +32,8 @@ namespace StreamMesh.Services
                             IsFavorite=excluded.IsFavorite,
                             IsVerified=excluded.IsVerified,
                             IsLocked=excluded.IsLocked,
-                            Notes=excluded.Notes;
+                            Notes=excluded.Notes,
+                            IsPremium=excluded.IsPremium;
                     ";
                     command.Parameters.AddWithValue("@Id", channel.Id);
                     command.Parameters.AddWithValue("@Name", channel.Name ?? string.Empty);
@@ -44,12 +45,14 @@ namespace StreamMesh.Services
                     command.Parameters.AddWithValue("@SourceType", channel.SourceType ?? "M3U");
                     command.Parameters.AddWithValue("@AddedDate", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
                     command.Parameters.AddWithValue("@Category", channel.Category ?? "TV");
-                    command.Parameters.AddWithValue("@Language", channel.Language ?? "Bilinmiyor");
+                    channel.Language = Channel.NormalizeLanguage(channel.Language);
+                    command.Parameters.AddWithValue("@Language", channel.Language);
                     command.Parameters.AddWithValue("@PlaylistUrl", channel.PlaylistUrl ?? string.Empty);
                     command.Parameters.AddWithValue("@IsFavorite", channel.IsFavorite ? 1 : 0);
                     command.Parameters.AddWithValue("@IsVerified", channel.IsVerified ? 1 : 0);
                     command.Parameters.AddWithValue("@IsLocked", channel.IsLocked ? 1 : 0);
                     command.Parameters.AddWithValue("@Notes", channel.Notes ?? string.Empty);
+                    command.Parameters.AddWithValue("@IsPremium", channel.IsPremium ? 1 : 0);
                     
                     command.ExecuteNonQuery();
                 }
@@ -58,6 +61,25 @@ namespace StreamMesh.Services
             {
                 LogService.LogError($"SaveChannel error for {channel.Name}", ex);
             }
+        }
+
+        private static string NormalizeChannelName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return string.Empty;
+            
+            // Standardize case using Turkish culture
+            string lower = name.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim();
+            
+            // Keep only alphanumeric characters (removes spaces and special characters)
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in lower)
+            {
+                if (char.IsLetterOrDigit(c))
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString();
         }
 
         public string SaveChannels(List<Channel> channels, string playlistUrl)
@@ -70,41 +92,60 @@ namespace StreamMesh.Services
 
             try
             {
-                // URL parçalarını tek tek takip eden bir harita (Map) oluşturuyoruz
-                var urlToIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                var idToChannelMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+                var urlToChannelMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+                var nameAndLangToChannelMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT Url, Id FROM Channels";
+                    cmd.CommandText = "SELECT Id, Name, Language, Url, EpgId, EpgUrl, LogoUrl, Category, GroupTitle, IsFavorite, IsVerified FROM Channels";
                     
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            string rawUrl = reader.GetString(0);
-                            string id = reader.GetString(1);
-                            if (!string.IsNullOrEmpty(rawUrl))
+                            var dbCh = new Channel
                             {
-                                foreach(var u in rawUrl.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                Id = reader.GetString(0),
+                                Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                                Language = reader.IsDBNull(2) ? "Bilinmiyor" : reader.GetString(2),
+                                Url = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                                EpgId = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                                EpgUrl = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                                LogoUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                                Category = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                                GroupTitle = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                                IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
+                                IsVerified = !reader.IsDBNull(10) && reader.GetInt32(10) == 1
+                            };
+
+                            dbCh.Language = Channel.NormalizeLanguage(dbCh.Language);
+
+                            if (!idToChannelMap.ContainsKey(dbCh.Id))
+                                idToChannelMap[dbCh.Id] = dbCh;
+
+                            if (!string.IsNullOrEmpty(dbCh.Url))
+                            {
+                                foreach (var u in dbCh.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                                 {
-                                    string trimmed = u.Trim();
-                                    if (!urlToIdMap.ContainsKey(trimmed))
-                                        urlToIdMap[trimmed] = id;
+                                    string trimmedUrl = u.Trim();
+                                    if (!urlToChannelMap.ContainsKey(trimmedUrl))
+                                        urlToChannelMap[trimmedUrl] = dbCh;
                                 }
+                            }
+
+                            if (!string.IsNullOrEmpty(dbCh.Name))
+                            {
+                                string key = $"{NormalizeChannelName(dbCh.Name)}|{dbCh.Language}";
+                                if (!nameAndLangToChannelMap.ContainsKey(key))
+                                    nameAndLangToChannelMap[key] = dbCh;
                             }
                         }
                     }
 
                     var newUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var c in channels)
-                    {
-                        if (c.Url != null) 
-                        {
-                            foreach(var u in c.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-                                newUrls.Add(u.Trim());
-                        }
-                    }
 
                     using (var transaction = connection.BeginTransaction())
                     {
@@ -146,6 +187,8 @@ namespace StreamMesh.Services
 
                         foreach (var channel in channels)
                         {
+                            channel.Language = Channel.NormalizeLanguage(channel.Language);
+
                             // Ölü link filtreleme
                             if (!string.IsNullOrEmpty(channel.Url))
                             {
@@ -156,58 +199,135 @@ namespace StreamMesh.Services
                                     if (!IsLinkDead(p))
                                     {
                                         aliveParts.Add(p.Trim());
+                                        newUrls.Add(p.Trim());
                                     }
                                 }
                                 if (aliveParts.Count == 0) continue; // Tüm linkler ölü ise ekleme
                                 channel.Url = string.Join(",", aliveParts);
                             }
 
-                            string idToUse = null;
-                            if (channel.Url != null)
+                            // Match search
+                            Channel matchedChannel = null;
+
+                            // 1. Try URL matching
+                            if (!string.IsNullOrEmpty(channel.Url))
                             {
-                                foreach(var u in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                foreach (var u in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                                 {
-                                    if (urlToIdMap.TryGetValue(u.Trim(), out var existingId))
+                                    if (urlToChannelMap.TryGetValue(u.Trim(), out var existingByUrl))
                                     {
-                                        idToUse = existingId;
+                                        matchedChannel = existingByUrl;
                                         break;
                                     }
                                 }
                             }
 
-                            if (idToUse != null)
+                            // 2. Try Name + Language matching if no URL match
+                            if (matchedChannel == null && !string.IsNullOrEmpty(channel.Name))
+                            {
+                                string normName = NormalizeChannelName(channel.Name);
+                                string key = $"{normName}|{channel.Language}";
+                                if (nameAndLangToChannelMap.TryGetValue(key, out var existingByNameAndLang))
+                                {
+                                    matchedChannel = existingByNameAndLang;
+                                }
+                            }
+
+                            Channel finalChannel = null;
+
+                            if (matchedChannel != null)
                             {
                                 existingChannels++;
+                                finalChannel = matchedChannel;
+
+                                // Merge fields!
+                                // Merge URLs
+                                var mergedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                                if (!string.IsNullOrEmpty(finalChannel.Url))
+                                {
+                                    foreach (var u in finalChannel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                        mergedUrls.Add(u.Trim());
+                                }
+                                if (!string.IsNullOrEmpty(channel.Url))
+                                {
+                                    foreach (var u in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                        mergedUrls.Add(u.Trim());
+                                }
+                                finalChannel.Url = string.Join(",", mergedUrls);
+
+                                // EPG merging is disabled per rules - only assign if target lacks it
+                                if (string.IsNullOrEmpty(finalChannel.EpgId))
+                                    finalChannel.EpgId = channel.EpgId;
+                                if (string.IsNullOrEmpty(finalChannel.EpgUrl))
+                                    finalChannel.EpgUrl = channel.EpgUrl;
+
+                                // Logo merging is disabled per rules - only assign if target lacks it
+                                if (string.IsNullOrEmpty(finalChannel.LogoUrl))
+                                    finalChannel.LogoUrl = channel.LogoUrl;
+
+                                // Merge Category/GroupTitle if target lacks them
+                                if (string.IsNullOrEmpty(finalChannel.Category))
+                                    finalChannel.Category = channel.Category;
+                                if (string.IsNullOrEmpty(finalChannel.GroupTitle))
+                                    finalChannel.GroupTitle = channel.GroupTitle;
+
+                                // Merge flags
+                                if (channel.IsFavorite) finalChannel.IsFavorite = true;
+                                if (channel.IsVerified) finalChannel.IsVerified = true;
                             }
                             else
                             {
                                 newChannels++;
-                                idToUse = channel.Id ?? Guid.NewGuid().ToString("N");
-                            }
-
-                            if (!string.IsNullOrEmpty(channel.Url))
-                            {
-                                foreach(var u in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                finalChannel = new Channel
                                 {
-                                    urlToIdMap[u.Trim()] = idToUse;
+                                    Id = channel.Id ?? Guid.NewGuid().ToString("N"),
+                                    Name = channel.Name,
+                                    Language = channel.Language,
+                                    Url = channel.Url,
+                                    EpgId = channel.EpgId,
+                                    EpgUrl = channel.EpgUrl,
+                                    LogoUrl = channel.LogoUrl,
+                                    Category = channel.Category,
+                                    GroupTitle = channel.GroupTitle,
+                                    PlaylistUrl = channel.PlaylistUrl,
+                                    IsFavorite = channel.IsFavorite,
+                                    IsVerified = channel.IsVerified
+                                };
+
+                                idToChannelMap[finalChannel.Id] = finalChannel;
+
+                                if (!string.IsNullOrEmpty(finalChannel.Name))
+                                {
+                                    string key = $"{NormalizeChannelName(finalChannel.Name)}|{finalChannel.Language}";
+                                    if (!nameAndLangToChannelMap.ContainsKey(key))
+                                        nameAndLangToChannelMap[key] = finalChannel;
                                 }
                             }
 
-                            pId.Value = idToUse;
-                            pName.Value = channel.Name ?? string.Empty;
-                            pEpgId.Value = channel.EpgId ?? string.Empty;
-                            pEpgUrl.Value = channel.EpgUrl ?? string.Empty;
-                            pUrl.Value = channel.Url ?? string.Empty;
-                            pGroup.Value = channel.GroupTitle ?? string.Empty;
-                            pLogo.Value = channel.LogoUrl ?? string.Empty;
-                            pSrcType.Value = channel.SourceType ?? "M3U";
+                            // Always update urlToChannelMap with all current/new URLs
+                            if (!string.IsNullOrEmpty(finalChannel.Url))
+                            {
+                                foreach (var u in finalChannel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    urlToChannelMap[u.Trim()] = finalChannel;
+                                }
+                            }
+
+                            pId.Value = finalChannel.Id;
+                            pName.Value = finalChannel.Name ?? string.Empty;
+                            pEpgId.Value = finalChannel.EpgId ?? string.Empty;
+                            pEpgUrl.Value = finalChannel.EpgUrl ?? string.Empty;
+                            pUrl.Value = finalChannel.Url ?? string.Empty;
+                            pGroup.Value = finalChannel.GroupTitle ?? string.Empty;
+                            pLogo.Value = finalChannel.LogoUrl ?? string.Empty;
+                            pSrcType.Value = finalChannel.SourceType ?? "M3U";
                             pDate.Value = now;
-                            pCat.Value = channel.Category ?? "TV";
-                            pLang.Value = channel.Language ?? "Bilinmiyor";
-                            pPlaylist.Value = channel.PlaylistUrl ?? string.Empty;
-                            pFav.Value = channel.IsFavorite ? 1 : 0;
-                            pVer.Value = channel.IsVerified ? 1 : 0;
-                            
+                            pCat.Value = finalChannel.Category ?? "TV";
+                            pLang.Value = finalChannel.Language;
+                            pPlaylist.Value = finalChannel.PlaylistUrl ?? string.Empty;
+                            pFav.Value = finalChannel.IsFavorite ? 1 : 0;
+                            pVer.Value = finalChannel.IsVerified ? 1 : 0;
+
                             command.ExecuteNonQuery();
                         }
 
@@ -312,7 +432,7 @@ namespace StreamMesh.Services
                 }
 
                 // Tekil bazda URL'leri kedi içinde temizle
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();
@@ -355,11 +475,11 @@ namespace StreamMesh.Services
         {
             var channels = new List<Channel>();
             
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels ORDER BY AddedDate DESC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium FROM Channels ORDER BY AddedDate DESC";
                 
                 using (var reader = command.ExecuteReader())
                 {
@@ -383,7 +503,8 @@ namespace StreamMesh.Services
                             EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
                             IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
-                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1
                         });
                     }
                 }
@@ -394,11 +515,11 @@ namespace StreamMesh.Services
         public List<Channel> GetChannelsByPlaylistUrl(string playlistUrl)
         {
             var channels = new List<Channel>();
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
                 command.Parameters.AddWithValue("@Url", playlistUrl);
                 
                 using (var reader = command.ExecuteReader())
@@ -423,7 +544,8 @@ namespace StreamMesh.Services
                             EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
                             IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
-                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1
                         });
                     }
                 }
@@ -435,7 +557,7 @@ namespace StreamMesh.Services
         {
             if (ids == null || ids.Count == 0) return;
 
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -445,7 +567,7 @@ namespace StreamMesh.Services
                     var pLang = cmd.Parameters.Add("@Lang", SqliteType.Text);
                     var pId = cmd.Parameters.Add("@Id", SqliteType.Text);
 
-                    pLang.Value = language;
+                    pLang.Value = Channel.NormalizeLanguage(language);
                     foreach (var id in ids)
                     {
                         pId.Value = id;
@@ -456,9 +578,28 @@ namespace StreamMesh.Services
             }
         }
 
-        public void DeleteChannel(string id, bool force = false)
+        public void DeleteChannel(string id, bool force = false, bool isMerge = false)
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            if (!isMerge)
+            {
+                try
+                {
+                    var ch = GetChannelById(id);
+                    if (ch != null && !string.IsNullOrEmpty(ch.Url))
+                    {
+                        foreach (var u in ch.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            AddDeadLink(u.Trim());
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError($"DeleteChannel URL logging failed for ID: {id}", ex);
+                }
+            }
+
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -477,11 +618,11 @@ namespace StreamMesh.Services
 
         public Channel GetChannelById(string id)
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels WHERE Id = @Id";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium FROM Channels WHERE Id = @Id";
                 command.Parameters.AddWithValue("@Id", id);
                 
                 using (var reader = command.ExecuteReader())
@@ -506,7 +647,8 @@ namespace StreamMesh.Services
                             EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
                             IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
-                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1
                         };
                     }
                 }
@@ -556,7 +698,7 @@ namespace StreamMesh.Services
                 string newCombinedEpgUrl = string.Join(",", epgUrls);
                 string newCombinedLogoUrl = string.Join(",", logoUrls);
 
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();
@@ -570,7 +712,7 @@ namespace StreamMesh.Services
                 }
 
                 // Kaynak kanalı sil
-                DeleteChannel(sourceId);
+                DeleteChannel(sourceId, force: false, isMerge: true);
                 LogService.Log($"Merged channel {source.Name} into {target.Name}. New URL count: {urls.Count}");
             }
             catch (Exception ex)
@@ -581,7 +723,7 @@ namespace StreamMesh.Services
 
         public (int total, int verified) GetChannelCountsBySource(string playlistUrl)
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -603,7 +745,7 @@ namespace StreamMesh.Services
 
         public int GetTotalChannelCount()
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -623,11 +765,11 @@ namespace StreamMesh.Services
         {
             var channels = new List<Channel>();
             
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium FROM Channels WHERE IsVerified = 1 ORDER BY AddedDate DESC LIMIT @Limit OFFSET @Offset";
                 command.Parameters.AddWithValue("@Limit", limit);
                 command.Parameters.AddWithValue("@Offset", offset);
                 
@@ -650,9 +792,11 @@ namespace StreamMesh.Services
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
                             IsVerified = !reader.IsDBNull(11) && reader.GetInt32(11) == 1,
                             CreatedAt = reader.IsDBNull(12) ? DateTime.Now : DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(12)).DateTime,
+                            EpgUrl = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
                             IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
-                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1
                         });
                     }
                 }
@@ -665,7 +809,7 @@ namespace StreamMesh.Services
             if (string.IsNullOrEmpty(id)) return;
             try
             {
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
@@ -682,7 +826,7 @@ namespace StreamMesh.Services
 
         public void ClearAllChannels()
         {
-            using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+            using (var connection = new SqliteConnection(ConnectionString))
             {
                 connection.Open();
                 var command = connection.CreateCommand();
@@ -703,7 +847,7 @@ namespace StreamMesh.Services
                 var urlMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 var existingChannels = new Dictionary<string, Channel>();
 
-                using (var connection = new SqliteConnection($"Data Source={_dbPath}"))
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
 
@@ -868,7 +1012,8 @@ namespace StreamMesh.Services
                                 iSrc.Value = c.SourceType ?? "P2P";
                                 iDate.Value = now;
                                 iCat.Value = c.Category ?? "TV";
-                                iLang.Value = c.Language ?? "Bilinmiyor";
+                                c.Language = Channel.NormalizeLanguage(c.Language);
+                                iLang.Value = c.Language;
                                 iPList.Value = c.PlaylistUrl ?? string.Empty;
                                 iVer.Value = c.IsVerified ? 1 : 0;
                                 insertCmd.ExecuteNonQuery();
@@ -890,6 +1035,174 @@ namespace StreamMesh.Services
             catch (Exception ex)
             {
                 LogService.LogError("SyncIncomingP2PChannels failed", ex);
+            }
+        }
+
+        public void SyncAndCleanPremiumChannels()
+        {
+            bool hasPremium = false;
+            if (StreamMesh.Services.P2P.UserService.CurrentUser != null && 
+                StreamMesh.Services.P2P.UserService.CurrentUser.IsPremium && 
+                StreamMesh.Services.P2P.UserService.CurrentUser.PremiumExpiry > DateTime.UtcNow)
+            {
+                hasPremium = true;
+            }
+
+            if (!hasPremium)
+            {
+                try
+                {
+                    var premiumUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        "https://www.youtube.com/watch?v=S08cKk_I-90",
+                        "https://www.youtube.com/watch?v=68T9Fsk3_zI",
+                        "https://www.youtube.com/watch?v=v=live_ssport",
+                        "http://premium.streams.xyz/live/ucl.m3u8",
+                        "https://www.youtube.com/watch?v=live_tribun"
+                    };
+
+                    var allChannels = GetAllChannels();
+                    foreach (var channel in allChannels)
+                    {
+                        bool hadPremiumUrl = false;
+                        var parts = !string.IsNullOrEmpty(channel.Url) 
+                            ? channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) 
+                            : Array.Empty<string>();
+
+                        var remainingParts = new List<string>();
+                        foreach (var part in parts)
+                        {
+                            if (premiumUrls.Contains(part.Trim()))
+                            {
+                                hadPremiumUrl = true;
+                            }
+                            else
+                            {
+                                remainingParts.Add(part.Trim());
+                            }
+                        }
+
+                        if (channel.IsPremium || hadPremiumUrl)
+                        {
+                            if (remainingParts.Count == 0)
+                            {
+                                DeleteChannel(channel.Id);
+                            }
+                            else
+                            {
+                                channel.Url = string.Join(",", remainingParts);
+                                channel.IsPremium = false;
+                                SaveChannel(channel);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("SyncAndCleanPremiumChannels failed", ex);
+                }
+            }
+        }
+
+        public void InsertPremiumChannels()
+        {
+            var premiumChannels = new List<Channel>
+            {
+                new Channel
+                {
+                    Id = "GS_TV_PREMIUM",
+                    Name = "🦁 Galatasaray TV HD (Premium)",
+                    Url = "https://www.youtube.com/watch?v=S08cKk_I-90",
+                    GroupTitle = "Galatasaray Premium",
+                    Category = "Premium",
+                    Language = "Türkçe",
+                    LogoUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f6/Galatasaray_Sports_Club_Logo.svg",
+                    SourceType = "YOUTUBE",
+                    IsPremium = true,
+                    IsVerified = true,
+                    Notes = "Galatasaray TV Resmi Canlı Yayını - Ultra HD"
+                },
+                new Channel
+                {
+                    Id = "BEIN_SPORTS_PREMIUM",
+                    Name = "⚽ beIN Sports Haber (Premium)",
+                    Url = "https://www.youtube.com/watch?v=68T9Fsk3_zI",
+                    GroupTitle = "Spor Premium",
+                    Category = "Premium",
+                    Language = "Türkçe",
+                    LogoUrl = "https://upload.wikimedia.org/wikipedia/commons/e/e0/BeIN_Sports_logo.svg",
+                    SourceType = "YOUTUBE",
+                    IsPremium = true,
+                    IsVerified = true,
+                    Notes = "beIN Sports Haber Canlı Maç & Özet Analizleri"
+                },
+                new Channel
+                {
+                    Id = "S_SPORT_PREMIUM",
+                    Name = "🏆 S Sport Haber (F1 & Premier League)",
+                    Url = "https://www.youtube.com/watch?v=v=live_ssport",
+                    GroupTitle = "Spor Premium",
+                    Category = "Premium",
+                    Language = "Türkçe",
+                    LogoUrl = "https://ssportplus.com/wp-content/uploads/2021/04/ssport_logo.png",
+                    SourceType = "YOUTUBE",
+                    IsPremium = true,
+                    IsVerified = true,
+                    Notes = "İngiltere Premier Lig ve Formula 1 Özel Canlı Yayınları"
+                },
+                new Channel
+                {
+                    Id = "CHAMPIONS_LEAGUE_HD",
+                    Name = "🌟 Champions League 4K (Premium)",
+                    Url = "http://premium.streams.xyz/live/ucl.m3u8",
+                    GroupTitle = "Avrupa Kupaları",
+                    Category = "Premium",
+                    Language = "Türkçe",
+                    LogoUrl = "https://upload.wikimedia.org/wikipedia/en/b/bf/UEFA_Champions_League_logo_2.svg",
+                    SourceType = "M3U",
+                    IsPremium = true,
+                    IsVerified = true,
+                    Notes = "UEFA Şampiyonlar Ligi Özel Canlı Yayın Kanalı"
+                },
+                new Channel
+                {
+                    Id = "TRIBUN_GS_PREMIUM",
+                    Name = "📣 RAMS Park Tribün Canlı Taraftar (Premium)",
+                    Url = "https://www.youtube.com/watch?v=live_tribun",
+                    GroupTitle = "Galatasaray Premium",
+                    Category = "Premium",
+                    Language = "Türkçe",
+                    LogoUrl = "https://upload.wikimedia.org/wikipedia/commons/f/f6/Galatasaray_Sports_Club_Logo.svg",
+                    SourceType = "YOUTUBE",
+                    IsPremium = true,
+                    IsVerified = true,
+                    Notes = "Ali Sami Yen Spor Kompleksi RAMS Park Canlı Yayın"
+                }
+            };
+
+            foreach (var ch in premiumChannels)
+            {
+                SaveChannel(ch);
+            }
+        }
+
+        public void UpdateChannelEpg(string id, string epgId)
+        {
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "UPDATE Channels SET EpgId = @EpgId WHERE Id = @Id";
+                    cmd.Parameters.AddWithValue("@EpgId", epgId ?? string.Empty);
+                    cmd.Parameters.AddWithValue("@Id", id);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"UpdateChannelEpg error: {id}", ex);
             }
         }
     }

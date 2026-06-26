@@ -263,12 +263,12 @@ namespace StreamMesh.Services
                                 { "Expires", "0" },
                                 { "Access-Control-Allow-Origin", "*" }
                             };
-                            await WriteHeadersAsync(stream, 200, "OK", "video/mp4", responseHeaders);
+                            await WriteHeadersAsync(stream, 200, "OK", "video/mp2t", responseHeaders);
 
                             var startInfo = new System.Diagnostics.ProcessStartInfo
                             {
                                 FileName = ffmpegPath,
-                                Arguments = $"-i \"{inputUrl}\" -c:v copy -c:a aac -y -f mp4 -movflags empty_moov+omit_tfhd_offset+frag_keyframe+default_base_moof -",
+                                Arguments = $"-i \"{inputUrl}\" -c:v copy -c:a aac -y -f mpegts -",
                                 UseShellExecute = false,
                                 RedirectStandardOutput = true,
                                 RedirectStandardError = true,
@@ -312,10 +312,12 @@ namespace StreamMesh.Services
                                     {
                                         var responseHeaders = new Dictionary<string, string>
                                         {
-                                            { "Cache-Control", "no-cache" },
+                                            { "Cache-Control", "no-cache, no-store, must-revalidate" },
+                                            { "Pragma", "no-cache" },
+                                            { "Expires", "0" },
                                             { "Access-Control-Allow-Origin", "*" }
                                         };
-                                        await WriteHeadersAsync(stream, 200, "OK", "video/mpeg", responseHeaders);
+                                        await WriteHeadersAsync(stream, 200, "OK", "video/mp2t", responseHeaders);
                                         using (var srcStream = await response.Content.ReadAsStreamAsync())
                                         {
                                             byte[] buffer = new byte[16384];
@@ -388,6 +390,7 @@ namespace StreamMesh.Services
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <title>StreamMesh Web Oynatıcı</title>
     <script src='https://cdn.jsdelivr.net/npm/hls.js@latest'></script>
+    <script src='https://cdn.jsdelivr.net/npm/mpegts.js@latest/dist/mpegts.js'></script>
     <style>
         :root {{
             --bg: #0f172a;
@@ -549,6 +552,7 @@ namespace StreamMesh.Services
             video.pause();
             video.src = '';
             if(hls) {{ hls.destroy(); hls = null; }}
+            if(mpegtsPlayer) {{ mpegtsPlayer.destroy(); mpegtsPlayer = null; }}
             container.style.display = 'none';
             document.getElementById('retry-btn').style.display = 'none';
             channelTitle.innerText = '';
@@ -561,6 +565,7 @@ namespace StreamMesh.Services
         var channelTitle = document.getElementById('current-channel');
         var retryBtn = document.getElementById('retry-btn');
         var hls = null;
+        var mpegtsPlayer = null;
         var currentPlayedChannel = null;
 
         function retryCurrent() {{
@@ -575,18 +580,71 @@ namespace StreamMesh.Services
             
             video.style.display = 'block';
             if(hls) {{ hls.destroy(); hls = null; }}
+            if(mpegtsPlayer) {{ mpegtsPlayer.destroy(); mpegtsPlayer = null; }}
             video.pause();
             video.src = '';
             
-            var streamUrl = '/stream?id=' + ch.id;
+            var streamUrl = window.location.origin + '/stream?id=' + ch.id;
             
-            if (ch.srcType === 'YOUTUBE' || ch.srcType === 'ACESTREAM') {{
+            if (ch.srcType === 'ACESTREAM') {{
+                playMpegTs(streamUrl, ch.name, ch.srcType);
+            }} else if (ch.srcType === 'YOUTUBE') {{
                 fallbackNative(streamUrl, ch.name, ch.srcType);
             }} else {{
-                playNativeOrHls(streamUrl, ch.name, ch.srcType);
+                var lowerUrl = (ch.url || '').toLowerCase();
+                if (lowerUrl.includes('.ts') || lowerUrl.includes('mpegts') || ch.srcType === 'TS') {{
+                    playMpegTs(streamUrl, ch.name, ch.srcType);
+                }} else {{
+                    playNativeOrHls(streamUrl, ch.name, ch.srcType);
+                }}
             }}
             
             window.scrollTo(0, 0);
+        }}
+
+        function playMpegTs(streamUrl, name, srcType) {{
+            video.style.display = 'block';
+            if (mpegts.getFeatureList().mseLivePlayback) {{
+                mpegtsPlayer = mpegts.createPlayer({{
+                    type: 'mpegts',
+                    isLive: true,
+                    url: streamUrl
+                }}, {{
+                    enableWorker: true,
+                    lazyLoadMaxKeepAliveDuration: 10,
+                    seekType: 'range'
+                }});
+                mpegtsPlayer.attachMediaElement(video);
+                mpegtsPlayer.load();
+                
+                var playPromise = mpegtsPlayer.play();
+                if (playPromise !== undefined) {{
+                    playPromise.then(() => {{
+                        channelTitle.innerText = name;
+                    }}).catch(e => {{
+                        console.log('mpegts.js play error:', e);
+                        handleMpegTsError(streamUrl, name, srcType, e);
+                    }});
+                }}
+                
+                mpegtsPlayer.on(mpegts.Events.ERROR, function(type, detail, info) {{
+                    console.log('mpegts.js error event:', type, detail, info);
+                    handleMpegTsError(streamUrl, name, srcType, detail);
+                }});
+            }} else {{
+                fallbackNative(streamUrl, name, srcType);
+            }}
+        }}
+
+        function handleMpegTsError(streamUrl, name, srcType, err) {{
+            if (srcType === 'ACESTREAM') {{
+                retryBtn.style.display = 'block';
+                channelTitle.innerText = name + ' - AceStream Motoru Başlıyor...';
+                setTimeout(() => {{ if (currentPlayedChannel && currentPlayedChannel.name === name) retryCurrent(); }}, 3500);
+            }} else {{
+                retryBtn.style.display = 'block';
+                channelTitle.innerText = name + ' (Oynatılamıyor)';
+            }}
         }}
 
         function playNativeOrHls(streamUrl, name, srcType) {{
@@ -614,6 +672,7 @@ namespace StreamMesh.Services
 
         function fallbackNative(url, name, srcType) {{
             if(hls) {{ hls.destroy(); }}
+            if(mpegtsPlayer) {{ mpegtsPlayer.destroy(); mpegtsPlayer = null; }}
             video.src = url;
             
             var playPromise = video.play();

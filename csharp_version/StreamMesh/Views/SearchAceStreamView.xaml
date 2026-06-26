@@ -1,0 +1,105 @@
+<UserControl x:Class="StreamMesh.Views.SearchAceStreamView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent" Foreground="#f8fafc">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="🌐 Global Yayın Araması" FontSize="32" FontWeight="Bold"/>
+            <TextBlock Text="AceStream, FreetuxTV ve IPTVcat veritabanlarından içerik arayın" FontSize="14" Foreground="#cbd5e1" Margin="0,5,0,0"/>
+        </StackPanel>
+
+        <!-- Search Bar -->
+        <Border Grid.Row="1" Background="#1e293b" CornerRadius="12" Padding="15" Margin="0,0,0,20" BorderBrush="#334155" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBox x:Name="SearchBox" Grid.Column="0" Height="40" FontSize="16" Padding="10,0" VerticalContentAlignment="Center" KeyDown="SearchBox_KeyDown" />
+                
+                <ComboBox x:Name="SourceCombo" Grid.Column="1" Width="150" Height="40" Margin="10,0,0,0" SelectedIndex="0" VerticalContentAlignment="Center">
+                    <ComboBoxItem Content="Tüm Kaynaklar"/>
+                    <ComboBoxItem Content="AceStream"/>
+                    <ComboBoxItem Content="FreetuxTV"/>
+                    <ComboBoxItem Content="IPTVcat"/>
+                </ComboBox>
+
+                <Button x:Name="SearchButton" Grid.Column="2" Content="Arama Yap" Width="120" Height="40" Margin="10,0,0,0" Background="#38bdf8" Foreground="White" FontWeight="Bold" Click="SearchButton_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                
+                <Button x:Name="AddAllButton" Grid.Column="3" Content="Hepsini Ekle" Width="120" Height="40" Margin="10,0,0,0" Background="#10b981" Foreground="White" FontWeight="Bold" Click="AddAllButton_Click" Visibility="Collapsed">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="8"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Results Grid -->
+        <Border Grid.Row="2" Background="#1e293b" CornerRadius="12" BorderBrush="#334155" BorderThickness="1" ClipToBounds="True">
+            <Grid>
+                <ListView x:Name="ResultsList" Background="Transparent" BorderThickness="0" Foreground="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Kaynak" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#334155" CornerRadius="4" Padding="5,2">
+                                            <TextBlock Text="{Binding SourceName}" FontSize="11" FontWeight="Bold" Foreground="#94a3b8" HorizontalAlignment="Center"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Kanal / İçerik Adı" Width="300">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Çevirisi / Bilgi" Width="200">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding TranslatedName}" Foreground="#cbd5e1" TextTrimming="CharacterEllipsis"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="İşlem" Width="150">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="➕ Listeme Ekle" Width="110" Height="30" Background="#10b981" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand" Click="AddToList_Click" CommandParameter="{Binding}">
+                                            <Button.Resources>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="CornerRadius" Value="4"/>
+                                                </Style>
+                                            </Button.Resources>
+                                        </Button>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+                
+                <TextBlock x:Name="LoadingText" Text="Aranıyor..." FontSize="18" Foreground="#38bdf8" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                <TextBlock x:Name="EmptyText" Text="Sonuç bulunamadı." FontSize="18" Foreground="#cbd5e1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

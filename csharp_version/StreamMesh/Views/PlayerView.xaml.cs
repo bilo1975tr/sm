@@ -112,7 +112,7 @@ namespace StreamMesh.Views
             catch (Exception ex)
             {
                 LogService.LogError("VLC could not be initialized", ex);
-                MessageBox.Show($"VLC başlatılamadı: {ex.Message}\nStack: {ex.StackTrace}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
 
             LoadChannelsFromDb();
@@ -276,7 +276,7 @@ namespace StreamMesh.Views
             catch (Exception ex)
             {
                 LogService.LogError("LoadChannel error", ex);
-                MessageBox.Show($"Kanal yüklenirken hata oluştu: {ex.Message}", "Yükleme Hatası", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Yükleme Hatası", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -352,8 +352,8 @@ namespace StreamMesh.Views
                 catch(Exception ex)
                 {
                     LogService.LogError($"Stream Play Error for channel: {channel.Name}", ex);
-                    StatusTextBlock.Text = "Hata: " + ex.Message;
-                    MessageBox.Show($"Yayın açılamadı!\n\nDetay: {ex.Message}", "Oynatma Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    StatusTextBlock.Text = "Hata oluştu";
+                    MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Oynatma Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             finally
