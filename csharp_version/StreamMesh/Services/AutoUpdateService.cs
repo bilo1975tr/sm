@@ -34,14 +34,64 @@ namespace StreamMesh.Services
 
         public static async Task<AutoUpdateConfig> FetchConfigAsync()
         {
+            // 1. Önce yerel geliştirme ortamındaki auto_update.json dosyasını kontrol et (Öncelikli)
+            try
+            {
+                string[] localPaths = new[]
+                {
+                    "auto_update.json",
+                    "../../auto_update.json",
+                    "../../../auto_update.json",
+                    "../../../../auto_update.json",
+                    "../../../../../auto_update.json",
+                    "/auto_update.json"
+                };
+
+                foreach (var path in localPaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        string localJson = File.ReadAllText(path, System.Text.Encoding.UTF8);
+                        var fetched = JsonConvert.DeserializeObject<AutoUpdateConfig>(localJson);
+                        if (fetched != null)
+                        {
+                            _config = fetched;
+                            SaveConfigLocal(localJson);
+                            LogService.Log($"auto_update.json yerel dosyası öncelikli olarak başarıyla yüklendi: {path}");
+                            return _config;
+                        }
+                    }
+                }
+            }
+            catch (Exception localEx)
+            {
+                LogService.LogError("FetchConfigAsync yerel dosya okuma hatası", localEx);
+            }
+
+            // 2. Yerel dosya bulunamadıysa veya hata alındıysa GitHub raw CDN üzerinden çek
             try
             {
                 using (var client = new HttpClient())
                 {
                     client.Timeout = TimeSpan.FromSeconds(15);
-                    string url = $"{AppConfig.GitHubRepoUrl}/auto_update.json";
-                    LogService.Log($"auto_update.json GitHub'dan çekiliyor: {url}");
-                    var json = await client.GetStringAsync(url);
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)");
+
+                    // 1. Try refs/heads/main as preferred by the user
+                    string url = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/auto_update.json";
+                    LogService.Log($"auto_update.json GitHub'dan çekiliyor (refs/heads/main): {url}");
+                    string json = null;
+                    try
+                    {
+                        json = await client.GetStringAsync(url);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.Log($"refs/heads/main failed, trying fallback /main/: {ex.Message}");
+                        // 2. Try the main fallback
+                        url = "https://raw.githubusercontent.com/bilo1975tr/sm/main/auto_update.json";
+                        json = await client.GetStringAsync(url);
+                    }
+
                     if (!string.IsNullOrEmpty(json))
                     {
                         var fetched = JsonConvert.DeserializeObject<AutoUpdateConfig>(json);
@@ -56,7 +106,7 @@ namespace StreamMesh.Services
             }
             catch (Exception ex)
             {
-                LogService.LogError("FetchConfigAsync GitHub failed, trying local cache.", ex);
+                LogService.LogError("FetchConfigAsync GitHub failed, trying local appdata cache.", ex);
             }
 
             LoadConfigLocal();

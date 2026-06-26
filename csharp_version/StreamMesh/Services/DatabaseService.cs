@@ -83,6 +83,13 @@ namespace StreamMesh.Services
                     CREATE TABLE IF NOT EXISTS DeadLinkHashes (
                         Hash INTEGER PRIMARY KEY
                     );
+                    CREATE TABLE IF NOT EXISTS WatchProgress (
+                        ChannelId TEXT PRIMARY KEY,
+                        Title TEXT,
+                        Seconds INTEGER,
+                        Duration INTEGER,
+                        LastWatched TEXT
+                    );
                 ";
                 command.ExecuteNonQuery();
 

@@ -9,12 +9,17 @@
     "https://onureroz.com/indirmeler/dunya/index.m3u"
   ],
   "film": [
-    "https://raw.githubusercontent.com/bilo1975tr/sm/main/auto_film_list.m3u"
+    "https://tinyurl.com/power-cinema",
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Filmler.m3u",
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/full.film.m3u",
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Yeşilçam.m3u8",
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Filmler_Yeni.m3u"
   ],
   "dizi": [
-    "https://raw.githubusercontent.com/bilo1975tr/sm/main/auto_dizi_list.m3u"
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Diziler.m3u"
   ],
   "epg": [
-    "https://raw.githubusercontent.com/bilo1975tr/sm/main/auto_epg.xml"
+    "https://iptv-epg.org/files/epg-de.xml",
+    "https://iptv-epg.org/files/epg-tr.xml"
   ]
 }

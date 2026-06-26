@@ -237,6 +237,16 @@ namespace StreamMesh.Services
                 {
                     currentChannel.Url = trimmedLine;
                     currentChannel.SourceType = DetermineSourceType(trimmedLine);
+                    
+                    if (currentChannel.Category != null && currentChannel.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var seriesDetails = Channel.ParseSeriesDetails(currentChannel.Name, currentChannel.Url);
+                        if (seriesDetails.IsParsed)
+                        {
+                            currentChannel.Name = $"{seriesDetails.SeriesName} - S{seriesDetails.Season:D2}E{seriesDetails.Episode:D2}";
+                        }
+                    }
+
                     channels.Add(currentChannel);
                     currentChannel = null;
                 }

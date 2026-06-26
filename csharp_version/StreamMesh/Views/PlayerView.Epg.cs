@@ -33,6 +33,29 @@ namespace StreamMesh.Views
 
             if (length > 0)
             {
+                // Kalınan yerden devam etme (Seek to Saved Progress)
+                if (_needsSeekToProgress)
+                {
+                    _needsSeekToProgress = false;
+                    var wp = _databaseService.GetWatchProgress(_currentChannel.Id);
+                    if (wp != null && wp.Seconds > 0 && wp.Seconds < length - 5000)
+                    {
+                        _mediaPlayer.Time = wp.Seconds;
+                        time = wp.Seconds; // Anlık UI güncellemesi için yerel değişkeni de güncelle
+                        LogService.Log($"WatchProgress: Auto-seeked to {wp.Seconds}ms for channel {_currentChannel.Name}");
+                    }
+                }
+                else
+                {
+                    // Periyodik izleme geçmişi kaydı (Her 5 saniyede bir - 10 ticks)
+                    _saveProgressCounter++;
+                    if (_saveProgressCounter >= 10)
+                    {
+                        _saveProgressCounter = 0;
+                        _databaseService.SaveWatchProgress(_currentChannel.Id, _currentChannel.Name, time, length);
+                    }
+                }
+
                 SeekSlider.Visibility = Visibility.Visible;
                 TimeTextBlock.Visibility = Visibility.Visible;
                 SeekSlider.Maximum = length;

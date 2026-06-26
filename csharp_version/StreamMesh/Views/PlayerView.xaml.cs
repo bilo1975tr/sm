@@ -54,6 +54,8 @@ namespace StreamMesh.Views
         private Random _rng = new Random();
         private WeatherService _weatherService = new WeatherService();
         private int _rssTickCounter = 0;
+        private bool _needsSeekToProgress = false;
+        private int _saveProgressCounter = 0;
 
         public PlayerView()
         {
@@ -168,6 +170,19 @@ namespace StreamMesh.Views
             if (channel == null) return;
             try
             {
+                // Eski kanalın izleme saniyesini hemen kaydet
+                if (_currentChannel != null && _mediaPlayer != null && _mediaPlayer.IsPlaying)
+                {
+                    long t = _mediaPlayer.Time;
+                    long len = _mediaPlayer.Length;
+                    if (len > 0 && t > 0)
+                    {
+                        _databaseService.SaveWatchProgress(_currentChannel.Id, _currentChannel.Name, t, len);
+                    }
+                }
+
+                _needsSeekToProgress = true;
+                _saveProgressCounter = 0;
                 _currentChannel = channel;
                 
                 _databaseService.IncrementPersonalWatchCount(channel.Id);
@@ -517,6 +532,15 @@ namespace StreamMesh.Views
 
         public void StopPlayback()
         {
+            if (_currentChannel != null && _mediaPlayer != null && _mediaPlayer.IsPlaying)
+            {
+                long t = _mediaPlayer.Time;
+                long len = _mediaPlayer.Length;
+                if (len > 0 && t > 0)
+                {
+                    _databaseService.SaveWatchProgress(_currentChannel.Id, _currentChannel.Name, t, len);
+                }
+            }
             _mediaPlayer?.Stop();
             _radioTimer?.Stop();
             if (RadioOverlayGrid != null) RadioOverlayGrid.Visibility = Visibility.Collapsed;

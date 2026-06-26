@@ -203,6 +203,54 @@ namespace StreamMesh.Views
                 }
             }
 
+            // Dizi kategorisindeki kanalları serilerine göre akıllıca tek kart altında grupla
+            var groupedResult = new List<Channel>();
+            var diziList = _filteredChannels.Where(c => c.Category != null && c.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).ToList();
+            var otherList = _filteredChannels.Where(c => c.Category == null || !c.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (diziList.Count > 0)
+            {
+                var groups = diziList.GroupBy(c => {
+                    var det = Channel.ParseSeriesDetails(c.Name, c.Url);
+                    return (det.SeriesName.ToLowerInvariant().Trim(), det.Year);
+                }).ToList();
+
+                foreach (var g in groups)
+                {
+                    var episodes = g.OrderBy(e => {
+                        var det = Channel.ParseSeriesDetails(e.Name, e.Url);
+                        return det.Season * 10000 + det.Episode;
+                    }).ToList();
+
+                    var firstEp = episodes[0];
+                    var seriesDet = Channel.ParseSeriesDetails(firstEp.Name, firstEp.Url);
+
+                    var repChannel = new Channel
+                    {
+                        Id = firstEp.Id,
+                        Name = seriesDet.SeriesName,
+                        Category = "Dizi",
+                        LogoUrl = firstEp.LogoUrl,
+                        GroupTitle = "Dizi",
+                        Language = firstEp.Language,
+                        IsFavorite = episodes.Any(e => e.IsFavorite),
+                        IsVerified = episodes.All(e => e.IsVerified),
+                        CreatedAt = episodes.Max(e => e.CreatedAt),
+                        Url = firstEp.Url,
+                        IsSeriesGroup = true,
+                        SeriesEpisodes = episodes,
+                        SeriesName = seriesDet.SeriesName,
+                        TotalSeasonsCount = episodes.Select(e => Channel.ParseSeriesDetails(e.Name, e.Url).Season).Distinct().Count(),
+                        TotalEpisodesCount = episodes.Count,
+                        PersonalWatchCount = episodes.Sum(e => e.PersonalWatchCount)
+                    };
+
+                    groupedResult.Add(repChannel);
+                }
+            }
+            groupedResult.AddRange(otherList);
+            _filteredChannels = groupedResult;
+
             // Apply Sorting
             if (SortComboBox != null && SortComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
@@ -494,7 +542,19 @@ namespace StreamMesh.Views
             {
                 if (sender is Border border && border.DataContext is Channel channel)
                 {
-                    OnChannelSelected(channel, _filteredChannels);
+                    if (channel.IsSeriesGroup)
+                    {
+                        var win = new StreamMesh.Windows.SeriesSelectionWindow(channel);
+                        win.Owner = Window.GetWindow(this);
+                        if (win.ShowDialog() == true && win.SelectedEpisode != null)
+                        {
+                            OnChannelSelected(win.SelectedEpisode, channel.SeriesEpisodes);
+                        }
+                    }
+                    else
+                    {
+                        OnChannelSelected(channel, _filteredChannels);
+                    }
                 }
             }
             _isDragging = false;
@@ -512,7 +572,19 @@ namespace StreamMesh.Views
         {
             if (sender is MenuItem menuItem && menuItem.CommandParameter is Channel channel)
             {
-                OnChannelSelected(channel, _filteredChannels);
+                if (channel.IsSeriesGroup)
+                {
+                    var win = new StreamMesh.Windows.SeriesSelectionWindow(channel);
+                    win.Owner = Window.GetWindow(this);
+                    if (win.ShowDialog() == true && win.SelectedEpisode != null)
+                    {
+                        OnChannelSelected(win.SelectedEpisode, channel.SeriesEpisodes);
+                    }
+                }
+                else
+                {
+                    OnChannelSelected(channel, _filteredChannels);
+                }
             }
         }
 

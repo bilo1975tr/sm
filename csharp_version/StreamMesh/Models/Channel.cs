@@ -220,11 +220,280 @@ namespace StreamMesh.Models
 
         public bool HasPersonalWatch => PersonalWatchCount > 0;
 
+        // Dizi Gruplama Özellikleri
+        private bool _isSeriesGroup = false;
+        public bool IsSeriesGroup
+        {
+            get => _isSeriesGroup;
+            set { if (_isSeriesGroup != value) { _isSeriesGroup = value; OnPropertyChanged(); OnPropertyChanged(nameof(CleanName)); } }
+        }
+
+        private List<Channel> _seriesEpisodes = null;
+        public List<Channel> SeriesEpisodes
+        {
+            get => _seriesEpisodes;
+            set { _seriesEpisodes = value; OnPropertyChanged(); }
+        }
+
+        private string _seriesName = string.Empty;
+        public string SeriesName
+        {
+            get => _seriesName;
+            set { if (_seriesName != value) { _seriesName = value; OnPropertyChanged(); OnPropertyChanged(nameof(CleanName)); } }
+        }
+
+        private int _totalSeasonsCount = 1;
+        public int TotalSeasonsCount
+        {
+            get => _totalSeasonsCount;
+            set { if (_totalSeasonsCount != value) { _totalSeasonsCount = value; OnPropertyChanged(); } }
+        }
+
+        private int _totalEpisodesCount = 0;
+        public int TotalEpisodesCount
+        {
+            get => _totalEpisodesCount;
+            set { if (_totalEpisodesCount != value) { _totalEpisodesCount = value; OnPropertyChanged(); } }
+        }
+
+        public class SeriesDetails
+        {
+            public string SeriesName { get; set; } = string.Empty;
+            public int Season { get; set; } = 1;
+            public int Episode { get; set; } = 1;
+            public string Year { get; set; } = string.Empty;
+            public bool IsParsed { get; set; } = false;
+        }
+
+        public static SeriesDetails ParseSeriesDetails(string name, string url = null)
+        {
+            var details = new SeriesDetails { SeriesName = name };
+            if (string.IsNullOrEmpty(name)) return details;
+
+            string working = name;
+
+            // 1. Yıl Çıkarımı (Örn: "(2023)" veya "2016")
+            var yearRegex = new System.Text.RegularExpressions.Regex(@"\(\s*(19\d{2}|20\d{2})\s*\)");
+            var yearMatch = yearRegex.Match(working);
+            if (yearMatch.Success)
+            {
+                details.Year = yearMatch.Groups[1].Value;
+                working = working.Replace(yearMatch.Value, "");
+            }
+            else
+            {
+                var yearRegexNoParen = new System.Text.RegularExpressions.Regex(@"\b(19\d{2}|20\d{2})\b");
+                var yearMatchNoParen = yearRegexNoParen.Match(working);
+                if (yearMatchNoParen.Success)
+                {
+                    details.Year = yearMatchNoParen.Groups[1].Value;
+                    working = working.Replace(yearMatchNoParen.Value, "");
+                }
+            }
+
+            // 2. Sezon ve Bölüm Çıkarımı
+            bool parsedSe = false;
+
+            // Pattern A: S01E02 veya s1e2 veya S1 E2 veya S01 E02
+            var patA = new System.Text.RegularExpressions.Regex(@"[Ss](\d+)\s*[Ee](\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var patB = new System.Text.RegularExpressions.Regex(@"(\d+)\.?\s*[Ss]ezon\s*(\d+)\.?\s*[Bb]ölüm", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var patC = new System.Text.RegularExpressions.Regex(@"[Ss]ezon\s*(\d+)\s*[Bb]ölüm\s*(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var patD = new System.Text.RegularExpressions.Regex(@"\b(\d+)x(\d+)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var patE = new System.Text.RegularExpressions.Regex(@"(\d+)\.?\s*[Bb]ölüm", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var patE2 = new System.Text.RegularExpressions.Regex(@"[Bb]ölüm\s*(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            var matchA = patA.Match(working);
+            if (matchA.Success)
+            {
+                details.Season = int.Parse(matchA.Groups[1].Value);
+                details.Episode = int.Parse(matchA.Groups[2].Value);
+                working = working.Replace(matchA.Value, "");
+                parsedSe = true;
+            }
+
+            // Pattern B: 1. Sezon 2. Bölüm veya 1.Sezon 2.Bölüm
+            if (!parsedSe)
+            {
+                var matchB = patB.Match(working);
+                if (matchB.Success)
+                {
+                    details.Season = int.Parse(matchB.Groups[1].Value);
+                    details.Episode = int.Parse(matchB.Groups[2].Value);
+                    working = working.Replace(matchB.Value, "");
+                    parsedSe = true;
+                }
+            }
+
+            // Pattern C: Sezon 1 Bölüm 2
+            if (!parsedSe)
+            {
+                var matchC = patC.Match(working);
+                if (matchC.Success)
+                {
+                    details.Season = int.Parse(matchC.Groups[1].Value);
+                    details.Episode = int.Parse(matchC.Groups[2].Value);
+                    working = working.Replace(matchC.Value, "");
+                    parsedSe = true;
+                }
+            }
+
+            // Pattern D: 1x02 veya 1x2
+            if (!parsedSe)
+            {
+                var matchD = patD.Match(working);
+                if (matchD.Success)
+                {
+                    details.Season = int.Parse(matchD.Groups[1].Value);
+                    details.Episode = int.Parse(matchD.Groups[2].Value);
+                    working = working.Replace(matchD.Value, "");
+                    parsedSe = true;
+                }
+            }
+
+            // Pattern E: Bölüm 2 veya 2. Bölüm (Sezon varsayılan 1)
+            if (!parsedSe)
+            {
+                var matchE = patE.Match(working);
+                if (matchE.Success)
+                {
+                    details.Season = 1;
+                    details.Episode = int.Parse(matchE.Groups[1].Value);
+                    working = working.Replace(matchE.Value, "");
+                    parsedSe = true;
+                }
+                else
+                {
+                    var matchE2 = patE2.Match(working);
+                    if (matchE2.Success)
+                    {
+                        details.Season = 1;
+                        details.Episode = int.Parse(matchE2.Groups[1].Value);
+                        working = working.Replace(matchE2.Value, "");
+                        parsedSe = true;
+                    }
+                }
+            }
+
+            // Eğer isimden çözülemediyse ve bir URL adresi verilmişse, adresteki dosya adından çözmeye çalışalım
+            if (!parsedSe && !string.IsNullOrEmpty(url))
+            {
+                try
+                {
+                    string urlDecoded = System.Uri.UnescapeDataString(url);
+                    int lastSlash = urlDecoded.LastIndexOf('/');
+                    if (lastSlash >= 0 && lastSlash < urlDecoded.Length - 1)
+                    {
+                        string segment = urlDecoded.Substring(lastSlash + 1);
+
+                        // Pattern A (S01E02) taraması
+                        var matchA_Url = patA.Match(segment);
+                        if (matchA_Url.Success)
+                        {
+                            details.Season = int.Parse(matchA_Url.Groups[1].Value);
+                            details.Episode = int.Parse(matchA_Url.Groups[2].Value);
+                            parsedSe = true;
+                        }
+
+                        // Pattern B (1.Sezon 2.Bölüm) taraması
+                        if (!parsedSe)
+                        {
+                            var matchB_Url = patB.Match(segment);
+                            if (matchB_Url.Success)
+                            {
+                                details.Season = int.Parse(matchB_Url.Groups[1].Value);
+                                details.Episode = int.Parse(matchB_Url.Groups[2].Value);
+                                parsedSe = true;
+                            }
+                        }
+
+                        // Pattern C (Sezon 1 Bölüm 2) taraması
+                        if (!parsedSe)
+                        {
+                            var matchC_Url = patC.Match(segment);
+                            if (matchC_Url.Success)
+                            {
+                                details.Season = int.Parse(matchC_Url.Groups[1].Value);
+                                details.Episode = int.Parse(matchC_Url.Groups[2].Value);
+                                parsedSe = true;
+                            }
+                        }
+
+                        // Pattern D (1x02) taraması
+                        if (!parsedSe)
+                        {
+                            var matchD_Url = patD.Match(segment);
+                            if (matchD_Url.Success)
+                            {
+                                details.Season = int.Parse(matchD_Url.Groups[1].Value);
+                                details.Episode = int.Parse(matchD_Url.Groups[2].Value);
+                                parsedSe = true;
+                            }
+                        }
+
+                        // Pattern E (Bölüm 2) taraması
+                        if (!parsedSe)
+                        {
+                            var matchE_Url = patE.Match(segment);
+                            if (matchE_Url.Success)
+                            {
+                                details.Season = 1;
+                                details.Episode = int.Parse(matchE_Url.Groups[1].Value);
+                                parsedSe = true;
+                            }
+                            else
+                            {
+                                var matchE2_Url = patE2.Match(segment);
+                                if (matchE2_Url.Success)
+                                {
+                                    details.Season = 1;
+                                    details.Episode = int.Parse(matchE2_Url.Groups[1].Value);
+                                    parsedSe = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch {}
+            }
+
+            // 3. İsim Temizleme
+            string clean = working;
+
+            if (parsedSe)
+            {
+                // Sezon/bölüm bilgisi çözüldüyse, kanal adındaki fazla bölüm/sezon veya gereksiz kısımları temizleyelim
+                int idxDash = clean.IndexOf('-');
+                if (idxDash > 0)
+                {
+                    clean = clean.Substring(0, idxDash);
+                }
+                else
+                {
+                    int idxColon = clean.IndexOf(':');
+                    if (idxColon > 0) clean = clean.Substring(0, idxColon);
+                }
+
+                int idxBracket = clean.IndexOf('[');
+                if (idxBracket > 0) clean = clean.Substring(0, idxBracket);
+
+                int idxParen = clean.IndexOf('(');
+                if (idxParen > 0) clean = clean.Substring(0, idxParen);
+            }
+
+            clean = System.Text.RegularExpressions.Regex.Replace(clean, @"\s+", " ");
+            clean = clean.Trim(' ', ':', '-', '(', ')', '[', ']', ',');
+            details.SeriesName = string.IsNullOrWhiteSpace(clean) ? name : clean;
+            details.IsParsed = parsedSe;
+
+            return details;
+        }
+
         // Akıllı Film Detay Çözümlemesi (Read-Only Properties)
         public string CleanName
         {
             get
             {
+                if (IsSeriesGroup) return SeriesName;
                 if (Category != "Film") return Name;
                 return ParsedMovieDetails.CleanName;
             }
