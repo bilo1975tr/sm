@@ -144,17 +144,17 @@ namespace StreamMesh.Services
                     string groupLow = currentChannel.GroupTitle?.ToLower() ?? "";
                     string nameLow = currentChannel.Name?.ToLower() ?? "";
 
-                    // Kategori Belirleme
+                    // 1. Kategori Belirleme (Geçici)
                     if (!string.IsNullOrEmpty(autoCategory))
                     {
                         currentChannel.Category = autoCategory;
                     }
                     else
                     {
-                        if (groupLow.Contains("film") || groupLow.Contains("movie") || groupLow.Contains("vod") || nameLow.Contains("vod") || groupLow.Contains("sinema"))
-                            currentChannel.Category = "Film";
-                        else if (groupLow.Contains("dizi") || groupLow.Contains("series"))
+                        if (groupLow.Contains("dizi") || groupLow.Contains("series"))
                             currentChannel.Category = "Dizi";
+                        else if (groupLow.Contains("film") || groupLow.Contains("movie") || groupLow.Contains("vod") || nameLow.Contains("vod") || groupLow.Contains("sinema"))
+                            currentChannel.Category = "Film";
                         else
                             currentChannel.Category = "TV";
                     }
@@ -249,6 +249,17 @@ namespace StreamMesh.Services
 
                     channels.Add(currentChannel);
                     currentChannel = null;
+                }
+            }
+            
+            // Post-processing: Kategorizasyon kuralları
+            var groupedByGroup = channels.GroupBy(c => c.GroupTitle ?? "");
+            foreach (var group in groupedByGroup)
+            {
+                // Eğer grupta sadece 1 tane "Dizi" varsa, onu "Film" kategorisine taşı
+                if (group.Count() == 1 && group.Any(c => c.Category == "Dizi"))
+                {
+                    foreach(var ch in group) ch.Category = "Film";
                 }
             }
 

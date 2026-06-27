@@ -1,0 +1,19 @@
+<Window x:Class="StreamMesh.Windows.ChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AI Asistan" Height="450" Width="400">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBox x:Name="ChatDisplay" Grid.Row="0" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <Button Content="Ayarlar" Click="Settings_Click" Width="60" Margin="0,0,5,0"/>
+            <TextBox x:Name="InputPrompt" Width="180" Margin="0,0,5,0" KeyDown="InputPrompt_KeyDown"/>
+            <Button x:Name="MicButton" Content="🎤" Click="Mic_Click" Width="30" Margin="0,0,5,0"/>
+            <Button x:Name="SpeakerButton" Content="🔊" Click="Speaker_Click" Width="30" Margin="0,0,5,0"/>
+            <Button Content="Gönder" Click="Send_Click" Width="60"/>
+        </StackPanel>
+    </Grid>
+</Window>

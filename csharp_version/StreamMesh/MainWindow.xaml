@@ -27,6 +27,8 @@
                 
                 <!-- Spacer -->
                 <Border Height="30"/>
+                <!-- AI Chat Button -->
+                <Button Content="🤖" ToolTip="AI Asistan" Width="40" Height="40" Background="Transparent" Foreground="#38bdf8" FontSize="20" BorderThickness="0" Cursor="Hand" Click="AIChatButton_Click" HorizontalAlignment="Center"/>
                 <!-- VIP / Destek Button -->
                 <Button Content="💎" ToolTip="VIP &amp; Destek" Width="40" Height="40" Background="Transparent" Foreground="#fbbf24" FontSize="20" BorderThickness="0" Cursor="Hand" Click="VIPButton_Click" HorizontalAlignment="Center"/>
             </StackPanel>

@@ -165,6 +165,13 @@ namespace StreamMesh
             donationWindow.ShowDialog();
         }
 
+        private void AIChatButton_Click(object sender, RoutedEventArgs e)
+        {
+            var chatWindow = new StreamMesh.Windows.ChatWindow();
+            chatWindow.Owner = this;
+            chatWindow.Show();
+        }
+
         private void InitializeTrayIcon()
         {
             _notifyIcon = new System.Windows.Forms.NotifyIcon();

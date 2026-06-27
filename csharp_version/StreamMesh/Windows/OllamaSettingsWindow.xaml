@@ -1,0 +1,12 @@
+<Window x:Class="StreamMesh.Windows.OllamaSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ollama Ayarları" Height="200" Width="400">
+    <StackPanel Margin="10">
+        <Label Content="Ollama URL:"/>
+        <TextBox x:Name="UrlTextBox"/>
+        <Label Content="Model Adı:"/>
+        <ComboBox x:Name="ModelComboBox" IsEditable="True"/>
+        <Button Content="Kaydet" Click="Save_Click" Margin="0,10,0,0"/>
+    </StackPanel>
+</Window>
