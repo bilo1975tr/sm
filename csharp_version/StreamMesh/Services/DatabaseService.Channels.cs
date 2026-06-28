@@ -1207,5 +1207,145 @@ namespace StreamMesh.Services
                 LogService.LogError($"UpdateChannelEpg error: {id}", ex);
             }
         }
+
+        public class VerificationResultBatchItem
+        {
+            public Channel Channel { get; set; }
+            public string Category { get; set; }
+            public string Resolution { get; set; }
+            public bool IsWorking { get; set; }
+            public List<string> DeadUrls { get; set; }
+        }
+
+        public void SaveVerificationResultsBatch(List<VerificationResultBatchItem> items)
+        {
+            if (items == null || items.Count == 0) return;
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        var channelCmd = connection.CreateCommand();
+                        channelCmd.Transaction = transaction;
+                        channelCmd.CommandText = @"
+                            INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified, IsLocked, Notes, IsPremium)
+                            VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified, @IsLocked, @Notes, @IsPremium)
+                            ON CONFLICT(Id) DO UPDATE SET
+                                Name=excluded.Name,
+                                EpgId=excluded.EpgId,
+                                EpgUrl=excluded.EpgUrl,
+                                Url=excluded.Url,
+                                GroupTitle=excluded.GroupTitle,
+                                LogoUrl=excluded.LogoUrl,
+                                SourceType=excluded.SourceType,
+                                Category=excluded.Category,
+                                Language=excluded.Language,
+                                PlaylistUrl=excluded.PlaylistUrl,
+                                IsFavorite=excluded.IsFavorite,
+                                IsVerified=excluded.IsVerified,
+                                IsLocked=excluded.IsLocked,
+                                Notes=excluded.Notes,
+                                IsPremium=excluded.IsPremium;
+                        ";
+                        var pId = channelCmd.Parameters.Add("@Id", SqliteType.Text);
+                        var pName = channelCmd.Parameters.Add("@Name", SqliteType.Text);
+                        var pEpgId = channelCmd.Parameters.Add("@EpgId", SqliteType.Text);
+                        var pEpgUrl = channelCmd.Parameters.Add("@EpgUrl", SqliteType.Text);
+                        var pUrl = channelCmd.Parameters.Add("@Url", SqliteType.Text);
+                        var pGroupTitle = channelCmd.Parameters.Add("@GroupTitle", SqliteType.Text);
+                        var pLogoUrl = channelCmd.Parameters.Add("@LogoUrl", SqliteType.Text);
+                        var pSourceType = channelCmd.Parameters.Add("@SourceType", SqliteType.Text);
+                        var pAddedDate = channelCmd.Parameters.Add("@AddedDate", SqliteType.Integer);
+                        var pCategory = channelCmd.Parameters.Add("@Category", SqliteType.Text);
+                        var pLanguage = channelCmd.Parameters.Add("@Language", SqliteType.Text);
+                        var pPlaylistUrl = channelCmd.Parameters.Add("@PlaylistUrl", SqliteType.Text);
+                        var pIsFavorite = channelCmd.Parameters.Add("@IsFavorite", SqliteType.Integer);
+                        var pIsVerified = channelCmd.Parameters.Add("@IsVerified", SqliteType.Integer);
+                        var pIsLocked = channelCmd.Parameters.Add("@IsLocked", SqliteType.Integer);
+                        var pNotes = channelCmd.Parameters.Add("@Notes", SqliteType.Text);
+                        var pIsPremium = channelCmd.Parameters.Add("@IsPremium", SqliteType.Integer);
+
+                        var cacheCmd = connection.CreateCommand();
+                        cacheCmd.Transaction = transaction;
+                        cacheCmd.CommandText = @"
+                            INSERT INTO VerificationCache (ChannelId, VerifiedAt, Category, Resolution, IsWorking)
+                            VALUES (@ChannelId, @VerifiedAt, @Category, @Resolution, @IsWorking)
+                            ON CONFLICT(ChannelId) DO UPDATE SET
+                                VerifiedAt = @VerifiedAt,
+                                Category = @Category,
+                                Resolution = @Resolution,
+                                IsWorking = @IsWorking;
+                        ";
+                        var pCacheChannelId = cacheCmd.Parameters.Add("@ChannelId", SqliteType.Text);
+                        var pCacheVerifiedAt = cacheCmd.Parameters.Add("@VerifiedAt", SqliteType.Integer);
+                        var pCacheCategory = cacheCmd.Parameters.Add("@Category", SqliteType.Text);
+                        var pCacheResolution = cacheCmd.Parameters.Add("@Resolution", SqliteType.Text);
+                        var pCacheIsWorking = cacheCmd.Parameters.Add("@IsWorking", SqliteType.Integer);
+
+                        var deadLinkCmd = connection.CreateCommand();
+                        deadLinkCmd.Transaction = transaction;
+                        deadLinkCmd.CommandText = "INSERT OR IGNORE INTO DeadLinkHashes (Hash) VALUES (@Hash);";
+                        var pDeadLinkHash = deadLinkCmd.Parameters.Add("@Hash", SqliteType.Integer);
+
+                        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                        foreach (var item in items)
+                        {
+                            var ch = item.Channel;
+                            if (ch == null) continue;
+
+                            SmartNormalizationEngine.Instance.NormalizeChannel(ch);
+
+                            pId.Value = ch.Id;
+                            pName.Value = ch.Name ?? string.Empty;
+                            pEpgId.Value = ch.EpgId ?? string.Empty;
+                            pEpgUrl.Value = ch.EpgUrl ?? string.Empty;
+                            pUrl.Value = ch.Url ?? string.Empty;
+                            pGroupTitle.Value = ch.GroupTitle ?? string.Empty;
+                            pLogoUrl.Value = ch.LogoUrl ?? string.Empty;
+                            pSourceType.Value = ch.SourceType ?? "M3U";
+                            pAddedDate.Value = now;
+                            pCategory.Value = ch.Category ?? "TV";
+                            ch.Language = Channel.NormalizeLanguage(ch.Language);
+                            pLanguage.Value = ch.Language;
+                            pPlaylistUrl.Value = ch.PlaylistUrl ?? string.Empty;
+                            pIsFavorite.Value = ch.IsFavorite ? 1 : 0;
+                            pIsVerified.Value = ch.IsVerified ? 1 : 0;
+                            pIsLocked.Value = ch.IsLocked ? 1 : 0;
+                            pNotes.Value = ch.Notes ?? string.Empty;
+                            pIsPremium.Value = ch.IsPremium ? 1 : 0;
+
+                            channelCmd.ExecuteNonQuery();
+
+                            pCacheChannelId.Value = ch.Id;
+                            pCacheVerifiedAt.Value = now;
+                            pCacheCategory.Value = item.Category ?? string.Empty;
+                            pCacheResolution.Value = item.Resolution ?? string.Empty;
+                            pCacheIsWorking.Value = item.IsWorking ? 1 : 0;
+
+                            cacheCmd.ExecuteNonQuery();
+
+                            if (item.DeadUrls != null && item.DeadUrls.Count > 0)
+                            {
+                                foreach (var failedUrl in item.DeadUrls)
+                                {
+                                    if (string.IsNullOrWhiteSpace(failedUrl)) continue;
+                                    pDeadLinkHash.Value = GetFnv1aHash(failedUrl.Trim());
+                                    deadLinkCmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        transaction.Commit();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("SaveVerificationResultsBatch error", ex);
+            }
+        }
     }
 }

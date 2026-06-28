@@ -43,10 +43,22 @@ namespace StreamMesh.Services
     public class StreamCheckerService
     {
         private readonly HttpClient _httpClient;
+        
+        // DNS cache: now caches failed DNS (expiry with DateTime.UtcNow)
         private static readonly ConcurrentDictionary<string, (IPAddress[] IPs, DateTime Expiry)> _dnsCache = new ConcurrentDictionary<string, (IPAddress[], DateTime)>();
         private static readonly TimeSpan DnsCacheTtl = TimeSpan.FromMinutes(10);
+        private static readonly TimeSpan DnsFailureTtl = TimeSpan.FromMinutes(2); // Failed DNS cache
+        
         private static readonly ConcurrentDictionary<string, SemaphoreSlim> _hostSemaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
+        
+        // Host failure tracking for Circuit Breaker
+        private static readonly ConcurrentDictionary<string, int> _hostConsecutiveFailures = new ConcurrentDictionary<string, int>();
+        private static readonly ConcurrentDictionary<string, DateTime> _hostBlacklist = new ConcurrentDictionary<string, DateTime>();
+        private const int CircuitBreakerThreshold = 5; // Failures before breaker trips
+        private static readonly TimeSpan CircuitBreakerDuration = TimeSpan.FromMinutes(5); // How long host is blacklisted
+
         private readonly object _statsLock = new object();
+        private long _lastProgressReportTicks = 0; // For progress reporting throttling
 
         public StreamCheckerService()
         {
@@ -87,7 +99,8 @@ namespace StreamMesh.Services
             }
             catch
             {
-                // DNS Çözümleme başarısız
+                // DNS Çözümleme başarısız -> Başarısız sonucu da cache'le
+                _dnsCache[host] = (null, DateTime.UtcNow.Add(DnsFailureTtl));
             }
             return null;
         }
@@ -98,6 +111,38 @@ namespace StreamMesh.Services
             var semaphore = _hostSemaphores.GetOrAdd(host, _ => new SemaphoreSlim(3, 3));
             await semaphore.WaitAsync();
             return new SemaphoreReleaser(semaphore);
+        }
+
+        private bool IsHostCircuitBroken(string host)
+        {
+            if (_hostBlacklist.TryGetValue(host, out var expiry))
+            {
+                if (expiry > DateTime.UtcNow)
+                {
+                    return true;
+                }
+                else
+                {
+                    _hostBlacklist.TryRemove(host, out _);
+                    _hostConsecutiveFailures.TryRemove(host, out _);
+                }
+            }
+            return false;
+        }
+
+        private void RegisterHostSuccess(string host)
+        {
+            _hostConsecutiveFailures.TryRemove(host, out _);
+        }
+
+        private void RegisterHostFailure(string host)
+        {
+            int failures = _hostConsecutiveFailures.AddOrUpdate(host, 1, (_, val) => val + 1);
+            if (failures >= CircuitBreakerThreshold)
+            {
+                _hostBlacklist[host] = DateTime.UtcNow.Add(CircuitBreakerDuration);
+                Debug.WriteLine($"Host {host} is temporary blacklisted (Circuit Breaker Tripped).");
+            }
         }
 
         private class SemaphoreReleaser : IDisposable
@@ -130,114 +175,8 @@ namespace StreamMesh.Services
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
 
-            try
-            {
-                var uri = new Uri(url);
-                var host = uri.Host;
-
-                // 1. DNS Önbelleği Kontrolü
-                var ips = await ResolveDnsWithCacheAsync(host, cancellationToken);
-                if (ips == null || ips.Length == 0)
-                {
-                    return false;
-                }
-
-                // 2. Host bazlı kilit al (Aynı hosta en fazla 3 bağlantı)
-                using (await AcquireHostSemaphoreAsync(host))
-                {
-                    HttpResponseMessage response = null;
-                    bool isSuccess = false;
-
-                    // 3. HTTP HEAD ve GET katmanlı sorgulama boru hattı (Timeout Stratejisi: 2s ve 5s)
-                    try
-                    {
-                        // İlk deneme: HEAD isteği (2 saniye timeout)
-                        response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Head, url), TimeSpan.FromSeconds(2), cancellationToken);
-                        if (!response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.MethodNotAllowed)
-                        {
-                            response?.Dispose();
-                            // HEAD başarısızsa GET ile 2 saniye dene
-                            response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, url), TimeSpan.FromSeconds(2), cancellationToken);
-                        }
-                    }
-                    catch
-                    {
-                        // İlk deneme başarısız olursa ikinci deneme: GET isteği (5 saniye timeout)
-                        try
-                        {
-                            response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, url), TimeSpan.FromSeconds(5), cancellationToken);
-                        }
-                        catch
-                        {
-                            return false;
-                        }
-                    }
-
-                    if (response != null && response.IsSuccessStatusCode)
-                    {
-                        var actualUrl = response.RequestMessage.RequestUri.ToString();
-                        string contentType = response.Content.Headers.ContentType?.MediaType?.ToLower() ?? "";
-
-                        // 4. Content-Type doğrulaması
-                        if (contentType.Contains("text/html") || 
-                            contentType.Contains("application/json") || 
-                            contentType.Contains("application/xhtml+xml"))
-                        {
-                            response.Dispose();
-                            return false;
-                        }
-
-                        bool isM3u8 = actualUrl.Contains(".m3u8") || 
-                                      contentType.Contains("mpegurl") || 
-                                      contentType.Contains("vnd.apple.mpegurl") ||
-                                      contentType.Contains("x-mpegurl");
-
-                        // 5. M3U8 analizi (Derinlik en fazla 1)
-                        if (isM3u8)
-                        {
-                            if (response.RequestMessage.Method == HttpMethod.Head)
-                            {
-                                response.Dispose();
-                                response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, actualUrl), TimeSpan.FromSeconds(5), cancellationToken);
-                            }
-                            string content = await response.Content.ReadAsStringAsync(cancellationToken);
-                            response.Dispose();
-                            return await VerifyM3u8ContentAsync(content, actualUrl, 0, cancellationToken);
-                        }
-
-                        // 6. Diğer akışlar için Magic Byte / Sahte içerik kontrolü
-                        if (response.RequestMessage.Method == HttpMethod.Head)
-                        {
-                            response.Dispose();
-                            response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, actualUrl), TimeSpan.FromSeconds(5), cancellationToken);
-                        }
-
-                        using (var stream = await response.Content.ReadAsStreamAsync(cancellationToken))
-                        {
-                            var buffer = new byte[8192];
-                            using (var readCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
-                            {
-                                readCts.CancelAfter(TimeSpan.FromSeconds(3));
-                                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, readCts.Token);
-                                response.Dispose();
-                                if (bytesRead > 0)
-                                {
-                                    if (IsHtmlOrJson(buffer, bytesRead))
-                                    {
-                                        return false;
-                                    }
-                                    return true; // Akış veri akışı sağlıyor
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Stream check failed for {url}: {ex.Message}");
-            }
-            return false;
+            var res = await VerifyStreamSmartAsync(url, cancellationToken, detailed: false);
+            return res.working;
         }
 
         private static bool IsHtmlOrJson(byte[] buffer, int bytesRead)
@@ -258,6 +197,18 @@ namespace StreamMesh.Services
             }
             catch { }
             return false;
+        }
+
+        private bool VerifyM3u8ContentFast(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return false;
+            if (!content.Contains("#EXTM3U")) return false;
+            
+            return content.Contains("#EXTINF") || 
+                   content.Contains("#EXT-X-STREAM-INF") || 
+                   content.Contains("#EXT-X-TARGETDURATION") || 
+                   content.Contains(".ts") || 
+                   content.Contains(".m3u8");
         }
 
         private async Task<bool> VerifyM3u8ContentAsync(string content, string baseUrl, int depth, CancellationToken cancellationToken)
@@ -383,8 +334,13 @@ namespace StreamMesh.Services
             catch { return false; }
         }
 
-        // Akıllı HTTP ve LibVLC hibrit doğrulama motoru
+        // Akıllı HTTP ve LibVLC hibrit doğrulama motoru (Çift aşamalı)
         public async Task<(bool working, string category, string resolution, bool usedVlc)> VerifyStreamSmartAsync(string url, CancellationToken cancellationToken)
+        {
+            return await VerifyStreamSmartAsync(url, cancellationToken, detailed: false);
+        }
+
+        public async Task<(bool working, string category, string resolution, bool usedVlc)> VerifyStreamSmartAsync(string url, CancellationToken cancellationToken, bool detailed)
         {
             if (string.IsNullOrWhiteSpace(url)) return (false, null, null, false);
 
@@ -398,16 +354,111 @@ namespace StreamMesh.Services
                 return (true, "TV", null, false);
             }
 
+            // HIZLI TARAMA (Default) - LibVLC kesinlikle başlatılmaz
+            if (!detailed)
+            {
+                try
+                {
+                    var uri = new Uri(url);
+                    var host = uri.Host;
+
+                    if (IsHostCircuitBroken(host))
+                    {
+                        return (false, null, null, false);
+                    }
+
+                    var ips = await ResolveDnsWithCacheAsync(host, cancellationToken);
+                    if (ips == null || ips.Length == 0)
+                    {
+                        RegisterHostFailure(host);
+                        return (false, null, null, false);
+                    }
+
+                    using (await AcquireHostSemaphoreAsync(host))
+                    {
+                        HttpResponseMessage response = null;
+                        try
+                        {
+                            response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, url), TimeSpan.FromSeconds(3), cancellationToken);
+                        }
+                        catch
+                        {
+                            RegisterHostFailure(host);
+                            return (false, null, null, false);
+                        }
+
+                        if (response != null && response.IsSuccessStatusCode)
+                        {
+                            RegisterHostSuccess(host);
+                            var actualUrl = response.RequestMessage.RequestUri.ToString();
+                            string fastContentType = response.Content.Headers.ContentType?.MediaType?.ToLower() ?? "";
+
+                            if (fastContentType.Contains("text/html") || 
+                                fastContentType.Contains("application/json") || 
+                                fastContentType.Contains("application/xhtml+xml"))
+                            {
+                                response.Dispose();
+                                return (false, null, null, false);
+                            }
+
+                            bool isM3u8 = actualUrl.Contains(".m3u8") || 
+                                          fastContentType.Contains("mpegurl") || 
+                                          fastContentType.Contains("vnd.apple.mpegurl") ||
+                                          fastContentType.Contains("x-mpegurl");
+
+                            if (isM3u8)
+                            {
+                                string content = await response.Content.ReadAsStringAsync(cancellationToken);
+                                response.Dispose();
+                                bool m3u8Valid = VerifyM3u8ContentFast(content);
+                                return (m3u8Valid, "TV", null, false);
+                            }
+                            else
+                            {
+                                using (var stream = await response.Content.ReadAsStreamAsync(cancellationToken))
+                                {
+                                    var buffer = new byte[1024];
+                                    using (var readCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+                                    {
+                                        readCts.CancelAfter(TimeSpan.FromSeconds(1));
+                                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, readCts.Token);
+                                        response.Dispose();
+                                        if (bytesRead > 0)
+                                        {
+                                            bool htmlOrJson = IsHtmlOrJson(buffer, bytesRead);
+                                            return (!htmlOrJson, "TV", null, false);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            RegisterHostFailure(host);
+                        }
+                        response?.Dispose();
+                    }
+                }
+                catch
+                {
+                    // Silent fail
+                }
+                return (false, null, null, false);
+            }
+
+            // DETAYLI TARAMA (LibVLC ile derin analiz)
             bool httpWorking = false;
             string inferredCategory = "TV";
             string contentType = "";
+            string finalUrl = url;
 
             try
             {
                 var uri = new Uri(url);
                 var host = uri.Host;
 
-                // DNS Çözümlemesi
+                if (IsHostCircuitBroken(host)) return (false, null, null, false);
+
                 var ips = await ResolveDnsWithCacheAsync(host, cancellationToken);
                 if (ips != null && ips.Length > 0)
                 {
@@ -416,62 +467,41 @@ namespace StreamMesh.Services
                         HttpResponseMessage response = null;
                         try
                         {
-                            response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Head, url), TimeSpan.FromSeconds(2), cancellationToken);
-                            if (!response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.MethodNotAllowed)
-                            {
-                                response?.Dispose();
-                                response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, url), TimeSpan.FromSeconds(2), cancellationToken);
-                            }
+                            response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, url), TimeSpan.FromSeconds(3), cancellationToken);
                         }
                         catch
                         {
-                            try
-                            {
-                                response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, url), TimeSpan.FromSeconds(5), cancellationToken);
-                            }
-                            catch
-                            {
-                                // İki deneme de başarısız
-                            }
+                            RegisterHostFailure(host);
                         }
 
                         if (response != null && response.IsSuccessStatusCode)
                         {
-                            var actualUrl = response.RequestMessage.RequestUri.ToString();
+                            RegisterHostSuccess(host);
+                            finalUrl = response.RequestMessage.RequestUri.ToString();
                             contentType = response.Content.Headers.ContentType?.MediaType?.ToLower() ?? "";
 
                             if (!contentType.Contains("text/html") && 
                                 !contentType.Contains("application/json") && 
                                 !contentType.Contains("application/xhtml+xml"))
                             {
-                                bool isM3u8 = actualUrl.Contains(".m3u8") || 
+                                bool isM3u8 = finalUrl.Contains(".m3u8") || 
                                               contentType.Contains("mpegurl") || 
                                               contentType.Contains("vnd.apple.mpegurl") ||
                                               contentType.Contains("x-mpegurl");
 
                                 if (isM3u8)
                                 {
-                                    if (response.RequestMessage.Method == HttpMethod.Head)
-                                    {
-                                        response.Dispose();
-                                        response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, actualUrl), TimeSpan.FromSeconds(5), cancellationToken);
-                                    }
                                     string content = await response.Content.ReadAsStringAsync(cancellationToken);
-                                    httpWorking = await VerifyM3u8ContentAsync(content, actualUrl, 0, cancellationToken);
+                                    httpWorking = await VerifyM3u8ContentAsync(content, finalUrl, 0, cancellationToken);
                                 }
                                 else
                                 {
-                                    if (response.RequestMessage.Method == HttpMethod.Head)
-                                    {
-                                        response.Dispose();
-                                        response = await SendWithTimeoutAsync(() => new HttpRequestMessage(HttpMethod.Get, actualUrl), TimeSpan.FromSeconds(5), cancellationToken);
-                                    }
                                     using (var stream = await response.Content.ReadAsStreamAsync(cancellationToken))
                                     {
                                         var buffer = new byte[8192];
                                         using (var readCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                                         {
-                                            readCts.CancelAfter(TimeSpan.FromSeconds(3));
+                                            readCts.CancelAfter(TimeSpan.FromSeconds(2));
                                             int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, readCts.Token);
                                             if (bytesRead > 0)
                                             {
@@ -483,6 +513,11 @@ namespace StreamMesh.Services
                             }
                             response?.Dispose();
                         }
+                        else
+                        {
+                            RegisterHostFailure(host);
+                            response?.Dispose();
+                        }
                     }
                 }
             }
@@ -491,7 +526,6 @@ namespace StreamMesh.Services
                 httpWorking = false;
             }
 
-            // İçerik türünden kategori çıkarımı
             if (!string.IsNullOrEmpty(contentType))
             {
                 if (contentType.StartsWith("audio/") || contentType.Contains("aac") || (contentType.Contains("mpeg") && !contentType.Contains("mpegurl")))
@@ -500,7 +534,6 @@ namespace StreamMesh.Services
                 }
             }
 
-            // HTTP kontrolünden başarıyla geçen ve güvenilir MIME türüne sahip akışlar için LibVLC başlatılmaz. (Zorunlu Kural 2)
             if (httpWorking && !string.IsNullOrEmpty(contentType))
             {
                 bool isExpectedMime = contentType.Contains("mpegurl") || 
@@ -516,12 +549,11 @@ namespace StreamMesh.Services
                 }
             }
 
-            // Sadece HTTP doğrulamasından geçmeyen veya detaylı analiz gereken durumlarda LibVLC başlatılır. (Zorunlu Kural 2)
             try
             {
                 using (var libVlc = new LibVLC(new string[] { "--quiet", "--no-video-title-show" }))
                 {
-                    using (var media = new Media(libVlc, new Uri(url)))
+                    using (var media = new Media(libVlc, new Uri(finalUrl)))
                     {
                         using (var mediaPlayer = new MediaPlayer(media))
                         {
@@ -596,7 +628,7 @@ namespace StreamMesh.Services
         // Geriye Dönük Uyumlu: AnalyzeStreamWithVlcAsync
         public async Task<(bool working, string category, string resolution)> AnalyzeStreamWithVlcAsync(string url)
         {
-            var res = await VerifyStreamSmartAsync(url, CancellationToken.None);
+            var res = await VerifyStreamSmartAsync(url, CancellationToken.None, detailed: true);
             return (res.working, res.category, res.resolution);
         }
 
@@ -617,10 +649,14 @@ namespace StreamMesh.Services
             }
         }
 
-        // Akıllı Önbellek Süre Kontrolü (Zorunlu Kural 4)
-        private bool IsCacheValid(long verifiedAt, string category)
+        // Akıllı Önbellek Süre Kontrolü (Genişletilmiş)
+        private bool IsCacheValid(long verifiedAt, string category, bool isWorking)
         {
             var age = TimeSpan.FromSeconds(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - verifiedAt);
+            if (!isWorking)
+            {
+                return age.TotalMinutes < 30; // Başarısız kanallar için 30 dakika önbellek
+            }
             if (category == "Radyo")
             {
                 return age.TotalHours < 24; // Radyo: 24 saat
@@ -635,19 +671,45 @@ namespace StreamMesh.Services
             }
         }
 
-        // Paralel Doğrulama ve Raporlama Motoru (Zorunlu Kural 5)
+        private void ReportProgressThrottled(StreamCheckStats stats, Action<StreamCheckStats> progressCallback)
+        {
+            if (progressCallback == null) return;
+            long currentTicks = DateTime.UtcNow.Ticks;
+            long lastTicks = Volatile.Read(ref _lastProgressReportTicks);
+            if (currentTicks - lastTicks > TimeSpan.FromMilliseconds(200).Ticks || stats.Processed == stats.Total)
+            {
+                Volatile.Write(ref _lastProgressReportTicks, currentTicks);
+                progressCallback(stats);
+            }
+        }
+
+        private void FlushResultQueue(DatabaseService db, ConcurrentQueue<DatabaseService.VerificationResultBatchItem> queue)
+        {
+            var listToSave = new List<DatabaseService.VerificationResultBatchItem>();
+            while (listToSave.Count < 50 && queue.TryDequeue(out var item))
+            {
+                listToSave.Add(item);
+            }
+            if (listToSave.Count > 0)
+            {
+                db.SaveVerificationResultsBatch(listToSave);
+            }
+        }
+
+        // Paralel Doğrulama ve Raporlama Motoru (Toplu Kayıt & Optimizasyonlu)
         public async Task<StreamCheckStats> CheckChannelsAsync(List<Channel> channels, bool unverifiedOnly, CancellationToken cancellationToken, Action<StreamCheckStats> progressCallback)
         {
             var stats = new StreamCheckStats { Total = channels.Count, Processed = 0 };
             var db = new DatabaseService();
             var newlyVerified = new ConcurrentBag<Channel>();
+            var resultQueue = new ConcurrentQueue<DatabaseService.VerificationResultBatchItem>();
 
             var totalSw = Stopwatch.StartNew();
 
-            // Paralel işlemler için ayarlar (32 thread havuzu)
+            // Paralel işlemler için ayarlar (Hızlı tarama için maksimum 128 paralel task)
             var parallelOptions = new ParallelOptions
             {
-                MaxDegreeOfParallelism = 32,
+                MaxDegreeOfParallelism = 128,
                 CancellationToken = cancellationToken
             };
 
@@ -658,16 +720,15 @@ namespace StreamMesh.Services
                 if (channel.IsLocked)
                 {
                     lock (_statsLock) { stats.Processed++; }
-                    progressCallback?.Invoke(stats);
+                    ReportProgressThrottled(stats, progressCallback);
                     return;
                 }
 
-                // Akıllı Önbellek Kontrolü (Sadece onaysız modda veya normal akışta)
-                // unverifiedOnly = false ise 'Tüm Kanalları Kontrol Et' (Zorla Yeniden Doğrula) olarak davranır ve önbellek atlanır.
+                // Akıllı Önbellek Kontrolü
                 if (unverifiedOnly)
                 {
                     var cached = db.GetVerificationCache(channel.Id);
-                    if (cached != null && IsCacheValid(cached.Value.VerifiedAt, cached.Value.Category))
+                    if (cached != null && IsCacheValid(cached.Value.VerifiedAt, cached.Value.Category, cached.Value.IsWorking))
                     {
                         lock (_statsLock)
                         {
@@ -690,7 +751,7 @@ namespace StreamMesh.Services
 
                             stats.Processed++;
                         }
-                        progressCallback?.Invoke(stats);
+                        ReportProgressThrottled(stats, progressCallback);
                         return;
                     }
                 }
@@ -738,7 +799,8 @@ namespace StreamMesh.Services
                     }
                     else
                     {
-                        var (working, cat, res, vlcRun) = await VerifyStreamSmartAsync(url, ct);
+                        // Default: Hızlı doğrulama (detailed: false)
+                        var (working, cat, res, vlcRun) = await VerifyStreamSmartAsync(url, ct, detailed: false);
                         if (vlcRun) vlcUsed = true;
 
                         if (working)
@@ -778,10 +840,6 @@ namespace StreamMesh.Services
                         }
 
                         channel.IsVerified = true;
-                        
-                        // Önbelleğe kaydet
-                        db.SaveVerificationCache(channel.Id, channel.Category, detectedResolution, true);
-                        db.SaveChannel(channel);
 
                         if (!wasVerifiedLocally || !unverifiedOnly)
                         {
@@ -798,26 +856,44 @@ namespace StreamMesh.Services
                     lock (_statsLock)
                     {
                         channel.IsVerified = false;
-                        db.SaveVerificationCache(channel.Id, channel.Category, null, false);
-                        db.SaveChannel(channel);
                         stats.BrokenChannelIds.Add(channel.Id);
-
-                        if (!string.IsNullOrEmpty(channel.Url))
-                        {
-                            foreach (var failedUrl in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-                            {
-                                db.AddDeadLink(failedUrl);
-                            }
-                        }
                     }
+                }
+
+                // SQLite toplu kayda ekle
+                var batchItem = new DatabaseService.VerificationResultBatchItem
+                {
+                    Channel = channel,
+                    Category = detectedCategory ?? channel.Category,
+                    Resolution = detectedResolution,
+                    IsWorking = anyWorking,
+                    DeadUrls = anyWorking ? null : channel.Url?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList()
+                };
+                resultQueue.Enqueue(batchItem);
+
+                // Queue boyutu 50'yi geçtiyse toplu yazdır
+                if (resultQueue.Count >= 50)
+                {
+                    FlushResultQueue(db, resultQueue);
                 }
 
                 lock (_statsLock)
                 {
                     stats.Processed++;
                 }
-                progressCallback?.Invoke(stats);
+                ReportProgressThrottled(stats, progressCallback);
             });
+
+            // Geri kalan kuyruğu diske kaydet
+            var finalBatch = new List<DatabaseService.VerificationResultBatchItem>();
+            while (resultQueue.TryDequeue(out var item))
+            {
+                finalBatch.Add(item);
+            }
+            if (finalBatch.Count > 0)
+            {
+                db.SaveVerificationResultsBatch(finalBatch);
+            }
 
             totalSw.Stop();
 
@@ -826,12 +902,15 @@ namespace StreamMesh.Services
                 stats.AverageCheckTimeMs = stats.Processed > 0 ? (double)totalSw.ElapsedMilliseconds / stats.Processed : 0;
             }
 
-            // Arka planda Firebase senkronizasyonu toplu (Batch) olarak gönderilir (Zorunlu Kural 10)
+            // Arka planda Firebase senkronizasyonu toplu (Batch) olarak gönderilir
             if (newlyVerified.Count > 0)
             {
                 var listToSend = newlyVerified.ToList();
                 _ = GitHubSyncService.PushNewChannelsToFirebasePoolAsync(listToSend);
             }
+
+            // En son durumun kesin yansıması için progressCallback'i son bir kez zorla tetikle
+            progressCallback?.Invoke(stats);
 
             return stats;
         }
