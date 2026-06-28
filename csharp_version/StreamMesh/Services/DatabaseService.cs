@@ -90,6 +90,13 @@ namespace StreamMesh.Services
                         Duration INTEGER,
                         LastWatched TEXT
                     );
+                    CREATE TABLE IF NOT EXISTS VerificationCache (
+                        ChannelId TEXT PRIMARY KEY,
+                        VerifiedAt INTEGER,
+                        Category TEXT,
+                        Resolution TEXT,
+                        IsWorking INTEGER
+                    );
                 ";
                 command.ExecuteNonQuery();
 
@@ -198,6 +205,9 @@ namespace StreamMesh.Services
                         normalizeCmd.ExecuteNonQuery();
                     }
                 } catch { }
+
+                EnsureNormalizationCacheTableExists();
+                NormalizeExistingUnknownChannels();
             }
         }
 
@@ -254,6 +264,45 @@ namespace StreamMesh.Services
             {
                 LogService.LogError("IsLinkDead error", ex);
                 return false;
+            }
+        }
+
+        public List<Dictionary<string, object>> ExecuteRawQuery(string sql)
+        {
+            var results = new List<Dictionary<string, object>>();
+            using (var connection = new SqliteConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = sql;
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var row = new Dictionary<string, object>();
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                            }
+                            results.Add(row);
+                        }
+                    }
+                }
+            }
+            return results;
+        }
+
+        public int ExecuteRawNonQuery(string sql)
+        {
+            using (var connection = new SqliteConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = sql;
+                    return command.ExecuteNonQuery();
+                }
             }
         }
     }

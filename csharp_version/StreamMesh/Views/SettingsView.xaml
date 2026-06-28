@@ -123,17 +123,6 @@
                                     Click="AutoMatchLogosBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#8b5cf6" Foreground="White" />
                         </StackPanel>
                         <TextBlock x:Name="LogoMatchStatusText" Foreground="#cbd5e1" TextWrapping="Wrap" Margin="0,0,0,10"/>
-
-                        <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
-
-                        <TextBlock Text="🎞️ Film, Dizi ve Yayın Güncelleyici" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
-                        <TextBlock Text="Dış film, dizi ve canlı yayın kaynaklarını (Zerk Film, Power Cinema, viziTV ve diğerleri) tarar, yeni doğrulanmış yayınları otomatik veritabanına ekler ve yedek yayın olarak birleştirir." Foreground="#94a3b8" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Button x:Name="AutoUpdateMoviesBtn" Content="Yayınları ve Filmleri Şimdi Güncelle" Width="260" Height="40" Margin="0,0,10,0"
-                                    Click="AutoUpdateMoviesBtn_Click" Style="{StaticResource PrimaryButtonStyle}" Background="#10b981" Foreground="White" />
-                            <CheckBox x:Name="WeeklyUpdateCheckBox" Content="Haftalık Arka Planda Otomatik Güncelle" Foreground="#94a3b8" VerticalAlignment="Center" Margin="10,0,0,0" Checked="WeeklyUpdateCheckBox_Changed" Unchecked="WeeklyUpdateCheckBox_Changed"/>
-                        </StackPanel>
-                        <TextBlock x:Name="MovieUpdateStatusText" Foreground="#cbd5e1" TextWrapping="Wrap" Margin="0,0,0,10"/>
                     </StackPanel>
                     </ScrollViewer>
                 </Border>

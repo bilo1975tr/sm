@@ -457,63 +457,6 @@ namespace StreamMesh.Views
                 return;
             }
 
-            if (query == "en büyük galatasaray" || query == "en buyuk galatasaray")
-            {
-                SearchBox.Text = "";
-                
-                if (StreamMesh.Services.P2P.UserService.CurrentUser == null)
-                {
-                    StreamMesh.Services.P2P.UserService.GuestLogin();
-                }
-
-                var user = StreamMesh.Services.P2P.UserService.CurrentUser;
-                bool currentlyPremium = user != null && user.IsPremium && user.PremiumExpiry > DateTime.UtcNow;
-
-                if (currentlyPremium)
-                {
-                    if (user != null)
-                    {
-                        user.IsPremium = false;
-                        user.PremiumExpiry = DateTime.MinValue;
-                        StreamMesh.Services.P2P.UserService.SaveProfile(user);
-                    }
-                    _databaseService.SetSetting("IsVIP", "false");
-
-                    // Clean premium URLs and delete channels if no URLs remain
-                    _databaseService.SyncAndCleanPremiumChannels();
-
-                    MessageBox.Show("ℹ️ Premium üyeliğiniz iptal edildi ve premium kanallara ait özel yayın adresleri listenizden temizlendi.", "Premium İptal Edildi", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    LoadChannels();
-                    return;
-                }
-                else
-                {
-                    if (user != null)
-                    {
-                        user.IsPremium = true;
-                        if (user.PremiumExpiry < DateTime.UtcNow)
-                        {
-                            user.PremiumExpiry = DateTime.UtcNow.AddMonths(1);
-                        }
-                        else
-                        {
-                            user.PremiumExpiry = user.PremiumExpiry.AddMonths(1);
-                        }
-                        StreamMesh.Services.P2P.UserService.SaveProfile(user);
-                    }
-                    _databaseService.SetSetting("IsVIP", "true");
-
-                    // Insert Premium/GS channels
-                    _databaseService.InsertPremiumChannels();
-
-                    MessageBox.Show("🎉 Tebrikler! 'En Büyük Galatasaray' şifresini buldunuz!\n\n1 Aylık Premium VIP üyeliğiniz aktif edildi ve özel taraftar kanalları listenize eklendi!\n\nŞampiyon Cimbom! 🦁💛❤️", "Premium Aktif Edildi", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    LoadChannels();
-                    return;
-                }
-            }
-
             _currentPage = 1;
             FilterChannels();
         }

@@ -114,7 +114,6 @@ namespace StreamMesh.Views
                         Lang1Combo.SelectedItem = profile.Languages.Count > 1 ? profile.Languages[1] : "Hiçbiri";
                         Lang2Combo.SelectedItem = profile.Languages.Count > 2 ? profile.Languages[2] : "Hiçbiri";
                     }
-                    WeeklyUpdateCheckBox.IsChecked = profile.WeeklyMovieAndChannelUpdateEnabled;
                 }
             }
             catch { }
@@ -857,46 +856,6 @@ namespace StreamMesh.Views
             {
                 AutoMatchLogosBtn.IsEnabled = true;
             }
-        }
-
-        private async void AutoUpdateMoviesBtn_Click(object sender, RoutedEventArgs e)
-        {
-            AutoUpdateMoviesBtn.IsEnabled = false;
-            MovieUpdateStatusText.Text = "Havuz kaynakları taranıyor...";
-
-            try
-            {
-                int updated = await StreamMesh.Services.MovieUpdaterService.Instance.UpdateResourcesAsync((msg) =>
-                {
-                    Dispatcher.Invoke(() => MovieUpdateStatusText.Text = msg);
-                });
-
-                MessageBox.Show($"Otomatik güncelleme ve yedek birleştirme tamamlandı!\nToplam {updated} yeni/yedek yayın veritabanı ile senkronize edildi.", "İşlem Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("AutoUpdateMovies error", ex);
-                MovieUpdateStatusText.Text = "Hata oluştu";
-                MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                AutoUpdateMoviesBtn.IsEnabled = true;
-            }
-        }
-
-        private void WeeklyUpdateCheckBox_Changed(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var profile = UserService.GetProfile();
-                if (profile != null)
-                {
-                    profile.WeeklyMovieAndChannelUpdateEnabled = WeeklyUpdateCheckBox.IsChecked == true;
-                    UserService.SaveProfile(profile);
-                }
-            }
-            catch { }
         }
 
         private void OpenEpgMatchWindowBtn_Click(object sender, RoutedEventArgs e)

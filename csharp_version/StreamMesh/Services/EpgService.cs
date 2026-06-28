@@ -60,63 +60,71 @@ namespace StreamMesh.Services
                                 Async = true
                             };
 
-                            using (var reader = XmlReader.Create(xmlStream, settings))
+                            try
                             {
-                                string currentChannelId = null;
-                                string currentElemName = null;
-                                EpgProgram currentProg = null;
-
-                                while (await reader.ReadAsync())
+                                using (var reader = XmlReader.Create(xmlStream, settings))
                                 {
-                                    if (reader.NodeType == XmlNodeType.Element)
+                                    string currentChannelId = null;
+                                    string currentElemName = null;
+                                    EpgProgram currentProg = null;
+
+                                    while (await reader.ReadAsync())
                                     {
-                                        currentElemName = reader.Name;
-                                        if (currentElemName == "channel")
+                                        if (reader.NodeType == XmlNodeType.Element)
                                         {
-                                            currentChannelId = reader.GetAttribute("id");
-                                            if (!string.IsNullOrEmpty(currentChannelId) && !channelsMap.ContainsKey(currentChannelId))
-                                                channelsMap[currentChannelId] = currentChannelId;
-                                        }
-                                        else if (currentElemName == "programme")
-                                        {
-                                            currentProg = new EpgProgram
+                                            currentElemName = reader.Name;
+                                            if (currentElemName == "channel")
                                             {
-                                                StartTime = ParseXmltvDate(reader.GetAttribute("start")),
-                                                EndTime = ParseXmltvDate(reader.GetAttribute("stop")),
-                                                SourceUrl = url,
-                                                ChannelName = reader.GetAttribute("channel") // Geçici olarak teknik ID'yi ata
-                                            };
+                                                currentChannelId = reader.GetAttribute("id");
+                                                if (!string.IsNullOrEmpty(currentChannelId) && !channelsMap.ContainsKey(currentChannelId))
+                                                    channelsMap[currentChannelId] = currentChannelId;
+                                            }
+                                            else if (currentElemName == "programme")
+                                            {
+                                                currentProg = new EpgProgram
+                                                {
+                                                    StartTime = ParseXmltvDate(reader.GetAttribute("start")),
+                                                    EndTime = ParseXmltvDate(reader.GetAttribute("stop")),
+                                                    SourceUrl = url,
+                                                    ChannelName = reader.GetAttribute("channel") // Geçici olarak teknik ID'yi ata
+                                                };
+                                            }
                                         }
-                                    }
-                                    else if (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA)
-                                    {
-                                        string value = reader.Value;
-                                        if (currentElemName == "display-name" && currentChannelId != null)
+                                        else if (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA)
                                         {
-                                            if (!string.IsNullOrEmpty(value))
-                                                channelsMap[currentChannelId] = value;
+                                            string value = reader.Value;
+                                            if (currentElemName == "display-name" && currentChannelId != null)
+                                            {
+                                                if (!string.IsNullOrEmpty(value))
+                                                    channelsMap[currentChannelId] = value;
+                                            }
+                                            else if (currentProg != null)
+                                            {
+                                                if (currentElemName == "title") currentProg.Title = value;
+                                                else if (currentElemName == "desc") currentProg.Description = value;
+                                            }
                                         }
-                                        else if (currentProg != null)
+                                        else if (reader.NodeType == XmlNodeType.EndElement)
                                         {
-                                            if (currentElemName == "title") currentProg.Title = value;
-                                            else if (currentElemName == "desc") currentProg.Description = value;
+                                            if (reader.Name == "programme" && currentProg != null)
+                                            {
+                                                if (!string.IsNullOrEmpty(currentProg.Title))
+                                                    programs.Add(currentProg);
+                                                currentProg = null;
+                                            }
+                                            else if (reader.Name == "channel")
+                                            {
+                                                currentChannelId = null;
+                                            }
+                                            currentElemName = null;
                                         }
-                                    }
-                                    else if (reader.NodeType == XmlNodeType.EndElement)
-                                    {
-                                        if (reader.Name == "programme" && currentProg != null)
-                                        {
-                                            if (!string.IsNullOrEmpty(currentProg.Title))
-                                                programs.Add(currentProg);
-                                            currentProg = null;
-                                        }
-                                        else if (reader.Name == "channel")
-                                        {
-                                            currentChannelId = null;
-                                        }
-                                        currentElemName = null;
                                     }
                                 }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"EPG XML Ayrıştırma Hatası (URL: {url}): {ex.Message}");
+                                return false;
                             }
 
                             // Gecikmeli Eşleştirme: Program isimlerini gerçek kanal isimleriyle güncelle

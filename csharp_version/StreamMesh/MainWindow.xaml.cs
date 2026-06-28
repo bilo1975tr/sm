@@ -4,6 +4,7 @@ using System.Windows;
 using LibVLCSharp.Shared;
 using StreamMesh.Views;
 using StreamMesh.Services;
+using StreamMesh.Services.P2P;
 
 namespace StreamMesh
 {
@@ -35,8 +36,7 @@ namespace StreamMesh
             // Core'u sadece ana pencere başlarken 1 kere çağırıyoruz.
             Core.Initialize();
 
-            // Sadece gerekli olduğunda yüklenmeleri için ilk açılışta Home ve Player hazırlıyoruz
-            _playerView = new PlayerView();
+            // Sadece gerekli olduğunda yüklenmeleri için ilk açılışta Home hazırlıyoruz
             _homeView = new HomeView();
             
             _homeView.ChannelSelectedEvent += OnChannelSelected;
@@ -46,18 +46,38 @@ namespace StreamMesh
             MainContent.Content = _homeView;
         }
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            LogService.Log("[Startup] MainWindow_Loaded started.");
+
             // Güncelleme kontrolü yap
             _ = StreamMesh.Services.UpdateService.CheckForUpdatesAsync();
 
-            await InventoryService.CheckAndDownloadInventoryAsync();
-
-            if (InventoryService.AreComponentsMissing())
+            // Bileşen kontrolü ve indirme işlemlerini asenkron olarak arka plana alıyoruz
+            _ = Task.Run(async () =>
             {
-                var missingWindow = new StreamMesh.Windows.MissingComponentsWindow();
-                missingWindow.ShowDialog();
-            }
+                try
+                {
+                    var invStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    await InventoryService.CheckAndDownloadInventoryAsync();
+                    invStopwatch.Stop();
+                    LogService.Log($"[Startup] InventoryService.CheckAndDownloadInventoryAsync took {invStopwatch.ElapsedMilliseconds} ms.");
+
+                    if (InventoryService.AreComponentsMissing())
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            var missingWindow = new StreamMesh.Windows.MissingComponentsWindow();
+                            missingWindow.ShowDialog();
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("Inventory check background task failed", ex);
+                }
+            });
 
             // EPG Otomatik Güncelleme Zamanlayıcısını Arka Planda Başlat (24 saatte bir günceller)
             _ = Task.Run(async () =>
@@ -73,24 +93,44 @@ namespace StreamMesh
                 }
             });
 
-            // Haftalık Film, Dizi ve Canlı Yayın Listelerinin Arka Planda Güncellenmesi
+            // Haftalık Otomatik Güncelleme Arka Plan Görevi
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    // Biraz gecikmeyle başlatıyoruz uygulama açılışında yük yaratmasın diye
-                    await Task.Delay(TimeSpan.FromSeconds(20));
-                    await MovieUpdaterService.Instance.RunWeeklyUpdateIfNeededAsync();
+                    await Task.Delay(TimeSpan.FromSeconds(30));
+                    var profile = UserService.GetProfile();
+                    if (profile != null && profile.WeeklyMovieAndChannelUpdateEnabled)
+                    {
+                        if ((DateTime.Now - profile.LastMovieAndChannelUpdateTime).TotalDays >= 7)
+                        {
+                            LogService.Log("Weekly scheduled auto update triggered.");
+                            await AutoUpdateService.PerformAutoUpdateAsync(msg => LogService.Log($"[AutoUpdate] {msg}"));
+                            profile.LastMovieAndChannelUpdateTime = DateTime.Now;
+                            UserService.SaveProfile(profile);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
                     LogService.LogError("Weekly background auto updater failure", ex);
                 }
             });
+
+            stopwatch.Stop();
+            LogService.Log($"[Startup] MainWindow_Loaded completed in {stopwatch.ElapsedMilliseconds} ms.");
         }
 
         private void OnChannelSelected(Models.Channel channel, List<Models.Channel> playlist)
         {
+            if (_playerView == null)
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                _playerView = new PlayerView();
+                sw.Stop();
+                LogService.Log($"[LazyLoad] PlayerView created in {sw.ElapsedMilliseconds} ms.");
+            }
+
             // Switch to Player tab
             NavPlayer.IsChecked = true;
             MainContent.Content = _playerView;

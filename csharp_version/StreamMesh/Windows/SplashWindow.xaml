@@ -1,0 +1,42 @@
+<Window x:Class="StreamMesh.Windows.SplashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="StreamMesh" Height="320" Width="500"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" AllowsTransparency="True" Background="Transparent" Topmost="True">
+    <Border Background="#0f172a" CornerRadius="16" BorderBrush="#334155" BorderThickness="1">
+        <Grid Margin="30">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Logo / Başlık -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,10">
+                <TextBlock Text="Stream" FontWeight="Bold" FontSize="36" Foreground="#38bdf8" FontFamily="Segoe UI" />
+                <TextBlock Text="Mesh" FontWeight="Normal" FontSize="36" Foreground="#f8fafc" FontFamily="Segoe UI" />
+            </StackPanel>
+
+            <!-- Slogan veya Alt Başlık -->
+            <TextBlock Grid.Row="1" Text="Yeni Nesil IPTV &amp; P2P Medya Merkezi" Foreground="#94a3b8" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Top" />
+
+            <!-- Yüklenme Durumu Metni -->
+            <TextBlock x:Name="StatusText" Grid.Row="2" Text="Uygulama hazırlanıyor..." Foreground="#cbd5e1" FontSize="13" HorizontalAlignment="Left" Margin="5,0,0,8" />
+
+            <!-- ProgressBar -->
+            <Grid Grid.Row="3" Margin="5,0,5,10">
+                <Border Background="#1e293b" Height="8" CornerRadius="4"/>
+                <!-- İlerleme Çubuğu (Dinamik) -->
+                <ProgressBar x:Name="LoadingProgress" Minimum="0" Maximum="100" Value="10" Height="8" BorderThickness="0" Background="Transparent">
+                    <ProgressBar.Foreground>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="#0284c7" Offset="0"/>
+                            <GradientStop Color="#38bdf8" Offset="1"/>
+                        </LinearGradientBrush>
+                    </ProgressBar.Foreground>
+                </ProgressBar>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

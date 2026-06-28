@@ -21,6 +21,8 @@ namespace StreamMesh.Services
         private static readonly HttpClient HttpClientInstance = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         private static List<LogoSearchResult> _cachedLogos = null;
 
+        public static List<LogoSearchResult> CachedLogos => _cachedLogos;
+
         private static string GetCountryCodeFromLanguageOrCountry(string name)
         {
             if (string.IsNullOrEmpty(name)) return null;

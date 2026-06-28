@@ -9,6 +9,8 @@ namespace StreamMesh.Services
     {
         public void SaveChannel(Channel channel)
         {
+            if (channel == null) return;
+            SmartNormalizationEngine.Instance.NormalizeChannel(channel);
             try
             {
                 using (var connection = new SqliteConnection(ConnectionString))
@@ -187,7 +189,7 @@ namespace StreamMesh.Services
 
                         foreach (var channel in channels)
                         {
-                            channel.Language = Channel.NormalizeLanguage(channel.Language);
+                            SmartNormalizationEngine.Instance.NormalizeChannel(channel);
 
                             // Ölü link filtreleme
                             if (!string.IsNullOrEmpty(channel.Url))
