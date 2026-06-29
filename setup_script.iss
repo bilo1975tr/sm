@@ -1,7 +1,7 @@
 [Setup]
 AppName=StreamMesh
 AppVersion=0.0 alfa 00060
-DefaultDirName={pf}\StreamMesh
+DefaultDirName={localappdata}\StreamMesh
 DefaultGroupName=StreamMesh
 UninstallDisplayIcon={app}\StreamMesh.exe
 Compression=lzma2
@@ -9,6 +9,7 @@ SolidCompression=yes
 OutputDir=Output
 OutputBaseFilename=StreamMesh_Setup
 SetupIconFile=icons\app_icon.ico
+PrivilegesRequired=lowest
 
 [Files]
 Source: "app\StreamMesh.exe"; DestDir: "{app}"; Flags: ignoreversion
