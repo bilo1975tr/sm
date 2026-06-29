@@ -8,7 +8,6 @@ Compression=lzma2
 SolidCompression=yes
 OutputDir=Output
 OutputBaseFilename=StreamMesh_Setup
-SetupIconFile=icons\app_icon.ico
 PrivilegesRequired=lowest
 
 [Files]
@@ -18,9 +17,9 @@ Source: "logos\*"; DestDir: "{app}\logos"; Flags: ignoreversion recursesubdirs c
 Source: "icons\*"; DestDir: "{app}\icons"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\icons\app_icon.ico"
+Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"
 Name: "{group}\Uninstall StreamMesh"; Filename: "{uninstallexe}"
-Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\icons\app_icon.ico"; Tasks: desktopicon
+Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Masaüstü kısayolu oluştur"; GroupDescription: "Ek Seçenekler:"
