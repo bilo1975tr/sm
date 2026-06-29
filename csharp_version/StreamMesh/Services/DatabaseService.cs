@@ -185,6 +185,12 @@ namespace StreamMesh.Services
                     indexCmd.ExecuteNonQuery();
                 } catch { }
 
+                try {
+                    var indexCmd2 = connection.CreateCommand();
+                    indexCmd2.CommandText = "CREATE INDEX IF NOT EXISTS idx_epg_times ON EpgPrograms (StartTime, EndTime);";
+                    indexCmd2.ExecuteNonQuery();
+                } catch { }
+
                 // Cihaz veri tabanındaki mevcut dilleri normalize etme işlemi (SQL performans optimizasyonu)
                 try {
                     using (var normalizeCmd = connection.CreateCommand())

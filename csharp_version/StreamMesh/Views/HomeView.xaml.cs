@@ -13,6 +13,8 @@ namespace StreamMesh.Views
     {
         private DatabaseService _databaseService;
         private List<Channel> _allChannels;
+        private System.Windows.Threading.DispatcherTimer _searchDebounceTimer;
+        private bool _isLoadingChannels = false;
 
         private string _selectedCategory = "Tümü";
         private int _currentPage = 1;
@@ -23,43 +25,74 @@ namespace StreamMesh.Views
         {
             InitializeComponent();
             _databaseService = new DatabaseService();
+
+            _searchDebounceTimer = new System.Windows.Threading.DispatcherTimer();
+            _searchDebounceTimer.Interval = TimeSpan.FromMilliseconds(300);
+            _searchDebounceTimer.Tick += (s, ev) =>
+            {
+                _searchDebounceTimer.Stop();
+                FilterChannels();
+            };
+
             LoadChannels();
         }
 
         public void LoadChannels()
         {
-            _databaseService.SyncAndCleanPremiumChannels();
-            _allChannels = _databaseService.GetAllChannels();
-            _currentPage = 1;
+            if (_isLoadingChannels) return;
+            _isLoadingChannels = true;
 
-            if (StreamMesh.Services.P2P.UserService.CurrentUser != null)
+            System.Threading.Tasks.Task.Run(() =>
             {
-                if (StreamMesh.Services.P2P.UserService.CurrentUser.IsPremium)
+                try
                 {
-                    SponsorBannerBorder.Visibility = Visibility.Collapsed;
+                    _databaseService.SyncAndCleanPremiumChannels();
+                    var channels = _databaseService.GetAllChannels();
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        _allChannels = channels;
+                        _currentPage = 1;
+
+                        if (StreamMesh.Services.P2P.UserService.CurrentUser != null)
+                        {
+                            if (StreamMesh.Services.P2P.UserService.CurrentUser.IsPremium)
+                            {
+                                SponsorBannerBorder.Visibility = Visibility.Collapsed;
+                            }
+                            else
+                            {
+                                SponsorBannerBorder.Visibility = Visibility.Visible;
+                                var refCode = StreamMesh.Services.P2P.UserService.CurrentUser.ReferralCode;
+                                HomeAdText.Text = $"Arkadaşını Getir VIP Kazan!\nReferans Kodun: {refCode}";
+                            }
+                        }
+                        else
+                        {
+                            SponsorBannerBorder.Visibility = Visibility.Visible;
+                        }
+
+                        bool isMovie = _selectedCategory != null && 
+                                       (_selectedCategory.ToUpper().Contains("FİLM") || 
+                                        _selectedCategory.ToUpper().Contains("FILM") || 
+                                        _selectedCategory.ToUpper().Contains("MOVIE"));
+                        if (isMovie && MovieFiltersPanel != null)
+                        {
+                            PopulateMovieFilters();
+                        }
+
+                        FilterChannels();
+                    });
                 }
-                else
+                catch (Exception ex)
                 {
-                    SponsorBannerBorder.Visibility = Visibility.Visible;
-                    var refCode = StreamMesh.Services.P2P.UserService.CurrentUser.ReferralCode;
-                    HomeAdText.Text = $"Arkadaşını Getir VIP Kazan!\nReferans Kodun: {refCode}";
+                    LogService.LogError("LoadChannels background task failed", ex);
                 }
-            }
-            else
-            {
-                SponsorBannerBorder.Visibility = Visibility.Visible;
-            }
-
-            bool isMovie = _selectedCategory != null && 
-                           (_selectedCategory.ToUpper().Contains("FİLM") || 
-                            _selectedCategory.ToUpper().Contains("FILM") || 
-                            _selectedCategory.ToUpper().Contains("MOVIE"));
-            if (isMovie && MovieFiltersPanel != null)
-            {
-                PopulateMovieFilters();
-            }
-
-            FilterChannels();
+                finally
+                {
+                    _isLoadingChannels = false;
+                }
+            });
         }
 
         private void UserControl_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -291,25 +324,7 @@ namespace StreamMesh.Views
 
             var paged = _filteredChannels.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
 
-            var epgService = new StreamMesh.Services.EpgService();
-            StreamMesh.Services.LogService.Log($"[HomeView] Sayfadaki {paged.Count} kanal için TOPLU EPG aranıyor...");
-            
-            var epgDict = epgService.GetCurrentEpgsForChannels(paged);
-
-            foreach (var ch in paged)
-            {
-                if (epgDict.TryGetValue(ch.Id, out var curEpg))
-                {
-                    ch.CurrentEpgTitle = curEpg.Title;
-                    ch.CurrentEpgTime = $"{curEpg.StartTime:HH:mm} - {curEpg.EndTime:HH:mm}";
-                }
-                else
-                {
-                    ch.CurrentEpgTitle = "EPG Bulunamadı";
-                    ch.CurrentEpgTime = "--:--";
-                }
-            }
-
+            // Set items immediately so UI is extremely fast and responsive
             ChannelGrid.ItemsSource = paged;
             TotalCountText.Text = string.Format(LocalizationManager.Instance["Home_Total"], _filteredChannels.Count);
             
@@ -320,6 +335,40 @@ namespace StreamMesh.Views
             }
             PrevPageBtn.IsEnabled = _currentPage > 1;
             NextPageBtn.IsEnabled = _currentPage < _totalPages;
+
+            // Load EPG data asynchronously in background to avoid any UI thread freeze
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    var epgService = new StreamMesh.Services.EpgService();
+                    var epgDict = epgService.GetCurrentEpgsForChannels(paged);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        foreach (var ch in paged)
+                        {
+                            if (epgDict.TryGetValue(ch.Id, out var curEpg))
+                            {
+                                ch.CurrentEpgTitle = curEpg.Title;
+                                ch.CurrentEpgTime = $"{curEpg.StartTime:HH:mm} - {curEpg.EndTime:HH:mm}";
+                            }
+                            else
+                            {
+                                ch.CurrentEpgTitle = "EPG Bulunamadı";
+                                ch.CurrentEpgTime = "--:--";
+                            }
+                        }
+
+                        // Refresh items to display the loaded EPG info
+                        ChannelGrid.Items.Refresh();
+                    });
+                }
+                catch (Exception ex)
+                {
+                    StreamMesh.Services.LogService.LogError("Background EPG load failed", ex);
+                }
+            });
         }
 
         private void Category_Click(object sender, RoutedEventArgs e)
@@ -458,7 +507,8 @@ namespace StreamMesh.Views
             }
 
             _currentPage = 1;
-            FilterChannels();
+            _searchDebounceTimer.Stop();
+            _searchDebounceTimer.Start();
         }
 
         private void PrevPageBtn_Click(object sender, RoutedEventArgs e)

@@ -11,6 +11,91 @@ namespace StreamMesh.Services
         {
             if (channel == null) return;
             SmartNormalizationEngine.Instance.NormalizeChannel(channel);
+            
+            // Smart Single Channel Merging
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    
+                    // Check if this channel ID already exists in the database
+                    bool idExists = false;
+                    using (var checkIdCmd = connection.CreateCommand())
+                    {
+                        checkIdCmd.CommandText = "SELECT COUNT(*) FROM Channels WHERE Id = @Id";
+                        checkIdCmd.Parameters.AddWithValue("@Id", channel.Id);
+                        idExists = Convert.ToInt32(checkIdCmd.ExecuteScalar()) > 0;
+                    }
+
+                    // If it is a new channel being added, look for existing channels with the same normalized name and language
+                    if (!idExists && !string.IsNullOrEmpty(channel.Name))
+                    {
+                        string normName = NormalizeChannelName(channel.Name);
+                        channel.Language = Channel.NormalizeLanguage(channel.Language);
+
+                        using (var findCmd = connection.CreateCommand())
+                        {
+                            findCmd.CommandText = "SELECT Id, Name, Url, Language, EpgId, EpgUrl, LogoUrl, Category, GroupTitle, IsFavorite, IsVerified FROM Channels";
+                            using (var reader = findCmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    string dbId = reader.GetString(0);
+                                    string dbName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                                    string dbUrl = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+                                    string dbLang = reader.IsDBNull(3) ? "Bilinmiyor" : reader.GetString(3);
+
+                                    if (NormalizeChannelName(dbName) == normName && Channel.NormalizeLanguage(dbLang) == channel.Language)
+                                    {
+                                        // Merge urls
+                                        var mergedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                                        if (!string.IsNullOrEmpty(dbUrl))
+                                        {
+                                            foreach (var u in dbUrl.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                                mergedUrls.Add(u.Trim());
+                                        }
+                                        if (!string.IsNullOrEmpty(channel.Url))
+                                        {
+                                            foreach (var u in channel.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                                                mergedUrls.Add(u.Trim());
+                                        }
+
+                                        // Reuse existing channel ID to trigger an UPDATE on conflict / overwrite
+                                        channel.Id = dbId;
+                                        channel.Url = string.Join(",", mergedUrls);
+
+                                        // Merge attributes safely
+                                        if (string.IsNullOrEmpty(channel.EpgId))
+                                            channel.EpgId = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+                                        if (string.IsNullOrEmpty(channel.EpgUrl))
+                                            channel.EpgUrl = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
+                                        if (string.IsNullOrEmpty(channel.LogoUrl))
+                                            channel.LogoUrl = reader.IsDBNull(6) ? string.Empty : reader.GetString(6);
+                                        if (string.IsNullOrEmpty(channel.Category))
+                                            channel.Category = reader.IsDBNull(7) ? "TV" : reader.GetString(7);
+                                        if (string.IsNullOrEmpty(channel.GroupTitle))
+                                            channel.GroupTitle = reader.IsDBNull(8) ? "Genel" : reader.GetString(8);
+                                        
+                                        bool dbIsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1;
+                                        bool dbIsVerified = !reader.IsDBNull(10) && reader.GetInt32(10) == 1;
+                                        
+                                        if (dbIsFavorite) channel.IsFavorite = true;
+                                        if (dbIsVerified) channel.IsVerified = true;
+                                        
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"SaveChannel pre-merge failed for {channel.Name}", ex);
+            }
+
             try
             {
                 using (var connection = new SqliteConnection(ConnectionString))

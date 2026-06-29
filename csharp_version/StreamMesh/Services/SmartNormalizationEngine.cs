@@ -292,6 +292,20 @@ namespace StreamMesh.Services
                 if (norm != "Bilinmiyor") return norm;
             }
 
+            // 1. Prioritize explicit channel name tags (e.g. "[DE]", "TR:") over vague group titles
+            if (!string.IsNullOrEmpty(channelName))
+            {
+                string cleanName = channelName.ToUpper(new System.Globalization.CultureInfo("tr-TR"));
+                if (cleanName.StartsWith("TR:") || cleanName.StartsWith("[TR]") || cleanName.Contains("(TR)") || cleanName.Contains(" TÜRK ") || cleanName.Contains(" TURK ")) return "Türkçe";
+                if (cleanName.StartsWith("DE:") || cleanName.StartsWith("[DE]") || cleanName.Contains("(DE)")) return "Almanca";
+                if (cleanName.StartsWith("EN:") || cleanName.StartsWith("UK:") || cleanName.StartsWith("US:") || cleanName.StartsWith("[EN]") || cleanName.Contains("(EN)")) return "İngilizce";
+                if (cleanName.StartsWith("FR:") || cleanName.StartsWith("[FR]") || cleanName.Contains("(FR)")) return "Fransızca";
+                if (cleanName.StartsWith("ES:") || cleanName.StartsWith("[ES]") || cleanName.Contains("(ES)")) return "İspanyolca";
+                if (cleanName.StartsWith("RU:") || cleanName.StartsWith("[RU]") || cleanName.Contains("(RU)")) return "Rusça";
+                if (cleanName.StartsWith("IT:") || cleanName.StartsWith("[IT]") || cleanName.Contains("(IT)")) return "İtalyanca";
+                if (cleanName.StartsWith("AR:") || cleanName.StartsWith("[AR]") || cleanName.Contains("(AR)")) return "Arapça";
+            }
+
             if (!string.IsNullOrEmpty(playlistUrl))
             {
                 string lowerUrl = playlistUrl.ToLowerInvariant();
@@ -305,28 +319,18 @@ namespace StreamMesh.Services
                 if (lowerUrl.Contains("/ara/") || lowerUrl.Contains("/ar/") || lowerUrl.Contains("arabic") || lowerUrl.Contains("ar.m3u")) return "Arapça";
             }
 
+            // 2. Fallback to group and tag title checks. Use exact word matching for two-letter codes to avoid "Arama" matching "ar"
             string combinedGroup = $"{groupTitle} {tvgGroup}".ToLower(new System.Globalization.CultureInfo("tr-TR"));
-            if (combinedGroup.Contains("türk") || combinedGroup.Contains("turk") || combinedGroup.Contains("turkish") || combinedGroup.Contains(" tr")) return "Türkçe";
-            if (combinedGroup.Contains("almanca") || combinedGroup.Contains("deutsch") || combinedGroup.Contains("german") || combinedGroup.Contains(" de")) return "Almanca";
-            if (combinedGroup.Contains("ingilizce") || combinedGroup.Contains("english") || combinedGroup.Contains(" en")) return "İngilizce";
-            if (combinedGroup.Contains("fransızca") || combinedGroup.Contains("french") || combinedGroup.Contains("français") || combinedGroup.Contains(" fr")) return "Fransızca";
-            if (combinedGroup.Contains("ispanyolca") || combinedGroup.Contains("spanish") || combinedGroup.Contains("español") || combinedGroup.Contains(" es")) return "İspanyolca";
-            if (combinedGroup.Contains("rusça") || combinedGroup.Contains("russian") || combinedGroup.Contains("русский") || combinedGroup.Contains(" ru")) return "Rusça";
-            if (combinedGroup.Contains("italyanca") || combinedGroup.Contains("italian") || combinedGroup.Contains("italiano") || combinedGroup.Contains(" it")) return "İtalyanca";
-            if (combinedGroup.Contains("arapça") || combinedGroup.Contains("arabic") || combinedGroup.Contains(" ar")) return "Arapça";
+            var words = new HashSet<string>(combinedGroup.Split(new[] { ' ', '_', '-', '/', '[', ']', '(', ')', ':' }, StringSplitOptions.RemoveEmptyEntries), StringComparer.OrdinalIgnoreCase);
 
-            if (!string.IsNullOrEmpty(channelName))
-            {
-                string cleanName = channelName.ToUpper(new System.Globalization.CultureInfo("tr-TR"));
-                if (cleanName.StartsWith("TR:") || cleanName.StartsWith("[TR]") || cleanName.Contains("(TR)") || cleanName.Contains(" TÜRK ") || cleanName.Contains(" TURK ")) return "Türkçe";
-                if (cleanName.StartsWith("DE:") || cleanName.StartsWith("[DE]") || cleanName.Contains("(DE)")) return "Almanca";
-                if (cleanName.StartsWith("EN:") || cleanName.StartsWith("UK:") || cleanName.StartsWith("US:") || cleanName.StartsWith("[EN]") || cleanName.Contains("(EN)")) return "İngilizce";
-                if (cleanName.StartsWith("FR:") || cleanName.StartsWith("[FR]") || cleanName.Contains("(FR)")) return "Fransızca";
-                if (cleanName.StartsWith("ES:") || cleanName.StartsWith("[ES]") || cleanName.Contains("(ES)")) return "İspanyolca";
-                if (cleanName.StartsWith("RU:") || cleanName.StartsWith("[RU]") || cleanName.Contains("(RU)")) return "Rusça";
-                if (cleanName.StartsWith("IT:") || cleanName.StartsWith("[IT]") || cleanName.Contains("(IT)")) return "İtalyanca";
-                if (cleanName.StartsWith("AR:") || cleanName.StartsWith("[AR]") || cleanName.Contains("(AR)")) return "Arapça";
-            }
+            if (combinedGroup.Contains("türk") || combinedGroup.Contains("turk") || combinedGroup.Contains("turkish") || words.Contains("tr")) return "Türkçe";
+            if (combinedGroup.Contains("almanca") || combinedGroup.Contains("deutsch") || combinedGroup.Contains("german") || words.Contains("de")) return "Almanca";
+            if (combinedGroup.Contains("ingilizce") || combinedGroup.Contains("english") || words.Contains("en")) return "İngilizce";
+            if (combinedGroup.Contains("fransızca") || combinedGroup.Contains("french") || combinedGroup.Contains("français") || words.Contains("fr")) return "Fransızca";
+            if (combinedGroup.Contains("ispanyolca") || combinedGroup.Contains("spanish") || combinedGroup.Contains("español") || words.Contains("es")) return "İspanyolca";
+            if (combinedGroup.Contains("rusça") || combinedGroup.Contains("russian") || combinedGroup.Contains("русский") || words.Contains("ru")) return "Rusça";
+            if (combinedGroup.Contains("italyanca") || combinedGroup.Contains("italian") || combinedGroup.Contains("italiano") || words.Contains("it")) return "İtalyanca";
+            if (combinedGroup.Contains("arapça") || combinedGroup.Contains("arabic") || words.Contains("ar")) return "Arapça";
 
             return "Bilinmiyor";
         }
