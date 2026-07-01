@@ -4,7 +4,8 @@
              xmlns:conv="clr-namespace:StreamMesh.Converters"
              xmlns:services="clr-namespace:StreamMesh.Services"
              Background="Transparent" Foreground="#f8fafc"
-             IsVisibleChanged="UserControl_IsVisibleChanged">
+             IsVisibleChanged="UserControl_IsVisibleChanged"
+             Loaded="UserControl_Loaded">
     
     <UserControl.Resources>
         <conv:LogoCacheConverter x:Key="LogoCacheConverter" />
@@ -48,12 +49,12 @@
                     </Grid.ColumnDefinitions>
                     
                     <StackPanel x:Name="CategoryPanel" Orientation="Horizontal" Grid.Column="0">
-                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_All]}" Width="100" Margin="0,0,10,0" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Favorites]}" Width="120" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_TV]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Movies]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Series]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
-                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Radio]}" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Width="100" Margin="0,0,10,0" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Width="120" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_TV]}" Tag="TV" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Movies]}" Tag="Movies" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Series]}" Tag="Series" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Radio]}" Tag="Radio" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                     </StackPanel>
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal">

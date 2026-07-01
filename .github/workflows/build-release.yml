@@ -56,33 +56,11 @@ jobs:
           $zipPath = "StreamMesh-${env:SAFE_VERSION}.zip"
           Compress-Archive -Path $publishPath -DestinationPath $zipPath -Force
 
-      - name: Prepare Files for Installer
-        shell: powershell
-        run: |
-          # Create app directory for Inno Setup
-          New-Item -ItemType Directory -Path "app" -Force
-          # Copy published files
-          Copy-Item -Path "csharp_version\StreamMesh\bin\Release\net8.0-windows\win-x64\publish\*" -Destination "app\" -Recurse -Force
-          # Copy VERSION file
-          Copy-Item -Path "VERSION" -Destination "app\" -Force
-
-      - name: Compile Inno Setup Installer
-        shell: powershell
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup_script.iss
-          Move-Item -Path "Output\StreamMesh_Setup.exe" -Destination "StreamMesh-Setup-${env:SAFE_VERSION}.exe" -Force
-
-      - name: Upload Artifact (For Dashboard ZIP)
+      - name: Upload Artifact (For Dashboard)
         uses: actions/upload-artifact@v4
         with:
-          name: StreamMesh-ZIP-${{ env.SAFE_VERSION }}
+          name: StreamMesh-EXE-${{ env.SAFE_VERSION }}
           path: StreamMesh-${{ env.SAFE_VERSION }}.zip
-
-      - name: Upload Artifact (For Dashboard EXE)
-        uses: actions/upload-artifact@v4
-        with:
-          name: StreamMesh-Setup-${{ env.SAFE_VERSION }}
-          path: StreamMesh-Setup-${{ env.SAFE_VERSION }}.exe
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -90,10 +68,8 @@ jobs:
         with:
           tag_name: v${{ env.SAFE_VERSION }}-${{ github.run_number }}
           name: StreamMesh ${{ env.APP_VERSION }}
-          body: "🚀 Otomatik Yayınlanan StreamMesh Sürümü: **${{ env.APP_VERSION }}**\n\nBu sürüm GitHub Actions tarafından derlenmiş ve paylaşıma açılmıştır.\n\n### İndirme Seçenekleri:\n1. **Kurulum Sihirbazı (EXE - Önerilen)**: `StreamMesh-Setup-${{ env.SAFE_VERSION }}.exe` (Yönetici yetkisi istemeden kolayca kurar)\n2. **Doğrudan Çalıştırılabilir Paket (ZIP)**: `StreamMesh-${{ env.SAFE_VERSION }}.zip`"
-          files: |
-            StreamMesh-${{ env.SAFE_VERSION }}.zip
-            StreamMesh-Setup-${{ env.SAFE_VERSION }}.exe
+          body: "🚀 Otomatik Yayınlanan StreamMesh Sürümü: **${{ env.APP_VERSION }}**\n\nBu sürüm GitHub Actions tarafından derlenmiş ve paylaşıma açılmıştır."
+          files: StreamMesh-${{ env.SAFE_VERSION }}.zip
           draft: false
           prerelease: false
         env:

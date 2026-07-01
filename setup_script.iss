@@ -1,14 +1,14 @@
 [Setup]
 AppName=StreamMesh
 AppVersion=0.0 alfa 00060
-DefaultDirName={localappdata}\StreamMesh
+DefaultDirName={pf}\StreamMesh
 DefaultGroupName=StreamMesh
 UninstallDisplayIcon={app}\StreamMesh.exe
 Compression=lzma2
 SolidCompression=yes
 OutputDir=Output
 OutputBaseFilename=StreamMesh_Setup
-PrivilegesRequired=lowest
+SetupIconFile=icons\app_icon.ico
 
 [Files]
 Source: "app\StreamMesh.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -17,9 +17,9 @@ Source: "logos\*"; DestDir: "{app}\logos"; Flags: ignoreversion recursesubdirs c
 Source: "icons\*"; DestDir: "{app}\icons"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"
+Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\icons\app_icon.ico"
 Name: "{group}\Uninstall StreamMesh"; Filename: "{uninstallexe}"
-Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; Tasks: desktopicon
+Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\icons\app_icon.ico"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Masaüstü kısayolu oluştur"; GroupDescription: "Ek Seçenekler:"

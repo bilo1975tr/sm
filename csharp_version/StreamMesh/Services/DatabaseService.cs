@@ -185,9 +185,14 @@ namespace StreamMesh.Services
                     indexCmd.ExecuteNonQuery();
                 } catch { }
 
+                // Performans İyileştirmesi: Büyük listelerde sorguları hızlandırmak için yeni indeksler (Auto Upgrade: Veritabanı Kuralı)
                 try {
                     var indexCmd2 = connection.CreateCommand();
-                    indexCmd2.CommandText = "CREATE INDEX IF NOT EXISTS idx_epg_times ON EpgPrograms (StartTime, EndTime);";
+                    indexCmd2.CommandText = @"
+                        CREATE INDEX IF NOT EXISTS idx_channels_playlisturl ON Channels (PlaylistUrl);
+                        CREATE INDEX IF NOT EXISTS idx_channels_isverified_added ON Channels (IsVerified, AddedDate DESC);
+                        CREATE INDEX IF NOT EXISTS idx_channels_addeddate ON Channels (AddedDate DESC);
+                    ";
                     indexCmd2.ExecuteNonQuery();
                 } catch { }
 
@@ -271,6 +276,32 @@ namespace StreamMesh.Services
                 LogService.LogError("IsLinkDead error", ex);
                 return false;
             }
+        }
+
+        public HashSet<long> GetAllDeadLinkHashes()
+        {
+            var hashes = new HashSet<long>();
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT Hash FROM DeadLinkHashes";
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            hashes.Add(reader.GetInt64(0));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("GetAllDeadLinkHashes error", ex);
+            }
+            return hashes;
         }
 
         public List<Dictionary<string, object>> ExecuteRawQuery(string sql)

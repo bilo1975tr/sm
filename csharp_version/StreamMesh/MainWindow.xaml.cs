@@ -10,17 +10,23 @@ namespace StreamMesh
 {
     public partial class MainWindow : Window
     {
+        private static MainWindow _instance;
+        public static MainWindow Instance => _instance;
+
         private PlayerView _playerView;
         private HomeView _homeView;
         private StatsView _statsView;
         private SettingsView _settingsView;
         private SearchAceStreamView _searchView;
 
+        public HomeView HomeView => _homeView;
+
         private System.Windows.Forms.NotifyIcon _notifyIcon;
         private bool _isRealClose = false;
 
         public MainWindow()
         {
+            _instance = this;
             InitializeComponent();
             this.Loaded += MainWindow_Loaded;
             

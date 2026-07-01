@@ -172,6 +172,9 @@ namespace StreamMesh.Views
 
                     string streamUrl = result.SourceName == "AceStream" ? $"acestream://{result.ContentId}" : result.ContentId;
 
+                    var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                    string defaultLang = (profile?.Languages != null && profile.Languages.Count > 0) ? profile.Languages[0] : "Türkçe";
+
                     var newChannel = new Channel
                     {
                         Id = Guid.NewGuid().ToString("N"),
@@ -182,11 +185,14 @@ namespace StreamMesh.Views
                         CreatedAt = DateTime.UtcNow,
                         IsFavorite = false,
                         SourceType = result.SourceName,
-                        Language = "Bilinmiyor"
+                        Language = defaultLang
                     };
 
                     new DatabaseService().SaveChannel(newChannel);
                     LogService.Log($"Kanal eklendi: {newChannel.Name}");
+
+                    // Auto-refresh the home view list and categories
+                    MainWindow.Instance?.HomeView?.LoadChannels();
                 }
                 catch (Exception ex)
                 {
@@ -204,6 +210,9 @@ namespace StreamMesh.Views
                 if (items == null || items.Count == 0) return;
 
                 var db = new DatabaseService();
+                var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                string defaultLang = (profile?.Languages != null && profile.Languages.Count > 0) ? profile.Languages[0] : "Türkçe";
+
                 int added = 0;
                 foreach (var result in items)
                 {
@@ -219,11 +228,14 @@ namespace StreamMesh.Views
                         CreatedAt = DateTime.UtcNow,
                         IsFavorite = false,
                         SourceType = result.SourceName,
-                        Language = "Bilinmiyor"
+                        Language = defaultLang
                     };
                     db.SaveChannel(newChannel);
                     added++;
                 }
+
+                // Auto-refresh the home view list and categories
+                MainWindow.Instance?.HomeView?.LoadChannels();
 
                 MessageBox.Show($"{added} adet içerik başarıyla kütüphanenize eklendi.", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
                 AddAllButton.Visibility = Visibility.Collapsed;

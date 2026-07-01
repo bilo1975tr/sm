@@ -120,10 +120,21 @@ namespace StreamMesh.Views
             LoadChannelsFromDb();
         }
 
-        private void LoadChannelsFromDb()
+        private async void LoadChannelsFromDb()
         {
-            _allChannels = _databaseService.GetAllChannels();
-            FilterChannels();
+            try
+            {
+                var channels = await System.Threading.Tasks.Task.Run(() => _databaseService.GetAllChannels());
+                Dispatcher.Invoke(() => 
+                {
+                    _allChannels = channels;
+                    FilterChannels();
+                });
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("LoadChannelsFromDb error", ex);
+            }
         }
 
         private void FilterChannels()
