@@ -208,18 +208,28 @@ namespace StreamMesh.Views
             var profile = StreamMesh.Services.P2P.UserService.GetProfile();
             if (profile != null && profile.Languages != null && profile.Languages.Count > 0)
             {
-                var activeLangs = profile.Languages
-                    .Where(l => !string.IsNullOrEmpty(l) && l != "Hiçbiri")
-                    .Select(NormalizeLanguage)
-                    .ToList();
+                bool showAllLangs = profile.Languages.Any(l => 
+                    !string.IsNullOrEmpty(l) && 
+                    (l.Equals("Tümü", StringComparison.OrdinalIgnoreCase) || 
+                     l.Equals("Hepsi", StringComparison.OrdinalIgnoreCase) || 
+                     l.Equals("All", StringComparison.OrdinalIgnoreCase))
+                );
 
-                if (activeLangs.Count > 0)
+                if (!showAllLangs)
                 {
-                    _filteredChannels = _filteredChannels.Where(c => 
-                        string.IsNullOrEmpty(c.Language) || 
-                        c.Language == "Bilinmiyor" || 
-                        activeLangs.Contains(NormalizeLanguage(c.Language))
-                    ).ToList();
+                    var activeLangs = profile.Languages
+                        .Where(l => !string.IsNullOrEmpty(l) && l != "Hiçbiri")
+                        .Select(NormalizeLanguage)
+                        .ToList();
+
+                    if (activeLangs.Count > 0)
+                    {
+                        _filteredChannels = _filteredChannels.Where(c => 
+                            string.IsNullOrEmpty(c.Language) || 
+                            c.Language == "Bilinmiyor" || 
+                            activeLangs.Contains(NormalizeLanguage(c.Language))
+                        ).ToList();
+                    }
                 }
             }
 

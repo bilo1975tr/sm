@@ -431,7 +431,7 @@ namespace StreamMesh.Services
         {
             get
             {
-                var list = new List<string> { "Hiçbiri", "Bilinmiyor" };
+                var list = new List<string> { "Hiçbiri", "Bilinmiyor", "Hepsi", "Tümü" };
                 list.AddRange(SystemLanguages);
                 return list;
             }
