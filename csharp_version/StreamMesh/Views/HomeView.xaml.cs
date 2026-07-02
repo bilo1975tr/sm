@@ -135,33 +135,20 @@ namespace StreamMesh.Views
                 else if (_selectedCategoryTag == "Radio") targetCategory = "Radyo";
                 else targetCategory = _selectedCategoryTag;
 
-                if (_selectedCategoryTag == "Vavoo")
+                string catUpper = targetCategory.ToUpper().Trim();
+                if (catUpper.Contains("RADYO") || catUpper.Contains("RADIO"))
                 {
-                    _filteredChannels = _filteredChannels.Where(c => c.SourceType == "VAVOO").ToList();
-                    
-                    if (VavooCountryComboBox != null && VavooCountryComboBox.SelectedItem is ComboBoxItem item && item.Content.ToString() != "Hepsi")
-                    {
-                        string selectedCountry = item.Content.ToString();
-                        _filteredChannels = _filteredChannels.Where(c => c.Category != null && c.Category.Equals(selectedCountry, StringComparison.OrdinalIgnoreCase)).ToList();
-                    }
+                    _filteredChannels = _filteredChannels.Where(c => 
+                        c.Category != null && 
+                        (c.Category.ToUpper().Contains("RADYO") || c.Category.ToUpper().Contains("RADIO"))
+                    ).ToList();
                 }
                 else
                 {
-                    string catUpper = targetCategory.ToUpper().Trim();
-                    if (catUpper.Contains("RADYO") || catUpper.Contains("RADIO"))
-                    {
-                        _filteredChannels = _filteredChannels.Where(c => 
-                            c.Category != null && 
-                            (c.Category.ToUpper().Contains("RADYO") || c.Category.ToUpper().Contains("RADIO"))
-                        ).ToList();
-                    }
-                    else
-                    {
-                        _filteredChannels = _filteredChannels.Where(c => 
-                            c.Category != null && 
-                            (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
-                        ).ToList();
-                    }
+                    _filteredChannels = _filteredChannels.Where(c => 
+                        c.Category != null && 
+                        (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
+                    ).ToList();
                 }
             }
 
@@ -374,7 +361,6 @@ namespace StreamMesh.Views
                 _selectedCategory = btn.Content.ToString();
 
                 bool isMovie = _selectedCategoryTag == "Movies";
-                bool isVavoo = _selectedCategoryTag == "Vavoo";
 
                 if (MovieFiltersPanel != null)
                 {
@@ -382,35 +368,6 @@ namespace StreamMesh.Views
                     if (isMovie)
                     {
                         PopulateMovieFilters();
-                    }
-                }
-                
-                if (VavooFiltersPanel != null)
-                {
-                    VavooFiltersPanel.Visibility = isVavoo ? Visibility.Visible : Visibility.Collapsed;
-                }
-                
-                if (_selectedCategoryTag == "Vavoo")
-                {
-                    // Load vavoo channels if not loaded
-                    if (StreamMesh.Services.VavooVirtualBrowser.Instance.CachedChannels.Count == 0)
-                    {
-                        await StreamMesh.Services.VavooVirtualBrowser.Instance.LoadChannelsToMemoryAsync();
-                    }
-                    
-                    // Merge to all channels so it shows
-                    var vavooChannels = StreamMesh.Services.VavooVirtualBrowser.Instance.CachedChannels;
-                    foreach(var vc in vavooChannels)
-                    {
-                        if (!_allChannels.Any(x => x.Id == vc.Id || x.Url == vc.Url))
-                        {
-                            _allChannels.Add(vc);
-                        }
-                    }
-                    
-                    if (VavooCountryComboBox != null)
-                    {
-                        PopulateVavooCountries(vavooChannels);
                     }
                 }
                 
@@ -495,48 +452,6 @@ namespace StreamMesh.Views
             finally
             {
                 _isPopulatingFilters = false;
-            }
-        }
-
-        private void PopulateVavooCountries(List<Models.Channel> vavooChannels)
-        {
-            _isPopulatingFilters = true;
-            try
-            {
-                string currentSelection = (VavooCountryComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
-
-                VavooCountryComboBox.Items.Clear();
-                VavooCountryComboBox.Items.Add(new ComboBoxItem { Content = "Hepsi", IsSelected = true });
-
-                var countries = vavooChannels
-                    .Where(c => !string.IsNullOrEmpty(c.Category))
-                    .Select(c => c.Category)
-                    .Distinct()
-                    .OrderBy(c => c)
-                    .ToList();
-
-                foreach (var country in countries)
-                {
-                    var item = new ComboBoxItem { Content = country };
-                    if (country == currentSelection)
-                    {
-                        item.IsSelected = true;
-                    }
-                    VavooCountryComboBox.Items.Add(item);
-                }
-            }
-            finally
-            {
-                _isPopulatingFilters = false;
-            }
-        }
-
-        private void VavooFilters_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!_isPopulatingFilters)
-            {
-                _currentPage = 1;
-                FilterChannels();
             }
         }
 

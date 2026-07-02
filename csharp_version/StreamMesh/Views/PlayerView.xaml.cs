@@ -340,7 +340,7 @@ namespace StreamMesh.Views
                     bool isYoutube = finalUrl.Contains("youtube.com") || finalUrl.Contains("youtu.be");
                     bool isAceStream = finalUrl.StartsWith("acestream://");
 
-                    LogService.Log($"[Player] Detection: isYoutube={isYoutube}, isAceStream={isAceStream}, isVavoo={(channel.SourceType == "VAVOO" || finalUrl.Contains("vavoo.to"))}");
+                    LogService.Log($"[Player] Detection: isYoutube={isYoutube}, isAceStream={isAceStream}");
 
                     if (channel.SourceType == "YOUTUBE" || isYoutube)
                     {
@@ -355,19 +355,6 @@ namespace StreamMesh.Views
                             _currentYtAudioUrl = null; // Ayrı ses akışı kullanılmıyor
                         }
                         else throw new Exception("YouTube stream çözülemedi.");
-                    }
-                    else if (channel.SourceType == "VAVOO" || finalUrl.Contains("vavoo.to"))
-                    {
-                        StatusTextBlock.Text = "Vavoo bağlantısı çözülüyor...";
-                        var m3u8Url = await StreamMesh.Services.VavooVirtualBrowser.Instance.FetchChannelLinkAsync(finalUrl);
-                        if (!string.IsNullOrEmpty(m3u8Url))
-                        {
-                            finalUrl = m3u8Url;
-                        }
-                        else
-                        {
-                            throw new Exception("Vavoo stream çözülemedi. Lütfen daha sonra tekrar deneyin.");
-                        }
                     }
                     else if (channel.SourceType == "ACESTREAM" || isAceStream)
                     {
