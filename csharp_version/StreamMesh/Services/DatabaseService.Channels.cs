@@ -1042,8 +1042,13 @@ namespace StreamMesh.Services
             }
         }
 
+        private static bool _premiumChannelsSynced = false;
+
         public void SyncAndCleanPremiumChannels()
         {
+            if (_premiumChannelsSynced) return;
+            _premiumChannelsSynced = true;
+
             bool hasPremium = false;
             if (StreamMesh.Services.P2P.UserService.CurrentUser != null && 
                 StreamMesh.Services.P2P.UserService.CurrentUser.IsPremium && 

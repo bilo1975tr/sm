@@ -47,3 +47,6 @@ Yan etki oluşturabilecek kodlar kontrol edilir
 9. SON KURAL (ÖZET)
 
 👉 “Bozma, sadece düzelt ve iyileştir.”
+
+10. VERSİYON ARTIRMA KURALI
+Her kod güncellemesinde, yeni bir özellik eklendiğinde veya hata düzeltildiğinde `/VERSION` dosyasındaki sürüm/versiyon numarasını (ve sayısal değerini) mutlaka artır. Bu kural tüm yapay zeka güncellemelerinde geçerlidir.
