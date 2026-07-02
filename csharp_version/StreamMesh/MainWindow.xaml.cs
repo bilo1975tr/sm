@@ -37,7 +37,7 @@ namespace StreamMesh
             {
                 VersionText.Text = "v" + StreamMesh.Services.UpdateService.GetCurrentVersion();
             }
-            catch { VersionText.Text = "v1.0.0"; }
+            catch { VersionText.Text = "v1.0.1"; }
 
             // Core'u sadece ana pencere başlarken 1 kere çağırıyoruz.
             Core.Initialize();
