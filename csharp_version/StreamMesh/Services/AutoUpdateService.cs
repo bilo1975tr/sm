@@ -200,9 +200,12 @@ namespace StreamMesh.Services
                         if (channels != null && channels.Count > 0)
                         {
                             db.AddM3uSource(url);
-                            db.SaveChannels(channels, url);
+                            await Task.Run(() => db.SaveChannels(channels, url));
                             ForceSetCategory(url, "TV");
                             totalAddedChannels += channels.Count;
+                            LogService.Log($"[AutoUpdate] {channels.Count} TV kanalı eklendi/güncellendi: {url}");
+                            GC.Collect();
+                            await Task.Delay(1500); // UI thread'in nefes almasına izin ver
                         }
                     }
                     catch (Exception ex)
@@ -222,9 +225,12 @@ namespace StreamMesh.Services
                         if (channels != null && channels.Count > 0)
                         {
                             db.AddM3uSource(url);
-                            db.SaveChannels(channels, url);
+                            await Task.Run(() => db.SaveChannels(channels, url));
                             ForceSetCategory(url, "Film");
                             totalAddedChannels += channels.Count;
+                            LogService.Log($"[AutoUpdate] {channels.Count} Film eklendi/güncellendi: {url}");
+                            GC.Collect();
+                            await Task.Delay(1500); // UI thread'in nefes almasına izin ver
                         }
                     }
                     catch (Exception ex)
@@ -244,9 +250,12 @@ namespace StreamMesh.Services
                         if (channels != null && channels.Count > 0)
                         {
                             db.AddM3uSource(url);
-                            db.SaveChannels(channels, url);
+                            await Task.Run(() => db.SaveChannels(channels, url));
                             ForceSetCategory(url, "Dizi");
                             totalAddedChannels += channels.Count;
+                            LogService.Log($"[AutoUpdate] {channels.Count} Dizi eklendi/güncellendi: {url}");
+                            GC.Collect();
+                            await Task.Delay(1500); // UI thread'in nefes almasına izin ver
                         }
                     }
                     catch (Exception ex)

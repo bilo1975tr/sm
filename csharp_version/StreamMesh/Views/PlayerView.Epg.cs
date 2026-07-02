@@ -139,7 +139,7 @@ namespace StreamMesh.Views
             menu.IsOpen = true;
         }
 
-        private async void SourceBtn_Click(object sender, RoutedEventArgs e)
+        private void SourceBtn_Click(object sender, RoutedEventArgs e)
         {
             if (_currentChannel == null) return;
             var menu = SourceBtn.ContextMenu;

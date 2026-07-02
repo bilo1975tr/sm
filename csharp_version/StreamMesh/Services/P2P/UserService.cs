@@ -126,7 +126,7 @@ namespace StreamMesh.Services.P2P
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("çoktan alınmış")) throw ex;
+                if (ex.Message.Contains("çoktan alınmış")) throw;
                 // Offline fallback - proceed with warning or just local login? Let's just log it if we wanted, but not crash.
             }
 

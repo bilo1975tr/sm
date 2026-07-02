@@ -164,31 +164,79 @@ Proaktif Güncelleme ve Analiz Kuralları (ÇOK ÖNEMLİ):
         {
             var config = OllamaConfigManager.Load();
             var url = config.Url;
-            
-            // Convert generation URL to chat URL if needed
-            if (url.EndsWith("/api/generate"))
+            bool isLMStudio = config.Provider == "LM Studio";
+
+            if (isLMStudio)
             {
-                url = url.Replace("/api/generate", "/api/chat");
+                // LM Studio uses OpenAI format: POST /v1/chat/completions
+                if (!url.Contains("/v1/chat/completions"))
+                {
+                    if (url.Contains("/api/generate") || url.Contains("/api/chat"))
+                    {
+                        url = "http://localhost:1234/v1/chat/completions";
+                    }
+                    else
+                    {
+                        url = url.TrimEnd('/') + "/v1/chat/completions";
+                    }
+                }
+
+                var payload = new
+                {
+                    model = config.Model,
+                    messages = messages,
+                    temperature = 0.7,
+                    stream = false
+                };
+
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(url, content, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var root = JsonSerializer.Deserialize<JsonElement>(jsonString);
+                
+                if (root.TryGetProperty("choices", out var choices) && choices.ValueKind == JsonValueKind.Array && choices.GetArrayLength() > 0)
+                {
+                    var firstChoice = choices[0];
+                    if (firstChoice.TryGetProperty("message", out var message) && message.TryGetProperty("content", out var contentProp))
+                    {
+                        return contentProp.GetString();
+                    }
+                }
+                throw new Exception("LM Studio yanıt formatı çözülemedi.");
             }
-            else if (!url.EndsWith("/api/chat"))
+            else
             {
-                url = url.TrimEnd('/') + "/api/chat";
+                // Ollama
+                if (url.Contains("/v1/chat/completions"))
+                {
+                    url = "http://localhost:11434/api/chat";
+                }
+                else if (url.EndsWith("/api/generate"))
+                {
+                    url = url.Replace("/api/generate", "/api/chat");
+                }
+                else if (!url.EndsWith("/api/chat"))
+                {
+                    url = url.TrimEnd('/') + "/api/chat";
+                }
+
+                var payload = new
+                {
+                    model = config.Model,
+                    messages = messages,
+                    stream = false
+                };
+
+                var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(url, content, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var root = JsonSerializer.Deserialize<JsonElement>(jsonString);
+                return root.GetProperty("message").GetProperty("content").GetString();
             }
-
-            var payload = new
-            {
-                model = config.Model,
-                messages = messages,
-                stream = false
-            };
-
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(url, content, cancellationToken);
-            response.EnsureSuccessStatusCode();
-
-            var jsonString = await response.Content.ReadAsStringAsync();
-            var root = JsonSerializer.Deserialize<JsonElement>(jsonString);
-            return root.GetProperty("message").GetProperty("content").GetString();
         }
 
         public async Task<List<string>> GetModels()
@@ -196,22 +244,65 @@ Proaktif Güncelleme ve Analiz Kuralları (ÇOK ÖNEMLİ):
             try
             {
                 var config = OllamaConfigManager.Load();
-                var baseUrl = config.Url.Replace("/api/generate", "").Replace("/api/chat", "");
-                var response = await _httpClient.GetAsync(baseUrl.TrimEnd('/') + "/api/tags");
-                response.EnsureSuccessStatusCode();
+                var baseUrl = config.Url;
+                bool isLMStudio = config.Provider == "LM Studio";
 
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var root = JsonSerializer.Deserialize<JsonElement>(jsonString);
-                var models = new List<string>();
-                foreach (var model in root.GetProperty("models").EnumerateArray())
+                if (isLMStudio)
                 {
-                    models.Add(model.GetProperty("name").GetString());
+                    if (baseUrl.Contains("/v1/chat/completions"))
+                    {
+                        baseUrl = baseUrl.Replace("/v1/chat/completions", "");
+                    }
+                    else if (baseUrl.Contains("/api/generate") || baseUrl.Contains("/api/chat"))
+                    {
+                        baseUrl = "http://localhost:1234";
+                    }
+
+                    var response = await _httpClient.GetAsync(baseUrl.TrimEnd('/') + "/v1/models");
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var root = JsonSerializer.Deserialize<JsonElement>(jsonString);
+                    var models = new List<string>();
+                    
+                    if (root.TryGetProperty("data", out var dataProp))
+                    {
+                        foreach (var model in dataProp.EnumerateArray())
+                        {
+                            if (model.TryGetProperty("id", out var idProp))
+                            {
+                                models.Add(idProp.GetString());
+                            }
+                        }
+                    }
+                    return models;
                 }
-                return models;
+                else
+                {
+                    if (baseUrl.Contains("/v1/chat/completions"))
+                    {
+                        baseUrl = "http://localhost:11434";
+                    }
+                    baseUrl = baseUrl.Replace("/api/generate", "").Replace("/api/chat", "");
+                    var response = await _httpClient.GetAsync(baseUrl.TrimEnd('/') + "/api/tags");
+                    response.EnsureSuccessStatusCode();
+
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    var root = JsonSerializer.Deserialize<JsonElement>(jsonString);
+                    var models = new List<string>();
+                    foreach (var model in root.GetProperty("models").EnumerateArray())
+                    {
+                        models.Add(model.GetProperty("name").GetString());
+                    }
+                    return models;
+                }
             }
             catch
             {
-                return new List<string> { "llama3" }; // Fallback
+                var config = OllamaConfigManager.Load();
+                return config.Provider == "LM Studio" 
+                    ? new List<string> { "local-model" } 
+                    : new List<string> { "llama3" }; // Fallback
             }
         }
     }

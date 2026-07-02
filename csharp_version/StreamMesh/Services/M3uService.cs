@@ -92,178 +92,181 @@ namespace StreamMesh.Services
                 autoCategory = categoryHint;
             }
 
-            var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            Channel currentChannel = null;
-
-            foreach (var line in lines)
+            return await Task.Run(() =>
             {
-                var trimmedLine = line.Trim();
+                var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                Channel currentChannel = null;
 
-                if (trimmedLine.StartsWith("#EXTINF:"))
+                foreach (var line in lines)
                 {
-                    currentChannel = new Channel();
-                    currentChannel.Id = Guid.NewGuid().ToString("N");
-                    currentChannel.PlaylistUrl = playlistUrl;
-                    
-                    // Logo parse
-                    int logoStart = trimmedLine.IndexOf("tvg-logo=\"");
-                    if (logoStart != -1)
+                    var trimmedLine = line.Trim();
+
+                    if (trimmedLine.StartsWith("#EXTINF:"))
                     {
-                        logoStart += 10;
-                        int logoEnd = trimmedLine.IndexOf("\"", logoStart);
-                        if (logoEnd != -1)
+                        currentChannel = new Channel();
+                        currentChannel.Id = Guid.NewGuid().ToString("N");
+                        currentChannel.PlaylistUrl = playlistUrl;
+                        
+                        // Logo parse
+                        int logoStart = trimmedLine.IndexOf("tvg-logo=\"");
+                        if (logoStart != -1)
                         {
-                            currentChannel.LogoUrl = trimmedLine.Substring(logoStart, logoEnd - logoStart);
-                        }
-                    }
-
-                    // Grup parse
-                    int groupStart = trimmedLine.IndexOf("group-title=\"");
-                    if (groupStart != -1)
-                    {
-                        groupStart += 13;
-                        int groupEnd = trimmedLine.IndexOf("\"", groupStart);
-                        if (groupEnd != -1)
-                        {
-                            currentChannel.GroupTitle = trimmedLine.Substring(groupStart, groupEnd - groupStart);
-                        }
-                    }
-
-                    // İsim parse
-                    var nameIndex = trimmedLine.LastIndexOf(',');
-                    if (nameIndex != -1 && nameIndex + 1 < trimmedLine.Length)
-                    {
-                        currentChannel.Name = trimmedLine.Substring(nameIndex + 1).Trim();
-                    }
-                    else
-                    {
-                        currentChannel.Name = "Bilinmeyen Kanal";
-                    }
-
-                    // Basit kategori ve dil tespiti için küçük harf kopyaları
-                    string groupLow = currentChannel.GroupTitle?.ToLower() ?? "";
-                    string nameLow = currentChannel.Name?.ToLower() ?? "";
-
-                    // 1. Kategori Belirleme (Geçici)
-                    if (!string.IsNullOrEmpty(autoCategory))
-                    {
-                        currentChannel.Category = autoCategory;
-                    }
-                    else
-                    {
-                        if (groupLow.Contains("dizi") || groupLow.Contains("series"))
-                            currentChannel.Category = "Dizi";
-                        else if (groupLow.Contains("film") || groupLow.Contains("movie") || groupLow.Contains("vod") || nameLow.Contains("vod") || groupLow.Contains("sinema"))
-                            currentChannel.Category = "Film";
-                        else
-                            currentChannel.Category = "TV";
-                    }
-
-                    // Dil Belirleme (tvg-language, language öznitelikleri veya grup başlığı ile)
-                    string parsedLang = null;
-                    int langStart = trimmedLine.IndexOf("tvg-language=\"");
-                    if (langStart != -1)
-                    {
-                        langStart += 14;
-                        int langEnd = trimmedLine.IndexOf("\"", langStart);
-                        if (langEnd != -1)
-                        {
-                            parsedLang = trimmedLine.Substring(langStart, langEnd - langStart);
-                        }
-                    }
-
-                    if (string.IsNullOrEmpty(parsedLang))
-                    {
-                        int langAttrStart = trimmedLine.IndexOf("language=\"");
-                        if (langAttrStart != -1)
-                        {
-                            langAttrStart += 10;
-                            int langAttrEnd = trimmedLine.IndexOf("\"", langAttrStart);
-                            if (langAttrEnd != -1)
+                            logoStart += 10;
+                            int logoEnd = trimmedLine.IndexOf("\"", logoStart);
+                            if (logoEnd != -1)
                             {
-                                parsedLang = trimmedLine.Substring(langAttrStart, langAttrEnd - langAttrStart);
+                                currentChannel.LogoUrl = trimmedLine.Substring(logoStart, logoEnd - logoStart);
                             }
                         }
-                    }
 
-                    if (!string.IsNullOrEmpty(parsedLang))
-                    {
-                        currentChannel.Language = Channel.NormalizeLanguage(parsedLang);
-                    }
-                    else
-                    {
-                        if (groupLow.Contains("tr") || groupLow.Contains("türk") || groupLow.Contains("turk"))
+                        // Grup parse
+                        int groupStart = trimmedLine.IndexOf("group-title=\"");
+                        if (groupStart != -1)
                         {
-                            currentChannel.Language = "Türkçe";
+                            groupStart += 13;
+                            int groupEnd = trimmedLine.IndexOf("\"", groupStart);
+                            if (groupEnd != -1)
+                            {
+                                currentChannel.GroupTitle = trimmedLine.Substring(groupStart, groupEnd - groupStart);
+                            }
                         }
-                        else if (groupLow.Contains("en") || groupLow.Contains("uk") || groupLow.Contains("us") || groupLow.Contains("english"))
+
+                        // İsim parse
+                        var nameIndex = trimmedLine.LastIndexOf(',');
+                        if (nameIndex != -1 && nameIndex + 1 < trimmedLine.Length)
                         {
-                            currentChannel.Language = "İngilizce";
-                        }
-                        else if (groupLow.Contains("de") || groupLow.Contains("germ") || groupLow.Contains("deutsch"))
-                        {
-                            currentChannel.Language = "Almanca";
-                        }
-                        else if (groupLow.Contains("fr") || groupLow.Contains("french") || groupLow.Contains("français") || groupLow.Contains("fransizca"))
-                        {
-                            currentChannel.Language = "Fransızca";
-                        }
-                        else if (groupLow.Contains("es") || groupLow.Contains("spanish") || groupLow.Contains("español"))
-                        {
-                            currentChannel.Language = "İspanyolca";
-                        }
-                        else if (groupLow.Contains("it") || groupLow.Contains("italian") || groupLow.Contains("italiano"))
-                        {
-                            currentChannel.Language = "İtalyanca";
-                        }
-                        else if (groupLow.Contains("ru") || groupLow.Contains("russian") || groupLow.Contains("русский") || groupLow.Contains("rusca"))
-                        {
-                            currentChannel.Language = "Rusça";
-                        }
-                        else if (groupLow.Contains("ar") || groupLow.Contains("arabic") || groupLow.Contains("arapca") || groupLow.Contains("arap"))
-                        {
-                            currentChannel.Language = "Arapça";
+                            currentChannel.Name = trimmedLine.Substring(nameIndex + 1).Trim();
                         }
                         else
                         {
-                            currentChannel.Language = "Bilinmiyor";
+                            currentChannel.Name = "Bilinmeyen Kanal";
                         }
-                    }
 
-                    // Her durumda son bir kez normalize et
-                    currentChannel.Language = Channel.NormalizeLanguage(currentChannel.Language);
-                }
-                else if (!trimmedLine.StartsWith("#") && currentChannel != null && !string.IsNullOrWhiteSpace(trimmedLine))
-                {
-                    currentChannel.Url = trimmedLine;
-                    currentChannel.SourceType = DetermineSourceType(trimmedLine);
-                    
-                    if (currentChannel.Category != null && currentChannel.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var seriesDetails = Channel.ParseSeriesDetails(currentChannel.Name, currentChannel.Url);
-                        if (seriesDetails.IsParsed)
+                        // Basit kategori ve dil tespiti için küçük harf kopyaları
+                        string groupLow = currentChannel.GroupTitle?.ToLower() ?? "";
+                        string nameLow = currentChannel.Name?.ToLower() ?? "";
+
+                        // 1. Kategori Belirleme (Geçici)
+                        if (!string.IsNullOrEmpty(autoCategory))
                         {
-                            currentChannel.Name = $"{seriesDetails.SeriesName} - S{seriesDetails.Season:D2}E{seriesDetails.Episode:D2}";
+                            currentChannel.Category = autoCategory;
                         }
+                        else
+                        {
+                            if (groupLow.Contains("dizi") || groupLow.Contains("series"))
+                                currentChannel.Category = "Dizi";
+                            else if (groupLow.Contains("film") || groupLow.Contains("movie") || groupLow.Contains("vod") || nameLow.Contains("vod") || groupLow.Contains("sinema"))
+                                currentChannel.Category = "Film";
+                            else
+                                currentChannel.Category = "TV";
+                        }
+
+                        // Dil Belirleme (tvg-language, language öznitelikleri veya grup başlığı ile)
+                        string parsedLang = null;
+                        int langStart = trimmedLine.IndexOf("tvg-language=\"");
+                        if (langStart != -1)
+                        {
+                            langStart += 14;
+                            int langEnd = trimmedLine.IndexOf("\"", langStart);
+                            if (langEnd != -1)
+                            {
+                                parsedLang = trimmedLine.Substring(langStart, langEnd - langStart);
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(parsedLang))
+                        {
+                            int langAttrStart = trimmedLine.IndexOf("language=\"");
+                            if (langAttrStart != -1)
+                            {
+                                langAttrStart += 10;
+                                int langAttrEnd = trimmedLine.IndexOf("\"", langAttrStart);
+                                if (langAttrEnd != -1)
+                                {
+                                    parsedLang = trimmedLine.Substring(langAttrStart, langAttrEnd - langAttrStart);
+                                }
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(parsedLang))
+                        {
+                            currentChannel.Language = Channel.NormalizeLanguage(parsedLang);
+                        }
+                        else
+                        {
+                            if (groupLow.Contains("tr") || groupLow.Contains("türk") || groupLow.Contains("turk"))
+                            {
+                                currentChannel.Language = "Türkçe";
+                            }
+                            else if (groupLow.Contains("en") || groupLow.Contains("uk") || groupLow.Contains("us") || groupLow.Contains("english"))
+                            {
+                                currentChannel.Language = "İngilizce";
+                            }
+                            else if (groupLow.Contains("de") || groupLow.Contains("germ") || groupLow.Contains("deutsch"))
+                            {
+                                currentChannel.Language = "Almanca";
+                            }
+                            else if (groupLow.Contains("fr") || groupLow.Contains("french") || groupLow.Contains("français") || groupLow.Contains("fransizca"))
+                            {
+                                currentChannel.Language = "Fransızca";
+                            }
+                            else if (groupLow.Contains("es") || groupLow.Contains("spanish") || groupLow.Contains("español"))
+                            {
+                                currentChannel.Language = "İspanyolca";
+                            }
+                            else if (groupLow.Contains("it") || groupLow.Contains("italian") || groupLow.Contains("italiano"))
+                            {
+                                currentChannel.Language = "İtalyanca";
+                            }
+                            else if (groupLow.Contains("ru") || groupLow.Contains("russian") || groupLow.Contains("русский") || groupLow.Contains("rusca"))
+                            {
+                                currentChannel.Language = "Rusça";
+                            }
+                            else if (groupLow.Contains("ar") || groupLow.Contains("arabic") || groupLow.Contains("arapca") || groupLow.Contains("arap"))
+                            {
+                                currentChannel.Language = "Arapça";
+                            }
+                            else
+                            {
+                                currentChannel.Language = "Bilinmiyor";
+                            }
+                        }
+
+                        // Her durumda son bir kez normalize et
+                        currentChannel.Language = Channel.NormalizeLanguage(currentChannel.Language);
                     }
+                    else if (!trimmedLine.StartsWith("#") && currentChannel != null && !string.IsNullOrWhiteSpace(trimmedLine))
+                    {
+                        currentChannel.Url = trimmedLine;
+                        currentChannel.SourceType = DetermineSourceType(trimmedLine);
+                        
+                        if (currentChannel.Category != null && currentChannel.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var seriesDetails = Channel.ParseSeriesDetails(currentChannel.Name, currentChannel.Url);
+                            if (seriesDetails.IsParsed)
+                            {
+                                currentChannel.Name = $"{seriesDetails.SeriesName} - S{seriesDetails.Season:D2}E{seriesDetails.Episode:D2}";
+                            }
+                        }
 
-                    channels.Add(currentChannel);
-                    currentChannel = null;
+                        channels.Add(currentChannel);
+                        currentChannel = null;
+                    }
                 }
-            }
-            
-            // Post-processing: Kategorizasyon kuralları
-            var groupedByGroup = channels.GroupBy(c => c.GroupTitle ?? "");
-            foreach (var group in groupedByGroup)
-            {
-                // Eğer grupta sadece 1 tane "Dizi" varsa, onu "Film" kategorisine taşı
-                if (group.Count() == 1 && group.Any(c => c.Category == "Dizi"))
+                
+                // Post-processing: Kategorizasyon kuralları
+                var groupedByGroup = channels.GroupBy(c => c.GroupTitle ?? "");
+                foreach (var group in groupedByGroup)
                 {
-                    foreach(var ch in group) ch.Category = "Film";
+                    // Eğer grupta sadece 1 tane "Dizi" varsa, onu "Film" kategorisine taşı
+                    if (group.Count() == 1 && group.Any(c => c.Category == "Dizi"))
+                    {
+                        foreach(var ch in group) ch.Category = "Film";
+                    }
                 }
-            }
 
-            return channels;
+                return channels;
+            });
         }
 
         private string DetermineSourceType(string url)

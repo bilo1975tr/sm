@@ -372,6 +372,71 @@ namespace StreamMesh.Services
             }
         }
 
+        private static List<string> _cachedSystemLanguages;
+        public static List<string> SystemLanguages
+        {
+            get
+            {
+                if (_cachedSystemLanguages != null) return _cachedSystemLanguages;
+
+                var list = new List<string>
+                {
+                    "Türkçe", "İngilizce", "Almanca", "Fransızca", "İspanyolca", "İtalyanca", "Rusça", "Portekizce", "Arapça", "Çince",
+                    "Arnavutça", "Azerice", "Boşnakça", "Bulgarca", "Hırvatça", "Sırpça", "Makedonca", "Slovence", "Slovakça", "Çekçe",
+                    "Lehçe", "Romence", "Yunanca", "Kürtçe", "Gürcüce", "Ermenice", "Felemenkçe", "İsveççe", "Norveççe", "Danca",
+                    "Fince", "Ukraynaca", "Macarca", "Estonyaca", "Letonca", "Litvanyaca", "Katalanca", "Baskça", "Galce", "İrlandaca",
+                    "Farsça", "Türkmence", "Kazakça", "Özbekçe", "Kırgızca", "Tacikçe", "Moğolca", "Japonca", "Korece", "Vietnamca",
+                    "Tayca", "Malayca", "Endonezce", "Filipince", "Hintçe", "Urduca", "Tamilce", "Bengalce", "İbranice", "Amharca", 
+                    "Svahili", "Somalice", "Afrikanca", "Balkan Dilleri"
+                };
+
+                try
+                {
+                    var neutralCultures = System.Globalization.CultureInfo.GetCultures(System.Globalization.CultureTypes.NeutralCultures);
+                    foreach (var c in neutralCultures)
+                    {
+                        string displayName = c.DisplayName;
+                        if (!string.IsNullOrEmpty(displayName) && !displayName.Contains("Invariant"))
+                        {
+                            displayName = char.ToUpper(displayName[0], new System.Globalization.CultureInfo("tr-TR")) + 
+                                          (displayName.Length > 1 ? displayName.Substring(1) : "");
+
+                            if (!list.Contains(displayName))
+                            {
+                                list.Add(displayName);
+                            }
+                        }
+
+                        string nativeName = c.NativeName;
+                        if (!string.IsNullOrEmpty(nativeName) && !nativeName.Contains("Invariant"))
+                        {
+                            nativeName = char.ToUpper(nativeName[0], new System.Globalization.CultureInfo("tr-TR")) + 
+                                         (nativeName.Length > 1 ? nativeName.Substring(1) : "");
+
+                            if (!list.Contains(nativeName))
+                            {
+                                list.Add(nativeName);
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                _cachedSystemLanguages = list.Distinct().OrderBy(x => x).ToList();
+                return _cachedSystemLanguages;
+            }
+        }
+
+        public static List<string> SystemLanguagesWithNone
+        {
+            get
+            {
+                var list = new List<string> { "Hiçbiri", "Bilinmiyor" };
+                list.AddRange(SystemLanguages);
+                return list;
+            }
+        }
+
         public static readonly List<string> AllCountries = new List<string>
         {
             "Türkiye", "Almanya", "Amerika Birleşik Devletleri", "Birleşik Krallık", "Fransa", 

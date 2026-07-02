@@ -103,20 +103,72 @@ namespace StreamMesh.Views
                 if (profile != null)
                 {
                     CountryCombo.ItemsSource = LocalizationManager.SystemCultures;
-                    Lang1Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
-                    Lang2Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
+                    Lang1Combo.ItemsSource = LocalizationManager.SystemLanguagesWithNone;
+                    Lang2Combo.ItemsSource = LocalizationManager.SystemLanguagesWithNone;
 
                     var defaultCountry = LocalizationManager.SystemCultures.FirstOrDefault(c => c.Contains("Türkçe")) ?? LocalizationManager.SystemCultures.FirstOrDefault();
                     CountryCombo.SelectedItem = string.IsNullOrEmpty(profile.Country) ? defaultCountry : profile.Country;
                     
                     if (profile.Languages != null)
                     {
-                        Lang1Combo.SelectedItem = profile.Languages.Count > 1 ? profile.Languages[1] : "Hiçbiri";
-                        Lang2Combo.SelectedItem = profile.Languages.Count > 2 ? profile.Languages[2] : "Hiçbiri";
+                        string lang1 = profile.Languages.Count > 1 ? profile.Languages[1] : "Hiçbiri";
+                        string lang2 = profile.Languages.Count > 2 ? profile.Languages[2] : "Hiçbiri";
+
+                        SelectLanguageInCombo(Lang1Combo, lang1);
+                        SelectLanguageInCombo(Lang2Combo, lang2);
                     }
                 }
             }
             catch { }
+        }
+
+        private void SelectLanguageInCombo(ComboBox combo, string target)
+        {
+            if (string.IsNullOrEmpty(target) || target == "Hiçbiri")
+            {
+                combo.SelectedItem = "Hiçbiri";
+                return;
+            }
+
+            // Önce birebir eşleşme ara
+            foreach (var item in combo.Items)
+            {
+                if (item?.ToString() == target)
+                {
+                    combo.SelectedItem = item;
+                    return;
+                }
+            }
+
+            // Normalleştirilmiş eşleşme ara
+            string targetNorm = StreamMesh.Models.Channel.NormalizeLanguage(target).ToLower(new System.Globalization.CultureInfo("tr-TR"));
+            foreach (var item in combo.Items)
+            {
+                string itemStr = item?.ToString();
+                if (!string.IsNullOrEmpty(itemStr))
+                {
+                    string itemNorm = StreamMesh.Models.Channel.NormalizeLanguage(itemStr).ToLower(new System.Globalization.CultureInfo("tr-TR"));
+                    if (itemNorm == targetNorm)
+                    {
+                        combo.SelectedItem = item;
+                        return;
+                    }
+                }
+            }
+
+            // Bulunamadıysa dinamik olarak ekle ve seç
+            var list = combo.ItemsSource as System.Collections.Generic.List<string>;
+            if (list != null)
+            {
+                var newList = new System.Collections.Generic.List<string>(list);
+                newList.Add(target);
+                combo.ItemsSource = newList;
+                combo.SelectedItem = target;
+            }
+            else
+            {
+                combo.SelectedItem = "Hiçbiri";
+            }
         }
 
         private void ProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)

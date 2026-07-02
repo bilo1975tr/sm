@@ -22,10 +22,10 @@ namespace StreamMesh.Windows
             var defaultCountry = LocalizationManager.SystemCultures.FirstOrDefault(c => c.Contains("Türkçe")) ?? LocalizationManager.SystemCultures.FirstOrDefault();
             CountryCombo.SelectedItem = defaultCountry;
 
-            Lang1Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
+            Lang1Combo.ItemsSource = LocalizationManager.SystemLanguagesWithNone;
             Lang1Combo.SelectedItem = "Hiçbiri";
 
-            Lang2Combo.ItemsSource = LocalizationManager.SystemCulturesWithNone;
+            Lang2Combo.ItemsSource = LocalizationManager.SystemLanguagesWithNone;
             Lang2Combo.SelectedItem = "Hiçbiri";
 
             AppLangCombo.ItemsSource = LocalizationManager.Top50Languages;

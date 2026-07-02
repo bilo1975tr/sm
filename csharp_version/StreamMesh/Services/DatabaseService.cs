@@ -9,7 +9,10 @@ namespace StreamMesh.Services
     public partial class DatabaseService
     {
         private readonly string _dbPath;
-        private string ConnectionString => $"Data Source={_dbPath}";
+        private string ConnectionString => $"Data Source={_dbPath};Default Timeout=10;Pooling=True;";
+
+        private static bool _databaseChecked = false;
+        private static readonly object _dbCheckLock = new object();
 
         public DatabaseService()
         {
@@ -19,22 +22,26 @@ namespace StreamMesh.Services
 
         public void EnsureDatabaseExists()
         {
-            var directory = Path.GetDirectoryName(_dbPath);
-            if (!Directory.Exists(directory))
+            lock (_dbCheckLock)
             {
-                Directory.CreateDirectory(directory);
-            }
+                if (_databaseChecked) return;
 
-            using (var connection = new SqliteConnection(ConnectionString))
-            {
-                connection.Open();
-                
-                // En yüksek hız için WAL (Write-Ahead Logging) ve Senkronizasyon optimizasyonu
-                using (var pragmaCmd = connection.CreateCommand())
+                var directory = Path.GetDirectoryName(_dbPath);
+                if (!Directory.Exists(directory))
                 {
-                    pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;";
-                    pragmaCmd.ExecuteNonQuery();
+                    Directory.CreateDirectory(directory);
                 }
+
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    
+                    // En yüksek hız için WAL (Write-Ahead Logging) ve Senkronizasyon optimizasyonu
+                    using (var pragmaCmd = connection.CreateCommand())
+                    {
+                        pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;";
+                        pragmaCmd.ExecuteNonQuery();
+                    }
 
                 var command = connection.CreateCommand();
                 command.CommandText = @"
@@ -219,6 +226,9 @@ namespace StreamMesh.Services
 
                 EnsureNormalizationCacheTableExists();
                 NormalizeExistingUnknownChannels();
+            }
+            
+            _databaseChecked = true;
             }
         }
 

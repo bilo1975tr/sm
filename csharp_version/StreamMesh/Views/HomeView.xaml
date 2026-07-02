@@ -55,6 +55,7 @@
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Movies]}" Tag="Movies" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Series]}" Tag="Series" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Radio]}" Tag="Radio" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="Vavoo" Tag="Vavoo" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                     </StackPanel>
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -107,6 +108,14 @@
                         <ComboBoxItem Content="8.0+ IMDb"/>
                         <ComboBoxItem Content="7.0+ IMDb"/>
                         <ComboBoxItem Content="6.0+ IMDb"/>
+                    </ComboBox>
+                </StackPanel>
+                
+                <!-- Vavoo Filtreleri -->
+                <StackPanel x:Name="VavooFiltersPanel" Orientation="Horizontal" Margin="0,15,0,0" Visibility="Collapsed">
+                    <TextBlock Text="🌍 Ülke/Kategori:" VerticalAlignment="Center" Foreground="#94a3b8" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="VavooCountryComboBox" Width="160" Height="32" Margin="0,0,20,0" SelectionChanged="VavooFilters_SelectionChanged">
+                        <ComboBoxItem Content="Hepsi" IsSelected="True" />
                     </ComboBox>
                 </StackPanel>
             </StackPanel>

@@ -316,9 +316,12 @@ namespace StreamMesh.Views
                 _mediaPlayer.Stop();
                 
                 string finalUrl = (channel.Url ?? "").Split(',')[0].Trim();
+                LogService.Log($"[Player] Start PlayChannelAsync: {channel.Name} | URL: {finalUrl} | SourceType: {channel.SourceType}");
+                
                 if (string.IsNullOrEmpty(finalUrl))
                 {
                     StatusTextBlock.Text = "Hata: Yayın URL'si bulunamadı!";
+                    LogService.Log($"[Player] Error: Empty URL for {channel.Name}");
                     return;
                 }
 
@@ -337,9 +340,12 @@ namespace StreamMesh.Views
                     bool isYoutube = finalUrl.Contains("youtube.com") || finalUrl.Contains("youtu.be");
                     bool isAceStream = finalUrl.StartsWith("acestream://");
 
+                    LogService.Log($"[Player] Detection: isYoutube={isYoutube}, isAceStream={isAceStream}, isVavoo={(channel.SourceType == "VAVOO" || finalUrl.Contains("vavoo.to"))}");
+
                     if (channel.SourceType == "YOUTUBE" || isYoutube)
                     {
                         StatusTextBlock.Text = "YouTube bağlantısı çözülüyor...";
+                        LogService.Log("[Player] Calling YoutubeService...");
                         // Web arayüzünde kullanılan Hızlı (Muxed) stream metoduna geçildi.
                         // Adaptive stream (ayrı ses ve görüntü) VLC'de yavaş arabelleğe alınıyor, süre göstermiyor ve ileri sarmada sorun yaşatıyordu.
                         var directUrl = await _youtubeService.GetSingleMuxedStreamUrlAsync(finalUrl);
@@ -349,6 +355,19 @@ namespace StreamMesh.Views
                             _currentYtAudioUrl = null; // Ayrı ses akışı kullanılmıyor
                         }
                         else throw new Exception("YouTube stream çözülemedi.");
+                    }
+                    else if (channel.SourceType == "VAVOO" || finalUrl.Contains("vavoo.to"))
+                    {
+                        StatusTextBlock.Text = "Vavoo bağlantısı çözülüyor...";
+                        var m3u8Url = await StreamMesh.Services.VavooVirtualBrowser.Instance.FetchChannelLinkAsync(finalUrl);
+                        if (!string.IsNullOrEmpty(m3u8Url))
+                        {
+                            finalUrl = m3u8Url;
+                        }
+                        else
+                        {
+                            throw new Exception("Vavoo stream çözülemedi. Lütfen daha sonra tekrar deneyin.");
+                        }
                     }
                     else if (channel.SourceType == "ACESTREAM" || isAceStream)
                     {

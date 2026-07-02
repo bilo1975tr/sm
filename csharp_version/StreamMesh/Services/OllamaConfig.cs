@@ -5,6 +5,7 @@ namespace StreamMesh.Services
 {
     public class OllamaConfig
     {
+        public string Provider { get; set; } = "Ollama"; // "Ollama" veya "LM Studio"
         public string Url { get; set; } = "http://localhost:11434/api/generate";
         public string Model { get; set; } = "llama3";
     }
