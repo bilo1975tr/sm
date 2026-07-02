@@ -483,8 +483,9 @@ namespace StreamMesh.Services
 
                                             for (let country of targetCountries) {
                                                 let opened = await openDropdown();
-                                                if (!opened) {
-                                                    let selectDiv = document.querySelector('[class*=\"select\"], [class*=\"dropdown\"], [class*=\"trigger\"], button');
+                                                if (!opened)
+                                                {
+                                                    let selectDiv = document.querySelector("[class*='select'], [class*='dropdown'], [class*='trigger'], button");
                                                     if (selectDiv) {
                                                         try {
                                                             selectDiv.click();
