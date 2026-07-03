@@ -8,7 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using StreamMesh.Models;
-using StreamMesh.Services.P2P;
+using StreamMesh.Services.Auth;
 
 namespace StreamMesh.Services
 {
@@ -181,7 +181,7 @@ namespace StreamMesh.Services
                 }
                 else
                 {
-                    var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                    var profile = StreamMesh.Services.Auth.UserService.GetProfile();
                     if (profile != null && profile.Languages != null && profile.Languages.Count > 0)
                     {
                         channel.Language = profile.Languages[0];

@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using LibVLCSharp.Shared;
 using StreamMesh.Models;
 using StreamMesh.Services;
-using StreamMesh.Services.P2P;
+using StreamMesh.Services.Auth;
 
 namespace StreamMesh.Views
 {
@@ -174,6 +174,37 @@ namespace StreamMesh.Views
                 filtered.Add(ch);
             }
             ChannelListView.ItemsSource = filtered;
+
+            // Fetch EPG in the background for filtered channels to show current program in the channel list
+            var channelsToProcess = filtered.ToList();
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    var epgService = new StreamMesh.Services.EpgService();
+                    var epgDict = epgService.GetCurrentEpgsForChannels(channelsToProcess);
+                    Dispatcher.Invoke(() =>
+                    {
+                        foreach (var ch in channelsToProcess)
+                        {
+                            if (epgDict.TryGetValue(ch.Id, out var curEpg))
+                            {
+                                ch.CurrentEpgTitle = curEpg.Title;
+                                ch.CurrentEpgTime = $"{curEpg.StartTime:HH:mm} - {curEpg.EndTime:HH:mm}";
+                            }
+                            else
+                            {
+                                ch.CurrentEpgTitle = "EPG Bilgisi Yok";
+                                ch.CurrentEpgTime = "--:--";
+                            }
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("PlayerView background EPG loading error", ex);
+                }
+            });
         }
 
         public async void LoadChannel(Channel channel, List<Channel> playlist = null)
@@ -195,35 +226,10 @@ namespace StreamMesh.Views
                 _needsSeekToProgress = true;
                 _saveProgressCounter = 0;
                 _currentChannel = channel;
+                StreamMesh.Services.ViewerTrackerService.Instance.SetActiveChannel(channel.Id);
                 
                 _databaseService.IncrementPersonalWatchCount(channel.Id);
                 channel.PersonalWatchCount++;
-
-                // Sync OSD Category Combobox with the dragged/played channel to provide continuous context
-                if (OsdCategoryBox != null)
-                {
-                    OsdCategoryBox.SelectionChanged -= OsdCategoryBox_SelectionChanged;
-
-                    if (playlist != null && playlist.All(c => c.IsFavorite)) 
-                    {
-                        OsdCategoryBox.SelectedIndex = 1; // Favoriler
-                    }
-                    else if (channel.Category != null)
-                    {
-                        string cat = channel.Category.ToLower();
-                        if (cat.Contains("film") || cat.Contains("movie")) OsdCategoryBox.SelectedIndex = 3;
-                        else if (cat.Contains("dizi") || cat.Contains("series")) OsdCategoryBox.SelectedIndex = 4;
-                        else if (cat.Contains("radyo") || cat.Contains("radio")) OsdCategoryBox.SelectedIndex = 5;
-                        else OsdCategoryBox.SelectedIndex = 2; // TV
-                    }
-                    else
-                    {
-                        OsdCategoryBox.SelectedIndex = 0;
-                    }
-
-                    OsdCategoryBox.SelectionChanged += OsdCategoryBox_SelectionChanged;
-                    FilterChannels(); // Apply filter based on this new selection
-                }
 
                 if (ChannelListView != null)
                 {
@@ -558,6 +564,7 @@ namespace StreamMesh.Views
                     _databaseService.SaveWatchProgress(_currentChannel.Id, _currentChannel.Name, t, len);
                 }
             }
+            StreamMesh.Services.ViewerTrackerService.Instance.ClearActiveChannel();
             _mediaPlayer?.Stop();
             _radioTimer?.Stop();
             if (RadioOverlayGrid != null) RadioOverlayGrid.Visibility = Visibility.Collapsed;

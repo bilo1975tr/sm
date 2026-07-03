@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using StreamMesh.Services;
-using StreamMesh.Services.P2P;
+using StreamMesh.Services.Auth;
 
 namespace StreamMesh.Views
 {

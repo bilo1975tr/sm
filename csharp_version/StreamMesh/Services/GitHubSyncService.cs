@@ -161,7 +161,7 @@ namespace StreamMesh.Services
                 using var client = new HttpClient();
                 client.Timeout = TimeSpan.FromSeconds(15);
 
-                var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                var profile = StreamMesh.Services.Auth.UserService.GetProfile();
                 var langs = profile?.Languages;
                 if (langs == null || langs.Count == 0)
                 {
@@ -229,7 +229,7 @@ namespace StreamMesh.Services
                     LastPulledGitHubChannelCount = allRemoteChannels.Count;
                     LastGitHubPullTime = DateTime.Now;
                     var db = new DatabaseService();
-                    db.SyncIncomingP2PChannels(allRemoteChannels);
+                    db.SyncIncomingRemoteChannels(allRemoteChannels);
                     LogService.Log($"GitHub'dan toplam {allRemoteChannels.Count} dil bazlı kanal çekildi ve yerel ile eşitlendi.");
                 }
             }

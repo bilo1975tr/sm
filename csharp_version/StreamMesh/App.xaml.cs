@@ -69,30 +69,19 @@ namespace StreamMesh
                 // Auto Login Check
                 splash.SetStatus("Kullanıcı profili ve lisans doğrulanıyor...", 45);
                 stepStopwatch.Restart();
-                bool loggedIn = StreamMesh.Services.P2P.UserService.AutoLogin();
+                bool loggedIn = StreamMesh.Services.Auth.UserService.AutoLogin();
                 stepStopwatch.Stop();
                 StreamMesh.Services.LogService.Log($"[StartupProfiler] UserService.AutoLogin took {stepStopwatch.ElapsedMilliseconds} ms.");
                 if (!loggedIn)
                 {
-                    splash.Hide();
-                    var loginWindow = new StreamMesh.Windows.LoginWindow();
-                    stepStopwatch.Restart();
-                    loginWindow.ShowDialog();
-                    stepStopwatch.Stop();
-                    StreamMesh.Services.LogService.Log($"[StartupProfiler] LoginWindow.ShowDialog took {stepStopwatch.ElapsedMilliseconds} ms.");
-
-                    if (!loginWindow.IsLoggedIn)
-                    {
-                        Application.Current.Shutdown();
-                        return;
-                    }
-                    splash.Show();
+                    StreamMesh.Services.LogService.Log("[Startup] Önceki oturum bulunamadı veya süresi dolmuş. Giriş ekranı atlanıyor ve otomatik Misafir girişi yapılıyor.");
+                    StreamMesh.Services.Auth.UserService.GuestLogin("Türkçe");
                 }
 
                 // Gelişmiş dil yükleme (AutoLogin veya LoginWindow sonrası)
                 splash.SetStatus("Dil paketleri ve arayüz yükleniyor...", 65);
                 stepStopwatch.Restart();
-                var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                var profile = StreamMesh.Services.Auth.UserService.GetProfile();
                 if (profile != null && !string.IsNullOrEmpty(profile.AppLanguage))
                 {
                     StreamMesh.Services.LocalizationManager.Instance.LoadTranslations(profile.AppLanguage);
@@ -118,6 +107,7 @@ namespace StreamMesh
                         StreamMesh.Services.GitHubSyncService.Start();
 
                         StreamMesh.Services.FirebaseQueueService.Instance.Start();
+                        StreamMesh.Services.ViewerTrackerService.Instance.Start();
                         bgStopwatch.Stop();
                         StreamMesh.Services.LogService.Log($"[StartupProfiler] Background services (GitHub Sync, Firebase Queue) initialized in {bgStopwatch.ElapsedMilliseconds} ms.");
                     }

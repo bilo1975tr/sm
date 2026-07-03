@@ -139,12 +139,12 @@ namespace StreamMesh.Views
                 monthsToAdd = 1; // Default fallback for low amount
             }
 
-            if (StreamMesh.Services.P2P.UserService.CurrentUser == null)
+            if (StreamMesh.Services.Auth.UserService.CurrentUser == null)
             {
-                StreamMesh.Services.P2P.UserService.GuestLogin();
+                StreamMesh.Services.Auth.UserService.GuestLogin();
             }
 
-            var user = StreamMesh.Services.P2P.UserService.CurrentUser;
+            var user = StreamMesh.Services.Auth.UserService.CurrentUser;
             if (user != null)
             {
                 user.IsPremium = true;
@@ -156,7 +156,7 @@ namespace StreamMesh.Views
                 {
                     user.PremiumExpiry = user.PremiumExpiry.AddMonths(monthsToAdd);
                 }
-                StreamMesh.Services.P2P.UserService.SaveProfile(user);
+                StreamMesh.Services.Auth.UserService.SaveProfile(user);
             }
 
             // Populate the premium channels into database

@@ -4,7 +4,7 @@ using System.Windows;
 using LibVLCSharp.Shared;
 using StreamMesh.Views;
 using StreamMesh.Services;
-using StreamMesh.Services.P2P;
+using StreamMesh.Services.Auth;
 
 namespace StreamMesh
 {

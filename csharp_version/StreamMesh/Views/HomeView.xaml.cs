@@ -19,12 +19,18 @@ namespace StreamMesh.Views
         private int _currentPage = 1;
         private int _pageSize = 14;
         private int _totalPages = 1;
+        private System.Windows.Threading.DispatcherTimer _viewerCountTimer;
 
         public HomeView()
         {
             InitializeComponent();
             _databaseService = new DatabaseService();
             LoadChannels();
+
+            _viewerCountTimer = new System.Windows.Threading.DispatcherTimer();
+            _viewerCountTimer.Interval = TimeSpan.FromSeconds(20);
+            _viewerCountTimer.Tick += (s, e) => UpdateViewerCountsAsync();
+            _viewerCountTimer.Start();
         }
 
         public async void LoadChannels()
@@ -40,18 +46,19 @@ namespace StreamMesh.Views
                 Dispatcher.Invoke(() => 
                 {
                     _allChannels = channels;
+                    UpdateViewerCountsAsync();
                     _currentPage = 1;
 
-                    if (StreamMesh.Services.P2P.UserService.CurrentUser != null)
+                    if (StreamMesh.Services.Auth.UserService.CurrentUser != null)
                     {
-                        if (StreamMesh.Services.P2P.UserService.CurrentUser.IsPremium)
+                        if (StreamMesh.Services.Auth.UserService.CurrentUser.IsPremium)
                         {
                             SponsorBannerBorder.Visibility = Visibility.Collapsed;
                         }
                         else
                         {
                             SponsorBannerBorder.Visibility = Visibility.Visible;
-                            var refCode = StreamMesh.Services.P2P.UserService.CurrentUser.ReferralCode;
+                            var refCode = StreamMesh.Services.Auth.UserService.CurrentUser.ReferralCode;
                             HomeAdText.Text = $"Arkadaşını Getir VIP Kazan!\nReferans Kodun: {refCode}";
                         }
                     }
@@ -72,6 +79,32 @@ namespace StreamMesh.Views
             catch (Exception ex)
             {
                 LogService.LogError("HomeView LoadChannels error", ex);
+            }
+        }
+
+        private async void UpdateViewerCountsAsync()
+        {
+            try
+            {
+                var viewerCounts = await ViewerTrackerService.Instance.FetchViewerCountsAsync();
+                if (_allChannels != null && viewerCounts != null)
+                {
+                    foreach (var ch in _allChannels)
+                    {
+                        if (viewerCounts.TryGetValue(ch.Id, out var count))
+                        {
+                            ch.ViewersCount = count;
+                        }
+                        else
+                        {
+                            ch.ViewersCount = 0;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("UpdateViewerCountsAsync error", ex);
             }
         }
 
@@ -205,7 +238,7 @@ namespace StreamMesh.Views
             }
 
             // Dil filtresini (profile.Languages) ve dil dengelemeyi/normalizasyonu uygula
-            var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+            var profile = StreamMesh.Services.Auth.UserService.GetProfile();
             if (profile != null && profile.Languages != null && profile.Languages.Count > 0)
             {
                 bool showAllLangs = profile.Languages.Any(l => 

@@ -172,7 +172,7 @@ namespace StreamMesh.Views
 
                     string streamUrl = result.SourceName == "AceStream" ? $"acestream://{result.ContentId}" : result.ContentId;
 
-                    var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                    var profile = StreamMesh.Services.Auth.UserService.GetProfile();
                     string defaultLang = (profile?.Languages != null && profile.Languages.Count > 0) ? profile.Languages[0] : "Türkçe";
 
                     var newChannel = new Channel
@@ -210,7 +210,7 @@ namespace StreamMesh.Views
                 if (items == null || items.Count == 0) return;
 
                 var db = new DatabaseService();
-                var profile = StreamMesh.Services.P2P.UserService.GetProfile();
+                var profile = StreamMesh.Services.Auth.UserService.GetProfile();
                 string defaultLang = (profile?.Languages != null && profile.Languages.Count > 0) ? profile.Languages[0] : "Türkçe";
 
                 int added = 0;

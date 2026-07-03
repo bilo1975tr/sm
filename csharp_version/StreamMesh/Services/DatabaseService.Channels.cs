@@ -168,7 +168,8 @@ namespace StreamMesh.Services
                                 Language=excluded.Language,
                                 PlaylistUrl=excluded.PlaylistUrl,
                                 IsFavorite=excluded.IsFavorite,
-                                IsVerified=excluded.IsVerified;
+                                IsVerified=excluded.IsVerified
+                            WHERE Channels.IsLocked = 0;
                         ";
 
                         var pId = command.Parameters.Add("@Id", SqliteType.Text);
@@ -840,7 +841,7 @@ namespace StreamMesh.Services
             SetSetting("m3u_sources", "");
         }
 
-        public void SyncIncomingP2PChannels(List<Channel> incomingChannels)
+        public void SyncIncomingRemoteChannels(List<Channel> incomingChannels)
         {
             if (incomingChannels == null || incomingChannels.Count == 0) return;
 
@@ -1013,7 +1014,7 @@ namespace StreamMesh.Services
                                 iUrl.Value = c.Url ?? string.Empty;
                                 iGrp.Value = c.GroupTitle ?? string.Empty;
                                 iLogo.Value = c.LogoUrl ?? string.Empty;
-                                iSrc.Value = c.SourceType ?? "P2P";
+                                iSrc.Value = c.SourceType ?? "STREAM";
                                 iDate.Value = now;
                                 iCat.Value = c.Category ?? "TV";
                                 c.Language = Channel.NormalizeLanguage(c.Language);
@@ -1038,7 +1039,7 @@ namespace StreamMesh.Services
             }
             catch (Exception ex)
             {
-                LogService.LogError("SyncIncomingP2PChannels failed", ex);
+                LogService.LogError("SyncIncomingRemoteChannels failed", ex);
             }
         }
 
@@ -1050,9 +1051,9 @@ namespace StreamMesh.Services
             _premiumChannelsSynced = true;
 
             bool hasPremium = false;
-            if (StreamMesh.Services.P2P.UserService.CurrentUser != null && 
-                StreamMesh.Services.P2P.UserService.CurrentUser.IsPremium && 
-                StreamMesh.Services.P2P.UserService.CurrentUser.PremiumExpiry > DateTime.UtcNow)
+            if (StreamMesh.Services.Auth.UserService.CurrentUser != null && 
+                StreamMesh.Services.Auth.UserService.CurrentUser.IsPremium && 
+                StreamMesh.Services.Auth.UserService.CurrentUser.PremiumExpiry > DateTime.UtcNow)
             {
                 hasPremium = true;
             }
@@ -1254,7 +1255,8 @@ namespace StreamMesh.Services
                                 IsVerified=excluded.IsVerified,
                                 IsLocked=excluded.IsLocked,
                                 Notes=excluded.Notes,
-                                IsPremium=excluded.IsPremium;
+                                IsPremium=excluded.IsPremium
+                            WHERE Channels.IsLocked = 0;
                         ";
                         var pId = channelCmd.Parameters.Add("@Id", SqliteType.Text);
                         var pName = channelCmd.Parameters.Add("@Name", SqliteType.Text);

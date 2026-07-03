@@ -19,7 +19,7 @@
             </StackPanel>
 
             <!-- Slogan veya Alt Başlık -->
-            <TextBlock Grid.Row="1" Text="Yeni Nesil IPTV &amp; P2P Medya Merkezi" Foreground="#94a3b8" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Top" />
+            <TextBlock Grid.Row="1" Text="Yeni Nesil IPTV Medya Merkezi" Foreground="#94a3b8" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Top" />
 
             <!-- Yüklenme Durumu Metni -->
             <TextBlock x:Name="StatusText" Grid.Row="2" Text="Uygulama hazırlanıyor..." Foreground="#cbd5e1" FontSize="13" HorizontalAlignment="Left" Margin="5,0,0,8" />

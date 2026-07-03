@@ -193,9 +193,33 @@ namespace StreamMesh.Services
                 foreach (var url in cfg.Tv)
                 {
                     if (string.IsNullOrWhiteSpace(url)) continue;
-                    statusCallback?.Invoke($"TV yayını indiriliyor: {url}");
+                    statusCallback?.Invoke($"TV yayını kontrol ediliyor: {url}");
                     try
                     {
+                        string savedHash = db.GetSetting($"last_hash_{url}", "");
+                        string savedEtag = db.GetSetting($"last_etag_{url}", "");
+                        string savedLastMod = db.GetSetting($"last_lastmod_{url}", "");
+                        var counts = db.GetChannelCountsBySource(url);
+
+                        var checkResult = await DownloadWithChangeDetectionAsync(url, savedEtag, savedLastMod, savedHash);
+                        
+                        if (checkResult.isNotModified && counts.total > 0)
+                        {
+                            LogService.Log($"[AutoUpdate] TV yayını değişmemiş, atlanıyor: {url}");
+                            continue;
+                        }
+
+                        statusCallback?.Invoke($"TV yayını indiriliyor: {url}");
+                        
+                        byte[] bytes = checkResult.contentBytes;
+                        if (bytes == null)
+                        {
+                            using (var client = new HttpClient())
+                            {
+                                bytes = await client.GetByteArrayAsync(url);
+                            }
+                        }
+
                         var channels = await m3uService.ParseM3uAsync(url, "TV");
                         if (channels != null && channels.Count > 0)
                         {
@@ -204,6 +228,12 @@ namespace StreamMesh.Services
                             ForceSetCategory(url, "TV");
                             totalAddedChannels += channels.Count;
                             LogService.Log($"[AutoUpdate] {channels.Count} TV kanalı eklendi/güncellendi: {url}");
+                            
+                            string computedHash = ComputeMD5Hash(bytes);
+                            db.SetSetting($"last_hash_{url}", computedHash);
+                            db.SetSetting($"last_etag_{url}", checkResult.etag ?? "");
+                            db.SetSetting($"last_lastmod_{url}", checkResult.lastModified ?? "");
+
                             GC.Collect();
                             await Task.Delay(1500); // UI thread'in nefes almasına izin ver
                         }
@@ -218,9 +248,33 @@ namespace StreamMesh.Services
                 foreach (var url in cfg.Film)
                 {
                     if (string.IsNullOrWhiteSpace(url)) continue;
-                    statusCallback?.Invoke($"Film yayını indiriliyor: {url}");
+                    statusCallback?.Invoke($"Film yayını kontrol ediliyor: {url}");
                     try
                     {
+                        string savedHash = db.GetSetting($"last_hash_{url}", "");
+                        string savedEtag = db.GetSetting($"last_etag_{url}", "");
+                        string savedLastMod = db.GetSetting($"last_lastmod_{url}", "");
+                        var counts = db.GetChannelCountsBySource(url);
+
+                        var checkResult = await DownloadWithChangeDetectionAsync(url, savedEtag, savedLastMod, savedHash);
+                        
+                        if (checkResult.isNotModified && counts.total > 0)
+                        {
+                            LogService.Log($"[AutoUpdate] Film yayını değişmemiş, atlanıyor: {url}");
+                            continue;
+                        }
+
+                        statusCallback?.Invoke($"Film yayını indiriliyor: {url}");
+                        
+                        byte[] bytes = checkResult.contentBytes;
+                        if (bytes == null)
+                        {
+                            using (var client = new HttpClient())
+                            {
+                                bytes = await client.GetByteArrayAsync(url);
+                            }
+                        }
+
                         var channels = await m3uService.ParseM3uAsync(url, "Film");
                         if (channels != null && channels.Count > 0)
                         {
@@ -229,6 +283,12 @@ namespace StreamMesh.Services
                             ForceSetCategory(url, "Film");
                             totalAddedChannels += channels.Count;
                             LogService.Log($"[AutoUpdate] {channels.Count} Film eklendi/güncellendi: {url}");
+                            
+                            string computedHash = ComputeMD5Hash(bytes);
+                            db.SetSetting($"last_hash_{url}", computedHash);
+                            db.SetSetting($"last_etag_{url}", checkResult.etag ?? "");
+                            db.SetSetting($"last_lastmod_{url}", checkResult.lastModified ?? "");
+
                             GC.Collect();
                             await Task.Delay(1500); // UI thread'in nefes almasına izin ver
                         }
@@ -243,9 +303,33 @@ namespace StreamMesh.Services
                 foreach (var url in cfg.Dizi)
                 {
                     if (string.IsNullOrWhiteSpace(url)) continue;
-                    statusCallback?.Invoke($"Dizi yayını indiriliyor: {url}");
+                    statusCallback?.Invoke($"Dizi yayını kontrol ediliyor: {url}");
                     try
                     {
+                        string savedHash = db.GetSetting($"last_hash_{url}", "");
+                        string savedEtag = db.GetSetting($"last_etag_{url}", "");
+                        string savedLastMod = db.GetSetting($"last_lastmod_{url}", "");
+                        var counts = db.GetChannelCountsBySource(url);
+
+                        var checkResult = await DownloadWithChangeDetectionAsync(url, savedEtag, savedLastMod, savedHash);
+                        
+                        if (checkResult.isNotModified && counts.total > 0)
+                        {
+                            LogService.Log($"[AutoUpdate] Dizi yayını değişmemiş, atlanıyor: {url}");
+                            continue;
+                        }
+
+                        statusCallback?.Invoke($"Dizi yayını indiriliyor: {url}");
+                        
+                        byte[] bytes = checkResult.contentBytes;
+                        if (bytes == null)
+                        {
+                            using (var client = new HttpClient())
+                            {
+                                bytes = await client.GetByteArrayAsync(url);
+                            }
+                        }
+
                         var channels = await m3uService.ParseM3uAsync(url, "Dizi");
                         if (channels != null && channels.Count > 0)
                         {
@@ -254,6 +338,12 @@ namespace StreamMesh.Services
                             ForceSetCategory(url, "Dizi");
                             totalAddedChannels += channels.Count;
                             LogService.Log($"[AutoUpdate] {channels.Count} Dizi eklendi/güncellendi: {url}");
+                            
+                            string computedHash = ComputeMD5Hash(bytes);
+                            db.SetSetting($"last_hash_{url}", computedHash);
+                            db.SetSetting($"last_etag_{url}", checkResult.etag ?? "");
+                            db.SetSetting($"last_lastmod_{url}", checkResult.lastModified ?? "");
+
                             GC.Collect();
                             await Task.Delay(1500); // UI thread'in nefes almasına izin ver
                         }
@@ -295,6 +385,71 @@ namespace StreamMesh.Services
             finally
             {
                 _isUpdating = false;
+            }
+        }
+
+        private static string ComputeMD5Hash(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0) return "";
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] hashBytes = md5.ComputeHash(bytes);
+                return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+            }
+        }
+
+        private static async Task<(byte[] contentBytes, string etag, string lastModified, bool isNotModified)> DownloadWithChangeDetectionAsync(
+            string url, string savedEtag, string savedLastModified, string savedHash)
+        {
+            try
+            {
+                using (var handler = new HttpClientHandler
+                {
+                    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
+                })
+                using (var client = new HttpClient(handler))
+                {
+                    client.Timeout = TimeSpan.FromMinutes(5);
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    if (!string.IsNullOrEmpty(savedEtag))
+                    {
+                        request.Headers.TryAddWithoutValidation("If-None-Match", savedEtag);
+                    }
+                    if (!string.IsNullOrEmpty(savedLastModified) && DateTime.TryParse(savedLastModified, out DateTime parsedDate))
+                    {
+                        request.Headers.IfModifiedSince = parsedDate;
+                    }
+
+                    using (var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
+                        {
+                            return (null, savedEtag, savedLastModified, true);
+                        }
+
+                        response.EnsureSuccessStatusCode();
+
+                        string etag = response.Headers.ETag?.Tag ?? "";
+                        string lastModified = response.Content.Headers.LastModified?.ToString() ?? "";
+                        
+                        byte[] bytes = await response.Content.ReadAsByteArrayAsync();
+                        string newHash = ComputeMD5Hash(bytes);
+
+                        if (newHash == savedHash)
+                        {
+                            return (null, etag, lastModified, true);
+                        }
+
+                        return (bytes, etag, lastModified, false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"DownloadWithChangeDetectionAsync failed for {url}", ex);
+                return (null, null, null, false);
             }
         }
 

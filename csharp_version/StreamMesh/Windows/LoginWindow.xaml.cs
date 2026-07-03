@@ -1,7 +1,7 @@
 using System;
 using System.Windows;
 using StreamMesh.Services;
-using StreamMesh.Services.P2P;
+using StreamMesh.Services.Auth;
 using System.Windows.Controls;
 
 namespace StreamMesh.Windows

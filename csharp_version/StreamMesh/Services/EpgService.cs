@@ -20,6 +20,7 @@ namespace StreamMesh.Services
 
         public async Task<bool> ParseEpgUrlAsync(string url)
         {
+            LogService.Log($"[EpgService] ParseEpgUrlAsync başlatıldı. URL: '{url}'");
             try
             {
                 var handler = new HttpClientHandler
@@ -32,21 +33,71 @@ namespace StreamMesh.Services
                     client.Timeout = TimeSpan.FromMinutes(15);
                     client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
-                    using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+                    string savedEtag = _db.GetSetting($"last_epg_etag_{url}", "");
+                    string savedLastMod = _db.GetSetting($"last_epg_lastmod_{url}", "");
+                    string savedHash = _db.GetSetting($"last_epg_hash_{url}", "");
+                    int currentProgCount = _db.GetEpgSourceProgramCount(url);
+
+                    var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    if (!string.IsNullOrEmpty(savedEtag))
                     {
+                        request.Headers.TryAddWithoutValidation("If-None-Match", savedEtag);
+                    }
+                    if (!string.IsNullOrEmpty(savedLastMod) && DateTime.TryParse(savedLastMod, out DateTime parsedDate))
+                    {
+                        request.Headers.IfModifiedSince = parsedDate;
+                    }
+
+                    LogService.Log($"[EpgService] EPG dosyası indiriliyor: '{url}'");
+                    using (var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                    {
+                        LogService.Log($"[EpgService] HTTP bağlantı yanıtı alındı. Durum Kodu: {response.StatusCode} ({(int)response.StatusCode})");
+                        
+                        if (response.StatusCode == System.Net.HttpStatusCode.NotModified && currentProgCount > 0)
+                        {
+                            LogService.Log($"[EpgService] EPG kaynağı değişmemiş (304 Not Modified). Güncelleme atlanıyor: {url}");
+                            return true;
+                        }
+
                         if (!response.IsSuccessStatusCode)
                         {
+                            LogService.Log($"[EpgService] EPG Bağlantı Hatası: {response.StatusCode} URL: {url}", "ERROR");
                             Console.WriteLine($"EPG Bağlantı Hatası: {response.StatusCode} URL: {url}");
                             return false;
                         }
 
-                        using (var stream = await response.Content.ReadAsStreamAsync())
+                        string newEtag = response.Headers.ETag?.Tag ?? "";
+                        string newLastMod = response.Content.Headers.LastModified?.ToString() ?? "";
+
+                        byte[] bytes;
+                        using (var responseStream = await response.Content.ReadAsStreamAsync())
+                        using (var ms = new MemoryStream())
                         {
-                            Stream xmlStream = stream;
+                            await responseStream.CopyToAsync(ms);
+                            bytes = ms.ToArray();
+                        }
+
+                        string newHash = "";
+                        using (var md5 = System.Security.Cryptography.MD5.Create())
+                        {
+                            byte[] hashBytes = md5.ComputeHash(bytes);
+                            newHash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                        }
+
+                        if (newHash == savedHash && currentProgCount > 0)
+                        {
+                            LogService.Log($"[EpgService] EPG kaynağı değişmemiş (Hash eşleşti). Güncelleme atlanıyor: {url}");
+                            return true;
+                        }
+
+                        using (var ms = new MemoryStream(bytes))
+                        {
+                            Stream xmlStream = ms;
                             // Manuel GZip desteği (URL bazlı veya content-type bazlı değilse)
                             if (url.ToLower().EndsWith(".gz") || url.ToLower().Contains(".xml.gz"))
                             {
-                                xmlStream = new GZipStream(stream, CompressionMode.Decompress);
+                                LogService.Log("[EpgService] GZip sıkıştırma algılandı. GZip dekompresyon akışı başlatılıyor.");
+                                xmlStream = new GZipStream(ms, CompressionMode.Decompress);
                             }
 
                             var programs = new List<EpgProgram>();
@@ -62,6 +113,7 @@ namespace StreamMesh.Services
 
                             try
                             {
+                                LogService.Log("[EpgService] XML ayrıştırıcı (XmlReader) başlatılıyor...");
                                 using (var reader = XmlReader.Create(xmlStream, settings))
                                 {
                                     string currentChannelId = null;
@@ -120,14 +172,17 @@ namespace StreamMesh.Services
                                         }
                                     }
                                 }
+                                LogService.Log($"[EpgService] XML ayrıştırma tamamlandı. Belleğe alınan ham program sayısı: {programs.Count}, Eşleşen kanal tanımlayıcı sayısı: {channelsMap.Count}");
                             }
                             catch (Exception ex)
                             {
+                                LogService.LogError($"[EpgService] EPG XML Ayrıştırma Hatası (URL: {url})", ex);
                                 Console.WriteLine($"EPG XML Ayrıştırma Hatası (URL: {url}): {ex.Message}");
                                 return false;
                             }
 
                             // Gecikmeli Eşleştirme: Program isimlerini gerçek kanal isimleriyle güncelle
+                            LogService.Log("[EpgService] Program kanal adları (display-name) teknik id'lerden gerçek isimlerine eşleştiriliyor...");
                             foreach (var prog in programs)
                             {
                                 string techId = prog.ChannelName; // Yukarıda atadığımız ID
@@ -139,14 +194,25 @@ namespace StreamMesh.Services
 
                             if (programs.Count > 0 || channelsMap.Count > 0)
                             {
+                                LogService.Log($"[EpgService] Eski EPG programları temizleniyor: '{url}'");
                                 _db.ClearEpgByUrl(url);
+                                
+                                LogService.Log($"[EpgService] {programs.Count} adet program SQLite veritabanına kaydediliyor...");
                                 _db.SaveEpgPrograms(programs);
                                 _db.AddEpgSource(url);
+                                
+                                // Save ETag, Last-Modified and Hash
+                                _db.SetSetting($"last_epg_etag_{url}", newEtag);
+                                _db.SetSetting($"last_epg_lastmod_{url}", newLastMod);
+                                _db.SetSetting($"last_epg_hash_{url}", newHash);
+
+                                LogService.Log($"[EpgService] EPG Başarılı: {programs.Count} program, {channelsMap.Count} kanal yüklendi.");
                                 Console.WriteLine($"EPG Başarılı: {programs.Count} program, {channelsMap.Count} kanal yüklendi.");
                                 return true;
                             }
                             else
                             {
+                                LogService.Log("[EpgService] EPG Hatası: Ayrıştırma bitti ancak program veya kanal verisi bulunamadı.", "WARN");
                                 Console.WriteLine("EPG Hatası: Ayrıştırma bitti ancak veri bulunamadı.");
                                 return false;
                             }
@@ -156,6 +222,7 @@ namespace StreamMesh.Services
             }
             catch (Exception ex)
             {
+                LogService.LogError($"[EpgService] ParseEpgUrlAsync Kritik Ayrıştırma Hatası (URL: {url})", ex);
                 Console.WriteLine("EPG Kritik Ayrıştırma Hatası: " + ex.Message);
                 return false;
             }

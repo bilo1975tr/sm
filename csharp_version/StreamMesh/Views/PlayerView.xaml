@@ -3,8 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
              xmlns:services="clr-namespace:StreamMesh.Services"
+             xmlns:converters="clr-namespace:StreamMesh.Converters"
              Background="Black">
     <UserControl.Resources>
+        <converters:LogoCacheConverter x:Key="LogoCacheConverter" />
         <!-- Modern Web Player Slider Style -->
         <Style x:Key="WebPlayerSliderStyle" TargetType="Slider">
             <Setter Property="Background" Value="#33ffffff"/>
@@ -156,11 +158,22 @@
 
                     <Button x:Name="MenuBtn" Content="☰" Grid.Column="0" Width="40" Height="40" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="20" Click="MenuBtn_Click" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
-                    <!-- Channel Logo and Name -->
+                     <!-- Channel Logo and Name -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
                         <Border Width="60" Height="60" CornerRadius="8" Background="#33ffffff" Margin="0,0,15,0" ClipToBounds="True">
                             <Grid>
-                                <TextBlock Text="📺" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#94a3b8"/>
+                                <TextBlock x:Name="OsdDefaultTvIcon" Text="📺" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#94a3b8">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Source, ElementName=OsdChannelLogo}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                                 <Image x:Name="OsdChannelLogo" Stretch="Uniform" />
                             </Grid>
                         </Border>
@@ -327,10 +340,27 @@
                         <DataTemplate>
                             <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,8" Padding="10" BorderThickness="1" BorderBrush="#334155" x:Name="ItemBorder">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📺" Margin="0,0,10,0" FontSize="16" VerticalAlignment="Center" />
+                                    <!-- Logo Area with fallback default TV icon -->
+                                    <Border Width="36" Height="36" CornerRadius="6" Background="#111827" Margin="0,0,10,0" ClipToBounds="True" VerticalAlignment="Center">
+                                        <Grid>
+                                            <TextBlock x:Name="DefaultTvIcon" Text="📺" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#475569">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Source, ElementName=ChannelLogoImg}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <Image x:Name="ChannelLogoImg" Source="{Binding LogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" />
+                                        </Grid>
+                                    </Border>
                                     <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#e2e8f0" TextTrimming="CharacterEllipsis" Width="220" FontSize="13"/>
-                                        <TextBlock Text="{Binding GroupTitle}" FontSize="10" Foreground="#94a3b8" />
+                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="#e2e8f0" TextTrimming="CharacterEllipsis" Width="200" FontSize="13"/>
+                                        <TextBlock Text="{Binding CurrentEpgTitle}" FontSize="10" Foreground="#94a3b8" TextTrimming="CharacterEllipsis" Width="200" />
                                     </StackPanel>
                                 </StackPanel>
                             </Border>

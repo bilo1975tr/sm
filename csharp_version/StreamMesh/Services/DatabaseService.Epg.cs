@@ -216,48 +216,90 @@ namespace StreamMesh.Services
             string epgId = channel.EpgId;
             string cleanName = CleanChannelName(channelName);
             
+            LogService.Log($"[EPG-Match] GetCurrentEpgForChannel: '{channelName}' kanalı için EPG aranıyor. EpgId: '{(string.IsNullOrEmpty(epgId) ? "(yok)" : epgId)}', Temizlenmiş İsim: '{cleanName}'");
+
             var allPrograms = new List<EpgProgram>();
 
-            using (var connection = new SqliteConnection(ConnectionString))
+            try
             {
-                connection.Open();
-                var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, ChannelName, Title, Description, StartTime, EndTime FROM EpgPrograms WHERE StartTime <= @Now AND EndTime >= @Now";
-                command.Parameters.AddWithValue("@Now", nowStr);
-                
-                using (var reader = command.ExecuteReader())
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    var command = connection.CreateCommand();
+                    command.CommandText = "SELECT Id, ChannelName, Title, Description, StartTime, EndTime FROM EpgPrograms WHERE StartTime <= @Now AND EndTime >= @Now";
+                    command.Parameters.AddWithValue("@Now", nowStr);
+                    
+                    using (var reader = command.ExecuteReader())
                     {
-                        var prog = new EpgProgram
+                        while (reader.Read())
                         {
-                            Id = reader.GetInt32(0),
-                            ChannelName = reader.GetString(1),
-                            Title = reader.GetString(2),
-                            Description = reader.GetString(3)
-                        };
-                        if (DateTime.TryParse(reader.GetString(4), out DateTime st)) prog.StartTime = st;
-                        if (DateTime.TryParse(reader.GetString(5), out DateTime et)) prog.EndTime = et;
-                        allPrograms.Add(prog);
+                            var prog = new EpgProgram
+                            {
+                                Id = reader.GetInt32(0),
+                                ChannelName = reader.GetString(1),
+                                Title = reader.GetString(2),
+                                Description = reader.GetString(3)
+                            };
+                            if (DateTime.TryParse(reader.GetString(4), out DateTime st)) prog.StartTime = st;
+                            if (DateTime.TryParse(reader.GetString(5), out DateTime et)) prog.EndTime = et;
+                            allPrograms.Add(prog);
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                LogService.LogError($"[EPG-Match] Şu anki EPG programları veritabanından okunurken hata oluştu. Kanal: '{channelName}'", ex);
+            }
 
+            LogService.Log($"[EPG-Match] Veritabanında şu an yayınlanan toplam EPG programı sayısı: {allPrograms.Count}");
+
+            if (allPrograms.Count == 0)
+            {
+                LogService.Log($"[EPG-Match] Veritabanında şu an için aktif hiçbir EPG programı bulunamadı. EPG kaynağı eklenmemiş veya süresi dolmuş olabilir.", "WARN");
+                return null;
+            }
+
+            // 1. Aşama: EpgId ile Birebir Eşleme
             if (!string.IsNullOrEmpty(epgId))
             {
                 var match = allPrograms.FirstOrDefault(p => p.ChannelName.Equals(epgId, StringComparison.OrdinalIgnoreCase));
-                if (match != null) return match;
+                if (match != null)
+                {
+                    LogService.Log($"[EPG-Match] -> 1. Aşama Başarılı (EpgId Eşleşmesi): Kanal '{channelName}' (EpgId: '{epgId}') == Program Kanalı '{match.ChannelName}' -> Program: '{match.Title}'");
+                    return match;
+                }
             }
 
+            // 2. Aşama: Kanal İsmiyle Birebir Eşleme
             var exactMatch = allPrograms.FirstOrDefault(p => p.ChannelName.Equals(channelName, StringComparison.OrdinalIgnoreCase));
-            if (exactMatch != null) return exactMatch;
+            if (exactMatch != null)
+            {
+                LogService.Log($"[EPG-Match] -> 2. Aşama Başarılı (Birebir İsim Eşleşmesi): Kanal '{channelName}' == Program Kanalı '{exactMatch.ChannelName}' -> Program: '{exactMatch.Title}'");
+                return exactMatch;
+            }
 
+            // 3. Aşama: Temizlenmiş Kanal İsmiyle Eşleme
             var cleanMatch = allPrograms.FirstOrDefault(p => CleanChannelName(p.ChannelName).Equals(cleanName, StringComparison.OrdinalIgnoreCase));
-            if (cleanMatch != null) return cleanMatch;
+            if (cleanMatch != null)
+            {
+                LogService.Log($"[EPG-Match] -> 3. Aşama Başarılı (Temizlenmiş İsim Eşleşmesi): Kanal '{channelName}' (Temiz: '{cleanName}') == Program Kanalı '{cleanMatch.ChannelName}' (Temiz: '{CleanChannelName(cleanMatch.ChannelName)}') -> Program: '{cleanMatch.Title}'");
+                return cleanMatch;
+            }
 
-            return allPrograms.FirstOrDefault(p => 
+            // 4. Aşama: Kısmi / İçerme Eşleşmesi
+            var partialMatch = allPrograms.FirstOrDefault(p => 
                 channelName.IndexOf(p.ChannelName, StringComparison.OrdinalIgnoreCase) >= 0 ||
                 p.ChannelName.IndexOf(cleanName, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            if (partialMatch != null)
+            {
+                LogService.Log($"[EPG-Match] -> 4. Aşama Başarılı (Kısmi/İçerme Eşleşmesi): Kanal '{channelName}' ile Program Kanalı '{partialMatch.ChannelName}' eşleşti -> Program: '{partialMatch.Title}'");
+                return partialMatch;
+            }
+
+            LogService.Log($"[EPG-Match] -> '{channelName}' kanalı için veritabanındaki {allPrograms.Count} program arasından hiçbir eşleşme bulunamadı.");
+            return null;
         }
 
         private string CleanChannelName(string name)
