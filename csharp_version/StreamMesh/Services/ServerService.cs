@@ -396,7 +396,7 @@ namespace StreamMesh.Services
             --bg: #0f172a;
             --card-bg: #1e293b;
             --text: #f8fafc;
-            --text-muted: #94a3b8;
+            --text-muted: #FFFFFF;
             --primary: #38bdf8;
         }}
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }}

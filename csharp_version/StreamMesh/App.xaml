@@ -8,7 +8,7 @@
         <SolidColorBrush x:Key="BgHover" Color="#334155" />
         <SolidColorBrush x:Key="BorderColor" Color="#334155" />
         <SolidColorBrush x:Key="TextLight" Color="#f8fafc" />
-        <SolidColorBrush x:Key="TextMuted" Color="#94a3b8" />
+        <SolidColorBrush x:Key="TextMuted" Color="#FFFFFF" />
         <SolidColorBrush x:Key="AccentColor" Color="#38bdf8" />
 
         <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,0">
@@ -150,7 +150,7 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="30"/>
                                 </Grid.ColumnDefinitions>
-                                <Path Grid.Column="1" x:Name="Arrow" Fill="#94a3b8" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                <Path Grid.Column="1" x:Name="Arrow" Fill="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>

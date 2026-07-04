@@ -45,6 +45,7 @@ namespace StreamMesh.Views
         private string _currentYtVideoUrl;
         private List<Channel> _allChannels = new List<Channel>();
         private DispatcherTimer _adBannerTimer;
+        private DispatcherTimer _viewerCountTimer;
 
         // Radio Visualizer Elements & Timers
         private DispatcherTimer _radioTimer;
@@ -78,6 +79,11 @@ namespace StreamMesh.Views
             _adBannerTimer = new DispatcherTimer();
             _adBannerTimer.Interval = TimeSpan.FromSeconds(30);
             _adBannerTimer.Tick += AdBannerTimer_Tick;
+
+            _viewerCountTimer = new DispatcherTimer();
+            _viewerCountTimer.Interval = TimeSpan.FromSeconds(15);
+            _viewerCountTimer.Tick += (s, e) => UpdateOsdViewerCountAsync();
+            _viewerCountTimer.Start();
 
             _radioTimer = new DispatcherTimer();
             _radioTimer.Interval = TimeSpan.FromMilliseconds(100);
@@ -239,6 +245,7 @@ namespace StreamMesh.Views
                 
                 OsdTitle.Text = channel.Name;
                 OsdCategory.Text = channel.Category ?? "Bilinmiyor";
+                UpdateOsdViewerCountAsync();
 
                 if (!string.IsNullOrEmpty(channel.LogoUrl))
                 {
@@ -547,6 +554,42 @@ namespace StreamMesh.Views
             }
         }
         
+        private async void UpdateOsdViewerCountAsync()
+        {
+            if (_currentChannel == null)
+            {
+                if (OsdViewerPanel != null) OsdViewerPanel.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            try
+            {
+                var viewerCounts = await StreamMesh.Services.ViewerTrackerService.Instance.FetchViewerCountsAsync();
+                if (viewerCounts != null && viewerCounts.TryGetValue(_currentChannel.Id, out var count))
+                {
+                    if (OsdViewerCount != null)
+                    {
+                        OsdViewerCount.Text = count.ToString();
+                    }
+                    if (OsdViewerPanel != null)
+                    {
+                        OsdViewerPanel.Visibility = Visibility.Visible;
+                    }
+                }
+                else
+                {
+                    if (OsdViewerPanel != null)
+                    {
+                        OsdViewerPanel.Visibility = Visibility.Collapsed;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("UpdateOsdViewerCountAsync error", ex);
+            }
+        }
+
         private void AdBannerTimer_Tick(object sender, EventArgs e)
         {
             _adBannerTimer.Stop();
@@ -565,6 +608,8 @@ namespace StreamMesh.Views
                 }
             }
             StreamMesh.Services.ViewerTrackerService.Instance.ClearActiveChannel();
+            if (OsdViewerPanel != null) OsdViewerPanel.Visibility = Visibility.Collapsed;
+            if (OsdViewerCount != null) OsdViewerCount.Text = "0";
             _mediaPlayer?.Stop();
             _radioTimer?.Stop();
             if (RadioOverlayGrid != null) RadioOverlayGrid.Visibility = Visibility.Collapsed;

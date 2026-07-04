@@ -174,7 +174,16 @@ namespace StreamMesh.Services
                                 foreach (var vKp in channelViewers)
                                 {
                                     long lastHeartbeat = vKp.Value;
-                                    if (now - lastHeartbeat <= 90)
+                                    
+                                    // Milisaniye cinsinden (13 haneli) kaydedilmişse saniyeye dönüştür
+                                    if (lastHeartbeat > 9999999999)
+                                    {
+                                        lastHeartbeat /= 1000;
+                                    }
+
+                                    long diff = now - lastHeartbeat;
+                                    // Sadece son 90 saniye içinde güncellenmiş ve geçerli (gelecekte olmayan) olanları say
+                                    if (diff >= 0 && diff <= 90)
                                     {
                                         activeCount++;
                                     }

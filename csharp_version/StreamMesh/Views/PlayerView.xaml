@@ -177,9 +177,15 @@
                                 <Image x:Name="OsdChannelLogo" Stretch="Uniform" />
                             </Grid>
                         </Border>
-                        <StackPanel VerticalAlignment="Center" MaxWidth="120">
+                        <StackPanel VerticalAlignment="Center" MaxWidth="160">
                             <TextBlock x:Name="OsdTitle" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_Loading]}" FontSize="18" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
-                            <TextBlock x:Name="OsdCategory" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_NoCategory]}" FontSize="11" Foreground="#38bdf8" TextTrimming="CharacterEllipsis"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock x:Name="OsdCategory" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_NoCategory]}" FontSize="11" Foreground="#38bdf8" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                                <StackPanel x:Name="OsdViewerPanel" Orientation="Horizontal" VerticalAlignment="Center" Visibility="Collapsed">
+                                    <TextBlock Text="👁" FontSize="11" Foreground="#10b981" Margin="0,0,3,0"/>
+                                    <TextBlock x:Name="OsdViewerCount" Text="0" FontSize="11" Foreground="#10b981" FontWeight="Bold"/>
+                                </StackPanel>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
 
