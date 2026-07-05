@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>StreamMesh Logo</title>
+
 </head>
 <body>
   <h1>StreamMesh Logo</h1>
