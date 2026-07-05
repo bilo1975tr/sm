@@ -191,7 +191,7 @@ namespace StreamMesh.Services
 
                         foreach (var channel in channels)
                         {
-                            SmartNormalizationEngine.Instance.NormalizeChannel(channel);
+                            SmartNormalizationEngine.Instance.NormalizeChannel(channel, skipDbCache: true);
 
                             // Ölü link filtreleme (N+1 query optimize edildi)
                             if (!string.IsNullOrEmpty(channel.Url))
@@ -1305,7 +1305,7 @@ namespace StreamMesh.Services
                             var ch = item.Channel;
                             if (ch == null) continue;
 
-                            SmartNormalizationEngine.Instance.NormalizeChannel(ch);
+                            SmartNormalizationEngine.Instance.NormalizeChannel(ch, skipDbCache: true);
 
                             pId.Value = ch.Id;
                             pName.Value = ch.Name ?? string.Empty;

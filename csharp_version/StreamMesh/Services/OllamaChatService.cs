@@ -160,6 +160,32 @@ Proaktif Güncelleme ve Analiz Kuralları (ÇOK ÖNEMLİ):
             return finalResponse;
         }
 
+        public async Task<string> GenerateMovieMetadataJsonAsync(string rawMovieName, System.Threading.CancellationToken cancellationToken = default)
+        {
+            var systemPrompt = @"Sen bir film analiz asistanısın. Sana verilen ham IPTV film/kanal ismi/dosya adından filmin gerçek, temiz Türkçe ismini (ve eğer varsa orijinal ismini ve çıkış yılını) tespit et ve bu film hakkında çok kısa (en fazla 2 cümle, maksimum 150 karakter) Türkçe bir özet/tanıtım yaz.
+Yanıtını kesinlikle sadece şu JSON formatında ver, başka hiçbir açıklama veya markdown kod bloğu ekleme:
+{
+  ""title"": ""Temiz Film İsmi (Yıl)"",
+  ""summary"": ""Çok kısa film özeti...""
+}";
+
+            var messages = new List<object>
+            {
+                new { role = "system", content = systemPrompt },
+                new { role = "user", content = $"Ham Film İsmi: {rawMovieName}" }
+            };
+
+            try
+            {
+                return await CallOllamaChat(messages, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ollama GenerateMovieMetadataJsonAsync error for {rawMovieName}: {ex.Message}");
+                return null;
+            }
+        }
+
         private async Task<string> CallOllamaChat(List<object> messages, System.Threading.CancellationToken cancellationToken = default)
         {
             var config = OllamaConfigManager.Load();
@@ -237,6 +263,27 @@ Proaktif Güncelleme ve Analiz Kuralları (ÇOK ÖNEMLİ):
                 var root = JsonSerializer.Deserialize<JsonElement>(jsonString);
                 return root.GetProperty("message").GetProperty("content").GetString();
             }
+        }
+
+        public async Task EnsureModelSelectedAsync()
+        {
+            try
+            {
+                var config = OllamaConfigManager.Load();
+                if (string.IsNullOrEmpty(config.Model) || config.Model == "auto")
+                {
+                    var models = await GetModels();
+                    if (models != null && models.Count > 0)
+                    {
+                        var bestModel = models.FirstOrDefault(m => m.Contains("llama3"))
+                                       ?? models.FirstOrDefault(m => m.Contains("mistral"))
+                                       ?? models.First();
+                        config.Model = bestModel;
+                        OllamaConfigManager.Save(config);
+                    }
+                }
+            }
+            catch { }
         }
 
         public async Task<List<string>> GetModels()

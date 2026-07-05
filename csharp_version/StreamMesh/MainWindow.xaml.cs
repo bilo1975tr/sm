@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Windows;
+using System.Threading.Tasks;
 using LibVLCSharp.Shared;
 using StreamMesh.Views;
 using StreamMesh.Services;
@@ -123,8 +124,40 @@ namespace StreamMesh
                 }
             });
 
+            // Asenkron Yapay Zeka (AI) Varlık Kontrolü
+            CheckAiAvailabilityAsync();
+
             stopwatch.Stop();
             LogService.Log($"[Startup] MainWindow_Loaded completed in {stopwatch.ElapsedMilliseconds} ms.");
+        }
+
+        private async void CheckAiAvailabilityAsync()
+        {
+            try
+            {
+                var service = new OllamaChatService();
+                var models = await Task.Run(() => service.GetModels());
+                if (models != null && models.Count > 0)
+                {
+                    LogService.Log($"[AI Check] Yerel Yapay Zeka (Ollama/LM Studio) tespit edildi. Bulunan modeller: {string.Join(", ", models)}");
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (AiButton != null)
+                        {
+                            AiButton.ToolTip = $"AI Asistanı Aktif (Ollama/LM Studio Tespit Edildi - Modeller: {string.Join(", ", models)})";
+                            AiButton.Foreground = System.Windows.Media.Brushes.LimeGreen;
+                        }
+                    });
+                }
+                else
+                {
+                    LogService.Log("[AI Check] Yerel Yapay Zeka (Ollama/LM Studio) yanıt vermedi veya yüklü model bulunamadı.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.Log($"[AI Check] Yapay Zeka algılama hatası: {ex.Message}");
+            }
         }
 
         private void OnChannelSelected(Models.Channel channel, List<Models.Channel> playlist)

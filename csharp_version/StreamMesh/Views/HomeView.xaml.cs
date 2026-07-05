@@ -47,7 +47,7 @@ namespace StreamMesh.Views
                 {
                     _allChannels = channels;
                     UpdateViewerCountsAsync();
-                    _currentPage = 1;
+                    if (_currentPage < 1) _currentPage = 1;
 
                     if (StreamMesh.Services.Auth.UserService.CurrentUser != null)
                     {
@@ -350,7 +350,7 @@ namespace StreamMesh.Views
 
             _totalPages = (int)Math.Ceiling(_filteredChannels.Count / (double)_pageSize);
             if (_totalPages == 0) _totalPages = 1;
-            if (_currentPage > _totalPages) _currentPage = 1;
+            if (_currentPage > _totalPages) _currentPage = _totalPages;
 
             var paged = _filteredChannels.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
 

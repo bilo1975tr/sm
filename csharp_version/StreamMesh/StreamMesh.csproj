@@ -10,6 +10,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>x64</PlatformTarget>
     <NoWarn>$(NoWarn);NU1701</NoWarn>
+    <ApplicationIcon>app_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,6 +36,17 @@
   <ItemGroup>
     <None Include="..\..\VERSION" Link="VERSION">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="logos\StreamMesh_logo.png" />
+    <Resource Include="app_icon.ico" />
+    <None Update="logos\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="app_icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

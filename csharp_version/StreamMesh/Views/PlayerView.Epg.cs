@@ -230,5 +230,44 @@ namespace StreamMesh.Views
             _isDragging = false;
             ResetOsdTimer();
         }
+
+        private void AudioBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer == null) return;
+            var menu = AudioBtn.ContextMenu;
+            if (menu == null) return;
+            menu.Items.Clear();
+
+            var tracks = _mediaPlayer.AudioTrackDescription;
+            if (tracks == null || tracks.Length <= 0)
+            {
+                StatusTextBlock.Text = "Ses kanalı bilgisi alınamıyor (Yayın başlamalı)";
+                return;
+            }
+
+            foreach (var track in tracks)
+            {
+                string header = track.Name;
+                if (track.Id == -1)
+                {
+                    header = "Sessiz (Devre Dışı)";
+                }
+                else if (string.IsNullOrEmpty(header))
+                {
+                    header = $"Ses Kanalı {track.Id}";
+                }
+
+                var menuItem = new MenuItem { Header = header, Tag = track.Id, IsCheckable = true, IsChecked = _mediaPlayer.AudioTrack == track.Id };
+                menuItem.Click += (s, ev) => {
+                    int trackId = (int)((MenuItem)s).Tag;
+                    _mediaPlayer.SetAudioTrack(trackId);
+                    StatusTextBlock.Text = $"Ses: {((MenuItem)s).Header}";
+                };
+                menu.Items.Add(menuItem);
+            }
+
+            menu.PlacementTarget = AudioBtn;
+            menu.IsOpen = true;
+        }
     }
 }

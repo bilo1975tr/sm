@@ -18,6 +18,20 @@ namespace StreamMesh
                 LogFatalError(args.Exception);
                 args.Handled = true;
             };
+
+            // Her pencere açıldığında otomatik olarak logosu/ikonu ata
+            EventManager.RegisterClassHandler(typeof(Window), Window.LoadedEvent, new RoutedEventHandler((sender, args) =>
+            {
+                if (sender is Window window)
+                {
+                    try
+                    {
+                        var uri = new Uri("pack://application:,,,/app_icon.ico");
+                        window.Icon = System.Windows.Media.Imaging.BitmapFrame.Create(uri);
+                    }
+                    catch { }
+                }
+            }));
         }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -108,6 +122,7 @@ namespace StreamMesh
 
                         StreamMesh.Services.FirebaseQueueService.Instance.Start();
                         StreamMesh.Services.ViewerTrackerService.Instance.Start();
+                        _ = new StreamMesh.Services.OllamaChatService().EnsureModelSelectedAsync();
                         bgStopwatch.Stop();
                         StreamMesh.Services.LogService.Log($"[StartupProfiler] Background services (GitHub Sync, Firebase Queue) initialized in {bgStopwatch.ElapsedMilliseconds} ms.");
                     }

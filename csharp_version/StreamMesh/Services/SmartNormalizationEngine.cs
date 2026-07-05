@@ -167,7 +167,7 @@ namespace StreamMesh.Services
             _databaseService.EnsureNormalizationCacheTableExists();
         }
 
-        public void NormalizeChannel(Channel channel)
+        public void NormalizeChannel(Channel channel, bool skipDbCache = false)
         {
             if (channel == null) return;
 
@@ -210,7 +210,7 @@ namespace StreamMesh.Services
             // 4. Smart Logo Matching
             if (string.IsNullOrWhiteSpace(channel.LogoUrl) || channel.LogoUrl == "null")
             {
-                string matchedLogo = FindBestLogo(channel.Name, channel.Language, out int score);
+                string matchedLogo = FindBestLogo(channel.Name, channel.Language, out int score, skipDbCache);
                 if (score >= 80 && !string.IsNullOrEmpty(matchedLogo))
                 {
                     channel.LogoUrl = matchedLogo;
@@ -358,21 +358,40 @@ namespace StreamMesh.Services
             return null;
         }
 
-        public string FindBestLogo(string channelName, string language, out int score)
+        public string FindBestLogo(string channelName, string language, out int score, bool skipDbCache = false)
         {
             score = 0;
             if (string.IsNullOrWhiteSpace(channelName)) return null;
 
             string key = $"logo|{channelName}|{language}";
-            string cached = _databaseService.GetCachedNormalization(key);
-            if (cached != null)
+            
+            // Check memory cache first
+            if (_memoryCache.TryGetValue(key, out string cachedVal))
             {
-                if (cached.StartsWith("SCORE:"))
+                if (cachedVal != null && cachedVal.StartsWith("SCORE:"))
                 {
-                    var parts = cached.Split('|', 2);
+                    var parts = cachedVal.Split('|', 2);
                     if (parts.Length == 2 && int.TryParse(parts[0].Replace("SCORE:", ""), out score))
                     {
                         return parts[1];
+                    }
+                }
+                return null;
+            }
+
+            if (!skipDbCache)
+            {
+                string cached = _databaseService.GetCachedNormalization(key);
+                if (cached != null)
+                {
+                    _memoryCache[key] = cached;
+                    if (cached.StartsWith("SCORE:"))
+                    {
+                        var parts = cached.Split('|', 2);
+                        if (parts.Length == 2 && int.TryParse(parts[0].Replace("SCORE:", ""), out score))
+                        {
+                            return parts[1];
+                        }
                     }
                 }
             }
@@ -390,7 +409,12 @@ namespace StreamMesh.Services
             if (exact != null)
             {
                 score = 100;
-                _databaseService.SetCachedNormalization(key, $"SCORE:{score}|{exact.LogoUrl}");
+                string val = $"SCORE:{score}|{exact.LogoUrl}";
+                _memoryCache[key] = val;
+                if (!skipDbCache)
+                {
+                    _databaseService.SetCachedNormalization(key, val);
+                }
                 return exact.LogoUrl;
             }
 
@@ -400,7 +424,12 @@ namespace StreamMesh.Services
             if (alias != null)
             {
                 score = 95;
-                _databaseService.SetCachedNormalization(key, $"SCORE:{score}|{alias.LogoUrl}");
+                string val = $"SCORE:{score}|{alias.LogoUrl}";
+                _memoryCache[key] = val;
+                if (!skipDbCache)
+                {
+                    _databaseService.SetCachedNormalization(key, val);
+                }
                 return alias.LogoUrl;
             }
 
@@ -420,7 +449,12 @@ namespace StreamMesh.Services
             if (bestMatch != null && bestSim >= 0.8)
             {
                 score = (int)(bestSim * 100);
-                _databaseService.SetCachedNormalization(key, $"SCORE:{score}|{bestMatch.LogoUrl}");
+                string val = $"SCORE:{score}|{bestMatch.LogoUrl}";
+                _memoryCache[key] = val;
+                if (!skipDbCache)
+                {
+                    _databaseService.SetCachedNormalization(key, val);
+                }
                 return bestMatch.LogoUrl;
             }
 

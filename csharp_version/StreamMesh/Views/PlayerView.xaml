@@ -148,79 +148,86 @@
             <!-- Top Panel: Premium EPG OSD -->
             <Border x:Name="TopOsd" VerticalAlignment="Top" Margin="20" Padding="15,10" CornerRadius="12"
                     Background="#B20f172a" BorderBrush="#44ffffff" BorderThickness="1" Visibility="Collapsed" Height="100">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="200" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <Border x:Name="StreamInfoOverlay" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,0,0,5" Padding="5,2" CornerRadius="4"
+                            Background="#40000000">
+                        <TextBlock x:Name="StreamInfoText" Text="Yükleniyor..." FontSize="10" Foreground="#38bdf8" />
+                    </Border>
+                    <!-- Existing OSD content would be here -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <Button x:Name="MenuBtn" Content="☰" Grid.Column="0" Width="40" Height="40" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="20" Click="MenuBtn_Click" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button x:Name="MenuBtn" Content="☰" Grid.Column="0" Width="40" Height="40" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="20" Click="MenuBtn_Click" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,10,0"/>
 
-                     <!-- Channel Logo and Name -->
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
-                        <Border Width="60" Height="60" CornerRadius="8" Background="#33ffffff" Margin="0,0,15,0" ClipToBounds="True">
-                            <Grid>
-                                <TextBlock x:Name="OsdDefaultTvIcon" Text="📺" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#94a3b8">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Source, ElementName=OsdChannelLogo}" Value="{x:Null}">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <Image x:Name="OsdChannelLogo" Stretch="Uniform" />
-                            </Grid>
-                        </Border>
-                        <StackPanel VerticalAlignment="Center" MaxWidth="160">
-                            <TextBlock x:Name="OsdTitle" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_Loading]}" FontSize="18" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="OsdCategory" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_NoCategory]}" FontSize="11" Foreground="#38bdf8" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
-                                <StackPanel x:Name="OsdViewerPanel" Orientation="Horizontal" VerticalAlignment="Center" Visibility="Collapsed">
-                                    <TextBlock Text="👁" FontSize="11" Foreground="#10b981" Margin="0,0,3,0"/>
-                                    <TextBlock x:Name="OsdViewerCount" Text="0" FontSize="11" Foreground="#10b981" FontWeight="Bold"/>
+                         <!-- Channel Logo and Name -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                            <Border Width="60" Height="60" CornerRadius="8" Background="#33ffffff" Margin="0,0,15,0" ClipToBounds="True">
+                                <Grid>
+                                    <TextBlock x:Name="OsdDefaultTvIcon" Text="📺" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#94a3b8">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Source, ElementName=OsdChannelLogo}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <Image x:Name="OsdChannelLogo" Stretch="Uniform" />
+                                </Grid>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" MaxWidth="160">
+                                <TextBlock x:Name="OsdTitle" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_Loading]}" FontSize="18" FontWeight="Bold" Foreground="White" TextWrapping="Wrap"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="OsdCategory" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_NoCategory]}" FontSize="11" Foreground="#38bdf8" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                                    <StackPanel x:Name="OsdViewerPanel" Orientation="Horizontal" VerticalAlignment="Center" Visibility="Collapsed">
+                                        <TextBlock Text="👁" FontSize="11" Foreground="#10b981" Margin="0,0,3,0"/>
+                                        <TextBlock x:Name="OsdViewerCount" Text="0" FontSize="11" Foreground="#10b981" FontWeight="Bold"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </StackPanel>
                         </StackPanel>
-                    </StackPanel>
 
-                    <!-- EPG Info (Current & Next) -->
-                    <Grid Grid.Column="2" VerticalAlignment="Center" Margin="20,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        
-                        <!-- Current Program -->
-                        <TextBlock x:Name="OsdCurrentEpgTime" Grid.Row="0" Text="00:00 - 00:00" FontSize="12" Foreground="#38bdf8" FontWeight="SemiBold" Margin="0,0,0,2"/>
-                        <TextBlock x:Name="OsdCurrentEpgTitle" Grid.Row="1" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_EpgWait]}" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
-                        
-                        <!-- Progress Bar & Next Program -->
-                        <Grid Grid.Row="2">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <ProgressBar x:Name="EpgProgressBar" Grid.Column="0" Height="4" Minimum="0" Maximum="100" Value="0" Background="#33ffffff" Foreground="#38bdf8" BorderThickness="0" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="OsdNextEpg" Grid.Column="1" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_NextEpgWait]}" FontSize="11" Foreground="#94a3b8" VerticalAlignment="Center"/>
+                        <!-- EPG Info (Current & Next) -->
+                        <Grid Grid.Column="2" VerticalAlignment="Center" Margin="20,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Current Program -->
+                            <TextBlock x:Name="OsdCurrentEpgTime" Grid.Row="0" Text="00:00 - 00:00" FontSize="12" Foreground="#38bdf8" FontWeight="SemiBold" Margin="0,0,0,2"/>
+                            <TextBlock x:Name="OsdCurrentEpgTitle" Grid.Row="1" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_EpgWait]}" FontSize="20" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
+                            
+                            <!-- Progress Bar & Next Program -->
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ProgressBar x:Name="EpgProgressBar" Grid.Column="0" Height="4" Minimum="0" Maximum="100" Value="0" Background="#33ffffff" Foreground="#38bdf8" BorderThickness="0" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="OsdNextEpg" Grid.Column="1" Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Player_NextEpgWait]}" FontSize="11" Foreground="#94a3b8" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="600"/>
+                            </Grid>
                         </Grid>
-                    </Grid>
 
-                    <!-- Embedded Weather in Top OSD -->
-                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" x:Name="WeatherPanel" Visibility="Collapsed">
-                        <TextBlock Text="🌤️" FontSize="26" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock x:Name="WeatherTemp" Text="24°C" FontSize="20" FontWeight="Bold" Foreground="White" />
-                            <TextBlock x:Name="WeatherCity" Text="İstanbul" FontSize="12" Foreground="#cbd5e1" />
+                        <!-- Embedded Weather in Top OSD -->
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" x:Name="WeatherPanel" Visibility="Collapsed">
+                            <TextBlock Text="🌤️" FontSize="26" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="WeatherTemp" Text="24°C" FontSize="20" FontWeight="Bold" Foreground="White" />
+                                <TextBlock x:Name="WeatherCity" Text="İstanbul" FontSize="12" Foreground="#cbd5e1" />
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-                </Grid>
+                    </Grid>
+                </StackPanel>
             </Border>
 
             <!-- Ad Banner Panel -->
@@ -230,6 +237,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     
                     <TextBlock Grid.Column="0" Text="⭐" FontSize="40" VerticalAlignment="Center" Margin="0,0,20,0" />
@@ -237,6 +245,8 @@
                         <TextBlock Text="Duyuru &amp; Kampanyalar" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,5" />
                         <TextBlock x:Name="AdBannerText" Text="Reklam yükleniyor..." FontSize="14" Foreground="#f8fafc" TextWrapping="Wrap" />
                     </StackPanel>
+                    
+                    <Button Grid.Column="2" x:Name="CloseAdBtn" Content="✕" Width="24" Height="24" Background="Transparent" Foreground="#94a3b8" BorderThickness="0" FontSize="14" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,0,0,0" Click="CloseAdBtn_Click" Cursor="Hand" Style="{x:Null}"/>
                 </Grid>
             </Border>
 
@@ -249,6 +259,8 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
@@ -281,17 +293,25 @@
                         </Button.ContextMenu>
                     </Button>
 
+                    <Button x:Name="AudioBtn" Content="🔊 Ses Seçimi" Grid.Column="8" Width="70" Height="40" Background="#33ffffff" Foreground="White" BorderThickness="0" FontSize="10" Click="AudioBtn_Click" Margin="0,0,5,0" Cursor="Hand" ToolTip="Ses İzi / Çoklu Dil Seçimi">
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="AudioMenu" Background="#1e293b" Foreground="White" BorderThickness="0">
+                                <!-- Dinamik dolacak -->
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+
                     <!-- Volume slider mockup -->
-                    <StackPanel Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <StackPanel Grid.Column="9" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                         <TextBlock Text="🔊" FontSize="16" Foreground="White" Margin="0,0,5,0" />
                         <Slider x:Name="VolumeSlider" Width="60" Minimum="0" Maximum="100" Value="100" ValueChanged="VolumeSlider_ValueChanged" />
                     </StackPanel>
 
                     <!-- Ratio Button -->
-                    <Button x:Name="RatioBtn" Content="🖥 Ratio" Grid.Column="9" Width="60" Height="40" Background="#33ffffff" Foreground="White" BorderThickness="0" FontSize="10" Click="RatioBtn_Click" Margin="0,0,5,0" Cursor="Hand" ToolTip="En-Boy Oranı" />
+                    <Button x:Name="RatioBtn" Content="🖥 Ratio" Grid.Column="10" Width="60" Height="40" Background="#33ffffff" Foreground="White" BorderThickness="0" FontSize="10" Click="RatioBtn_Click" Margin="0,0,5,0" Cursor="Hand" ToolTip="En-Boy Oranı" />
 
                     <!-- Source Selection Button -->
-                    <Button x:Name="SourceBtn" Content="🔗 Kaynak" Grid.Column="10" Width="60" Height="40" Background="#33ffffff" Foreground="White" BorderThickness="0" FontSize="10" Click="SourceBtn_Click" Margin="0,0,10,0" Cursor="Hand" ToolTip="Yayın Kaynağı / Alternatif Linkler">
+                    <Button x:Name="SourceBtn" Content="🔗 Kaynak" Grid.Column="11" Width="60" Height="40" Background="#33ffffff" Foreground="White" BorderThickness="0" FontSize="10" Click="SourceBtn_Click" Margin="0,0,10,0" Cursor="Hand" ToolTip="Yayın Kaynağı / Alternatif Linkler">
                         <Button.ContextMenu>
                             <ContextMenu x:Name="SourceMenu" Background="#1e293b" Foreground="White" BorderThickness="0">
                                 <!-- Dinamik dolacak -->
@@ -300,7 +320,7 @@
                     </Button>
 
                     <!-- Fullscreen Button -->
-                    <Button x:Name="FullscreenBtn" Content="⛶" Grid.Column="11" Width="40" Height="40" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="20" Click="FullscreenBtn_Click" Cursor="Hand" />
+                    <Button x:Name="FullscreenBtn" Content="⛶" Grid.Column="12" Width="40" Height="40" Background="Transparent" Foreground="White" BorderThickness="0" FontSize="20" Click="FullscreenBtn_Click" Cursor="Hand" />
                 </Grid>
             </Border>
 

@@ -1,9 +1,0 @@
-# StreamMesh Uygulama Logoları
-
-Bu klasöre uygulama içerisinde kullanılacak logoları yerleştirebilirsiniz.
-
-Gereksinimler:
-- Geniş Logo (Header vb. için): 500x150 veya benzeri yatay format, PNG (Şeffaf arka plan)
-- Kare Logo (Profil, varsayılan kanal vb. için): 256x256 veya 512x512, PNG (Şeffaf arka plan)
-
-Not: İsimlendirmeleri uygulama içindeki kullanım alanlarına göre yapmanız tavsiye edilir (örn: logo_main.png).

@@ -31,6 +31,23 @@ namespace StreamMesh.Services.Auth
                                 return false; // 90 days policy
                             }
                             user.LastLoginTime = DateTime.UtcNow;
+
+                            // Kullanıcının dili ve ikinci dil olarak "Tümü" seçilmesini garanti altına alıyoruz
+                            if (user.Languages == null)
+                            {
+                                user.Languages = new System.Collections.Generic.List<string>();
+                            }
+                            if (user.Languages.Count == 0)
+                            {
+                                string cultureName = System.Globalization.CultureInfo.CurrentCulture.Name;
+                                string defaultLanguage = cultureName.StartsWith("tr", StringComparison.OrdinalIgnoreCase) ? "Türkçe" : (cultureName.StartsWith("de", StringComparison.OrdinalIgnoreCase) ? "Almanca" : "İngilizce");
+                                user.Languages.Add(defaultLanguage);
+                            }
+                            if (!System.Linq.Enumerable.Any(user.Languages, l => l.Equals("Tümü", StringComparison.OrdinalIgnoreCase) || l.Equals("Hepsi", StringComparison.OrdinalIgnoreCase) || l.Equals("All", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                user.Languages.Add("Tümü");
+                            }
+
                             CurrentUser = user;
                             SaveUser();
                             LocalizationManager.Instance.CurrentLanguage = CurrentUser.AppLanguage ?? "Türkçe";
@@ -174,18 +191,42 @@ namespace StreamMesh.Services.Auth
 
         public static void GuestLogin(string appLang = "Türkçe")
         {
+            string cultureName = System.Globalization.CultureInfo.CurrentCulture.Name;
+            string defaultCountry = "Türkiye";
+            string defaultLanguage = "Türkçe";
+            string localAppLang = appLang;
+
+            if (cultureName.StartsWith("tr", StringComparison.OrdinalIgnoreCase))
+            {
+                defaultCountry = "Türkiye";
+                defaultLanguage = "Türkçe";
+                localAppLang = "Türkçe";
+            }
+            else if (cultureName.StartsWith("de", StringComparison.OrdinalIgnoreCase))
+            {
+                defaultCountry = "Deutschland";
+                defaultLanguage = "Almanca";
+                localAppLang = "Deutsch";
+            }
+            else
+            {
+                defaultCountry = "United Kingdom";
+                defaultLanguage = "İngilizce";
+                localAppLang = "English";
+            }
+
             CurrentUser = new UserProfile
             {
                 Email = "Misafir",
                 PasswordHash = "",
-                Country = "Türkiye",
-                Languages = new System.Collections.Generic.List<string> { "İngilizce" },
-                AppLanguage = appLang,
+                Country = defaultCountry,
+                Languages = new System.Collections.Generic.List<string> { defaultLanguage, "Tümü" },
+                AppLanguage = localAppLang,
                 IsPremium = false,
                 LastLoginTime = DateTime.UtcNow
             };
             SaveUser(); // So auto-login works next time for the guest as well
-            LocalizationManager.Instance.CurrentLanguage = appLang;
+            LocalizationManager.Instance.CurrentLanguage = localAppLang;
         }
 
         public static UserProfile GetProfile()

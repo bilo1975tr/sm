@@ -140,7 +140,24 @@
                             <!-- Kaba Icon / Logo (eğer LogoUrl boşsa placeholder) -->
                             <Border Grid.Row="0" Background="#0f172a" CornerRadius="12,12,0,0" ClipToBounds="True">
                                 <Grid>
-                                    <TextBlock Text="📺" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#334155"/>
+                                    <TextBlock Text="📺" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#334155">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding LogoUrl}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding LogoUrl}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding LogoUrl}" Value="null">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                     <Image Source="{Binding LogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="10"/>
                                     
                                     <!-- Badges and Drag Icon -->

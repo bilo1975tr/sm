@@ -138,7 +138,7 @@ namespace StreamMesh.Services
 
                                     foreach (var ch in channelsToUpdate)
                                     {
-                                        SmartNormalizationEngine.Instance.NormalizeChannel(ch);
+                                        SmartNormalizationEngine.Instance.NormalizeChannel(ch, skipDbCache: true);
 
                                         pId.Value = ch.Id;
                                         pLang.Value = ch.Language ?? "Bilinmiyor";

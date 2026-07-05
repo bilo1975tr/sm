@@ -27,18 +27,32 @@ namespace StreamMesh.Services
         {
             if (string.IsNullOrEmpty(name)) return null;
             string norm = name.ToLowerInvariant().Trim();
-            if (norm.Contains("türk") || norm.Contains("turk") || norm.Contains("tr")) return "tr";
-            if (norm.Contains("alm") || norm.Contains("ger") || norm.Contains("de")) return "de";
-            if (norm.Contains("ing") || norm.Contains("eng") || norm.Contains("en") || norm.Contains("us") || norm.Contains("gb") || norm.Contains("united kingdom") || norm.Contains("united states")) return "us";
-            if (norm.Contains("fra") || norm.Contains("fre") || norm.Contains("fr")) return "fr";
-            if (norm.Contains("ita") || norm.Contains("it")) return "it";
-            if (norm.Contains("esp") || norm.Contains("spa") || norm.Contains("es")) return "es";
-            if (norm.Contains("rus") || norm.Contains("ru")) return "ru";
-            if (norm.Contains("aze") || norm.Contains("az")) return "az";
-            if (norm.Contains("ara") || norm.Contains("ar")) return "ar";
-            if (norm.Contains("hol") || norm.Contains("dut") || norm.Contains("nl")) return "nl";
             
-            if (name.Length == 2) return norm;
+            // Tam eşleşmeler veya sınırlandırılmış kelime eşleşmeleri daha güvenlidir
+            if (norm == "tr" || norm == "türkiye" || norm == "turkey" || norm.Contains("türkçe") || norm.Contains("turkish")) return "tr";
+            if (norm == "de" || norm == "almanya" || norm == "germany" || norm.Contains("almanca") || norm.Contains("deutsch") || norm.Contains("german")) return "de";
+            if (norm == "en" || norm == "us" || norm == "gb" || norm == "uk" || norm == "ingiltere" || norm == "united kingdom" || norm == "united states" || norm.Contains("ingilizce") || norm.Contains("english")) return "us";
+            if (norm == "fr" || norm == "fransa" || norm == "france" || norm.Contains("fransızca") || norm.Contains("french")) return "fr";
+            if (norm == "it" || norm == "italya" || norm == "italy" || norm.Contains("italyanca") || norm.Contains("italian")) return "it";
+            if (norm == "es" || norm == "ispanya" || norm == "spain" || norm.Contains("ispanyolca") || norm.Contains("spanish")) return "es";
+            if (norm == "ru" || norm == "rusya" || norm == "russia" || norm.Contains("rusça") || norm.Contains("russian")) return "ru";
+            if (norm == "az" || norm == "azerbaycan" || norm == "azerbaijan" || norm.Contains("azerice") || norm.Contains("azerbaijani")) return "az";
+            if (norm == "ar" || norm == "arapça" || norm == "arabic" || norm.Contains("arabistan")) return "ar";
+            if (norm == "nl" || norm == "hollanda" || norm == "netherlands" || norm.Contains("felemenkçe") || norm.Contains("dutch")) return "nl";
+
+            // Grup başlıklarındaki yaygın ülke kodlarını yakalamak için (örn. "[DE] Cinema", "DE: Action")
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\btr\b")) return "tr";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\bde\b")) return "de";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\b(en|us|gb|uk)\b")) return "us";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\bfr\b")) return "fr";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\bit\b")) return "it";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\bes\b")) return "es";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\bru\b")) return "ru";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\baz\b")) return "az";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\bar\b")) return "ar";
+            if (System.Text.RegularExpressions.Regex.IsMatch(norm, @"\bnl\b")) return "nl";
+
+            if (norm.Length == 2) return norm;
             return null;
         }
 
@@ -113,6 +127,21 @@ namespace StreamMesh.Services
                         if (_cachedLogos != null && _cachedLogos.Count > 0)
                         {
                             LogService.Log($"[LogoSearchService] Yerel önbellekten {_cachedLogos.Count} adet logo başarıyla belleğe yüklendi. GitHub sorgulamasına gerek kalmadı.");
+
+                            // DETAYLI LOG: Önbellekten yüklenen tüm logoları her ihtimale karşı logs klasörüne de yedekle/yaz
+                            try
+                            {
+                                string logsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+                                if (!Directory.Exists(logsDir)) Directory.CreateDirectory(logsDir);
+                                string cacheDebugPath = Path.Combine(logsDir, "logo_cache_loaded_debug.json");
+                                await File.WriteAllTextAsync(cacheDebugPath, cachedText);
+                                LogService.Log($"[LogoSearchService] [DETAYLI LOG] Önbellekten yüklenen tüm logoların ham listesi '{cacheDebugPath}' dosyasına yazıldı.");
+                            }
+                            catch (Exception ex)
+                            {
+                                LogService.LogError("[LogoSearchService] Önbellek debug dosyası yazılırken hata", ex);
+                            }
+
                             return;
                         }
                     }
@@ -171,16 +200,66 @@ namespace StreamMesh.Services
                     LogService.LogError("[LogoSearchService] Kullanıcı profilinden ülke kodları çözümlenirken hata oluştu", ex);
                 }
 
+                // Kanal veritabanından ek dilleri/ülkeleri de tara
+                try
+                {
+                    var db = new DatabaseService();
+                    var allChannels = db.GetAllChannels();
+                    if (allChannels != null && allChannels.Count > 0)
+                    {
+                        int scanned = 0;
+                        int detectedCount = 0;
+                        foreach (var ch in allChannels)
+                        {
+                            if (!string.IsNullOrEmpty(ch.Language))
+                            {
+                                var codeLang = GetCountryCodeFromLanguageOrCountry(ch.Language);
+                                if (codeLang != null && GetCountryFolderName(codeLang) != null)
+                                {
+                                    if (countryCodes.Add(codeLang)) detectedCount++;
+                                }
+                            }
+                            if (!string.IsNullOrEmpty(ch.GroupTitle))
+                            {
+                                var codeGroup = GetCountryCodeFromLanguageOrCountry(ch.GroupTitle);
+                                if (codeGroup != null && GetCountryFolderName(codeGroup) != null)
+                                {
+                                    if (countryCodes.Add(codeGroup)) detectedCount++;
+                                }
+                            }
+                            scanned++;
+                            if (scanned > 1000) break;
+                        }
+                        if (detectedCount > 0)
+                        {
+                            LogService.Log($"[LogoSearchService] Kanal veritabanı taramasından {detectedCount} yeni benzersiz ülke kodu tespit edildi.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[LogoSearchService] Kanal veritabanından ülke kodları taranırken hata oluştu", ex);
+                }
+
                 if (countryCodes.Count == 0)
                 {
                     countryCodes.Add("tr");
                     LogService.Log($"[LogoSearchService] Belirlenmiş ülke kodu bulunamadı, varsayılan olarak 'tr' (Türkiye) eklendi.");
                 }
 
-                LogService.Log($"[LogoSearchService] Sorgulanacak ülke kodları kümesi: [{string.Join(", ", countryCodes)}]");
+                // GitHub API Hız Sınırını (Rate Limit) aşmamak için ülke kodlarını limitliyoruz
+                var finalCountryCodes = countryCodes.ToList();
+                if (finalCountryCodes.Count > 6)
+                {
+                    var priorityCodes = new List<string> { "tr", "de", "us", "gb" };
+                    finalCountryCodes = finalCountryCodes.OrderByDescending(c => priorityCodes.Contains(c)).Take(6).ToList();
+                    LogService.Log($"[LogoSearchService] Sınır aşımını önlemek için ülke kodları limitlendi. Orijinal: [{string.Join(", ", countryCodes)}], Seçilen: [{string.Join(", ", finalCountryCodes)}]");
+                }
+
+                LogService.Log($"[LogoSearchService] Sorgulanacak ülke kodları kümesi: [{string.Join(", ", finalCountryCodes)}]");
                 var tempLogos = new List<LogoSearchResult>();
 
-                foreach (var code in countryCodes)
+                foreach (var code in finalCountryCodes)
                 {
                     int startCount = tempLogos.Count;
                     string folderName = GetCountryFolderName(code);
@@ -201,6 +280,21 @@ namespace StreamMesh.Services
                         if (response.IsSuccessStatusCode)
                         {
                             string json = await response.Content.ReadAsStringAsync();
+
+                            // DETAYLI LOG: Karşı taraftan alınan ham dosyanın tamamını kaydet
+                            try
+                            {
+                                string logsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+                                if (!Directory.Exists(logsDir)) Directory.CreateDirectory(logsDir);
+                                string responseFilePath = Path.Combine(logsDir, $"logo_api_response_{code}_tvlogos_raw.json");
+                                await File.WriteAllTextAsync(responseFilePath, json);
+                                LogService.Log($"[LogoSearchService] [DETAYLI LOG] tv-logo/tv-logos'tan alınan ham JSON yanıt '{responseFilePath}' dosyasına kaydedildi. Karakter sayısı: {json.Length}");
+                            }
+                            catch (Exception fileEx)
+                            {
+                                LogService.LogError("[LogoSearchService] tv-logos ham JSON yanıt dosyası kaydedilirken hata", fileEx);
+                            }
+
                             int addedCount = 0;
                             using (var doc = JsonDocument.Parse(json))
                             {
@@ -252,6 +346,21 @@ namespace StreamMesh.Services
                         if (response.IsSuccessStatusCode)
                         {
                             string json = await response.Content.ReadAsStringAsync();
+
+                            // DETAYLI LOG: Karşı taraftan alınan ham dosyanın tamamını kaydet
+                            try
+                            {
+                                string logsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+                                if (!Directory.Exists(logsDir)) Directory.CreateDirectory(logsDir);
+                                string responseFilePath = Path.Combine(logsDir, $"logo_api_response_{code}_fourqui_raw.json");
+                                await File.WriteAllTextAsync(responseFilePath, json);
+                                LogService.Log($"[LogoSearchService] [DETAYLI LOG] Fourqui/tv'den alınan ham JSON yanıt '{responseFilePath}' dosyasına kaydedildi. Karakter sayısı: {json.Length}");
+                            }
+                            catch (Exception fileEx)
+                            {
+                                LogService.LogError("[LogoSearchService] Fourqui/tv ham JSON yanıt dosyası kaydedilirken hata", fileEx);
+                            }
+
                             int addedCount = 0;
                             using (var doc = JsonDocument.Parse(json))
                             {
@@ -329,6 +438,13 @@ namespace StreamMesh.Services
             if (_cachedLogos == null) _cachedLogos = new List<LogoSearchResult>();
         }
 
+        private class ScoredTraceResult
+        {
+            public LogoSearchResult Item { get; set; }
+            public double Score { get; set; }
+            public string Reason { get; set; }
+        }
+
         public static async Task<List<LogoSearchResult>> SearchLogosAsync(string channelName)
         {
             if (string.IsNullOrEmpty(channelName)) return new List<LogoSearchResult>();
@@ -337,13 +453,141 @@ namespace StreamMesh.Services
             await EnsureLoadedAsync();
 
             string query = channelName.ToLowerInvariant().Trim();
-            var results = _cachedLogos
-                .Where(x => x.Name.ToLowerInvariant().Contains(query))
-                .Select(x => new 
+            string normalizedQuery = NormalizeChannelNameForLogo(query);
+
+            string logsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            if (!Directory.Exists(logsDir)) Directory.CreateDirectory(logsDir);
+
+            // Güvenli ve temiz bir dosya adı oluşturma
+            string safeQueryForFile = string.Concat(query.Split(Path.GetInvalidFileNameChars())).Replace(" ", "_");
+            if (string.IsNullOrEmpty(safeQueryForFile)) safeQueryForFile = "default_search";
+            string traceFilePath = Path.Combine(logsDir, $"logo_search_trace_{safeQueryForFile}.log");
+
+            try
+            {
+                using (var writer = new StreamWriter(traceFilePath, false, System.Text.Encoding.UTF8))
                 {
-                    Item = x,
-                    Score = CalculateSimilarity(query, x.Name.ToLowerInvariant())
+                    writer.WriteLine("==================================================================");
+                    writer.WriteLine("=== LOGO ARAMA İZLEME DETAYLI RAPORU (A'DAN Z'YE DETAYLAR) ===");
+                    writer.WriteLine("==================================================================");
+                    writer.WriteLine($"Tarih/Saat: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                    writer.WriteLine($"Aranan Kanal Adı (Orijinal): '{channelName}'");
+                    writer.WriteLine($"Aranan Kanal Adı (Küçük Harf / Trim): '{query}'");
+                    writer.WriteLine($"Aranan Kanal Adı (Normalize Edilmiş): '{normalizedQuery}'");
+                    writer.WriteLine($"Veritabanındaki Toplam Logo Sayısı: {_cachedLogos?.Count ?? 0}");
+                    writer.WriteLine("Önbellek Dosya Yolu: " + CacheFilePath);
+                    writer.WriteLine("------------------------------------------------------------------");
+                    writer.WriteLine();
+
+                    if (_cachedLogos == null || _cachedLogos.Count == 0)
+                    {
+                        writer.WriteLine("HATA: Logo veritabanı boş veya yüklenemedi!");
+                    }
+                    else
+                    {
+                        writer.WriteLine("Eşleşme Hesaplama Kuralları ve Skor Değerleri:");
+                        writer.WriteLine("1. Birebir Tam Eşleşme (Skor: 1.0)");
+                        writer.WriteLine("2. Logo adının aranan kanal adıyla başlaması (Skor: 0.9)");
+                        writer.WriteLine("3. Logo adının aranan kanal adını içermesi (Skor: 0.7)");
+                        writer.WriteLine("4. Aranan kanal adının logo adını içermesi (Skor: 0.65)");
+                        writer.WriteLine("5. Normalize edilmiş isimlerin tam eşleşmesi (Skor: 0.85)");
+                        writer.WriteLine("6. Normalize edilmiş isimlerin birbirini içermesi (Skor: 0.6)");
+                        writer.WriteLine("------------------------------------------------------------------");
+                        writer.WriteLine();
+
+                        var scoredItems = new List<ScoredTraceResult>();
+
+                        writer.WriteLine("A'DAN Z'YE TÜM KARŞILAŞTIRMALAR VE DETAYLI ANALİZ:");
+                        writer.WriteLine("==================================================================");
+
+                        foreach (var x in _cachedLogos)
+                        {
+                            string targetName = x.Name;
+                            string targetLower = targetName.ToLowerInvariant().Trim();
+                            string targetNormalized = NormalizeChannelNameForLogo(targetLower);
+
+                            double score = 0.0;
+                            string matchReason = "Uyuşmuyor";
+
+                            // Karşılaştırma senaryoları
+                            if (query == targetLower)
+                            {
+                                score = 1.0;
+                                matchReason = "Tam Eşleşme (Küçük harf duyarlı)";
+                            }
+                            else if (normalizedQuery == targetNormalized && !string.IsNullOrEmpty(normalizedQuery))
+                            {
+                                score = 0.85;
+                                matchReason = $"Normalize edilmiş halleri birebir eşleşiyor ('{normalizedQuery}' == '{targetNormalized}')";
+                            }
+                            else if (targetLower.StartsWith(query))
+                            {
+                                score = 0.9;
+                                matchReason = $"Logo adı '{targetName}', sorgu '{query}' ile başlıyor.";
+                            }
+                            else if (targetLower.Contains(query))
+                            {
+                                score = 0.7;
+                                matchReason = $"Logo adı '{targetName}', sorgu '{query}' değerini içeriyor.";
+                            }
+                            else if (query.Contains(targetLower))
+                            {
+                                score = 0.65;
+                                matchReason = $"Sorgu '{query}', logo adı '{targetName}' değerini içeriyor.";
+                            }
+                            else if (!string.IsNullOrEmpty(normalizedQuery) && !string.IsNullOrEmpty(targetNormalized) && 
+                                     (targetNormalized.Contains(normalizedQuery) || normalizedQuery.Contains(targetNormalized)))
+                            {
+                                score = 0.6;
+                                matchReason = $"Normalize edilmiş haller birbirini içeriyor (Sorgu: '{normalizedQuery}' <-> Logo: '{targetNormalized}')";
+                            }
+
+                            if (score > 0)
+                            {
+                                scoredItems.Add(new ScoredTraceResult { Item = x, Score = score, Reason = matchReason });
+                            }
+
+                            writer.WriteLine($"[KONTROL] Logo: '{targetName}' | Normalize: '{targetNormalized}'");
+                            writer.WriteLine($"          Sorgu: '{channelName}' | Normalize: '{normalizedQuery}'");
+                            writer.WriteLine($"          Durum: {(score > 0 ? $"EŞLEŞTİ (Skor: {score:F2} - {matchReason})" : "UYUŞMUYOR")}");
+                            writer.WriteLine($"          Detay: Logo adresi: {x.LogoUrl}");
+                            writer.WriteLine();
+                        }
+
+                        writer.WriteLine("==================================================================");
+                        writer.WriteLine($"=== SKOR ALAN EN YÜKSEK PUANLI ADAYLAR (TOP 40) ===");
+                        writer.WriteLine("==================================================================");
+                        var sortedResults = scoredItems.OrderByDescending(x => x.Score).Take(40).ToList();
+                        if (sortedResults.Count == 0)
+                        {
+                            writer.WriteLine("HİÇBİR LOGO EŞLEŞMEDİ VEYA UYGUN BULUNMADI.");
+                        }
+                        else
+                        {
+                            for (int i = 0; i < sortedResults.Count; i++)
+                            {
+                                var r = sortedResults[i];
+                                writer.WriteLine($"{i + 1}. Sıra [Skor: {r.Score:F2}] - Logo: '{r.Item.Name}' -> URL: {r.Item.LogoUrl}");
+                                writer.WriteLine($"          Eşleşme Gerekçesi: {r.Reason}");
+                                writer.WriteLine();
+                            }
+                        }
+                    }
+                }
+                LogService.Log($"[LogoSearchService] [DETAYLI LOG] A'dan Z'ye tüm karşılaştırma ve analiz detayları içeren log dosyası başarıyla oluşturuldu: '{traceFilePath}'");
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[LogoSearchService] Logo arama izleme log dosyası oluşturulurken hata", ex);
+            }
+
+            // Gelişmiş, esnek ve akıllı arama algoritmasıyla sonuç listesini döndür
+            var results = _cachedLogos
+                .Select(x => {
+                    double score = CalculateSimilarityEnhanced(query, normalizedQuery, x.Name.ToLowerInvariant().Trim(), NormalizeChannelNameForLogo(x.Name));
+                    return new { Item = x, Score = score };
                 })
+                .Where(x => x.Score > 0)
                 .OrderByDescending(x => x.Score)
                 .Select(x => x.Item)
                 .Take(40)
@@ -361,6 +605,18 @@ namespace StreamMesh.Services
             }
 
             return results;
+        }
+
+        private static double CalculateSimilarityEnhanced(string query, string normalizedQuery, string targetLower, string targetNormalized)
+        {
+            if (query == targetLower) return 1.0;
+            if (normalizedQuery == targetNormalized && !string.IsNullOrEmpty(normalizedQuery)) return 0.85;
+            if (targetLower.StartsWith(query)) return 0.9;
+            if (targetLower.Contains(query)) return 0.7;
+            if (query.Contains(targetLower)) return 0.65;
+            if (!string.IsNullOrEmpty(normalizedQuery) && !string.IsNullOrEmpty(targetNormalized) && 
+                (targetNormalized.Contains(normalizedQuery) || normalizedQuery.Contains(targetNormalized))) return 0.6;
+            return 0.0;
         }
 
         private static double CalculateSimilarity(string source, string target)
@@ -460,8 +716,33 @@ namespace StreamMesh.Services
         {
             if (string.IsNullOrEmpty(name)) return string.Empty;
             name = name.ToLowerInvariant();
-            name = name.Replace(" hd", "").Replace(" sd", "").Replace(" fhd", "").Replace(" uhd", "").Replace(" hq", "");
-            name = System.Text.RegularExpressions.Regex.Replace(name, @"[^a-zA-Z0-9]", "");
+
+            // Türkçe, Almanca ve diğer yaygın aksanlı karakterleri ASCII karşılıklarına dönüştür
+            name = name.Replace("ı", "i")
+                       .Replace("ğ", "g")
+                       .Replace("ü", "u")
+                       .Replace("ş", "s")
+                       .Replace("ö", "o")
+                       .Replace("ç", "c")
+                       .Replace("ä", "a")
+                       .Replace("ß", "ss")
+                       .Replace("é", "e")
+                       .Replace("è", "e")
+                       .Replace("ê", "e")
+                       .Replace("à", "a")
+                       .Replace("â", "a")
+                       .Replace("ô", "o")
+                       .Replace("û", "u")
+                       .Replace("î", "i")
+                       .Replace("ï", "i");
+
+            // Kalite belirteçlerini (hd, sd, fhd, uhd, hq, vb.) kelime sınırlarında temizle
+            name = System.Text.RegularExpressions.Regex.Replace(name, @"\b(hd|sd|fhd|uhd|hq)\b", "");
+            // Eğer kelime sonuna yapışık hd/sd varsa (örn: "ActionHD") onları da temizleyelim
+            name = System.Text.RegularExpressions.Regex.Replace(name, @"(hd|sd|fhd|uhd|hq)$", "");
+
+            // Sadece a-z ve 0-9 arası karakterleri tut, diğer tüm karakterleri (boşluklar dahil) temizle
+            name = System.Text.RegularExpressions.Regex.Replace(name, @"[^a-z0-9]", "");
             return name;
         }
     }

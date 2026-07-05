@@ -7,6 +7,7 @@ using System.Windows.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Runtime.InteropServices;
+using System.Net.NetworkInformation;
 using LibVLCSharp.Shared;
 using StreamMesh.Models;
 using StreamMesh.Services;
@@ -31,6 +32,7 @@ namespace StreamMesh.Views
         private System.Threading.SemaphoreSlim _playSemaphore = new System.Threading.SemaphoreSlim(1, 1);
         private DispatcherTimer _osdTimer;
         private DispatcherTimer _updateTimer;
+        private DispatcherTimer _streamInfoTimer;
         private EpgProgram _currentEpg;
         private EpgProgram _nextEpg;
         private bool _isDragging = false;
@@ -57,6 +59,7 @@ namespace StreamMesh.Views
         private int _rssTickCounter = 0;
         private bool _needsSeekToProgress = false;
         private int _saveProgressCounter = 0;
+        private System.Threading.CancellationTokenSource _movieAiCts;
 
         public PlayerView()
         {
@@ -75,6 +78,10 @@ namespace StreamMesh.Views
             _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
             _updateTimer.Tick += UpdateTimer_Tick;
             _updateTimer.Start();
+
+            _streamInfoTimer = new DispatcherTimer();
+            _streamInfoTimer.Interval = TimeSpan.FromSeconds(10);
+            _streamInfoTimer.Tick += StreamInfoTimer_Tick;
 
             _adBannerTimer = new DispatcherTimer();
             _adBannerTimer.Interval = TimeSpan.FromSeconds(30);
@@ -268,26 +275,48 @@ namespace StreamMesh.Views
                 }
                 else OsdChannelLogo.Source = null;
                 
-                var epgService = new EpgService();
-                _currentEpg = epgService.GetCurrentEpgForChannel(channel);
-                _nextEpg = epgService.GetNextEpgForChannel(channel);
+                string category = (channel.Category ?? "").ToLower();
+                string groupTitle = (channel.GroupTitle ?? "").ToLower();
+                bool isFilm = category.Contains("film") || category.Contains("movie") || category.Contains("sinema") || groupTitle.Contains("film");
 
-                if (_currentEpg != null)
+                if (isFilm)
                 {
-                    OsdCurrentEpgTime.Text = $"{_currentEpg.StartTime:HH:mm} - {_currentEpg.EndTime:HH:mm}";
-                    OsdCurrentEpgTitle.Text = _currentEpg.Title;
+                    EpgProgressBar.Visibility = Visibility.Collapsed;
+                    _currentEpg = null;
+                    _nextEpg = null;
+
+                    string localCleanTitle = CleanMovieTitleLocal(channel.Name);
+                    OsdTitle.Text = localCleanTitle;
+                    OsdCurrentEpgTime.Text = "YAPAY ZEKA FİLM DETAYI";
+                    OsdCurrentEpgTitle.Text = localCleanTitle;
+                    OsdNextEpg.Text = "Yapay zeka film özeti yükleniyor...";
+
+                    FetchMovieAiDetailsAsync(channel.Name, localCleanTitle);
                 }
                 else
                 {
-                    OsdCurrentEpgTime.Text = "";
-                    OsdCurrentEpgTitle.Text = "EPG Bilgisi Yok";
-                    EpgProgressBar.Value = 0;
-                }
+                    EpgProgressBar.Visibility = Visibility.Visible;
+                    var epgService = new EpgService();
+                    _currentEpg = epgService.GetCurrentEpgForChannel(channel);
+                    _nextEpg = epgService.GetNextEpgForChannel(channel);
 
-                if (_nextEpg != null) OsdNextEpg.Text = $"Sonraki: {_nextEpg.StartTime:HH:mm} {_nextEpg.Title}";
-                else OsdNextEpg.Text = "Sonraki Program Yok";
+                    if (_currentEpg != null)
+                    {
+                        OsdCurrentEpgTime.Text = $"{_currentEpg.StartTime:HH:mm} - {_currentEpg.EndTime:HH:mm}";
+                        OsdCurrentEpgTitle.Text = _currentEpg.Title;
+                    }
+                    else
+                    {
+                        OsdCurrentEpgTime.Text = "";
+                        OsdCurrentEpgTitle.Text = "EPG Bilgisi Yok";
+                        EpgProgressBar.Value = 0;
+                    }
+
+                    if (_nextEpg != null) OsdNextEpg.Text = $"Sonraki: {_nextEpg.StartTime:HH:mm} {_nextEpg.Title}";
+                    else OsdNextEpg.Text = "Sonraki Program Yok";
+                }
                 
-                string category = (channel.Category ?? "").ToLower();
+                category = (channel.Category ?? "").ToLower();
                 bool isRadio = category.Contains("radyo") || category.Contains("radio");
                 
                 if (isRadio)
@@ -439,6 +468,7 @@ namespace StreamMesh.Views
         private void MediaPlayer_Playing(object sender, EventArgs e)
         {
             Dispatcher.Invoke(() => {
+                _streamInfoTimer.Start();
                 StatusTextBlock.Text = "Oynatılıyor";
                 PlayPauseBtn.Content = "⏸";
                 
@@ -464,6 +494,9 @@ namespace StreamMesh.Views
                 var tracks = _mediaPlayer.VideoTrackDescription;
                 bool hasYtStreams = _currentYtVideoStreams != null && _currentYtVideoStreams.Count > 1;
                 QualityBtn.Visibility = (hasYtStreams || (tracks != null && tracks.Length > 1)) ? Visibility.Visible : Visibility.Collapsed;
+
+                var audioTracks = _mediaPlayer.AudioTrackDescription;
+                AudioBtn.Visibility = (audioTracks != null && audioTracks.Length > 1) ? Visibility.Visible : Visibility.Collapsed;
             });
         }
 
@@ -478,6 +511,7 @@ namespace StreamMesh.Views
         private void MediaPlayer_EndReached(object sender, EventArgs e)
         {
             Dispatcher.Invoke(() => {
+                _streamInfoTimer.Stop();
                 StatusTextBlock.Text = "Yayın Koptu veya Sona Erdi";
                 PlayPauseBtn.Content = "▶";
             });
@@ -533,6 +567,20 @@ namespace StreamMesh.Views
             TopOsd.Visibility = Visibility.Collapsed;
             BottomOsd.Visibility = Visibility.Collapsed;
             this.Cursor = Cursors.None;
+            if (OsdAdBanner != null)
+            {
+                OsdAdBanner.Visibility = Visibility.Collapsed;
+                _adBannerTimer?.Stop();
+            }
+        }
+
+        private void CloseAdBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (OsdAdBanner != null)
+            {
+                OsdAdBanner.Visibility = Visibility.Collapsed;
+                _adBannerTimer?.Stop();
+            }
         }
 
         private void ResetOsdTimer()
@@ -612,6 +660,7 @@ namespace StreamMesh.Views
             if (OsdViewerCount != null) OsdViewerCount.Text = "0";
             _mediaPlayer?.Stop();
             _radioTimer?.Stop();
+            _streamInfoTimer?.Stop();
             if (RadioOverlayGrid != null) RadioOverlayGrid.Visibility = Visibility.Collapsed;
         }
 
@@ -732,6 +781,7 @@ namespace StreamMesh.Views
 
         public void Dispose()
         {
+            _movieAiCts?.Cancel();
             _radioTimer?.Stop();
             _mediaPlayer?.Stop();
             _mediaPlayer?.Dispose();
@@ -741,6 +791,209 @@ namespace StreamMesh.Views
                 Marshal.FreeHGlobal(_bufferPtr);
                 _bufferPtr = IntPtr.Zero;
             }
+        }
+
+        public static string CleanMovieTitleLocal(string rawName)
+        {
+            if (string.IsNullOrEmpty(rawName)) return "";
+            try
+            {
+                string cleaned = System.IO.Path.GetFileNameWithoutExtension(rawName);
+                
+                cleaned = cleaned.Replace(".", " ")
+                                 .Replace("_", " ")
+                                 .Replace("-", " ")
+                                 .Replace("(", " ")
+                                 .Replace(")", " ")
+                                 .Replace("[", " ")
+                                 .Replace("]", " ");
+                
+                string[] patternsToRemove = new string[] {
+                    "1080p", "720p", "480p", "2160p", "4k", "bluray", "brrip", "web-dl", "webdl", "hdrip", "dvdrip", "x264", "x265", "hevc", "h264", "h265",
+                    "dual", "dublaj", "altyazili", "altyazılı", "altyazi", "tr", "eng", "turkce", "english", "turkish", "multi", "aac", "dd5 1", "dts", "ac3", "web", "rip", "remux", "imax"
+                };
+                
+                foreach (var pattern in patternsToRemove)
+                {
+                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\b" + pattern + @"\b", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                }
+                
+                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ").Trim();
+                
+                if (!string.IsNullOrEmpty(cleaned))
+                {
+                    cleaned = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cleaned.ToLower());
+                }
+                
+                return string.IsNullOrEmpty(cleaned) ? rawName : cleaned;
+            }
+            catch
+            {
+                return rawName;
+            }
+        }
+
+        private async void FetchMovieAiDetailsAsync(string rawName, string localCleanTitle)
+        {
+            _movieAiCts?.Cancel();
+            _movieAiCts = new System.Threading.CancellationTokenSource();
+            var token = _movieAiCts.Token;
+
+            try
+            {
+                var chatService = new OllamaChatService();
+                string jsonResponse = await chatService.GenerateMovieMetadataJsonAsync(rawName, token);
+
+                if (token.IsCancellationRequested) return;
+
+                if (!string.IsNullOrEmpty(jsonResponse))
+                {
+                    string cleanedJson = jsonResponse.Trim();
+                    if (cleanedJson.StartsWith("```"))
+                    {
+                        int start = cleanedJson.IndexOf('{');
+                        int end = cleanedJson.LastIndexOf('}');
+                        if (start >= 0 && end > start)
+                        {
+                            cleanedJson = cleanedJson.Substring(start, end - start + 1);
+                        }
+                    }
+
+                    try
+                    {
+                        using (var doc = System.Text.Json.JsonDocument.Parse(cleanedJson))
+                        {
+                            var root = doc.RootElement;
+                            string aiTitle = root.GetProperty("title").GetString();
+                            string aiSummary = root.GetProperty("summary").GetString();
+
+                            if (!string.IsNullOrEmpty(aiTitle) && !string.IsNullOrEmpty(aiSummary))
+                            {
+                                Dispatcher.Invoke(() =>
+                                {
+                                    if (token.IsCancellationRequested) return;
+                                    OsdTitle.Text = aiTitle;
+                                    OsdCurrentEpgTitle.Text = aiTitle;
+                                    OsdNextEpg.Text = aiSummary;
+                                });
+                                return;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        string titleKey = "\"title\":";
+                        string summaryKey = "\"summary\":";
+                        int tIdx = cleanedJson.IndexOf(titleKey);
+                        int sIdx = cleanedJson.IndexOf(summaryKey);
+                        if (tIdx >= 0 && sIdx >= 0)
+                        {
+                            string aiTitle = ExtractValue(cleanedJson, titleKey);
+                            string aiSummary = ExtractValue(cleanedJson, summaryKey);
+                            if (!string.IsNullOrEmpty(aiTitle) && !string.IsNullOrEmpty(aiSummary))
+                            {
+                                Dispatcher.Invoke(() =>
+                                {
+                                    if (token.IsCancellationRequested) return;
+                                    OsdTitle.Text = aiTitle;
+                                    OsdCurrentEpgTitle.Text = aiTitle;
+                                    OsdNextEpg.Text = aiSummary;
+                                });
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error fetching movie details from Ollama: {ex.Message}");
+            }
+
+            Dispatcher.Invoke(() =>
+            {
+                if (token.IsCancellationRequested) return;
+                OsdNextEpg.Text = "Bu film için EPG/özet bilgisi bulunmuyor. Yapay zeka çevrimdışı veya film detaylarına erişilemedi.";
+            });
+        }
+
+        private async void StreamInfoTimer_Tick(object sender, EventArgs e)
+        {
+            if (_mediaPlayer == null || !_mediaPlayer.IsPlaying || _currentChannel == null)
+            {
+                StreamInfoOverlay.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            _streamInfoTimer.Stop(); // Stop timer while processing
+
+            StreamInfoOverlay.Visibility = Visibility.Visible;
+
+            string host = "Unknown";
+            try { host = new Uri(_currentChannelUrl).Host; } catch { }
+
+            string ping = await GetPingAsync(host);
+
+            // Fetch technical stats
+            var media = _mediaPlayer.Media;
+            string codec = "N/A";
+            string resolution = "N/A";
+            string fps = "N/A";
+
+            if (media != null)
+            {
+                // In LibVLCSharp, stats can be accessed via Media.Statistics
+                var stats = _mediaPlayer.Media.Statistics;
+                double bitrateKbps = stats.InputBitrate * 8 / 1024.0; // Bitrate is in bytes/s, convert to Kbps
+
+                // Track info for resolution/fps
+                var tracks = _mediaPlayer.VideoTrackDescription;
+                if (tracks != null && tracks.Length > 0)
+                {
+                    // This is a simplified approach, LibVLC doesn't easily expose FPS/Codec in a single call without parsing tracks
+                    codec = "H264"; // Default assumption, LibVLC doesn't expose it easily in the simplified API
+                    resolution = "1080p"; // Placeholder, LibVLC tracks info would need parsing
+                    fps = "60fps"; // Placeholder
+                }
+
+                StreamInfoText.Text = $"{host} | {codec} {resolution} {fps} | Bitrate: {bitrateKbps:F0} Kbps | Ping: {ping}";
+            }
+            else
+            {
+                StreamInfoText.Text = $"{host} | Ping: {ping}";
+            }
+
+            _streamInfoTimer.Start(); // Restart timer
+        }
+
+        private async Task<string> GetPingAsync(string host)
+        {
+            return await Task.Run(() => {
+                try
+                {
+                    using (Ping ping = new Ping())
+                    {
+                        PingReply reply = ping.Send(host, 1000);
+                        return reply.Status == IPStatus.Success ? $"{reply.RoundtripTime}ms" : "N/A";
+                    }
+                }
+                catch { return "N/A"; }
+            });
+        }
+
+        private string ExtractValue(string json, string key)
+        {
+            try
+            {
+                int idx = json.IndexOf(key);
+                if (idx < 0) return null;
+                int start = json.IndexOf('"', idx + key.Length);
+                if (start < 0) return null;
+                int end = json.IndexOf('"', start + 1);
+                if (end < 0) return null;
+                return json.Substring(start + 1, end - start - 1);
+            }
+            catch { return null; }
         }
     }
 }
