@@ -96,6 +96,10 @@ namespace StreamMesh.Views
             _radioTimer.Interval = TimeSpan.FromMilliseconds(100);
             _radioTimer.Tick += RadioTimer_Tick;
 
+            this.PreviewKeyDown += PlayerView_PreviewKeyDown;
+            this.Focusable = true;
+            this.Loaded += (s, e) => this.Focus();
+
             try
             {
                 // Ensure LibVLC is initialized
@@ -287,11 +291,22 @@ namespace StreamMesh.Views
 
                     string localCleanTitle = CleanMovieTitleLocal(channel.Name);
                     OsdTitle.Text = localCleanTitle;
-                    OsdCurrentEpgTime.Text = "YAPAY ZEKA FİLM DETAYI";
-                    OsdCurrentEpgTitle.Text = localCleanTitle;
-                    OsdNextEpg.Text = "Yapay zeka film özeti yükleniyor...";
 
-                    FetchMovieAiDetailsAsync(channel.Name, localCleanTitle);
+                    bool isAiAvailable = MainWindow.Instance.AiButton?.Foreground == System.Windows.Media.Brushes.LimeGreen;
+
+                    if (isAiAvailable)
+                    {
+                        OsdCurrentEpgTime.Text = "YAPAY ZEKA FİLM DETAYI";
+                        OsdCurrentEpgTitle.Text = localCleanTitle;
+                        OsdNextEpg.Text = "Yapay zeka film özeti yükleniyor...";
+                        FetchMovieAiDetailsAsync(channel.Name, localCleanTitle);
+                    }
+                    else
+                    {
+                        OsdCurrentEpgTime.Text = "FİLM MODU";
+                        OsdCurrentEpgTitle.Text = localCleanTitle;
+                        OsdNextEpg.Text = "Yapay zeka (Ollama) çevrimdışı olduğu için film özeti alınamadı.";
+                    }
                 }
                 else
                 {
@@ -355,79 +370,61 @@ namespace StreamMesh.Views
             await _playSemaphore.WaitAsync();
             try
             {
-                _mediaPlayer.Stop();
-                
-                string finalUrl = (channel.Url ?? "").Split(',')[0].Trim();
-                LogService.Log($"[Player] Start PlayChannelAsync: {channel.Name} | URL: {finalUrl} | SourceType: {channel.SourceType}");
-                
-                if (string.IsNullOrEmpty(finalUrl))
+                var urls = (channel.Url ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                bool success = false;
+
+                for (int i = 0; i < urls.Length; i++)
                 {
-                    StatusTextBlock.Text = "Hata: Yayın URL'si bulunamadı!";
-                    LogService.Log($"[Player] Error: Empty URL for {channel.Name}");
-                    return;
-                }
+                    string finalUrl = urls[i].Trim();
+                    if (string.IsNullOrEmpty(finalUrl)) continue;
 
-                _currentYtAudioUrl = null;
-                _currentYtVideoStreams = null;
-                _currentYtVideoUrl = null;
+                    LogService.Log($"[Player] Deneniyor ({i+1}/{urls.Length}): {channel.Name} | URL: {finalUrl}");
+                    _currentChannelUrl = finalUrl;
 
-                LogService.Log($"Playing channel: {channel.Name} | URL: {finalUrl}");
-                _currentChannelUrl = finalUrl;
-                StatusTextBlock.Text = "Bağlanıyor...";
-                ShowOsd();
-                
-                try
-                {
-                    // URL bazlı otomatik tespit (SourceType yanlış olsa bile düzelt)
-                    bool isYoutube = finalUrl.Contains("youtube.com") || finalUrl.Contains("youtu.be");
-                    bool isAceStream = finalUrl.StartsWith("acestream://");
+                    Dispatcher.Invoke(() => {
+                        StatusTextBlock.Text = urls.Length > 1 ? $"Bağlanıyor (Yedek {i+1})..." : "Bağlanıyor...";
+                    });
 
-                    LogService.Log($"[Player] Detection: isYoutube={isYoutube}, isAceStream={isAceStream}");
-
-                    if (channel.SourceType == "YOUTUBE" || isYoutube)
+                    try
                     {
-                        StatusTextBlock.Text = "YouTube bağlantısı çözülüyor...";
-                        LogService.Log("[Player] Calling YoutubeService...");
-                        // Web arayüzünde kullanılan Hızlı (Muxed) stream metoduna geçildi.
-                        // Adaptive stream (ayrı ses ve görüntü) VLC'de yavaş arabelleğe alınıyor, süre göstermiyor ve ileri sarmada sorun yaşatıyordu.
-                        var directUrl = await _youtubeService.GetSingleMuxedStreamUrlAsync(finalUrl);
-                        if (!string.IsNullOrEmpty(directUrl))
+                        bool isYoutube = finalUrl.Contains("youtube.com") || finalUrl.Contains("youtu.be");
+                        bool isAceStream = finalUrl.StartsWith("acestream://") || (finalUrl.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(finalUrl, @"^[a-fA-F0-9]+$"));
+
+                        if (channel.SourceType == "YOUTUBE" || isYoutube)
                         {
-                            finalUrl = directUrl;
-                            _currentYtAudioUrl = null; // Ayrı ses akışı kullanılmıyor
+                            var directUrl = await _youtubeService.GetSingleMuxedStreamUrlAsync(finalUrl);
+                            if (!string.IsNullOrEmpty(directUrl)) finalUrl = directUrl;
                         }
-                        else throw new Exception("YouTube stream çözülemedi.");
-                    }
-                    else if (channel.SourceType == "ACESTREAM" || isAceStream)
-                    {
-                        StatusTextBlock.Text = "AceStream motoru hazırlanıyor...";
-                        // Engine kontrolü ve başlatılması
-                        await _aceStreamService.StartEngineAsync();
+                        else if (channel.SourceType == "ACESTREAM" || isAceStream)
+                        {
+                            await _aceStreamService.StartEngineAsync();
+                            finalUrl = _aceStreamService.GetHttpUrl(finalUrl);
+                        }
+
+                        var media = new Media(_libVLC, new Uri(finalUrl));
+                        ApplyFiltersToMedia(media);
                         
-                        // HTTP proxy URL'ine dönüştür
-                        finalUrl = _aceStreamService.GetHttpUrl(finalUrl);
-                        LogService.Log($"AceStream converted to: {finalUrl}");
-                    }
+                        _mediaPlayer.Play(media);
 
-                    // URL hala "acestream://" ise ve dönüştürülemediyse VLC kilitlenmeyi önlemek için engelle
-                    if (finalUrl.StartsWith("acestream://"))
+                        // Kısa bir süre bekleyip yayın açıldı mı kontrol edelim
+                        await System.Threading.Tasks.Task.Delay(3000);
+                        if (_mediaPlayer.IsPlaying) {
+                            success = true;
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
                     {
-                        throw new Exception("AceStream motoru hazır değil veya yüklü değil!");
+                        LogService.LogError($"[Player] Link hatası (Yedek {i+1}): {ex.Message}");
                     }
-
-                    var media = new Media(_libVLC, new Uri(finalUrl));
-                    if (!string.IsNullOrEmpty(_currentYtAudioUrl)) media.AddOption($":input-slave={_currentYtAudioUrl}");
-                    ApplyFiltersToMedia(media);
-                    
-                    _mediaPlayer.Play(media);
-                    PlayPauseBtn.Content = "⏸";
-                    StatusTextBlock.Text = "Yükleniyor...";
                 }
-                catch(Exception ex)
+
+                if (!success)
                 {
-                    LogService.LogError($"Stream Play Error for channel: {channel.Name}", ex);
-                    StatusTextBlock.Text = "Hata oluştu";
-                    MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Oynatma Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    Dispatcher.Invoke(() => {
+                        StatusTextBlock.Text = "Tüm linkler başarısız!";
+                        MessageBox.Show("Bu kanala ait tüm yayın linkleri şu an ulaşılamaz durumda.", "Yayın Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    });
                 }
             }
             finally
@@ -979,6 +976,49 @@ namespace StreamMesh.Views
                 }
                 catch { return "N/A"; }
             });
+        }
+
+        private void PlayerView_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (_mediaPlayer == null) return;
+
+            switch (e.Key)
+            {
+                case Key.Space:
+                    PlayPauseBtn_Click(null, null);
+                    e.Handled = true;
+                    break;
+                case Key.F:
+                    FullscreenBtn_Click(null, null);
+                    e.Handled = true;
+                    break;
+                case Key.M:
+                    MuteBtn_Click(null, null);
+                    e.Handled = true;
+                    break;
+                case Key.Left:
+                    if (_mediaPlayer.Length > 0) _mediaPlayer.Time -= 10000; // 10 sn geri
+                    ShowOsd();
+                    e.Handled = true;
+                    break;
+                case Key.Right:
+                    if (_mediaPlayer.Length > 0) _mediaPlayer.Time += 10000; // 10 sn ileri
+                    ShowOsd();
+                    e.Handled = true;
+                    break;
+                case Key.Up:
+                    _mediaPlayer.Volume = Math.Min(100, _mediaPlayer.Volume + 5);
+                    VolumeSlider.Value = _mediaPlayer.Volume;
+                    ShowOsd();
+                    e.Handled = true;
+                    break;
+                case Key.Down:
+                    _mediaPlayer.Volume = Math.Max(0, _mediaPlayer.Volume - 5);
+                    VolumeSlider.Value = _mediaPlayer.Volume;
+                    ShowOsd();
+                    e.Handled = true;
+                    break;
+            }
         }
 
         private string ExtractValue(string json, string key)

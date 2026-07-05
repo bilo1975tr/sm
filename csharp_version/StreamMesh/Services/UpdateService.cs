@@ -100,17 +100,23 @@ namespace StreamMesh.Services
             {
                 string versionFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../../VERSION");
                 if (File.Exists(versionFile))
-                    return File.ReadAllText(versionFile).Trim();
+                {
+                    var lines = File.ReadAllLines(versionFile);
+                    if (lines.Length > 0) return lines[0].Trim();
+                }
                 
                 versionFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VERSION");
                 if (File.Exists(versionFile))
-                    return File.ReadAllText(versionFile).Trim();
+                {
+                    var lines = File.ReadAllLines(versionFile);
+                    if (lines.Length > 0) return lines[0].Trim();
+                }
             }
             catch (Exception ex)
             {
                 LogService.LogError("Version okuma hatasi", ex);
             }
-            return "1.0.3 00136"; // Fallback to current version to prevent false updates
+            return "1.0.8"; // Fallback to current major version
         }
 
         public static async Task CheckForUpdatesAsync()
@@ -125,7 +131,11 @@ namespace StreamMesh.Services
                     var response = await client.GetAsync(VersionUrl);
                     if (response.IsSuccessStatusCode)
                     {
-                        string remoteVersionStr = (await response.Content.ReadAsStringAsync()).Trim();
+                        string fullContent = await response.Content.ReadAsStringAsync();
+                        string remoteVersionStr = "";
+                        using (var reader = new StringReader(fullContent)) {
+                            remoteVersionStr = reader.ReadLine()?.Trim() ?? "";
+                        }
 
                         if (!string.IsNullOrEmpty(remoteVersionStr) && remoteVersionStr != currentVersionStr)
                         {

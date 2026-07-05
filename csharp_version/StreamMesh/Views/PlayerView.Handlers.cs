@@ -52,6 +52,22 @@ namespace StreamMesh.Views
             }
         }
 
+        private int _lastVolume = 100;
+        private void MuteBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer == null) return;
+            if (_mediaPlayer.Volume > 0)
+            {
+                _lastVolume = _mediaPlayer.Volume;
+                _mediaPlayer.Volume = 0;
+            }
+            else
+            {
+                _mediaPlayer.Volume = _lastVolume > 0 ? _lastVolume : 100;
+            }
+            VolumeSlider.Value = _mediaPlayer.Volume;
+        }
+
         private void RatioBtn_Click(object sender, RoutedEventArgs e)
         {
             if (_mediaPlayer == null) return;

@@ -87,6 +87,13 @@ namespace StreamMesh.Services
                         EndTime TEXT,
                         SourceUrl TEXT
                     );
+                    CREATE TABLE IF NOT EXISTS EpgChannels (
+                        EpgId TEXT,
+                        DisplayName TEXT,
+                        LogoUrl TEXT,
+                        SourceUrl TEXT,
+                        PRIMARY KEY (EpgId, SourceUrl)
+                    );
                     CREATE TABLE IF NOT EXISTS DeadLinkHashes (
                         Hash INTEGER PRIMARY KEY
                     );

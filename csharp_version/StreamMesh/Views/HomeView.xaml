@@ -50,6 +50,7 @@
                     
                     <StackPanel x:Name="CategoryPanel" Orientation="Horizontal" Grid.Column="0">
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Width="100" Margin="0,0,10,0" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
+                        <Button Content="🕒 Son İzlenenler" Tag="Recent" Width="130" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Width="120" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_TV]}" Tag="TV" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
                         <Button Content="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Movies]}" Tag="Movies" Width="100" Margin="0,0,10,0" Background="#334155" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}"/>
@@ -69,10 +70,10 @@
                         </ComboBox>
                         
                         <Grid>
-                            <TextBox x:Name="SearchBox" Width="200" Height="35" TextChanged="SearchBox_TextChanged" >
+                            <TextBox x:Name="SearchBox" Width="200" Height="35" TextChanged="SearchBox_TextChanged" PreviewKeyDown="SearchBox_PreviewKeyDown">
                                 <!-- Using Style via App.xaml automatically -->
                             </TextBox>
-                            <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Home_Search]}" Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,0,0">
+                            <TextBlock Text="🔍 Akıllı Arama (Tab: AI)" Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,0,0">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="Collapsed"/>

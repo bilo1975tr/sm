@@ -104,7 +104,6 @@ namespace StreamMesh.Services
                     if (trimmedLine.StartsWith("#EXTINF:"))
                     {
                         currentChannel = new Channel();
-                        currentChannel.Id = Guid.NewGuid().ToString("N");
                         currentChannel.PlaylistUrl = playlistUrl;
                         
                         // Logo parse
@@ -238,6 +237,18 @@ namespace StreamMesh.Services
                     else if (!trimmedLine.StartsWith("#") && currentChannel != null && !string.IsNullOrWhiteSpace(trimmedLine))
                     {
                         currentChannel.Url = trimmedLine;
+
+                        // Deterministic ID generation based on URL to make viewer counts work across users
+                        try {
+                            using (var sha1 = System.Security.Cryptography.SHA1.Create()) {
+                                byte[] hashBytes = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(trimmedLine));
+                                currentChannel.Id = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+                            }
+                        } catch {
+                            // Fallback to random if hashing fails
+                            currentChannel.Id = Guid.NewGuid().ToString("N");
+                        }
+
                         currentChannel.SourceType = DetermineSourceType(trimmedLine);
                         
                         if (currentChannel.Category != null && currentChannel.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase))

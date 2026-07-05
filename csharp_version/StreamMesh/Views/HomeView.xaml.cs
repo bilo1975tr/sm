@@ -91,13 +91,18 @@ namespace StreamMesh.Views
                 {
                     foreach (var ch in _allChannels)
                     {
-                        if (viewerCounts.TryGetValue(ch.Id, out var count))
+                        ch.ViewersCount = viewerCounts.TryGetValue(ch.Id, out var count) ? count : 0;
+                    }
+
+                    // UI'daki gruplanmış dizi kartlarını da güncelle
+                    if (ChannelGrid.ItemsSource is IEnumerable<Channel> currentDisplay)
+                    {
+                        foreach (var displayCh in currentDisplay)
                         {
-                            ch.ViewersCount = count;
-                        }
-                        else
-                        {
-                            ch.ViewersCount = 0;
+                            if (displayCh.IsSeriesGroup && displayCh.SeriesEpisodes != null)
+                            {
+                                displayCh.ViewersCount = displayCh.SeriesEpisodes.Sum(e => e.ViewersCount);
+                            }
                         }
                     }
                 }
@@ -159,6 +164,15 @@ namespace StreamMesh.Views
             if (_selectedCategoryTag == "Favorites")
             {
                 _filteredChannels = _filteredChannels.Where(c => c.IsFavorite).ToList();
+            }
+            else if (_selectedCategoryTag == "Recent")
+            {
+                var recentProgress = _databaseService.GetAllWatchProgress();
+                _filteredChannels = _filteredChannels
+                    .Where(c => recentProgress.ContainsKey(c.Id))
+                    .OrderByDescending(c => recentProgress[c.Id].LastWatched)
+                    .Take(50)
+                    .ToList();
             }
             else if (_selectedCategoryTag != "All")
             {
@@ -305,7 +319,8 @@ namespace StreamMesh.Views
                         SeriesName = seriesDet.SeriesName,
                         TotalSeasonsCount = episodes.Select(e => Channel.ParseSeriesDetails(e.Name, e.Url).Season).Distinct().Count(),
                         TotalEpisodesCount = episodes.Count,
-                        PersonalWatchCount = episodes.Sum(e => e.PersonalWatchCount)
+                        PersonalWatchCount = episodes.Sum(e => e.PersonalWatchCount),
+                        ViewersCount = episodes.Sum(e => e.ViewersCount)
                     };
 
                     groupedResult.Add(repChannel);
@@ -521,6 +536,65 @@ namespace StreamMesh.Views
 
             _currentPage = 1;
             FilterChannels();
+        }
+
+        private async void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Tab && !string.IsNullOrWhiteSpace(SearchBox.Text))
+            {
+                e.Handled = true;
+                string query = SearchBox.Text;
+
+                // Show thinking status
+                TotalCountText.Text = "AI Akıllı Arama yapıyor...";
+
+                try
+                {
+                    var aiService = new OllamaChatService();
+                    var result = await aiService.AskOllama(
+                        $"Kullanıcı şu aramayı yaptı: '{query}'. Lütfen bu aramaya en uygun kanalları bulmamı sağlayacak bir SQL WHERE cümlesi üret. Sadece WHERE cümlesini döndür. Örn: Name LIKE '%haber%' AND Language = 'Türkçe'",
+                        "DATABASE_SEARCH_HELPER");
+
+                    if (result.Contains("[SQL:"))
+                    {
+                        int start = result.IndexOf("[SQL:") + 5;
+                        int end = result.IndexOf("]", start);
+                        string sql = result.Substring(start, end - start).Trim();
+                        if (sql.ToUpper().StartsWith("SELECT"))
+                        {
+                            // If AI returned full SELECT, try to extract WHERE part or just use it
+                            _filteredChannels = await Task.Run(() => {
+                                var rows = _databaseService.ExecuteRawQuery(sql);
+                                var ids = rows.Select(r => r["Id"]?.ToString()).Where(id => id != null).ToList();
+                                return _allChannels.Where(c => ids.Contains(c.Id)).ToList();
+                            });
+
+                            _currentPage = 1;
+                            // Skip normal FilterChannels() because we have custom AI results
+                            UpdateUiWithFilteredResults();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("AI Search failed", ex);
+                }
+            }
+        }
+
+        private void UpdateUiWithFilteredResults()
+        {
+            _totalPages = (int)Math.Ceiling(_filteredChannels.Count / (double)_pageSize);
+            if (_totalPages == 0) _totalPages = 1;
+            if (_currentPage > _totalPages) _currentPage = _totalPages;
+
+            var paged = _filteredChannels.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
+            ChannelGrid.ItemsSource = paged;
+            TotalCountText.Text = $"AI Sonucu: {_filteredChannels.Count} içerik bulundu.";
+
+            if (PageInfoText != null) PageInfoText.Text = $"{_currentPage} / {_totalPages}";
+            PrevPageBtn.IsEnabled = _currentPage > 1;
+            NextPageBtn.IsEnabled = _currentPage < _totalPages;
         }
 
         private void PrevPageBtn_Click(object sender, RoutedEventArgs e)

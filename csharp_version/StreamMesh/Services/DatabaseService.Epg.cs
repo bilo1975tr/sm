@@ -25,9 +25,36 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "DELETE FROM EpgPrograms WHERE SourceUrl = @Url";
+                command.CommandText = "DELETE FROM EpgPrograms WHERE SourceUrl = @Url; DELETE FROM EpgChannels WHERE SourceUrl = @Url;";
                 command.Parameters.AddWithValue("@Url", url);
                 command.ExecuteNonQuery();
+            }
+        }
+
+        public void SaveEpgChannels(List<Tuple<string, string, string, string>> epgChannels)
+        {
+            using (var connection = new SqliteConnection(ConnectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    var command = connection.CreateCommand();
+                    command.CommandText = "INSERT OR REPLACE INTO EpgChannels (EpgId, DisplayName, LogoUrl, SourceUrl) VALUES (@Id, @Name, @Logo, @Url)";
+                    var pId = command.Parameters.Add("@Id", SqliteType.Text);
+                    var pName = command.Parameters.Add("@Name", SqliteType.Text);
+                    var pLogo = command.Parameters.Add("@Logo", SqliteType.Text);
+                    var pUrl = command.Parameters.Add("@Url", SqliteType.Text);
+
+                    foreach (var ch in epgChannels)
+                    {
+                        pId.Value = ch.Item1;
+                        pName.Value = ch.Item2;
+                        pLogo.Value = ch.Item3;
+                        pUrl.Value = ch.Item4;
+                        command.ExecuteNonQuery();
+                    }
+                    transaction.Commit();
+                }
             }
         }
 
@@ -305,8 +332,12 @@ namespace StreamMesh.Services
         private string CleanChannelName(string name)
         {
             if (string.IsNullOrEmpty(name)) return "";
-            string[] tags = { "HD", "SD", "FHD", "4K", "UHD", "TR", "GE", "FR", "EN", "HE", "BACKUP", "YEDEK", "|", "-" };
             string result = name;
+            // Ülke takılarını temizle
+            string[] prefixes = { "DE -", "TR -", "EN -", "FR -", "IT -", "ES -", "AR -", "UK -", "US -", "DE:", "TR:", "AT -", "CH -" };
+            foreach (var p in prefixes) if (result.StartsWith(p, StringComparison.OrdinalIgnoreCase)) result = result.Substring(p.Length).Trim();
+
+            string[] tags = { "HD", "SD", "FHD", "4K", "UHD", "TR", "GE", "FR", "EN", "HE", "BACKUP", "YEDEK", "|", "-", "RAW" };
             foreach (var tag in tags) result = result.Replace(tag, "", StringComparison.OrdinalIgnoreCase);
             return result.Replace("  ", " ").Trim();
         }
@@ -359,23 +390,21 @@ namespace StreamMesh.Services
             }
         }
 
-        public List<Tuple<string, string>> GetEpgChannelsWithSource()
+        public List<Tuple<string, string, string>> GetEpgChannelsWithSource()
         {
-            var list = new List<Tuple<string, string>>();
+            var list = new List<Tuple<string, string, string>>();
             try
             {
                 using (var connection = new SqliteConnection(ConnectionString))
                 {
                     connection.Open();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT ChannelName, MAX(SourceUrl) FROM EpgPrograms GROUP BY ChannelName ORDER BY ChannelName ASC";
+                    cmd.CommandText = "SELECT EpgId, DisplayName, SourceUrl FROM EpgChannels ORDER BY DisplayName ASC";
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            string name = reader.GetString(0);
-                            string url = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
-                            list.Add(new Tuple<string, string>(name, url));
+                            list.Add(new Tuple<string, string, string>(reader.GetString(0), reader.GetString(1), reader.IsDBNull(2) ? "" : reader.GetString(2)));
                         }
                     }
                 }
@@ -385,6 +414,27 @@ namespace StreamMesh.Services
                 LogService.Log($"[DatabaseService] GetEpgChannelsWithSource error: {ex.Message}");
             }
             return list;
+        }
+
+        public void CleanupOldEpgPrograms()
+        {
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var command = connection.CreateCommand();
+                    string nowStr = DateTime.Now.ToString("o");
+                    command.CommandText = "DELETE FROM EpgPrograms WHERE EndTime < @Now";
+                    command.Parameters.AddWithValue("@Now", nowStr);
+                    int count = command.ExecuteNonQuery();
+                    if (count > 0) LogService.Log($"[EPG] {count} adet eski program veritabanından temizlendi.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[EPG] Eski programlar temizlenirken hata oluştu", ex);
+            }
         }
     }
 }

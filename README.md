@@ -1,13 +1,20 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-</head>
-<body>
-  <h1>StreamMesh Logo</h1>
-  <img src="https://github.com/bilo1975tr/sm/blob/main/csharp_version/StreamMesh/logos/StreamMesh_logo.png?raw=true" 
-       alt="StreamMesh Logo" 
-       width="400">
-</body>
-</html>
+# Run and deploy your AI Studio app
+
+This contains everything you need to run your app locally.
+
+View your app in AI Studio: https://ai.studio/apps/282a680c-3421-4faa-9b8b-44e72aaf1001
+
+## Run Locally
+
+**Prerequisites:**  Node.js
+
+
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

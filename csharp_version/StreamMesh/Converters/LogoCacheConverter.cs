@@ -11,8 +11,8 @@ namespace StreamMesh.Converters
 {
     public class LogoCacheConverter : IValueConverter
     {
-        private static readonly string CacheDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StreamMesh", "LogoCache");
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        private static readonly string CacheDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Envanter", "Logos");
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
 
         static LogoCacheConverter()
         {

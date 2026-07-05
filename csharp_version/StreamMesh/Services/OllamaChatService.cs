@@ -10,7 +10,7 @@ namespace StreamMesh.Services
 {
     public class OllamaChatService
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         private readonly DatabaseService _dbService = new DatabaseService();
 
         public async Task<string> AskOllama(string prompt, string context, System.Threading.CancellationToken cancellationToken = default, System.Action<string> onStatusUpdate = null)

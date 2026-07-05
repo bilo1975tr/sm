@@ -1,1 +1,7 @@
-1.1.11 00161
+1.1.0 (Major UX & Intelligence Update)
+- Added Auto-Failover: Automatically switches to backup stream URLs if the primary link fails.
+- Integrated Keyboard Shortcuts: Space (Play/Pause), F (Fullscreen), M (Mute), Arrows (Volume/Seek).
+- New "Son İzlenenler" (Recently Watched) category in Library.
+- AI-Powered Smart Search: Press TAB in search box to let AI find content across your entire database.
+- High-Performance Logo Caching: Local storage in Envanter/Logos for instant library loading.
+- Optimized stream-based EPG engine for massive XML files.

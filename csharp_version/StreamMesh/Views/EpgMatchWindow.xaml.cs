@@ -32,6 +32,7 @@ namespace StreamMesh.Views
 
         public class EpgChannelItem
         {
+            public string Id { get; set; }
             public string Name { get; set; }
             public string SourceUrl { get; set; }
             public string InferredLanguage { get; set; }
@@ -74,8 +75,9 @@ namespace StreamMesh.Views
             }).ToList();
 
             _allEpgChannels = dbEpgs.Select(epg => {
-                string name = epg.Item1;
-                string url = epg.Item2;
+                string id = epg.Item1;
+                string name = epg.Item2;
+                string url = epg.Item3;
                 string inferredLang = InferLanguageFromUrl(url);
                 if (inferredLang == "Bilinmiyor")
                 {
@@ -83,6 +85,7 @@ namespace StreamMesh.Views
                 }
                 return new EpgChannelItem
                 {
+                    Id = id,
                     Name = name,
                     SourceUrl = url,
                     InferredLanguage = inferredLang
@@ -263,8 +266,9 @@ namespace StreamMesh.Views
         {
             if (_selectedLocal == null || _selectedEpg == null) return;
 
-            _databaseService.UpdateChannelEpg(_selectedLocal.Id, _selectedEpg.Name);
-            _selectedLocal.EpgId = _selectedEpg.Name;
+            string targetId = !string.IsNullOrEmpty(_selectedEpg.Id) ? _selectedEpg.Id : _selectedEpg.Name;
+            _databaseService.UpdateChannelEpg(_selectedLocal.Id, targetId);
+            _selectedLocal.EpgId = targetId;
 
             UpdateStats();
             LocalChannelsListBox.Items.Refresh();
@@ -291,8 +295,9 @@ namespace StreamMesh.Views
 
                     if (match != null)
                     {
-                        _databaseService.UpdateChannelEpg(local.Id, match.Name);
-                        local.EpgId = match.Name;
+                        string targetId = !string.IsNullOrEmpty(match.Id) ? match.Id : match.Name;
+                        _databaseService.UpdateChannelEpg(local.Id, targetId);
+                        local.EpgId = targetId;
                         matchedCount++;
                     }
                 }
