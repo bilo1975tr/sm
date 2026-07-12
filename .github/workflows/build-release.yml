@@ -6,7 +6,9 @@ on:
       - main
       - master
     paths:
-      - 'csharp_version/**'
+      - '**.cs'
+      - '**.xaml'
+      - 'StreamMesh.csproj'
       - 'VERSION'
   workflow_dispatch: # Allows manual trigger from Actions tab
 
@@ -44,15 +46,14 @@ jobs:
       - name: Build & Publish App
         shell: cmd
         run: |
-          cd csharp_version\StreamMesh
           dotnet clean -c Release
           dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:IncludeNativeLibrariesForSelfExtract=true
 
       - name: Create ZIP Archive
         shell: powershell
         run: |
-          $publishPath = "csharp_version\StreamMesh\bin\Release\net8.0-windows\win-x64\publish\*"
-          Copy-Item -Path "VERSION" -Destination "csharp_version\StreamMesh\bin\Release\net8.0-windows\win-x64\publish\"
+          $publishPath = "bin\Release\net8.0-windows\win-x64\publish\*"
+          Copy-Item -Path "VERSION" -Destination "bin\Release\net8.0-windows\win-x64\publish\"
           $zipPath = "StreamMesh-${env:SAFE_VERSION}.zip"
           Compress-Archive -Path $publishPath -DestinationPath $zipPath -Force
 

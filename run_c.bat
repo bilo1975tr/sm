@@ -51,7 +51,7 @@ exit /b 1
 :DOTNET_OK
 echo [INFO] .NET SDK algilandi.
 echo [INFO] Gerekli kutuphaneler kontrol ediliyor ve indiriliyor...
-cd /d "%~dp0csharp_version\StreamMesh"
+cd /d "%~dp0"
 dotnet restore
 
 if %ERRORLEVEL% neq 0 (

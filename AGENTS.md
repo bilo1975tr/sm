@@ -131,9 +131,11 @@ Hiçbir zaman doğrulanmayan bir şeyi doğrulandı gibi gösterme.
 
 ## 12. VERSİYON
 
-Gerçekten kod değiştiyse `/VERSION` dosyasını güncelle.
+Gerçekten kod değiştiyse `/VERSION` dosyasını her zaman sürüm yükselterek güncelle. Kod değişmediyse VERSION dosyasına dokunma.
 
-Kod değişmediyse VERSION dosyasına dokunma.
+Sürüm güncelleme kuralları:
+* **Hata Düzeltmeleri (Bug Fix):** Versiyon numarasının en son hanesini artır/değiştir (Örn: `x.y.Z` -> `1.3.8` ise `1.3.9` yap).
+* **Yeni Özellikler (New Feature):** Versiyon numarasının orta hanesini artır/değiştir ve son haneyi sıfırla (Örn: `x.Y.z` -> `1.3.8` ise `1.4.0` yap).
 
 ---
 
