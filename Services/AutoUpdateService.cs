@@ -220,7 +220,21 @@ namespace StreamMesh.Services
                             }
                         }
 
-                        var channels = await m3uService.ParseM3uAsync(url, "TV");
+                        string m3uContentString;
+                        try
+                        {
+                            m3uContentString = System.Text.Encoding.UTF8.GetString(bytes);
+                            if (!m3uContentString.Contains("#EXTINF") && !m3uContentString.Contains("#EXTM3U"))
+                            {
+                                m3uContentString = System.Text.Encoding.Default.GetString(bytes);
+                            }
+                        }
+                        catch
+                        {
+                            m3uContentString = System.Text.Encoding.UTF8.GetString(bytes);
+                        }
+
+                        var channels = await m3uService.ParseM3uAsync(m3uContentString, "TV", url);
                         if (channels != null && channels.Count > 0)
                         {
                             db.AddM3uSource(url);
@@ -275,7 +289,21 @@ namespace StreamMesh.Services
                             }
                         }
 
-                        var channels = await m3uService.ParseM3uAsync(url, "Film");
+                        string m3uContentString;
+                        try
+                        {
+                            m3uContentString = System.Text.Encoding.UTF8.GetString(bytes);
+                            if (!m3uContentString.Contains("#EXTINF") && !m3uContentString.Contains("#EXTM3U"))
+                            {
+                                m3uContentString = System.Text.Encoding.Default.GetString(bytes);
+                            }
+                        }
+                        catch
+                        {
+                            m3uContentString = System.Text.Encoding.UTF8.GetString(bytes);
+                        }
+
+                        var channels = await m3uService.ParseM3uAsync(m3uContentString, "Film", url);
                         if (channels != null && channels.Count > 0)
                         {
                             db.AddM3uSource(url);
@@ -330,7 +358,21 @@ namespace StreamMesh.Services
                             }
                         }
 
-                        var channels = await m3uService.ParseM3uAsync(url, "Dizi");
+                        string m3uContentString;
+                        try
+                        {
+                            m3uContentString = System.Text.Encoding.UTF8.GetString(bytes);
+                            if (!m3uContentString.Contains("#EXTINF") && !m3uContentString.Contains("#EXTM3U"))
+                            {
+                                m3uContentString = System.Text.Encoding.Default.GetString(bytes);
+                            }
+                        }
+                        catch
+                        {
+                            m3uContentString = System.Text.Encoding.UTF8.GetString(bytes);
+                        }
+
+                        var channels = await m3uService.ParseM3uAsync(m3uContentString, "Dizi", url);
                         if (channels != null && channels.Count > 0)
                         {
                             db.AddM3uSource(url);
@@ -469,6 +511,7 @@ namespace StreamMesh.Services
                         cmd.ExecuteNonQuery();
                     }
                 }
+                DatabaseService.ClearChannelCache();
             }
             catch (Exception ex)
             {

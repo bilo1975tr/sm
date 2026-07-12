@@ -21,6 +21,8 @@ namespace StreamMesh.Services
 
         public async Task StartEngineAsync()
         {
+            RegisterBrowserExtension();
+
             if (IsRunning()) return;
 
             string[] possiblePaths = {
@@ -85,6 +87,65 @@ namespace StreamMesh.Services
             catch (Exception ex)
             {
                 LogService.LogError("Failed to kill AceStream processes.", ex);
+            }
+        }
+
+        public void RegisterBrowserExtension()
+        {
+            try
+            {
+                string appDataRoaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string aceStreamDir = Path.Combine(appDataRoaming, "AceStream");
+                if (!Directory.Exists(aceStreamDir))
+                {
+                    aceStreamDir = Path.Combine(appDataRoaming, "ACEStream");
+                }
+
+                string engineDir = Path.Combine(aceStreamDir, "engine");
+                string nativeHostExe = Path.Combine(engineDir, "ace_chrome_native_messaging_host.exe");
+
+                if (!Directory.Exists(engineDir) || !File.Exists(nativeHostExe))
+                {
+                    LogService.Log("ace_chrome_native_messaging_host.exe bulunamadı, tarayıcı eklenti kaydı yapılamadı.", "WARN");
+                    return;
+                }
+
+                string manifestPath = Path.Combine(engineDir, "org.acestream.engine.json");
+                string escapedExePath = nativeHostExe.Replace("\\", "\\\\");
+
+                string manifestContent = @"{
+  ""name"": ""org.acestream.engine"",
+  ""description"": ""Ace Stream Engine"",
+  ""path"": """ + escapedExePath + @""",
+  ""type"": ""stdio"",
+  ""allowed_origins"": [
+    ""chrome-extension://mjbepbhonbojpoaenhckjocchgfiaofo/"",
+    ""chrome-extension://jgbnehibmelahoclnbljocnknpndcekl/"",
+    ""chrome-extension://ieidgknbghmbihihlgjedmhmdfbgieng/""
+  ]
+}";
+
+                File.WriteAllText(manifestPath, manifestContent);
+                LogService.Log($"AceStream manifest yazıldı: {manifestPath}");
+
+                using (var chromeKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Google\Chrome\NativeMessagingHosts\org.acestream.engine"))
+                {
+                    chromeKey?.SetValue("", manifestPath);
+                }
+                using (var edgeKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Edge\NativeMessagingHosts\org.acestream.engine"))
+                {
+                    edgeKey?.SetValue("", manifestPath);
+                }
+                using (var firefoxKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Mozilla\NativeMessagingHosts\org.acestream.engine"))
+                {
+                    firefoxKey?.SetValue("", manifestPath);
+                }
+
+                LogService.Log("AceStream tarayıcı eklentisi entegrasyonu (Native Messaging Host) başarıyla kaydedildi.");
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("AceStream tarayıcı eklenti kaydı başarısız oldu.", ex);
             }
         }
     }

@@ -46,6 +46,7 @@ namespace StreamMesh.Services
                     if (newHash == savedHash && currentProgCount > 0)
                     {
                         LogService.Log($"[EpgService] EPG değişmemiş (Hash eşleşti): {url}");
+                        _db.SetSetting($"epg_updated_{url}", DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
                         return true;
                     }
 
@@ -146,16 +147,40 @@ namespace StreamMesh.Services
             if (string.IsNullOrEmpty(dateStr)) return DateTime.Now;
             try
             {
-                string cleanDate = dateStr.Split(' ')[0];
-                if (cleanDate.Length >= 14)
+                string trimmed = dateStr.Trim();
+                string[] parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 1)
                 {
-                    int y = int.Parse(cleanDate.Substring(0, 4));
-                    int m = int.Parse(cleanDate.Substring(4, 2));
-                    int d = int.Parse(cleanDate.Substring(6, 2));
-                    int h = int.Parse(cleanDate.Substring(8, 2));
-                    int min = int.Parse(cleanDate.Substring(10, 2));
-                    int s = int.Parse(cleanDate.Substring(12, 2));
-                    return new DateTime(y, m, d, h, min, s, DateTimeKind.Utc).ToLocalTime();
+                    string datePart = parts[0];
+                    if (datePart.Length >= 14)
+                    {
+                        int y = int.Parse(datePart.Substring(0, 4));
+                        int m = int.Parse(datePart.Substring(4, 2));
+                        int d = int.Parse(datePart.Substring(6, 2));
+                        int h = int.Parse(datePart.Substring(8, 2));
+                        int min = int.Parse(datePart.Substring(10, 2));
+                        int s = int.Parse(datePart.Substring(12, 2));
+
+                        // Timezone offset kontrolü (örn: +0300 veya -0500)
+                        if (parts.Length >= 2)
+                        {
+                            string offsetPart = parts[1];
+                            if ((offsetPart.StartsWith("+") || offsetPart.StartsWith("-")) && offsetPart.Length >= 5)
+                            {
+                                int sign = offsetPart.StartsWith("+") ? 1 : -1;
+                                if (int.TryParse(offsetPart.Substring(1, 2), out int offsetHours) &&
+                                    int.TryParse(offsetPart.Substring(3, 2), out int offsetMins))
+                                {
+                                    var dt = new DateTime(y, m, d, h, min, s, DateTimeKind.Unspecified);
+                                    var offset = new TimeSpan(sign * offsetHours, sign * offsetMins, 0);
+                                    var dto = new DateTimeOffset(dt, offset);
+                                    return dto.LocalDateTime;
+                                }
+                            }
+                        }
+                        
+                        return new DateTime(y, m, d, h, min, s, DateTimeKind.Utc).ToLocalTime();
+                    }
                 }
             } catch { }
             return DateTime.Now;

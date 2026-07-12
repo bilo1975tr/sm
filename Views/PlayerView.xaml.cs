@@ -42,8 +42,8 @@ namespace StreamMesh.Views
         private bool _isOsnEnabled = false;
         private bool _isGoEnabled = false;
 
-        private string _currentYtAudioUrl;
-        private List<Tuple<string, string>> _currentYtVideoStreams;
+        private string _currentYtAudioUrl = null;
+        private List<Tuple<string, string>> _currentYtVideoStreams = null;
         private string _currentYtVideoUrl;
         private List<Channel> _allChannels = new List<Channel>();
         private DispatcherTimer _adBannerTimer;

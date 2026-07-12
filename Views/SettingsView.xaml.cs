@@ -812,7 +812,7 @@ namespace StreamMesh.Views
                 return;
             }
 
-            var channels = _databaseService.GetAllChannels();
+            var channels = await System.Threading.Tasks.Task.Run(() => _databaseService.GetAllChannels());
             
             // Eğer onaysız ise, sadece son 24 saat içinde eklenenleri filtresine takılabilir.
             // Şimdilik test amaçlı HEPSİNİ alıyoruz veya 'unapprovedOnly' mantığıyla bölüyoruz.

@@ -2,7 +2,6 @@ using System;
 using System.Windows;
 using System.Threading;
 using System.Threading.Tasks;
-using LibVLCSharp.Shared;
 
 namespace StreamMesh
 {

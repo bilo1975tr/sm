@@ -150,6 +150,7 @@ namespace StreamMesh.Services
                                 }
                                 transaction.Commit();
                             }
+                            ClearChannelCache();
                             LogService.Log("Smart Normalization of unknown channels completed successfully.");
                         }
                     }

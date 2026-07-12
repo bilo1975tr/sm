@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using Microsoft.Data.Sqlite;
 using StreamMesh.Models;
 
@@ -233,6 +234,15 @@ namespace StreamMesh.Services
 
                 EnsureNormalizationCacheTableExists();
                 NormalizeExistingUnknownChannels();
+
+                try
+                {
+                    SyncBlacklistWithFile();
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("SyncBlacklistWithFile failed during DB initialization", ex);
+                }
             }
             
             _databaseChecked = true;
@@ -254,7 +264,8 @@ namespace StreamMesh.Services
         public void AddDeadLink(string url)
         {
             if (string.IsNullOrEmpty(url)) return;
-            long hash = GetFnv1aHash(url.Trim());
+            string trimmedUrl = url.Trim();
+            long hash = GetFnv1aHash(trimmedUrl);
             try
             {
                 using (var connection = new SqliteConnection(ConnectionString))
@@ -265,10 +276,127 @@ namespace StreamMesh.Services
                     cmd.Parameters.AddWithValue("@Hash", hash);
                     cmd.ExecuteNonQuery();
                 }
+
+                AppendToBlacklistFile(trimmedUrl);
             }
             catch (Exception ex)
             {
                 LogService.LogError("AddDeadLink error", ex);
+            }
+        }
+
+        private static readonly string BlacklistFilePath = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData), "StreamMesh", "blacklist.txt.gz");
+        private static readonly object BlacklistLock = new object();
+
+        public void SyncBlacklistWithFile()
+        {
+            lock (BlacklistLock)
+            {
+                try
+                {
+                    var fileUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    if (File.Exists(BlacklistFilePath))
+                    {
+                        using (var fs = new FileStream(BlacklistFilePath, FileMode.Open, FileAccess.Read))
+                        using (var gzip = new GZipStream(fs, CompressionMode.Decompress))
+                        using (var reader = new StreamReader(gzip, System.Text.Encoding.UTF8))
+                        {
+                            string line;
+                            while ((line = reader.ReadLine()) != null)
+                            {
+                                if (!string.IsNullOrWhiteSpace(line))
+                                {
+                                    fileUrls.Add(line.Trim());
+                                }
+                            }
+                        }
+                    }
+
+                    if (fileUrls.Count == 0) return;
+
+                    var dbHashes = GetAllDeadLinkHashes();
+
+                    using (var connection = new SqliteConnection(ConnectionString))
+                    {
+                        connection.Open();
+                        using (var transaction = connection.BeginTransaction())
+                        {
+                            var cmd = connection.CreateCommand();
+                            cmd.CommandText = "INSERT OR IGNORE INTO DeadLinkHashes (Hash) VALUES (@Hash)";
+                            var pHash = cmd.Parameters.Add("@Hash", SqliteType.Integer);
+
+                            bool hasNew = false;
+                            foreach (var url in fileUrls)
+                            {
+                                long hash = GetFnv1aHash(url);
+                                if (!dbHashes.Contains(hash))
+                                {
+                                    pHash.Value = hash;
+                                    cmd.ExecuteNonQuery();
+                                    hasNew = true;
+                                }
+                            }
+                            if (hasNew)
+                            {
+                                transaction.Commit();
+                                LogService.Log($"[Blacklist] {fileUrls.Count} URL'den yeni ölü linkler veritabanına geri yüklendi.");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[Blacklist] Dosya senkronizasyonu hatası", ex);
+                }
+            }
+        }
+
+        private void AppendToBlacklistFile(string url)
+        {
+            lock (BlacklistLock)
+            {
+                try
+                {
+                    var directory = Path.GetDirectoryName(BlacklistFilePath);
+                    if (!Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    if (File.Exists(BlacklistFilePath))
+                    {
+                        using (var fs = new FileStream(BlacklistFilePath, FileMode.Open, FileAccess.Read))
+                        using (var gzip = new GZipStream(fs, CompressionMode.Decompress))
+                        using (var reader = new StreamReader(gzip, System.Text.Encoding.UTF8))
+                        {
+                            string line;
+                            while ((line = reader.ReadLine()) != null)
+                            {
+                                if (!string.IsNullOrWhiteSpace(line)) existing.Add(line.Trim());
+                            }
+                        }
+                    }
+
+                    if (!existing.Contains(url))
+                    {
+                        existing.Add(url);
+                        using (var fs = new FileStream(BlacklistFilePath, FileMode.Create, FileAccess.Write))
+                        using (var gzip = new GZipStream(fs, CompressionMode.Compress))
+                        using (var writer = new StreamWriter(gzip, System.Text.Encoding.UTF8))
+                        {
+                            foreach (var u in existing)
+                            {
+                                writer.WriteLine(u);
+                            }
+                        }
+                        LogService.Log($"[Blacklist] Yeni silinen URL sıkıştırılmış dosyaya yedeklendi: {url}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[Blacklist] Sıkıştırılmış dosyaya yazma hatası", ex);
+                }
             }
         }
 

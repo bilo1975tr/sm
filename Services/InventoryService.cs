@@ -87,7 +87,18 @@ namespace StreamMesh.Services
                     ZipFile.ExtractToDirectory(aceZipPath, aceStreamDir);
                     
                     File.Delete(aceZipPath);
-                    progressCallback?.Invoke("Ace Stream başarıyla kuruldu!");
+
+                    try
+                    {
+                        var aceService = new AceStreamService();
+                        aceService.RegisterBrowserExtension();
+                        progressCallback?.Invoke("Ace Stream ve Tarayıcı Eklentisi başarıyla kuruldu!");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError("[Envanter] Tarayıcı eklentisi kaydedilirken hata oluştu.", ex);
+                        progressCallback?.Invoke("Ace Stream kuruldu ancak tarayıcı eklentisi kaydedilemedi.");
+                    }
                 }
                 else
                 {

@@ -83,8 +83,8 @@ namespace StreamMesh.Services
                         pChannelName.Value = prog.ChannelName ?? string.Empty;
                         pTitle.Value = prog.Title ?? string.Empty;
                         pDescription.Value = prog.Description ?? string.Empty;
-                        pStartTime.Value = prog.StartTime.ToString("o");
-                        pEndTime.Value = prog.EndTime.ToString("o");
+                        pStartTime.Value = prog.StartTime.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                        pEndTime.Value = prog.EndTime.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
                         pSourceUrl.Value = prog.SourceUrl ?? string.Empty;
                         command.ExecuteNonQuery();
                     }
@@ -157,7 +157,7 @@ namespace StreamMesh.Services
             var dict = new Dictionary<string, EpgProgram>(StringComparer.OrdinalIgnoreCase);
             if (channels == null || channels.Count == 0) return dict;
 
-            string nowStr = DateTime.Now.ToString("o");
+            string nowStr = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
             var allPlayingPrograms = new List<EpgProgram>();
 
             using (var connection = new SqliteConnection(ConnectionString))
@@ -182,8 +182,10 @@ namespace StreamMesh.Services
                             Description = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
                         };
 
-                        if (!reader.IsDBNull(4) && DateTime.TryParse(reader.GetString(4), out DateTime st)) prog.StartTime = st;
-                        if (!reader.IsDBNull(5) && DateTime.TryParse(reader.GetString(5), out DateTime et)) prog.EndTime = et;
+                        if (!reader.IsDBNull(4) && DateTime.TryParse(reader.GetString(4), out DateTime st)) 
+                            prog.StartTime = DateTime.SpecifyKind(st, DateTimeKind.Utc).ToLocalTime();
+                        if (!reader.IsDBNull(5) && DateTime.TryParse(reader.GetString(5), out DateTime et)) 
+                            prog.EndTime = DateTime.SpecifyKind(et, DateTimeKind.Utc).ToLocalTime();
                         
                         allPlayingPrograms.Add(prog);
                     }
@@ -238,7 +240,7 @@ namespace StreamMesh.Services
         {
             if (channel == null || string.IsNullOrEmpty(channel.Name)) return null;
 
-            string nowStr = DateTime.Now.ToString("o");
+            string nowStr = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
             string channelName = channel.Name;
             string epgId = channel.EpgId;
             string cleanName = CleanChannelName(channelName);
@@ -267,8 +269,10 @@ namespace StreamMesh.Services
                                 Title = reader.GetString(2),
                                 Description = reader.GetString(3)
                             };
-                            if (DateTime.TryParse(reader.GetString(4), out DateTime st)) prog.StartTime = st;
-                            if (DateTime.TryParse(reader.GetString(5), out DateTime et)) prog.EndTime = et;
+                            if (DateTime.TryParse(reader.GetString(4), out DateTime st)) 
+                                prog.StartTime = DateTime.SpecifyKind(st, DateTimeKind.Utc).ToLocalTime();
+                            if (DateTime.TryParse(reader.GetString(5), out DateTime et)) 
+                                prog.EndTime = DateTime.SpecifyKind(et, DateTimeKind.Utc).ToLocalTime();
                             allPrograms.Add(prog);
                         }
                     }
@@ -346,7 +350,7 @@ namespace StreamMesh.Services
         {
             if (channel == null || string.IsNullOrEmpty(channel.Name)) return null;
 
-            string nowStr = DateTime.Now.ToString("o");
+            string nowStr = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
             string channelName = channel.Name;
             string epgId = channel.EpgId;
             string cleanName = CleanChannelName(channelName);
@@ -369,8 +373,10 @@ namespace StreamMesh.Services
                             Title = reader.GetString(2),
                             Description = reader.GetString(3)
                         };
-                        if (DateTime.TryParse(reader.GetString(4), out DateTime st)) prog.StartTime = st;
-                        if (DateTime.TryParse(reader.GetString(5), out DateTime et)) prog.EndTime = et;
+                        if (DateTime.TryParse(reader.GetString(4), out DateTime st)) 
+                            prog.StartTime = DateTime.SpecifyKind(st, DateTimeKind.Utc).ToLocalTime();
+                        if (DateTime.TryParse(reader.GetString(5), out DateTime et)) 
+                            prog.EndTime = DateTime.SpecifyKind(et, DateTimeKind.Utc).ToLocalTime();
                         potentials.Add(prog);
                     }
                 }
@@ -424,7 +430,7 @@ namespace StreamMesh.Services
                 {
                     connection.Open();
                     var command = connection.CreateCommand();
-                    string nowStr = DateTime.Now.ToString("o");
+                    string nowStr = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
                     command.CommandText = "DELETE FROM EpgPrograms WHERE EndTime < @Now";
                     command.Parameters.AddWithValue("@Now", nowStr);
                     int count = command.ExecuteNonQuery();

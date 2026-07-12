@@ -12,11 +12,11 @@ namespace StreamMesh.Services
     {
         private readonly HttpClient _httpClient = new HttpClient();
 
-        public async Task<List<Channel>> ParseM3uAsync(string m3uContentOrUrl, string categoryHint = null)
+        public async Task<List<Channel>> ParseM3uAsync(string m3uContentOrUrl, string categoryHint = null, string overridePlaylistUrl = null)
         {
             var channels = new List<Channel>();
             string content = m3uContentOrUrl;
-            string playlistUrl = "";
+            string playlistUrl = overridePlaylistUrl ?? "";
             string fileName = "";
 
             // Eğer bir URL ise içeriği indir
@@ -75,6 +75,20 @@ namespace StreamMesh.Services
                 {
                     LogService.LogError($"M3U local file read error: {m3uContentOrUrl}", ex);
                     return channels;
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(playlistUrl))
+                {
+                    try
+                    {
+                        fileName = Path.GetFileName(new Uri(playlistUrl).AbsolutePath);
+                    }
+                    catch
+                    {
+                        fileName = "playlist.m3u";
+                    }
                 }
             }
 

@@ -7,6 +7,16 @@ namespace StreamMesh.Services
 {
     public partial class DatabaseService
     {
+        private static List<Channel> _channelCache = null;
+        private static readonly object _cacheLock = new object();
+
+        public static void ClearChannelCache()
+        {
+            lock (_cacheLock)
+            {
+                _channelCache = null;
+            }
+        }
         public void SaveChannel(Channel channel)
         {
             if (channel == null) return;
@@ -57,6 +67,7 @@ namespace StreamMesh.Services
                     command.Parameters.AddWithValue("@IsPremium", channel.IsPremium ? 1 : 0);
                     
                     command.ExecuteNonQuery();
+                    ClearChannelCache();
                 }
             }
             catch (Exception ex)
@@ -386,6 +397,7 @@ namespace StreamMesh.Services
                         transaction.Commit();
                     }
                 }
+                ClearChannelCache();
                 return $"İşlem tamamlandı.\nToplam: {channels.Count}\nYeni Eklenen: {newChannels}\nMevcut/Güncellenen: {existingChannels}";
             }
             catch (Exception ex)
@@ -469,6 +481,7 @@ namespace StreamMesh.Services
                     }
                 }
                 LogService.Log("Kütüphane optimizasyonu tamamlandı.");
+                ClearChannelCache();
             }
             catch (Exception ex)
             {
@@ -478,6 +491,14 @@ namespace StreamMesh.Services
 
         public List<Channel> GetAllChannels()
         {
+            lock (_cacheLock)
+            {
+                if (_channelCache != null)
+                {
+                    return new List<Channel>(_channelCache);
+                }
+            }
+
             var channels = new List<Channel>();
             
             using (var connection = new SqliteConnection(ConnectionString))
@@ -514,7 +535,12 @@ namespace StreamMesh.Services
                     }
                 }
             }
-            return channels;
+
+            lock (_cacheLock)
+            {
+                _channelCache = channels;
+                return new List<Channel>(_channelCache);
+            }
         }
 
         public List<Channel> GetChannelsByPlaylistUrl(string playlistUrl)
@@ -619,6 +645,7 @@ namespace StreamMesh.Services
                 command.Parameters.AddWithValue("@Id", id);
                 command.ExecuteNonQuery();
             }
+            ClearChannelCache();
         }
 
         public Channel GetChannelById(string id)
@@ -822,6 +849,7 @@ namespace StreamMesh.Services
                     command.Parameters.AddWithValue("@Id", id);
                     command.ExecuteNonQuery();
                 }
+                ClearChannelCache();
             }
             catch (Exception ex)
             {
@@ -838,6 +866,7 @@ namespace StreamMesh.Services
                 command.CommandText = "DELETE FROM Channels";
                 command.ExecuteNonQuery();
             }
+            ClearChannelCache();
             SetSetting("m3u_sources", "");
         }
 
@@ -1036,6 +1065,7 @@ namespace StreamMesh.Services
                         transaction.Commit();
                     }
                 }
+                ClearChannelCache();
             }
             catch (Exception ex)
             {
@@ -1350,6 +1380,7 @@ namespace StreamMesh.Services
                         transaction.Commit();
                     }
                 }
+                ClearChannelCache();
             }
             catch (Exception ex)
             {

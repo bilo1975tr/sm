@@ -61,9 +61,9 @@ namespace StreamMesh.Views
             });
         }
 
-        private void LoadStats()
+        private async void LoadStats()
         {
-            var channels = _dbService.GetAllChannels();
+            var channels = await System.Threading.Tasks.Task.Run(() => _dbService.GetAllChannels());
 
             int m3uCount = channels.Count(c => c.SourceType == "M3U");
             int ytCount = channels.Count(c => c.SourceType == "YOUTUBE");

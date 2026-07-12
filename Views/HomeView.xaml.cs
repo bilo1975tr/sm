@@ -31,6 +31,14 @@ namespace StreamMesh.Views
             _viewerCountTimer.Interval = TimeSpan.FromSeconds(20);
             _viewerCountTimer.Tick += (s, e) => UpdateViewerCountsAsync();
             _viewerCountTimer.Start();
+
+            this.Unloaded += (s, e) =>
+            {
+                if (_viewerCountTimer != null)
+                {
+                    _viewerCountTimer.Stop();
+                }
+            };
         }
 
         public async void LoadChannels()
@@ -400,7 +408,7 @@ namespace StreamMesh.Views
             NextPageBtn.IsEnabled = _currentPage < _totalPages;
         }
 
-        private async void Category_Click(object sender, RoutedEventArgs e)
+        private void Category_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn)
             {

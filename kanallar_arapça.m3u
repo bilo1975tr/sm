@@ -1,5 +1,0 @@
-#EXTM3U
-#EXTINF:-1 tvg-id="" tvg-name="SIXO TV (360p)" tvg-logo="https://i.ibb.co/GTPs9Xy/9068.png" group-title="Hungarian",SIXO TV (360p)
-https://cloudfront44.lexanetwork.com:1344/relay01/HDE038.sdp/playlist.m3u8
-#EXTINF:-1 tvg-id="" tvg-name="Szolnok TV (1080p)" tvg-logo="https://i.imgur.com/Eiab9MP.png" group-title="Hungarian",Szolnok TV (1080p)
-https://cloudfront44.lexanetwork.com:1344/relay01/livestream004.sdp/playlist.m3u8

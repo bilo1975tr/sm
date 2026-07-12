@@ -71,6 +71,7 @@ namespace StreamMesh.Services
                         command.Parameters.AddWithValue("@Url", url);
                         command.ExecuteNonQuery();
                     }
+                    ClearChannelCache();
                 }
                 catch (Exception ex)
                 {
