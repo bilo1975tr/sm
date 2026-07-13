@@ -1,0 +1,39 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="Altaghier TV (1080p)" tvg-logo="https://i.imgur.com/YTyCBvB.png" group-title="Arabic",Altaghier TV (1080p)
+https://jmc-live.ercdn.net/altaghier/altaghier.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Alkarma TV Australia (1080p)" tvg-logo="https://i.imgur.com/90ykspa.png" group-title="Arabic",Alkarma TV Australia (1080p)
+https://5a8308add0b31.streamlock.net/alkarmatv.com/alkarmaau.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Al Ekhbariya (1080p)" tvg-logo="https://i.imgur.com/WcRlHQm.png" group-title="Arabic",Al Ekhbariya (1080p)
+https://aloula-redirect.vercel.app/4/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="LBC International" tvg-logo="https://i.imgur.com/h26xtUv.png" group-title="Arabic",LBC International
+http://185.9.2.18/chid_327/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="LBC (1080p) [Geo-blocked]" tvg-logo="https://s3.eu-central-1.amazonaws.com/rotana.website/channels/1688402500.webp" group-title="Arabic",LBC (1080p) [Geo-blocked]
+https://rotana.hibridcdn.net/rotananet/lbc_net-7Y83PP5adWixDF93/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Marjaeyat TV Arabic (1080p)" tvg-logo="https://i.imgur.com/LsYYkUI.png" group-title="Arabic",Marjaeyat TV Arabic (1080p)
+https://livefa.marjaeyattv.com/mtv_ar/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Al Quran Al Kareem TV (1080p)" tvg-logo="https://aloula.faulio.com/storage/mediagallery/da/6c/fullhd_7eaf7e165c4cad5b3a45eff65d2011e18be5d670.png" group-title="Arabic",Al Quran Al Kareem TV (1080p)
+https://aloula-redirect.vercel.app/7/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Hala London (1080p)" tvg-logo="https://i.imgur.com/bM4VZDH.png" group-title="Arabic",Hala London (1080p)
+https://halalondon-live.ercdn.net/halalondon/halalondon.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Dabanga TV (1080p)" tvg-logo="https://i.imgur.com/BH1N6TA.png" group-title="Arabic",Dabanga TV (1080p)
+https://hls.dabangasudan.org/hls/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Alkarma TV Praise (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/bJLKkou.png" group-title="Arabic",Alkarma TV Praise (720p) [Not 24/7]
+https://58cc65c534c67.streamlock.net/alkarmatv.com/alkarmapa.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Al Jazeera Mubasher 24 (1080p)" tvg-logo="https://i.imgur.com/LMCcIZ2.png" group-title="Arabic",Al Jazeera Mubasher 24 (1080p)
+https://live-hls-apps-ajm24-fa.getaj.net/AJM24/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Marina TV (1080p)" tvg-logo="https://i.imgur.com/F2PzEaw.png" group-title="Arabic",Marina TV (1080p)
+https://ffs.gulfsat.com/Marina-TV-HD/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Nour Al Sharq (576p)" tvg-logo="https://i.imgur.com/EEy2dUr.png" group-title="Arabic",Nour Al Sharq (576p)
+https://svs.itworkscdn.net/nour8satlive/livestream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Alquran (1080p)" tvg-logo="https://i.imgur.com/lqVwrAF.png" group-title="Arabic",Alquran (1080p)
+https://ktvlive.online/stream/hls/ch1.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Al Saudiya (1080p)" tvg-logo="https://i.imgur.com/GRQTndk.png" group-title="Arabic",Al Saudiya (1080p)
+https://aloula-redirect.vercel.app/2/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Asharq Discovery (1080p)" tvg-logo="https://i.imgur.com/Czxi7yk.png" group-title="Arabic",Asharq Discovery (1080p)
+https://svs.itworkscdn.net/asharqdiscoverylive/asharqd.smil/playlist_dvr.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Oman TV (1080p)" tvg-logo="https://i.imgur.com/rBftT9x.png" group-title="Arabic",Oman TV (1080p)
+https://partneta.cdn.mgmlcdn.com/omantv/smil:omantv.stream.smil/chunklist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="KSA Sports 3 (1080p)" tvg-logo="https://i.imgur.com/BXfCvez.png" group-title="Arabic",KSA Sports 3 (1080p)
+https://aloula-redirect.vercel.app/16/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Alkarma TV Family (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/yUEuQA2.png" group-title="Arabic",Alkarma TV Family (1080p) [Not 24/7]
+https://58cc65c534c67.streamlock.net/alkarmatv.com/alkarmaNA2.smil/playlist.m3u8

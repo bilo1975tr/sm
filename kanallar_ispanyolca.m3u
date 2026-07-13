@@ -1,0 +1,43 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="LIVExLIVE (1080p)" tvg-logo="https://i.imgur.com/KFzEoed.png" group-title="Lifestyle",LIVExLIVE (1080p)
+https://dai.google.com/linear/hls/event/xC8SDBfbTKCTCa20kFJQXQ/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Star Movies India (576p) [Not 24/7]" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/STAR_Movies_logo.svg/512px-STAR_Movies_logo.svg.png" group-title="Sinema",Star Movies India (576p) [Not 24/7]
+http://c0.cdn.trinity-tv.net/stream/nh9u54a7sfnc2hwzxr2zwykwkqm43bgyyzsm68ybbbnjei8kytwcgs3zm5gnw5c6efa5gr3fadzqe686w8gj2eaehrj89wvujvqza3kez78dtknwbbmnqf79yygmqqg7e9pnc3i3bpywjkiqrwke94yf.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vida Nueva TV" tvg-logo="https://i.imgur.com/lxv1lre.png" group-title="Spanish",Vida Nueva TV
+https://mc.servidor.stream:19360/8240/8240.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CCTV-15 (1080p)" tvg-logo="https://i.imgur.com/CCV0eRG.png" group-title="Chinese",CCTV-15 (1080p)
+https://xykt-fix.github.io/play/a02e/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Deal or No Deal (720p)" tvg-logo="https://i.imgur.com/lZvNXA1.png" group-title="Series",Pluto TV Deal or No Deal (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5e9debf8c881310007d7bde1/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="WWXY-DT1 (Boricua TV) (1080p)" tvg-logo="https://i.imgur.com/Qs4szHD.png" group-title="Spanish",WWXY-DT1 (Boricua TV) (1080p)
+https://2-fss-2.streamhoster.com/pl_138/amlst:201284-1347630/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Star 1 (544p)" tvg-logo="https://i.imgur.com/PSVgw99.png" group-title="Sinema",Star 1 (544p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=bs08
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Cuisine (720p)" tvg-logo="https://i.imgur.com/OuAi5ef.png" group-title="Lifestyle",Pluto TV Cuisine (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5f8ed48146ba9e00078424b6/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Weddings (720p)" tvg-logo="https://i.imgur.com/JosxTMv.png" group-title="Series",Pluto TV Weddings (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5877acecb16bb1e042ee453f/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5877acecb16bb1e042ee453f&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=632&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Best Life (720p)" tvg-logo="https://i.imgur.com/nLS7Oh2.png" group-title="Lifestyle",Pluto TV Best Life (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5887ba337b8e94223eb121bd/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5887ba337b8e94223eb121bd&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=630&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Uranio TV (720p)" tvg-logo="https://i.imgur.com/EeNpfIr.png" group-title="Spanish",Uranio TV (720p)
+https://live-evg8.tv360.bitel.com.pe/bitel/uranioyurimaguasSRT/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Xtra Tv (720p) [Not 24/7]" tvg-logo="https://xtratvrd.com/logo512.png" group-title="Spanish",Xtra Tv (720p) [Not 24/7]
+https://edge.essastream.com/xtratv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Dossiers FBI (720p)" tvg-logo="https://i.imgur.com/CB6wqgS.png" group-title="Series",Pluto TV Dossiers FBI (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5f8edad922b10b000753bc37/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="Xtremo Channel (720p) [Geo-blocked]" tvg-logo="https://i.imgur.com/bvPh0Uq.png" group-title="Spanish",Xtremo Channel (720p) [Geo-blocked]
+https://ss2.tvrdomi.com:1936/xtremochannel/xtremochannel/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Degrassi (720p)" tvg-logo="https://i.imgur.com/vhSzfDC.png" group-title="Series",Pluto TV Degrassi (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5c6eeb85c05dfc257e5a50c4/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="CCTV-17 (1080p)" tvg-logo="https://i.imgur.com/jSQURxS.png" group-title="Chinese",CCTV-17 (1080p)
+http://74.91.26.218:82/live/cctv17hd.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="白城新闻综合 [Geo-blocked]" tvg-logo="https://www.tvchinese.net/uploads/tv/baicheng.jpg" group-title="Chinese",白城新闻综合 [Geo-blocked]
+https://stream2.jlntv.cn/baicheng1/sd/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Dogs 24/7 (720p)" tvg-logo="https://i.imgur.com/zeTgPIx.png" group-title="Series",Pluto TV Dogs 24/7 (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5b329e0a7b9d8872aeb49ceb/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5b329e0a7b9d8872aeb49ceb&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=636&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Dog el cazarrecompensas (480p) [Not 24/7]" tvg-logo="https://i.imgur.com/h3kSZLc.png" group-title="Series",Pluto TV Dog el cazarrecompensas (480p) [Not 24/7]
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f9992c685a2a80007fa414a/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=19.4358&deviceLon=-99.1441&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=VE&serverSideAds=false&sessionID=b8e5a857-714a-11eb-b532-0242ac110002&sid=b8e5a857-714a-11eb-b532-0242ac110002&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Visión Sur TV (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/AbZYWEQ.png" group-title="Spanish",Visión Sur TV (1080p) [Not 24/7]
+https://ott1.hdlatam.tv/live_abr/webtvVisionSur/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Deadly Women (720p)" tvg-logo="https://i.imgur.com/36QcP83.png" group-title="Series",Pluto TV Deadly Women (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5ca1df0d50be2571e393ad31/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
