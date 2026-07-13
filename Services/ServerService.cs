@@ -64,6 +64,34 @@ namespace StreamMesh.Services
                 _serverThread.Start();
 
                 LogService.Log($"Server started successfully on port {Port} (Bypass Mode)");
+                
+                // Triggers best connection establishment (Direct -> STUN -> Playit.gg)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        string bestAddress = await TunnelService.Instance.EstablishBestConnectionAsync(Port);
+                        string displayIp = LocalIp;
+                        string displayPort = Port.ToString();
+                        
+                        if (TunnelService.Instance.ActiveMode == ConnectionMode.PlayitTunnel && !string.IsNullOrEmpty(TunnelService.Instance.ExternalAddress))
+                        {
+                            var addressParts = TunnelService.Instance.ExternalAddress.Split(':');
+                            if (addressParts.Length == 2)
+                            {
+                                displayIp = addressParts[0];
+                                displayPort = addressParts[1];
+                            }
+                        }
+                        
+                        OnStatusChanged?.Invoke(true, displayIp, displayPort);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError("Tunnel connection establishment failed", ex);
+                    }
+                });
+
                 OnStatusChanged?.Invoke(true, LocalIp, Port.ToString());
             }
             catch (Exception ex)
@@ -79,6 +107,14 @@ namespace StreamMesh.Services
             if (!_isRunning) return;
 
             _isRunning = false;
+            try
+            {
+                TunnelService.Instance.StopPlayitTunnel();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("Error stopping playit tunnel", ex);
+            }
             OnStatusChanged?.Invoke(false, "", "");
         }
 

@@ -16,6 +16,14 @@
         <Border x:Name="MainSidebar" Grid.Column="0" Background="#1e293b" BorderBrush="#334155" BorderThickness="0,0,1,0">
             <StackPanel Margin="0,20,0,0">
                 <Image Source="pack://application:,,,/logos/StreamMesh_logo.png" Width="40" Height="40" HorizontalAlignment="Center" Margin="0,0,0,8" RenderOptions.BitmapScalingMode="HighQuality"/>
+                
+                <!-- Bağlantı Durum Göstergeleri (Direct, STUN, Playit) -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                    <Ellipse x:Name="DirectStatusDot" Width="8" Height="8" Fill="#ef4444" Margin="3,0" ToolTip="P2P Doğrudan Bağlantı (Tıklayıp ayrıntılı raporu görün)" Cursor="Hand" MouseLeftButtonDown="DirectStatusDot_MouseLeftButtonDown"/>
+                    <Ellipse x:Name="StunStatusDot" Width="8" Height="8" Fill="#ef4444" Margin="3,0" ToolTip="STUN NAT Delme (Tıklayıp ayrıntılı raporu görün)" Cursor="Hand" MouseLeftButtonDown="StunStatusDot_MouseLeftButtonDown"/>
+                    <Ellipse x:Name="PlayitStatusDot" Width="8" Height="8" Fill="#ef4444" Margin="3,0" ToolTip="Metered TURN Tüneli (Tıklayıp ayrıntılı raporu görün)" Cursor="Hand" MouseLeftButtonDown="PlayitStatusDot_MouseLeftButtonDown"/>
+                </StackPanel>
+
                 <Border Background="#334155" CornerRadius="4" Padding="4,2" HorizontalAlignment="Center" Margin="0,2,0,20">
                     <TextBlock x:Name="VersionText" Text="v0.0.0" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold"/>
                 </Border>

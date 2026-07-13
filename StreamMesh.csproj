@@ -31,6 +31,8 @@
     <PackageReference Include="YoutubeExplode" Version="6.*" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.2" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2151.40" />
+    <PackageReference Include="SIPSorcery" Version="6.0.22" />
+    <PackageReference Include="Google.Cloud.Firestore" Version="3.5.1" />
   </ItemGroup>
 
   <ItemGroup>

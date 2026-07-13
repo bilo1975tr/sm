@@ -52,6 +52,94 @@ namespace StreamMesh.Views
 
             // Auto Update link listesini yukle
             LoadAutoUpdateLinks();
+
+            // Wire up TunnelService events
+            TunnelService.Instance.OnStatusMessage += (msg) => 
+            {
+                Dispatcher.Invoke(() => 
+                {
+                    TunnelLogsBox.AppendText($"[{DateTime.Now:HH:mm:ss}] {msg}{Environment.NewLine}");
+                    TunnelLogsBox.ScrollToEnd();
+                    
+                    // Update NAT status display
+                    NatTypeStatusText.Text = TunnelService.Instance.CurrentNatType switch
+                    {
+                        NatType.ConeNAT => "Cone NAT (Hole Punching Destekleniyor)",
+                        NatType.SymmetricNAT => "Simetrik NAT (Hole Punching İmkansız)",
+                        _ => "Bilinmiyor (Analiz edilmedi)"
+                    };
+                    
+                    // Update connection mode display
+                    ConnectionModeText.Text = TunnelService.Instance.ActiveMode switch
+                    {
+                        ConnectionMode.StunP2P => "STUN P2P",
+                        ConnectionMode.PlayitTunnel => "Playit Tüneli (Aktif)",
+                        _ => "Doğrudan Yerel IP"
+                    };
+
+                    // Show claim button if claim URL is present
+                    if (!string.IsNullOrEmpty(TunnelService.Instance.PlayitClaimUrl))
+                    {
+                        ClaimPlayitBtn.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        ClaimPlayitBtn.Visibility = Visibility.Collapsed;
+                    }
+                });
+            };
+
+            TunnelService.Instance.OnTunnelStateChanged += (isRunning, state) =>
+            {
+                Dispatcher.Invoke(() => 
+                {
+                    TogglePlayitBtn.Content = isRunning ? "Tüneli Durdur" : "Tüneli Elle Başlat";
+                    if (!isRunning)
+                    {
+                        ClaimPlayitBtn.Visibility = Visibility.Collapsed;
+                    }
+                });
+            };
+        }
+
+        private async void DetectNatBtn_Click(object sender, RoutedEventArgs e)
+        {
+            DetectNatBtn.IsEnabled = false;
+            TunnelLogsBox.AppendText($"[{DateTime.Now:HH:mm:ss}] NAT analizi başlatıldı...{Environment.NewLine}");
+            var nat = await TunnelService.Instance.DetectNatTypeAsync();
+            DetectNatBtn.IsEnabled = true;
+        }
+
+        private async void TogglePlayitBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (TunnelService.Instance.IsTunnelRunning)
+            {
+                TunnelService.Instance.StopPlayitTunnel();
+            }
+            else
+            {
+                await TunnelService.Instance.StartPlayitTunnelAsync(ServerService.Instance.Port);
+            }
+        }
+
+        private void ClaimPlayitBtn_Click(object sender, RoutedEventArgs e)
+        {
+            string url = TunnelService.Instance.PlayitClaimUrl;
+            if (!string.IsNullOrEmpty(url))
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Claim linki açılamadı: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void UpdateComponentStatusUI()

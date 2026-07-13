@@ -48,9 +48,84 @@ namespace StreamMesh
             
             _homeView.ChannelSelectedEvent += OnChannelSelected;
 
+            // Wire up Tunnel status dots
+            TunnelService.Instance.OnStatusDotsUpdated += UpdateStatusDots;
+            UpdateStatusDots(TunnelService.Instance.DirectDotState, TunnelService.Instance.StunDotState, TunnelService.Instance.TunnelDotState);
+
             // Varsayılan sayfa: Kütüphane (Home)
             NavHome.IsChecked = true;
             MainContent.Content = _homeView;
+        }
+
+        private void UpdateStatusDots(int direct, int stun, int tunnel)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                DirectStatusDot.Fill = GetBrushFromState(direct);
+                StunStatusDot.Fill = GetBrushFromState(stun);
+                PlayitStatusDot.Fill = GetBrushFromState(tunnel);
+            });
+        }
+
+        private System.Windows.Media.Brush GetBrushFromState(int state)
+        {
+            return state switch
+            {
+                2 => System.Windows.Media.Brushes.LimeGreen, // Green
+                1 => System.Windows.Media.Brushes.Orange,    // Yellow/Orange
+                _ => System.Windows.Media.Brushes.Red        // Red
+            };
+        }
+
+        private void DirectStatusDot_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            try
+            {
+                string logText = TunnelService.DirectLogs.Count > 0 
+                    ? string.Join(Environment.NewLine, TunnelService.DirectLogs)
+                    : "Doğrudan dış bağlantı testi henüz gerçekleştirilmedi.";
+                
+                var reportWindow = new StreamMesh.Windows.P2PReportWindow("Doğrudan Bağlantı Durum Raporu", logText) { Owner = this };
+                reportWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("Doğrudan bağlantı rapor penceresi açılamadı.", ex);
+            }
+        }
+
+        private void StunStatusDot_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            try
+            {
+                string logText = TunnelService.StunLogs.Count > 0 
+                    ? string.Join(Environment.NewLine, TunnelService.StunLogs)
+                    : "STUN sorgulaması henüz gerçekleştirilmedi.";
+                
+                var reportWindow = new StreamMesh.Windows.P2PReportWindow("STUN Durum Raporu", logText) { Owner = this };
+                reportWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("STUN rapor penceresi açılamadı.", ex);
+            }
+        }
+
+        private void PlayitStatusDot_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            try
+            {
+                string logText = TunnelService.TurnLogs.Count > 0 
+                    ? string.Join(Environment.NewLine, TunnelService.TurnLogs)
+                    : "Tünel/TURN bağlantı testi henüz gerçekleştirilmedi.";
+                
+                var reportWindow = new StreamMesh.Windows.P2PReportWindow("Tünel / Metered TURN Durum Raporu", logText) { Owner = this };
+                reportWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("TURN rapor penceresi açılamadı.", ex);
+            }
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)

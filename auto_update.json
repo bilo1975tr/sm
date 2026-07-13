@@ -1,15 +1,6 @@
 {
   "tv": [
-    "https://streams.uzunmuhalefet.com/lists/tr.m3u",
-    "https://raw.githubusercontent.com/hayatiptv/iptv/master/index.m3u",
-    "https://raw.githubusercontent.com/hayatiptv/iptv/refs/heads/master/BDNLTR.m3u",
-    "https://raw.githubusercontent.com/hayatiptv/iptv/refs/heads/master/TRDECesitlikanallar.m3u",
     "https://iptv-org.github.io/iptv/index.language.m3u",
-    "https://raw.githubusercontent.com/hydrokin/M3U/e4e9ba44d54d360ff3de6388220a4dc1019bf34e/tvando.m3u",
-    "https://link.testworkery0.workers.dev/patron.m3u",
-    "https://raw.githubusercontent.com/yasarfalkan/m3u-dosyam/refs/heads/main/YMBK.m3u8",
-    "https://www.dropbox.com/scl/fi/p58t5o980tah2hz3234a5/SmartGO.m3u?rlkey=w44w0ycaa83uyn21uph77pp6v&st=mj0n6byr&raw=1",
-    "https://raw.githubusercontent.com/kadirsener1/avva/537423d13dd489dd9ec1627c5b5b2bad765e25a5/playlist.m3u",
     "https://onureroz.com/indirmeler/turk/all.m3u",
     "https://onureroz.com/indirmeler/turk/index.m3u",
     "https://onureroz.com/indirmeler/turk/karma-index.m3u",
@@ -20,24 +11,12 @@
   "film": [
     "https://tinyurl.com/power-cinema",
     "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Filmler.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-nowtv-com-tr/filmler.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-kanald-com-tr/evde-sinema.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/puhutv-com/filmler.m3u",
     "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/full.film.m3u",
     "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Yeşilçam.m3u8",
     "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Filmler_Yeni.m3u"
   ],
   "dizi": [
-    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Diziler.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-showtv-com-tr/arsiv-diziler.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-showtv-com-tr/arsiv-programlar.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-nowtv-com-tr/program-arsivi.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-kanald-com-tr/arsiv-programlar.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-nowtv-com-tr/dizi-arsivi.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-kanald-com-tr/arsiv-diziler.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-dmax-com-tr/all.m3u",
-    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-cnnturk-com/belgeseller.m3u",
-    "https://raw.githubusercontent.com/batuhansabri55/AkcagozTV_Film/refs/heads/main/FilmDizi.m3u"
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Diziler.m3u"
   ],
   "epg": [
     "https://iptv-epg.org/files/epg-de.xml",

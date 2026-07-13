@@ -291,6 +291,47 @@
                                     <TextBlock Text="Web Oynatıcı Adresi:" Width="150" VerticalAlignment="Center" Foreground="#FFFFFF"/>
                                     <TextBox x:Name="WebPlayerUrlBox" Width="400" Height="35" IsReadOnly="True" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155"/>
                                 </StackPanel>
+
+                                <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
+
+                                <TextBlock Text="🌐 Akıllı Ağ ve Tünelleme Katmanı" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
+                                <TextBlock Text="NAT tipinizi otomatik tespit edin, gerekirse STUN delme deneyin veya Simetrik NAT arkasındaysanız Playit.gg tüneli kurun." Foreground="#e2e8f0" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                                <Grid Margin="0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="NAT Tipi tespiti:" VerticalAlignment="Center" Foreground="#FFFFFF"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <TextBlock x:Name="NatTypeStatusText" Text="Bilinmiyor (Analiz edilmedi)" VerticalAlignment="Center" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,15,0"/>
+                                        <Button x:Name="DetectNatBtn" Content="NAT Tipini Analiz Et" Click="DetectNatBtn_Click" Padding="12,5" Style="{StaticResource PrimaryButtonStyle}" Background="#4b5563"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Aktif Bağlantı Modu:" VerticalAlignment="Center" Foreground="#FFFFFF"/>
+                                    <TextBlock Grid.Column="1" x:Name="ConnectionModeText" Text="Doğrudan Yerel IP" VerticalAlignment="Center" FontWeight="Bold" Foreground="#10b981"/>
+                                </Grid>
+
+                                <Grid Margin="0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Playit.gg Tüneli:" VerticalAlignment="Center" Foreground="#FFFFFF"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button x:Name="TogglePlayitBtn" Content="Tüneli Elle Başlat" Click="TogglePlayitBtn_Click" Padding="12,5" Style="{StaticResource PrimaryButtonStyle}" Background="#3b82f6" Margin="0,0,10,0"/>
+                                        <Button x:Name="ClaimPlayitBtn" Content="Tüneli Hesaba Eşle" Click="ClaimPlayitBtn_Click" Padding="12,5" Style="{StaticResource PrimaryButtonStyle}" Background="#8b5cf6" Visibility="Collapsed"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="Tünel ve Bağlantı Logları:" FontWeight="Bold" Foreground="#94a3b8" Margin="0,15,0,5"/>
+                                <TextBox x:Name="TunnelLogsBox" Height="120" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Background="#0f172a" Foreground="#a7f3d0" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Padding="8"/>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
