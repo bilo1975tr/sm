@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -58,16 +59,17 @@ namespace StreamMesh.Services
                     TunnelService.AddStunLog("DNS araması yapılıyor: stun.l.google.com");
                     
                     // SIPSorcery STUN istemcisi ile genel IP çözme işlemi (Önceden çalışan Google STUN sunucusu)
-                    var stunDnsResult = Dns.GetHostAddresses("stun.l.google.com");
-                    if (stunDnsResult.Length == 0)
+                    var stunAddresses = Dns.GetHostAddresses("stun.l.google.com");
+                    if (stunAddresses.Length == 0)
                     {
                         throw new Exception("STUN sunucusu DNS çözümlenemedi.");
                     }
 
-                    TunnelService.AddStunLog($"DNS başarılı. STUN IP adresi: {stunDnsResult[0]}");
-                    var stunEp = new IPEndPoint(stunDnsResult[0], 19302);
+                    var targetAddress = stunAddresses[0];
+                    TunnelService.AddStunLog($"DNS başarılı. STUN IP adresi: {targetAddress}");
+                    var stunEp = new IPEndPoint(targetAddress, 19302);
                     TunnelService.AddStunLog($"UDP Soket oluşturuluyor ve {stunEp} adresine bağlanılıyor...");
-                    using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+                    using (var socket = new Socket(targetAddress.AddressFamily, SocketType.Dgram, ProtocolType.Udp))
                     {
                         socket.Connect(stunEp);
                         
