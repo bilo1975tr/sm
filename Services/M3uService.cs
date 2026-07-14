@@ -10,7 +10,17 @@ namespace StreamMesh.Services
 {
     public class M3uService
     {
-        private readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient;
+
+        public M3uService()
+        {
+            var handler = new HttpClientHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
+            };
+            _httpClient = new HttpClient(handler);
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        }
 
         public async Task<List<Channel>> ParseM3uAsync(string m3uContentOrUrl, string categoryHint = null, string overridePlaylistUrl = null)
         {
@@ -115,7 +125,7 @@ namespace StreamMesh.Services
                 {
                     var trimmedLine = line.Trim();
 
-                    if (trimmedLine.StartsWith("#EXTINF:"))
+                    if (trimmedLine.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase) || trimmedLine.StartsWith("#EXTINF ", StringComparison.OrdinalIgnoreCase))
                     {
                         currentChannel = new Channel();
                         currentChannel.PlaylistUrl = playlistUrl;
