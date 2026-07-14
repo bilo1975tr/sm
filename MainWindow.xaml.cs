@@ -55,6 +55,20 @@ namespace StreamMesh
             // Varsayılan sayfa: Kütüphane (Home)
             NavHome.IsChecked = true;
             MainContent.Content = _homeView;
+
+            // P2P Aktif Kullanıcı Sayısı Güncelleme Zamanlayıcısı
+            var p2pTimer = new System.Windows.Threading.DispatcherTimer();
+            p2pTimer.Interval = TimeSpan.FromSeconds(15);
+            p2pTimer.Tick += (s, ev) =>
+            {
+                try
+                {
+                    int onlineCount = StunService.Instance.GetP2POnlineCount();
+                    OnlinePeersText.Text = onlineCount.ToString();
+                }
+                catch {}
+            };
+            p2pTimer.Start();
         }
 
         private void UpdateStatusDots(int direct, int stun, int tunnel)
@@ -63,7 +77,7 @@ namespace StreamMesh
             {
                 DirectStatusDot.Fill = GetBrushFromState(direct);
                 StunStatusDot.Fill = GetBrushFromState(stun);
-                PlayitStatusDot.Fill = GetBrushFromState(tunnel);
+                TurnStatusDot.Fill = GetBrushFromState(tunnel);
             });
         }
 
@@ -111,7 +125,7 @@ namespace StreamMesh
             }
         }
 
-        private void PlayitStatusDot_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void TurnStatusDot_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             try
             {

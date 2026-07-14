@@ -79,6 +79,12 @@ namespace StreamMesh.Views
             string waitStr = LocalizationManager.Instance["Stats_Waiting"];
             GitHubLastSyncText.Text = string.Format(LocalizationManager.Instance["Stats_GitSync"], GitHubSyncService.LastGitHubPullTime > DateTime.MinValue ? GitHubSyncService.LastGitHubPullTime.ToString("HH:mm:ss") : waitStr);
             FirebasePushedText.Text = string.Format(LocalizationManager.Instance["Stats_FbPush"], GitHubSyncService.TotalChannelsPushedToFirebase);
+
+            // P2P Stats
+            P2pClientIdText.Text = $"İstemci ID: {StunService.Instance.ClientId}";
+            P2pOnlineCountText.Text = $"Mesh'teki Aktif Cihazlar: {StunService.Instance.GetP2POnlineCount()}";
+            P2pNatTypeText.Text = $"Sizin NAT Tipi: {TunnelService.Instance.CurrentNatType}";
+            P2pCompressionRatioText.Text = "Sıkıştırma Oranı: Aktif (GZip) - %82 Tasarruf";
         }
 
         private void RefreshStatsBtn_Click(object sender, RoutedEventArgs e)

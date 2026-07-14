@@ -295,7 +295,7 @@
                                 <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
 
                                 <TextBlock Text="🌐 Akıllı Ağ ve Tünelleme Katmanı" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
-                                <TextBlock Text="NAT tipinizi otomatik tespit edin, gerekirse STUN delme deneyin veya Simetrik NAT arkasındaysanız Playit.gg tüneli kurun." Foreground="#e2e8f0" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                                <TextBlock Text="NAT tipinizi otomatik tespit edin veya WebRTC P2P / TURN (Metered) katmanını kullanarak güvenli bağlantı kurun." Foreground="#e2e8f0" TextWrapping="Wrap" Margin="0,0,0,15"/>
 
                                 <Grid Margin="0,5">
                                     <Grid.ColumnDefinitions>
@@ -316,18 +316,6 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Aktif Bağlantı Modu:" VerticalAlignment="Center" Foreground="#FFFFFF"/>
                                     <TextBlock Grid.Column="1" x:Name="ConnectionModeText" Text="Doğrudan Yerel IP" VerticalAlignment="Center" FontWeight="Bold" Foreground="#10b981"/>
-                                </Grid>
-
-                                <Grid Margin="0,5">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Playit.gg Tüneli:" VerticalAlignment="Center" Foreground="#FFFFFF"/>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <Button x:Name="TogglePlayitBtn" Content="Tüneli Elle Başlat" Click="TogglePlayitBtn_Click" Padding="12,5" Style="{StaticResource PrimaryButtonStyle}" Background="#3b82f6" Margin="0,0,10,0"/>
-                                        <Button x:Name="ClaimPlayitBtn" Content="Tüneli Hesaba Eşle" Click="ClaimPlayitBtn_Click" Padding="12,5" Style="{StaticResource PrimaryButtonStyle}" Background="#8b5cf6" Visibility="Collapsed"/>
-                                    </StackPanel>
                                 </Grid>
 
                                 <TextBlock Text="Tünel ve Bağlantı Logları:" FontWeight="Bold" Foreground="#94a3b8" Margin="0,15,0,5"/>

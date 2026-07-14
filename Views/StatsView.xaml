@@ -33,6 +33,17 @@
                     <TextBlock x:Name="FirebasePushedText" Text="Firebase Havuza Gönderilen: 0" FontSize="16" Margin="0,5"/>
                 </StackPanel>
             </Border>
+
+            <!-- P2P Stats -->
+            <Border Background="#1e293b" CornerRadius="12" Padding="20" Margin="0,0,20,20" BorderBrush="#334155" BorderThickness="1" MinWidth="300">
+                <StackPanel>
+                    <TextBlock Text="P2P Mesh İstatistikleri" FontWeight="Bold" FontSize="18" Foreground="#10b981" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="P2pClientIdText" Text="İstemci ID: -" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="P2pOnlineCountText" Text="Mesh'teki Aktif Cihazlar: 1" FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="P2pNatTypeText" Text="Sizin NAT Tipi: Saptanıyor..." FontSize="16" Margin="0,5"/>
+                    <TextBlock x:Name="P2pCompressionRatioText" Text="Sıkıştırma Oranı: Aktif (GZip)" FontSize="16" Margin="0,5"/>
+                </StackPanel>
+            </Border>
             
             <Button Content="Verileri Yenile" Width="150" Height="40" Click="RefreshStatsBtn_Click" VerticalAlignment="Top" Style="{StaticResource PrimaryButtonStyle}" />
         </WrapPanel>

@@ -124,10 +124,12 @@ namespace StreamMesh.Services
             try
             {
                 string currentVersionStr = GetCurrentVersion();
+                LogService.Log($"[Güncelleme] Mevcut sürüm kontrol ediliyor: {currentVersionStr}");
                 
                 using (var client = new HttpClient())
                 {
                     client.Timeout = TimeSpan.FromSeconds(10);
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("StreamMesh-Updater");
                     var response = await client.GetAsync(VersionUrl);
                     if (response.IsSuccessStatusCode)
                     {
@@ -137,16 +139,24 @@ namespace StreamMesh.Services
                             remoteVersionStr = reader.ReadLine()?.Trim() ?? "";
                         }
 
-                        if (!string.IsNullOrEmpty(remoteVersionStr) && remoteVersionStr != currentVersionStr)
-                        {
-                            int currentNum = ExtractVersionNumber(currentVersionStr);
-                            int remoteNum = ExtractVersionNumber(remoteVersionStr);
+                        LogService.Log($"[Güncelleme] GitHub üzerindeki uzak sürüm: {remoteVersionStr}");
 
-                            if (remoteNum > currentNum)
+                        if (!string.IsNullOrEmpty(remoteVersionStr))
+                        {
+                            if (IsNewerVersion(currentVersionStr, remoteVersionStr))
                             {
+                                LogService.Log("[Güncelleme] Yeni bir güncelleme mevcut! Kullanıcıya bildiriliyor...");
                                 ShowUpdatePrompt(remoteVersionStr);
                             }
+                            else
+                            {
+                                LogService.Log("[Güncelleme] Uygulama güncel.");
+                            }
                         }
+                    }
+                    else
+                    {
+                        LogService.Log($"[Güncelleme] Uzak sürüm dosyası alınamadı. Durum kodu: {response.StatusCode}");
                     }
                 }
             }
@@ -156,21 +166,56 @@ namespace StreamMesh.Services
             }
         }
 
-        private static int ExtractVersionNumber(string versionStr)
+        private static bool IsNewerVersion(string currentVersionStr, string remoteVersionStr)
         {
             try
             {
-                var parts = versionStr.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length > 0)
+                if (string.IsNullOrEmpty(currentVersionStr) || string.IsNullOrEmpty(remoteVersionStr))
+                    return false;
+
+                string cleanCurrent = NormalizeVersionString(currentVersionStr);
+                string cleanRemote = NormalizeVersionString(remoteVersionStr);
+
+                if (Version.TryParse(cleanCurrent, out var currentVer) && Version.TryParse(cleanRemote, out var remoteVer))
                 {
-                    string lastPart = parts[parts.Length - 1];
-                    if (int.TryParse(lastPart, out int num))
-                    {
-                        return num;
-                    }
+                    return remoteVer > currentVer;
                 }
+
+                // Fallback to integer conversion
+                int curNum = ExtractFallbackVersionNumber(cleanCurrent);
+                int remNum = ExtractFallbackVersionNumber(cleanRemote);
+                return remNum > curNum;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogError("IsNewerVersion hatasi", ex);
+            }
+            return false;
+        }
+
+        private static string NormalizeVersionString(string versionStr)
+        {
+            if (string.IsNullOrEmpty(versionStr)) return "";
+            string val = versionStr.Trim().TrimStart('v', 'V');
+            int spaceIdx = val.IndexOf(' ');
+            if (spaceIdx > 0) val = val.Substring(0, spaceIdx);
+            int dashIdx = val.IndexOf('-');
+            if (dashIdx > 0) val = val.Substring(0, dashIdx);
+            return val;
+        }
+
+        private static int ExtractFallbackVersionNumber(string cleanVersionStr)
+        {
+            if (int.TryParse(cleanVersionStr, out int num))
+            {
+                return num;
+            }
+            string digits = "";
+            foreach (char c in cleanVersionStr)
+            {
+                if (char.IsDigit(c)) digits += c;
+            }
+            if (int.TryParse(digits, out int res)) return res;
             return 0;
         }
 
@@ -203,9 +248,11 @@ namespace StreamMesh.Services
                     progressWindow.Show();
                 });
 
-                string zipUrl = null;
+                string downloadUrl = null;
+                bool isZip = true;
+                string downloadName = "";
 
-                // 1. Fetch release assets from GitHub API to get the ZIP URL
+                // 1. Fetch release assets from GitHub API to get the ZIP or EXE URL
                 using (var client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("StreamMesh-Updater");
@@ -217,36 +264,55 @@ namespace StreamMesh.Services
                     
                     if (assets != null)
                     {
+                        // First search for .zip asset
                         foreach (var asset in assets)
                         {
                             string name = asset["name"]?.ToString();
                             if (name != null && name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                             {
-                                zipUrl = asset["browser_download_url"]?.ToString();
+                                downloadUrl = asset["browser_download_url"]?.ToString();
+                                isZip = true;
+                                downloadName = name;
                                 break;
+                            }
+                        }
+
+                        // If no .zip asset is found, search for standalone .exe asset
+                        if (string.IsNullOrEmpty(downloadUrl))
+                        {
+                            foreach (var asset in assets)
+                            {
+                                string name = asset["name"]?.ToString();
+                                if (name != null && name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && !name.Contains("setup", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    downloadUrl = asset["browser_download_url"]?.ToString();
+                                    isZip = false;
+                                    downloadName = name;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
 
-                if (string.IsNullOrEmpty(zipUrl))
+                if (string.IsNullOrEmpty(downloadUrl))
                 {
-                    throw new Exception("GitHub sürümünde ZIP paketi bulunamadı.");
+                    throw new Exception("GitHub sürümünde ZIP veya EXE paketi bulunamadı.");
                 }
 
-                // 2. Download ZIP file to temporary path
-                string tempZipPath = Path.Combine(Path.GetTempPath(), "StreamMesh_Update.zip");
+                // 2. Download file to temporary path
+                string tempFilePath = Path.Combine(Path.GetTempPath(), isZip ? "StreamMesh_Update.zip" : "StreamMesh_Update.exe");
                 
                 using (var client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("StreamMesh-Updater");
-                    using (var response = await client.GetAsync(zipUrl, HttpCompletionOption.ResponseHeadersRead))
+                    using (var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
                     {
                         response.EnsureSuccessStatusCode();
                         var totalBytes = response.Content.Headers.ContentLength;
                         
                         using (var contentStream = await response.Content.ReadAsStreamAsync())
-                        using (var fileStream = new FileStream(tempZipPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
+                        using (var fileStream = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
                         {
                             var buffer = new byte[8192];
                             long totalRead = 0;
@@ -267,13 +333,16 @@ namespace StreamMesh.Services
                     }
                 }
 
-                // 3. Write and launch PowerShell updater script
+                // 3. Write and launch PowerShell updater script to target AppData (permission-free)
                 progressWindow.UpdateProgress(100, "Güncelleme yükleniyor, uygulama kapatılıyor...");
                 await Task.Delay(1500); // Give user a moment to read the finished state
 
-                string installDir = AppDomain.CurrentDomain.BaseDirectory;
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string installDir = Path.Combine(localAppData, "StreamMesh").Replace("\\", "/");
+                string currentBaseDir = AppDomain.CurrentDomain.BaseDirectory.Replace("\\", "/");
                 string updaterScriptPath = Path.Combine(Path.GetTempPath(), "StreamMesh_Updater.ps1");
                 int currentPid = Process.GetCurrentProcess().Id;
+                string cleanTempFilePath = tempFilePath.Replace("\\", "/");
 
                 string psScript = $@"
 Start-Sleep -Seconds 1
@@ -284,27 +353,47 @@ while (Get-Process -Id {currentPid} -ErrorAction SilentlyContinue) {{
 }}
 
 try {{
-    $tempExtract = Join-Path $env:TEMP ""StreamMesh_Extract""
-    if (Test-Path $tempExtract) {{ Remove-Item -Recurse -Force $tempExtract }}
-    New-Item -ItemType Directory -Path $tempExtract | Out-Null
-
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory(""{tempZipPath}"", $tempExtract)
-
-    $subDirs = Get-ChildItem -Path $tempExtract
-    $sourcePath = $tempExtract
-    if ($subDirs.Count -eq 1 -and $subDirs[0].PSIsContainer) {{
-        $sourcePath = $subDirs[0].FullName
+    # Hedef klasoru olustur (yetki gerektirmez)
+    if (!(Test-Path ""{installDir}"")) {{
+        New-Item -ItemType Directory -Path ""{installDir}"" -Force | Out-Null
     }}
 
-    Start-Sleep -Seconds 1
+    # Mevcut klasordeki dosyalari yedekle/kopyala (Eski exe ve pdb haric her seyi kopyala)
+    $currentBase = ""{currentBaseDir}""
+    if ($currentBase -ne ""{installDir}"") {{
+        Get-ChildItem -Path $currentBase -Exclude ""StreamMesh.exe"", ""StreamMesh.pdb"" | ForEach-Object {{
+            $dest = Join-Path ""{installDir}"" $_.Name
+            Copy-Item -Path $_.FullName -Destination $dest -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+        }}
+    }}
 
-    # Dosyalari kopyala ve uzerine yaz
-    Copy-Item -Path ""$sourcePath\*"" -Destination ""{installDir}"" -Recurse -Force | Out-Null
+    if (""{isZip.ToString().ToLower()}"" -eq ""true"") {{
+        $tempExtract = Join-Path $env:TEMP ""StreamMesh_Extract""
+        if (Test-Path $tempExtract) {{ Remove-Item -Recurse -Force $tempExtract }}
+        New-Item -ItemType Directory -Path $tempExtract | Out-Null
 
-    # Temizlik
-    Remove-Item -Recurse -Force $tempExtract | Out-Null
-    Remove-Item -Force ""{tempZipPath}"" | Out-Null
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory(""{cleanTempFilePath}"", $tempExtract)
+
+        $subDirs = Get-ChildItem -Path $tempExtract
+        $sourcePath = $tempExtract
+        if ($subDirs.Count -eq 1 -and $subDirs[0].PSIsContainer) {{
+            $sourcePath = $subDirs[0].FullName
+        }}
+
+        Start-Sleep -Seconds 1
+
+        # Dosyalari kopyala ve uzerine yaz
+        Copy-Item -Path ""$sourcePath\*"" -Destination ""{installDir}"" -Recurse -Force | Out-Null
+
+        # Temizlik
+        Remove-Item -Recurse -Force $tempExtract | Out-Null
+        Remove-Item -Force ""{cleanTempFilePath}"" | Out-Null
+    }} else {{
+        # Tek bir EXE indirildiyse dogrudan kopyala
+        Copy-Item -Path ""{cleanTempFilePath}"" -Destination (Join-Path ""{installDir}"" ""StreamMesh.exe"") -Force | Out-Null
+        Remove-Item -Force ""{cleanTempFilePath}"" | Out-Null
+    }}
 }} catch {{
     [System.Windows.MessageBox]::Show(""Güncelleme yüklenirken bir hata oluştu: "" + $_.Exception.Message, ""StreamMesh Güncelleme Hatası"")
 }}

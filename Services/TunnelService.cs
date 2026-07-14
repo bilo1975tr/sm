@@ -20,8 +20,7 @@ namespace StreamMesh.Services
     public enum ConnectionMode
     {
         Direct,
-        StunP2P,
-        PlayitTunnel
+        StunP2P
     }
 
     public class TunnelService
@@ -29,14 +28,9 @@ namespace StreamMesh.Services
         private static TunnelService _instance;
         public static TunnelService Instance => _instance ?? (_instance = new TunnelService());
 
-        private Process _playitProcess;
-        private bool _isTunnelRunning = false;
-        public bool IsTunnelRunning => _isTunnelRunning;
-
         public NatType CurrentNatType { get; private set; } = NatType.Unknown;
         public ConnectionMode ActiveMode { get; private set; } = ConnectionMode.Direct;
         public string ExternalAddress { get; private set; }
-        public string PlayitClaimUrl { get; private set; }
 
         public int DirectDotState { get; set; } = 0; // 0=Red, 1=Yellow, 2=Green
         public int StunDotState { get; set; } = 0;
@@ -82,16 +76,11 @@ namespace StreamMesh.Services
             OnStatusDotsUpdated?.Invoke(direct, stun, tunnel);
         }
 
-        private readonly string PlayitBinaryPath;
-
         public TunnelService()
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             string toolsDir = Path.Combine(baseDir, "tools");
             if (!Directory.Exists(toolsDir)) Directory.CreateDirectory(toolsDir);
-
-            bool isWindows = Environment.OSVersion.Platform == PlatformID.Win32NT;
-            PlayitBinaryPath = Path.Combine(toolsDir, isWindows ? "playit.exe" : "playit");
         }
 
         public async Task<NatType> DetectNatTypeAsync()
@@ -350,150 +339,6 @@ namespace StreamMesh.Services
             OnStatusMessage?.Invoke("Doğrudan dış bağlantı başarısız. NAT delme veya tünel gereklidir.");
             UpdateDots(0, StunDotState, TunnelDotState);
             return false;
-        }
-
-        public async Task<bool> StartPlayitTunnelAsync(int localPort)
-        {
-            await Task.Yield();
-            if (_isTunnelRunning) return true;
-
-            AddTurnLog("Playit tüneli başlatma isteği alındı.");
-            UpdateDots(DirectDotState, StunDotState, 1);
-            OnStatusMessage?.Invoke("Playit.gg Tünel başlatılıyor...");
-
-            // Step 1: Ensure local binary is present
-            string localFileName = Environment.OSVersion.Platform == PlatformID.Win32NT ? "playit-windows-x86_64-signed.exe" : "playit-linux-amd64";
-            string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "evn", localFileName);
-
-            AddTurnLog($"Yerel tünel istemci dosyası aranıyor: {localPath}");
-            if (!File.Exists(localPath))
-            {
-                localPath = Path.Combine(Environment.CurrentDirectory, "evn", localFileName);
-            }
-
-            if (!File.Exists(localPath))
-            {
-                LogService.Log("Local playit binary not found.");
-                AddTurnLog("Hata: Yerel playit.gg tünel dosyası bulunamadı. Tünel başlatılamıyor.");
-                OnStatusMessage?.Invoke("Yerel playit dosyası bulunamadı — tünel geçildi.");
-                UpdateDots(DirectDotState, StunDotState, 0);
-                return false;
-            }
-
-            AddTurnLog($"Yerel tünel dosyası bulundu: {localPath}. Çalıştırılıyor...");
-
-            // Step 2: Start playit agent process from local path
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = localPath,
-                    Arguments = "",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                    WorkingDirectory = Path.GetDirectoryName(localPath)
-                };
-
-                _playitProcess = new Process { StartInfo = startInfo };
-                _playitProcess.OutputDataReceived += (s, e) => ProcessPlayitLog(e.Data);
-                _playitProcess.ErrorDataReceived += (s, e) => ProcessPlayitLog(e.Data);
-
-                _playitProcess.Start();
-                _playitProcess.BeginOutputReadLine();
-                _playitProcess.BeginErrorReadLine();
-
-                _isTunnelRunning = true;
-                ActiveMode = ConnectionMode.PlayitTunnel;
-                OnTunnelStateChanged?.Invoke(true, "Aktif");
-
-                AddTurnLog("Playit.gg arka plan tünel süreci başarıyla başlatıldı. Sinyalleşme ve tünel adresi bekleniyor...");
-                OnStatusMessage?.Invoke("Tünel aktif edildi. Bağlantı adresi çözümleniyor...");
-                
-                // Monitor output for external address or claim URL
-                _ = Task.Run(async () =>
-                {
-                    for (int i = 0; i < 20; i++)
-                    {
-                        if (!_isTunnelRunning) break;
-                        await Task.Delay(1000);
-                        if (!string.IsNullOrEmpty(ExternalAddress)) break;
-                    }
-                    if (string.IsNullOrEmpty(ExternalAddress))
-                    {
-                        AddTurnLog("Uyarı: Tünel süreci çalışıyor ancak dış tünel adresi henüz çözümlenemedi (Zaman Aşımı).");
-                        OnStatusMessage?.Invoke("Tünel kuruldu ancak bağlantı adresi henüz alınamadı.");
-                    }
-                });
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                AddTurnLog($"Hata: Playit.gg tüneli çalıştırılırken istisna oluştu. Detay: {ex.Message}");
-                OnStatusMessage?.Invoke($"Tünel başlatılamadı: {ex.Message}");
-                LogService.LogError("Failed to start playit tunnel", ex);
-                _isTunnelRunning = false;
-                UpdateDots(DirectDotState, StunDotState, 0);
-                return false;
-            }
-        }
-
-        private void ProcessPlayitLog(string line)
-        {
-            if (string.IsNullOrEmpty(line)) return;
-
-            LogService.Log($"[Playit] {line}");
-            AddTurnLog($"[Playit Log] {line}");
-
-            // Look for playit external address e.g. "assigned address: 123.45.67.89:1234" or "xxx.playit.gg:1234" or "Tunnel ready: xxx.localto.net:1234"
-            var addressMatch = Regex.Match(line, @"(assigned address|tunnel address|address is|tunnel ready:?)\s+([a-zA-Z0-9\.\-]+:\d+)", RegexOptions.IgnoreCase);
-            if (addressMatch.Success)
-            {
-                ExternalAddress = addressMatch.Groups[2].Value;
-                AddTurnLog($"BAŞARILI: Tünel kuruldu! Dış Erişim Adresiniz: {ExternalAddress}");
-                OnStatusMessage?.Invoke($"Tünel Bağlantı Adresiniz: {ExternalAddress}");
-                UpdateDots(DirectDotState, StunDotState, 2);
-            }
-
-            // Look for claim link if playit needs setup
-            var claimMatch = Regex.Match(line, @"(https://playit\.gg/claim/[a-zA-Z0-9\-]+)", RegexOptions.IgnoreCase);
-            if (claimMatch.Success)
-            {
-                PlayitClaimUrl = claimMatch.Groups[1].Value;
-                AddTurnLog($"Kurulum Gerekli: Tüneli eşleştirmek için şu linke tıklamalısınız: {PlayitClaimUrl}");
-                OnStatusMessage?.Invoke($"Lütfen tünelinizi eşleştirin: {PlayitClaimUrl}");
-            }
-        }
-
-        public void StopPlayitTunnel()
-        {
-            if (!_isTunnelRunning) return;
-
-            AddTurnLog("Tünel kapatılıyor...");
-            OnStatusMessage?.Invoke("Tünel durduruluyor...");
-            try
-            {
-                if (_playitProcess != null && !_playitProcess.HasExited)
-                {
-                    _playitProcess.Kill();
-                }
-                AddTurnLog("Tünel süreci sonlandırıldı.");
-            }
-            catch (Exception ex)
-            {
-                AddTurnLog($"Tünel süreci sonlandırılırken hata: {ex.Message}");
-            }
-
-            _isTunnelRunning = false;
-            ExternalAddress = null;
-            PlayitClaimUrl = null;
-            ActiveMode = ConnectionMode.Direct;
-            
-            OnTunnelStateChanged?.Invoke(false, "Kapalı");
-            OnStatusMessage?.Invoke("Tünel kapatıldı.");
-            UpdateDots(DirectDotState, StunDotState, 0);
         }
 
         public async Task<string> EstablishBestConnectionAsync(int localPort)

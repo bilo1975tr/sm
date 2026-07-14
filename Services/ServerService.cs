@@ -65,7 +65,7 @@ namespace StreamMesh.Services
 
                 LogService.Log($"Server started successfully on port {Port} (Bypass Mode)");
                 
-                // Triggers best connection establishment (Direct -> STUN -> Playit.gg)
+                // Triggers best connection establishment (Direct -> STUN / TURN)
                 _ = Task.Run(async () =>
                 {
                     try
@@ -73,16 +73,6 @@ namespace StreamMesh.Services
                         string bestAddress = await TunnelService.Instance.EstablishBestConnectionAsync(Port);
                         string displayIp = LocalIp;
                         string displayPort = Port.ToString();
-                        
-                        if (TunnelService.Instance.ActiveMode == ConnectionMode.PlayitTunnel && !string.IsNullOrEmpty(TunnelService.Instance.ExternalAddress))
-                        {
-                            var addressParts = TunnelService.Instance.ExternalAddress.Split(':');
-                            if (addressParts.Length == 2)
-                            {
-                                displayIp = addressParts[0];
-                                displayPort = addressParts[1];
-                            }
-                        }
                         
                         OnStatusChanged?.Invoke(true, displayIp, displayPort);
                     }
@@ -107,14 +97,6 @@ namespace StreamMesh.Services
             if (!_isRunning) return;
 
             _isRunning = false;
-            try
-            {
-                TunnelService.Instance.StopPlayitTunnel();
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("Error stopping playit tunnel", ex);
-            }
             OnStatusChanged?.Invoke(false, "", "");
         }
 

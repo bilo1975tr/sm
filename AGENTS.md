@@ -1,164 +1,46 @@
-# STREAMMESH GELİŞTİRME YÖNERGESİ (OPTİMİZE EDİLMİŞ)
+# StreamMesh Geliştirici Yönergeleri (AGENTS.md)
 
-## 1. TEMEL DAVRANIŞ
-
-* Her zaman Türkçe cevap ver.
-* Cevaplar kısa, net ve teknik olsun.
-* Gereksiz açıklama yapma.
-* İstenen işi yap, gereksiz rapor üretme.
+Bu belge, StreamMesh projesinde çalışan yapay zeka kodlama asistanları ve geliştiriciler için standart geliştirme standartlarını, proje mimarisini ve kurallarını tanımlar. Lütfen projede değişiklik yaparken bu kurallara harfiyen uyun.
 
 ---
 
-## 2. SİSTEMİ KORU
+## 1. Proje Genel Tanımı ve Teknolojiler
 
-En önemli kural budur.
+StreamMesh; C#, .NET ve WPF (Windows Presentation Foundation) kullanılarak geliştirilmiş, gelişmiş bir IPTV, EPG (Elektronik Program Rehberi), AceStream/P2P oynatıcı ve medya yönetim uygulamasıdır.
 
-* Çalışan sistemi bozma.
-* Çalışan özelliği kaldırma.
-* Davranışı değiştirme (özellikle istenmedikçe).
-* Sadece gerekli olan kısmı düzelt.
-* Minimum müdahale ile çalış.
-
----
-
-## 3. GÜVENLİ GELİŞTİRME
-
-Kod üzerinde çalışırken:
-
-* Hata varsa düzelt.
-* Performans sorunu varsa optimize et.
-* Güvenlik açığı varsa kapat.
-* Gereksiz karmaşıklığı azalt.
-* Modern ama stabil yöntem kullan.
-
-Bunları yaparken mevcut davranışı koru.
+- **Platform:** .NET / WPF (Windows Masaüstü Uygulaması)
+- **Veritabanı & Kalıcılık:** SQLite (Yerel) ve Firebase Firestore (P2P tünelleme, senkronizasyon ve veri saklama için)
+- **P2P Tünelleme:** WebRTC, STUN (örneğin `stun.l.google.com`) ve TURN servisleri
+- **Yapay Zeka Entegrasyonu:** Ollama / LM Studio (Yerel LLM entegrasyonu)
+- **Dış Servisler:** GitHub (kanal listeleri senkronizasyonu), VLC Native (medya oynatım motoru)
 
 ---
 
-## 4. ANALİZ KURALI
+## 2. Geliştirme Kuralları ve Kodlama Standartları
 
-Uzun analiz hazırlama.
+### A. C# ve .NET Standartları
+1. **Asenkron Programlama:** UI iş parçacığının (UI Thread) kilitlenmesini önlemek için tüm disk, ağ, Firebase ve veritabanı işlemlerinde mutlaka `async/await` mimarisi kullanılmalıdır. Bloklayıcı `.Result`, `.Wait()` veya `Thread.Sleep()` kullanmaktan kaçının.
+2. **Tip Güvenliği ve Temiz Kod:** Kod yazarken gereksiz tip dönüşümlerinden kaçının. Güçlü tipler (strongly-typed models) kullanın. Model sınıfları `/Models` dizininde, servisler ise `/Services` dizininde yer almalıdır.
+3. **Loglama (`LogService`):** Uygulama içerisindeki tüm kritik adımlar, hata durumları ve bilgi mesajları `LogService` aracılığıyla kaydedilmelidir.
+   - Bilgi mesajları için: `LogService.LogInfo("...")` veya ilgili sınıfa özgü log metotları.
+   - Hata durumları için: `LogService.LogError("...", exception)`
 
-Yalnızca şu durumlarda analiz yap:
+### B. WPF ve XAML Kuralları
+1. **MVVM ve Veri Bağlama (Data Binding):** Görünümler (Views) ile iş mantığı (Services/Models) arasındaki bağ olabildiğince gevşek olmalıdır. UI elemanlarının durumları kod arkasından (code-behind) doğrudan manipüle edilmek yerine veri bağlama (Binding) ile yönetilmelidir.
+2. **Duyarlı ve Temiz Arayüz Tasarımı:** XAML tasarımlarında sabit genişlik/yükseklik değerleri yerine esnek düzen belirteçleri (Grid, Auto, *, DockPanel, StackPanel) tercih edilmelidir.
+3. **Kullanıcı Deneyimi:** Ağır işlemler yapılırken kullanıcıya mutlaka bir yükleniyor (Loading/ProgressBar) göstergesi sunulmalıdır.
 
-* Gerçek kırılma riski varsa
-* Birden fazla çözüm arasında seçim gerekiyorsa
-* Kullanıcı özellikle analiz isterse
+### C. Altyapı ve Yapay Süslendirme Karşıtlığı (Anti-AI-Slop)
+1. **Gerçekçi Arayüzler:** Kullanıcı arayüzüne veya log ekranlarına uydurma sistem verileri, hayali konsol çıktıları (örn: `"CORE_NODE_ONLINE"`, `"PORT: 3000"`, `"SYSTEM_ACTIVE"`) veya süs amaçlı anlamsız durum göstergeleri eklemeyin.
+2. **Sade ve Doğal İsimlendirmeler:** UI bileşenleri için süslü, yapay veya dramatik isimler yerine (örn. *"Chronos Engine"*), sade ve anlaşılır insan dilinde isimlendirmeler (örn. *"Zamanlayıcı"* veya *"Yayın Akışı Servisi"*) kullanın.
 
-Diğer durumlarda analiz yazmadan doğrudan uygula.
-
----
-
-## 5. RAPOR KURALI
-
-Her işlem sonunda yalnızca aşağıdaki kısa raporu ver:
-
-* Değiştirilen dosyalar
-* Yapılan değişiklik
-* Derleme durumu
-* Hata varsa hata
-
-Uzun rapor, TDD, alternatif çözüm, performans makalesi veya tekrar eden açıklamalar yazma.
+### D. Firebase ve Ağ Yönetimi
+1. **Firebase Yapılandırması:** Firebase işlemlerini yürütürken kimlik bilgilerinin (Credentials) eksik olabileceği veya ağ hatası alınabileceği senaryoları her zaman `try-catch` blokları ile sarmalayın ve kullanıcıya veya log sistemine anlamlı hata detayları sunun.
+2. **Soket ve Bağlantı Yönetimi:** STUN/TURN veya TCP soket bağlantıları kurarken IPv4 ve IPv6 adres ailelerinin uyumluluğuna dikkat edin. Soket oluşturulurken hedef IP adresinin ailesi (`AddressFamily`) dinamik olarak tespit edilmeli ve soket buna göre başlatılmalıdır.
 
 ---
 
-## 6. TEKRAR ANALİZ ETME
+## 3. Değişiklik ve Sürüm Yönetimi
 
-Bir dosya veya metot analiz edildiyse aynı analizi tekrar üretme.
-
-Önceki sonucu kullan.
-
-Aynı dosya için tekrar 20 sayfalık analiz hazırlama.
-
----
-
-## 7. DEĞİŞİKLİK ŞEKLİ
-
-Her seferinde yalnızca tek işi yap.
-
-İş bittikten sonra dur.
-
-Yeni işe geçmeden önce kullanıcı onayı bekle.
-
----
-
-## 8. REFACTOR KURALI
-
-Kullanıcı istemedikçe:
-
-* Büyük refactor yapma.
-* Dosya taşıma.
-* İsim değiştirme.
-* Namespace değiştirme.
-* MVVM dönüşümü yapma.
-* Mimari değiştirme.
-
-Sadece gerekli satırı düzelt.
-
----
-
-## 9. VERİTABANI
-
-* Yavaş sorguları optimize et.
-* Gereksiz sorguları kaldır.
-* Index gerekiyorsa öner.
-* Şemayı kullanıcı onayı olmadan değiştirme.
-
----
-
-## 10. PERFORMANS
-
-Performans problemi varsa:
-
-* Önce en düşük riskli çözümü uygula.
-* Gereksiz thread oluşturma.
-* Gereksiz bellek kullanma.
-* UI kilitlenmesine izin verme.
-
----
-
-## 11. DOĞRULAMA
-
-Derleme yapabiliyorsan yap.
-
-Yapamıyorsan sadece şunu yaz:
-
-"Derleme doğrulanamadı. Yerel Visual Studio/MSBuild ortamında test edilmelidir."
-
-Hiçbir zaman doğrulanmayan bir şeyi doğrulandı gibi gösterme.
-
----
-
-## 12. VERSİYON
-
-Gerçekten kod değiştiyse `/VERSION` dosyasını her zaman sürüm yükselterek güncelle. Kod değişmediyse VERSION dosyasına dokunma.
-
-Sürüm güncelleme kuralları:
-* **Hata Düzeltmeleri (Bug Fix):** Versiyon numarasının en son hanesini artır/değiştir (Örn: `x.y.Z` -> `1.3.8` ise `1.3.9` yap).
-* **Yeni Özellikler (New Feature):** Versiyon numarasının orta hanesini artır/değiştir ve son haneyi sıfırla (Örn: `x.Y.z` -> `1.3.8` ise `1.4.0` yap).
-
----
-
-## 13. ÇALIŞMA AKIŞI
-
-Her görevde şu sırayı uygula:
-
-1. Dosyayı oku.
-2. En fazla 5 satırlık teknik özet ver.
-3. Kritik risk varsa belirt.
-4. Değişikliği uygula.
-5. Derlemeyi doğrula (veya doğrulanamadığını belirt).
-6. Kısa rapor ver.
-7. Dur ve kullanıcı onayı bekle.
-
----
-
-## 14. SON KURAL
-
-Amaç rapor yazmak değildir.
-
-Amaç çalışan projeyi daha kaliteli hale getirmektir.
-
-Gereksiz analiz, gereksiz açıklama, gereksiz rapor ve tekrar eden teknik incelemeler üretme.
-
-Odak noktan kodu geliştirmek olsun.
+- Projede yapılan her anlamlı güncelleme sonrasında `/VERSION` dosyasındaki sürüm numarası uygun şekilde (örn: `1.8.2` -> `1.8.3`) artırılmalıdır.
+- Kod eklerken mevcut sınıfların yapısını bozmamaya, özellikle kısmi sınıfları (partial classes) ve event handler yapılarını doğru korumaya özen gösterin.

@@ -19,14 +19,25 @@ namespace StreamMesh.Services
         public static StunService Instance => _instance.Value;
 
         private FirestoreDb _firestoreDb;
-        private RTCPeerConnection _peerConnection;
-        private RTCDataChannel _dataChannel;
         private string _clientId;
+        public string ClientId => _clientId;
         private bool _isInitialized;
+        private bool _isLoopRunning;
+
+        // Multi-peer state
+        private readonly Dictionary<string, RTCPeerConnection> _peerConnections = new Dictionary<string, RTCPeerConnection>();
+        private readonly Dictionary<string, RTCDataChannel> _dataChannels = new Dictionary<string, RTCDataChannel>();
+        
+        // Peer States (P2P Mesh): ClientId -> ActiveChannelId
+        private readonly Dictionary<string, string> _peerActiveChannels = new Dictionary<string, string>();
+        private readonly Dictionary<string, DateTime> _peerLastSeen = new Dictionary<string, DateTime>();
+
+        // Current viewed channel of the local user
+        private string _localActiveChannelId = "";
 
         private StunService()
         {
-            _clientId = Guid.NewGuid().ToString();
+            _clientId = Guid.NewGuid().ToString("N").Substring(0, 8); // Short & elegant Client ID
         }
 
         public async Task InitializeAsync(string projectId)
@@ -166,6 +177,184 @@ namespace StreamMesh.Services
             }
         }
 
+        public static byte[] CompressString(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return Array.Empty<byte>();
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(text);
+            using (var msi = new MemoryStream(bytes))
+            using (var mso = new MemoryStream())
+            {
+                using (var gs = new System.IO.Compression.GZipStream(mso, System.IO.Compression.CompressionMode.Compress))
+                {
+                    msi.CopyTo(gs);
+                }
+                return mso.ToArray();
+            }
+        }
+
+        public static string DecompressString(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0) return string.Empty;
+            using (var msi = new MemoryStream(bytes))
+            using (var mso = new MemoryStream())
+            {
+                using (var gs = new System.IO.Compression.GZipStream(msi, System.IO.Compression.CompressionMode.Decompress))
+                {
+                    gs.CopyTo(mso);
+                }
+                return System.Text.Encoding.UTF8.GetString(mso.ToArray());
+            }
+        }
+
+        public void BroadcastStatus(string activeChannelId)
+        {
+            _localActiveChannelId = activeChannelId;
+
+            var payload = new P2PPayload
+            {
+                Type = "status",
+                ClientId = _clientId,
+                ChannelId = activeChannelId,
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+
+            string json = System.Text.Json.JsonSerializer.Serialize(payload);
+            byte[] compressed = CompressString(json);
+
+            LogService.Log($"[P2P] BroadcastStatus: Sıkıştırılmamış: {json.Length} bytes, Sıkıştırılmış: {compressed.Length} bytes.");
+
+            lock (_dataChannels)
+            {
+                foreach (var kp in _dataChannels)
+                {
+                    try
+                    {
+                        var channel = kp.Value;
+                        channel.send(compressed);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError($"[P2P] BroadcastStatus to peer {kp.Key} failed", ex);
+                    }
+                }
+            }
+        }
+
+        public void BroadcastMeshSync()
+        {
+            Dictionary<string, string> currentStates;
+            lock (_peerActiveChannels)
+            {
+                currentStates = new Dictionary<string, string>(_peerActiveChannels);
+                currentStates[_clientId] = _localActiveChannelId;
+            }
+
+            var payload = new P2PPayload
+            {
+                Type = "mesh_sync",
+                ClientId = _clientId,
+                States = currentStates,
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+
+            string json = System.Text.Json.JsonSerializer.Serialize(payload);
+            byte[] compressed = CompressString(json);
+
+            lock (_dataChannels)
+            {
+                foreach (var kp in _dataChannels)
+                {
+                    try
+                    {
+                        var channel = kp.Value;
+                        channel.send(compressed);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError($"[P2P] BroadcastMeshSync to peer {kp.Key} failed", ex);
+                    }
+                }
+            }
+        }
+
+        private void ProcessIncomingP2PMessage(byte[] rawData)
+        {
+            try
+            {
+                string decompressed = DecompressString(rawData);
+                var payload = System.Text.Json.JsonSerializer.Deserialize<P2PPayload>(decompressed);
+                if (payload == null) return;
+
+                lock (_peerActiveChannels)
+                {
+                    if (payload.Type == "status")
+                    {
+                        _peerActiveChannels[payload.ClientId] = payload.ChannelId;
+                        _peerLastSeen[payload.ClientId] = DateTime.UtcNow;
+                    }
+                    else if (payload.Type == "mesh_sync" && payload.States != null)
+                    {
+                        foreach (var kp in payload.States)
+                        {
+                            string peerId = kp.Key;
+                            string channelId = kp.Value;
+
+                            if (peerId == _clientId) continue;
+
+                            _peerActiveChannels[peerId] = channelId;
+                            _peerLastSeen[peerId] = DateTime.UtcNow;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[P2P] ProcessIncomingP2PMessage failed", ex);
+            }
+        }
+
+        public Dictionary<string, int> GetP2PViewerCounts()
+        {
+            lock (_peerActiveChannels)
+            {
+                var counts = new Dictionary<string, int>();
+
+                if (!string.IsNullOrEmpty(_localActiveChannelId))
+                {
+                    counts[_localActiveChannelId] = 1;
+                }
+
+                var cutoff = DateTime.UtcNow.AddSeconds(-90);
+                var activePeers = _peerLastSeen
+                    .Where(kp => kp.Value > cutoff)
+                    .Select(kp => kp.Key)
+                    .ToList();
+
+                foreach (var peerId in activePeers)
+                {
+                    if (_peerActiveChannels.TryGetValue(peerId, out var channelId) && !string.IsNullOrEmpty(channelId))
+                    {
+                        if (counts.ContainsKey(channelId))
+                            counts[channelId]++;
+                        else
+                            counts[channelId] = 1;
+                    }
+                }
+
+                return counts;
+            }
+        }
+
+        public int GetP2POnlineCount()
+        {
+            lock (_peerActiveChannels)
+            {
+                var cutoff = DateTime.UtcNow.AddSeconds(-90);
+                int activePeersCount = _peerLastSeen.Count(kp => kp.Value > cutoff);
+                return activePeersCount + 1; // Include ourselves
+            }
+        }
+
         public async Task<bool> StartP2PSync()
         {
             TunnelService.TurnLogs.Clear();
@@ -192,121 +381,15 @@ namespace StreamMesh.Services
 
                 TunnelService.AddTurnLog($"Genel IP/Port adresi başarılı bir şekilde alındı: {ipPort}");
 
-                // Firebase active_clients yazımı ve Süper Düğüm (Super-Peer) modelinin uygulanması
-                if (_firestoreDb != null)
+                if (!_isLoopRunning)
                 {
-                    TunnelService.AddTurnLog("Firestore 'active_clients' koleksiyonuna istemci bilgileri yazılıyor...");
-                    var clientDocRef = _firestoreDb.Collection("active_clients").Document(_clientId);
-                    
-                    // Süper Düğüm (Super-Peer) Kararı:
-                    // Eğer direct erişim varsa (DirectDotState == 2) veya STUN/ConeNAT başarılıysa (StunDotState == 2 ve SymmetricNAT değilse) Super-Peer olabilir.
-                    bool isSuperPeer = (TunnelService.Instance.DirectDotState == 2) || 
-                                       (TunnelService.Instance.StunDotState == 2 && TunnelService.Instance.CurrentNatType == NatType.ConeNAT);
-
-                    var clientData = new Dictionary<string, object>
-                    {
-                        { "clientId", _clientId },
-                        { "ipPort", ipPort },
-                        { "isSuperPeer", isSuperPeer },
-                        { "natType", TunnelService.Instance.CurrentNatType.ToString() },
-                        { "connectionMode", TunnelService.Instance.ActiveMode.ToString() },
-                        { "updatedAt", Timestamp.FromDateTime(DateTime.UtcNow) }
-                    };
-                    await clientDocRef.SetAsync(clientData);
-                    LogService.Log($"[P2P] Firebase active_clients listesine kaydedildi. IP/Port: {ipPort}, Super-Peer: {isSuperPeer}, NAT: {TunnelService.Instance.CurrentNatType}, Mode: {TunnelService.Instance.ActiveMode}");
-                    TunnelService.AddTurnLog($"Firestore kaydı başarıyla tamamlandı. Süper Düğüm (Super-Peer): {isSuperPeer}");
-                }
-                else
-                {
-                    TunnelService.AddTurnLog("Uyarı: Firestore veritabanı aktif değil, P2P sinyalizasyonu kısıtlı olabilir.");
+                    _isLoopRunning = true;
+                    _ = Task.Run(() => SignalingAndGossipLoopAsync(ipPort));
                 }
 
-                // Dinamik TURN credentials çekme işlemi
-                var iceServers = await FetchTurnCredentialsAsync();
-
-                // WebRTC Kurulumu
-                TunnelService.AddTurnLog("WebRTC PeerConnection yapılandırılıyor...");
-                var config = new RTCConfiguration
-                {
-                    iceServers = iceServers
-                };
-
-                _peerConnection = new RTCPeerConnection(config);
-                TunnelService.AddTurnLog("RTCPeerConnection nesnesi oluşturuldu.");
-
-                // DataChannel Kurulumu
-                TunnelService.AddTurnLog("WebRTC DataChannel oluşturuluyor ('p2p-sync')...");
-                _dataChannel = await _peerConnection.createDataChannel("p2p-sync", null);
-                _dataChannel.onopen += () =>
-                {
-                    LogService.Log("[P2P] WebRTC DataChannel başarıyla açıldı.");
-                    TunnelService.AddTurnLog("WebRTC DataChannel BAŞARIYLA AÇILDI! P2P bağlantı tüneli aktif.");
-                    // DataChannel açıldı -> TURN/P2P Tünel Aktif (Yeşil - 2)
-                    TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, TunnelService.Instance.StunDotState, 2);
-                };
-
-                _dataChannel.onclose += () =>
-                {
-                    LogService.Log("[P2P] WebRTC DataChannel kapandı.");
-                    TunnelService.AddTurnLog("WebRTC DataChannel kapandı.");
-                    TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, TunnelService.Instance.StunDotState, 0);
-                };
-
-                _dataChannel.onmessage += (channel, protocol, data) =>
-                {
-                    string message = System.Text.Encoding.UTF8.GetString(data);
-                    LogService.Log($"[P2P] Alınan Veri: {message}");
-                    TunnelService.AddTurnLog($"P2P Kanalından Veri Alındı: {message}");
-                };
-
-                // ICE Aday toplama olayları
-                _peerConnection.onicecandidate += async (candidate) =>
-                {
-                    if (candidate != null && !string.IsNullOrEmpty(candidate.candidate))
-                    {
-                        TunnelService.AddTurnLog($"Yeni ICE Adayı toplandı: {candidate.candidate}");
-                        if (_firestoreDb != null)
-                        {
-                            // ICE candidate exchange via Firestore
-                            var candidateDocRef = _firestoreDb.Collection("active_clients")
-                                                              .Document(_clientId)
-                                                              .Collection("candidates")
-                                                              .Document();
-                            
-                            await candidateDocRef.SetAsync(new Dictionary<string, object>
-                            {
-                                { "candidate", candidate.candidate },
-                                { "sdpMid", candidate.sdpMid },
-                                { "sdpMLineIndex", candidate.sdpMLineIndex },
-                                { "createdAt", Timestamp.FromDateTime(DateTime.UtcNow) }
-                            });
-                        }
-                    }
-                };
-
-                // SDP Offer Oluşturma
-                TunnelService.AddTurnLog("WebRTC SDP Offer (Teklif) oluşturuluyor...");
-                var offer = _peerConnection.createOffer();
-                await _peerConnection.setLocalDescription(offer);
-
-                if (_firestoreDb != null)
-                {
-                    TunnelService.AddTurnLog("SDP Offer bilgisi Firestore sinyalizasyon kanalına kaydediliyor...");
-                    var offerDocRef = _firestoreDb.Collection("active_clients")
-                                                  .Document(_clientId)
-                                                  .Collection("offers")
-                                                  .Document("sdp");
-
-                    await offerDocRef.SetAsync(new Dictionary<string, object>
-                    {
-                        { "sdp", offer.sdp },
-                        { "type", "offer" },
-                        { "createdAt", Timestamp.FromDateTime(DateTime.UtcNow) }
-                    });
-                }
-
-                LogService.Log("[P2P] WebRTC Offer oluşturuldu ve Firestore'a kaydedildi.");
-                TunnelService.AddTurnLog("WebRTC SDP Offer oluşturuldu ve sinyalizasyon sunucusuna gönderildi. Karşı taraf bağlantısı bekleniyor...");
+                TunnelService.AddTurnLog("P2P Arka Plan Koordinasyon ve Sinyalleşme Döngüsü Başlatıldı.");
+                // Tünel aktif -> Yeşil (2)
+                TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, TunnelService.Instance.StunDotState, 2);
                 return true;
             }
             catch (Exception ex)
@@ -316,6 +399,341 @@ namespace StreamMesh.Services
                 TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, TunnelService.Instance.StunDotState, 0);
                 return false;
             }
+        }
+
+        private async Task SignalingAndGossipLoopAsync(string ipPort)
+        {
+            int loopCount = 0;
+            while (_isLoopRunning)
+            {
+                try
+                {
+                    if (_firestoreDb == null)
+                    {
+                        await Task.Delay(10000);
+                        continue;
+                    }
+
+                    var nowUtc = DateTime.UtcNow;
+
+                    // Step 1: Register/Heartbeat in active_clients
+                    var myDoc = _firestoreDb.Collection("active_clients").Document(_clientId);
+                    bool isSuperPeer = (TunnelService.Instance.DirectDotState == 2) || 
+                                       (TunnelService.Instance.StunDotState == 2 && TunnelService.Instance.CurrentNatType == NatType.ConeNAT);
+
+                    await myDoc.SetAsync(new Dictionary<string, object>
+                    {
+                        { "clientId", _clientId },
+                        { "ipPort", ipPort },
+                        { "isSuperPeer", isSuperPeer },
+                        { "natType", TunnelService.Instance.CurrentNatType.ToString() },
+                        { "connectionMode", TunnelService.Instance.ActiveMode.ToString() },
+                        { "updatedAt", Timestamp.FromDateTime(nowUtc) }
+                    });
+
+                    // Step 2: Query active clients and prune dead ones
+                    var allClientsQuery = await _firestoreDb.Collection("active_clients").GetSnapshotAsync();
+                    var activePeerIds = new List<string>();
+
+                    foreach (var doc in allClientsQuery.Documents)
+                     {
+                        if (doc.Id == _clientId) continue;
+
+                        if (doc.TryGetValue<Timestamp>("updatedAt", out var updatedAt))
+                        {
+                            var age = nowUtc - updatedAt.ToDateTime();
+                            if (age.TotalSeconds > 90)
+                            {
+                                try { await doc.Reference.DeleteAsync(); } catch {}
+                                try
+                                {
+                                    string sigId1 = $"{_clientId}_{doc.Id}";
+                                    string sigId2 = $"{doc.Id}_{_clientId}";
+                                    await _firestoreDb.Collection("p2p_signals").Document(sigId1).DeleteAsync();
+                                    await _firestoreDb.Collection("p2p_signals").Document(sigId2).DeleteAsync();
+                                }
+                                catch {}
+                            }
+                            else
+                            {
+                                activePeerIds.Add(doc.Id);
+                            }
+                        }
+                    }
+
+                    // Step 3: Gossip/Mesh Sync over open channels
+                    BroadcastMeshSync();
+
+                    // Step 4: Signaling and Handshake with active peers
+                    var iceServers = await FetchTurnCredentialsAsync();
+                    var config = new RTCConfiguration { iceServers = iceServers };
+
+                    foreach (var peerId in activePeerIds)
+                    {
+                        bool alreadyConnectedOrConnecting;
+                        lock (_peerConnections)
+                        {
+                            alreadyConnectedOrConnecting = _peerConnections.ContainsKey(peerId);
+                        }
+
+                        if (alreadyConnectedOrConnecting) continue;
+
+                        if (string.Compare(_clientId, peerId) < 0)
+                        {
+                            _ = Task.Run(() => InitiateOfferAsync(peerId, config));
+                        }
+                        else
+                        {
+                            _ = Task.Run(() => CheckIncomingOffersAsync(peerId, config));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[P2P] SignalingAndGossipLoopAsync error", ex);
+                }
+
+                loopCount++;
+                await Task.Delay(15000); // Run every 15 seconds
+            }
+        }
+
+        private async Task InitiateOfferAsync(string peerId, RTCConfiguration config)
+        {
+            try
+            {
+                LogService.Log($"[P2P] Peer {peerId} için WebRTC bağlantı teklifi (Offer) başlatılıyor...");
+                TunnelService.AddTurnLog($"Peer {peerId} ile bağlantı kuruluyor (Biz: Offerer)...");
+
+                var pc = new RTCPeerConnection(config);
+                lock (_peerConnections)
+                {
+                    _peerConnections[peerId] = pc;
+                }
+
+                var dc = await pc.createDataChannel("p2p-sync", null);
+                SetupDataChannel(peerId, dc);
+
+                var signalDocRef = _firestoreDb.Collection("p2p_signals").Document($"{_clientId}_{peerId}");
+                
+                pc.onicecandidate += async (candidate) =>
+                {
+                    if (candidate != null && !string.IsNullOrEmpty(candidate.candidate))
+                    {
+                        try
+                        {
+                            await signalDocRef.UpdateAsync("offerCandidates", FieldValue.ArrayUnion(candidate.candidate));
+                        }
+                        catch {}
+                    }
+                };
+
+                var offer = pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                await signalDocRef.SetAsync(new Dictionary<string, object>
+                {
+                    { "offererId", _clientId },
+                    { "answererId", peerId },
+                    { "offerSdp", offer.sdp },
+                    { "offerCandidates", new List<string>() },
+                    { "answerCandidates", new List<string>() },
+                    { "updatedAt", Timestamp.FromDateTime(DateTime.UtcNow) }
+                });
+
+                bool answerFound = false;
+                for (int i = 0; i < 30; i++)
+                {
+                    await Task.Delay(2000);
+                    var snap = await signalDocRef.GetSnapshotAsync();
+                    if (snap.Exists && snap.TryGetValue<string>("answerSdp", out var answerSdp) && !string.IsNullOrEmpty(answerSdp))
+                    {
+                        LogService.Log($"[P2P] Peer {peerId} için Answer SDP bulundu! Uzak bağlantı kuruluyor...");
+                        pc.setRemoteDescription(new RTCSessionDescriptionInit { sdp = answerSdp, type = RTCSdpType.answer });
+                        answerFound = true;
+
+                        if (snap.TryGetValue<List<string>>("answerCandidates", out var answerCandidates) && answerCandidates != null)
+                        {
+                            foreach (var cand in answerCandidates)
+                            {
+                                pc.addIceCandidate(new RTCIceCandidateInit { candidate = cand });
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                if (!answerFound)
+                {
+                    LogService.Log($"[P2P] Peer {peerId} teklife cevap vermedi (Zaman Aşımı).");
+                    CleanupPeer(peerId);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"[P2P] InitiateOfferAsync to peer {peerId} failed", ex);
+                CleanupPeer(peerId);
+            }
+        }
+
+        private async Task CheckIncomingOffersAsync(string peerId, RTCConfiguration config)
+        {
+            try
+            {
+                var signalDocRef = _firestoreDb.Collection("p2p_signals").Document($"{peerId}_{_clientId}");
+                var snap = await signalDocRef.GetSnapshotAsync();
+                if (!snap.Exists) return;
+
+                if (snap.TryGetValue<string>("offerSdp", out var offerSdp) && !string.IsNullOrEmpty(offerSdp))
+                {
+                    if (snap.TryGetValue<string>("answerSdp", out var existingAnswer) && !string.IsNullOrEmpty(existingAnswer))
+                    {
+                        return;
+                    }
+
+                    LogService.Log($"[P2P] Peer {peerId} tarafından gelen WebRTC teklifi tespit edildi! Kabul ediliyor...");
+                    TunnelService.AddTurnLog($"Peer {peerId} ile gelen bağlantı kabul ediliyor (Biz: Answerer)...");
+
+                    var pc = new RTCPeerConnection(config);
+                    lock (_peerConnections)
+                    {
+                        _peerConnections[peerId] = pc;
+                    }
+
+                    pc.ondatachannel += (dc) =>
+                    {
+                        SetupDataChannel(peerId, dc);
+                    };
+
+                    pc.onicecandidate += async (candidate) =>
+                    {
+                        if (candidate != null && !string.IsNullOrEmpty(candidate.candidate))
+                        {
+                            try
+                            {
+                                await signalDocRef.UpdateAsync("answerCandidates", FieldValue.ArrayUnion(candidate.candidate));
+                            }
+                            catch {}
+                        }
+                    };
+
+                    pc.setRemoteDescription(new RTCSessionDescriptionInit { sdp = offerSdp, type = RTCSdpType.offer });
+
+                    var answer = pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+
+                    await signalDocRef.UpdateAsync(new Dictionary<string, object>
+                    {
+                        { "answerSdp", answer.sdp },
+                        { "updatedAt", Timestamp.FromDateTime(DateTime.UtcNow) }
+                    });
+
+                    if (snap.TryGetValue<List<string>>("offerCandidates", out var offerCandidates) && offerCandidates != null)
+                    {
+                        foreach (var cand in offerCandidates)
+                        {
+                            pc.addIceCandidate(new RTCIceCandidateInit { candidate = cand });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"[P2P] CheckIncomingOffersAsync from peer {peerId} failed", ex);
+                CleanupPeer(peerId);
+            }
+        }
+
+        private void SetupDataChannel(string peerId, RTCDataChannel dc)
+        {
+            lock (_dataChannels)
+            {
+                _dataChannels[peerId] = dc;
+            }
+
+            dc.onopen += () =>
+            {
+                LogService.Log($"[P2P] Peer {peerId} ile DataChannel açıldı.");
+                TunnelService.AddTurnLog($"Peer {peerId} ile P2P veri kanalı başarıyla bağlandı!");
+                SendStatusToPeer(peerId, _localActiveChannelId);
+            };
+
+            dc.onclose += () =>
+            {
+                LogService.Log($"[P2P] Peer {peerId} ile DataChannel kapandı.");
+                CleanupPeer(peerId);
+            };
+
+            dc.onmessage += (channel, protocol, data) =>
+            {
+                ProcessIncomingP2PMessage(data);
+            };
+        }
+
+        private void CleanupPeer(string peerId)
+        {
+            try
+            {
+                lock (_peerConnections)
+                {
+                    if (_peerConnections.TryGetValue(peerId, out var pc))
+                    {
+                        pc.Close("Cleanup");
+                        _peerConnections.Remove(peerId);
+                    }
+                }
+                lock (_dataChannels)
+                {
+                    _dataChannels.Remove(peerId);
+                }
+                lock (_peerActiveChannels)
+                {
+                    _peerActiveChannels.Remove(peerId);
+                    _peerLastSeen.Remove(peerId);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"[P2P] CleanupPeer for {peerId} failed", ex);
+            }
+        }
+
+        private void SendStatusToPeer(string peerId, string activeChannelId)
+        {
+            try
+            {
+                var payload = new P2PPayload
+                {
+                    Type = "status",
+                    ClientId = _clientId,
+                    ChannelId = activeChannelId,
+                    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+
+                string json = System.Text.Json.JsonSerializer.Serialize(payload);
+                byte[] compressed = CompressString(json);
+
+                lock (_dataChannels)
+                {
+                    if (_dataChannels.TryGetValue(peerId, out var dc))
+                    {
+                        dc.send(compressed);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"[P2P] SendStatusToPeer {peerId} failed", ex);
+            }
+        }
+
+        public class P2PPayload
+        {
+            public string Type { get; set; }
+            public string ClientId { get; set; }
+            public string ChannelId { get; set; }
+            public long Timestamp { get; set; }
+            public Dictionary<string, string> States { get; set; }
         }
     }
 }
