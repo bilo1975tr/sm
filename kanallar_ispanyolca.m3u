@@ -1,0 +1,93 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="E! Latin America Mexico (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/E%21_Logo_2012.svg/500px-E%21_Logo_2012.svg.png" group-title="Spanish",E! Latin America Mexico (720p)
+http://72.1.184.5:8089/play/a05d/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Home Drama Channel (544p)" tvg-logo="https://i.imgur.com/iNkKh7w.png" group-title="Series",Home Drama Channel (544p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=cs05
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Tortues Ninja TV (720p)" tvg-logo="https://i.imgur.com/WJBegAz.png" group-title="Series",Pluto TV Tortues Ninja TV (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f8ecc1b37867f00071469e9/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=48.8582&deviceLon=2.3387&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=FR&serverSideAds=false&sessionID=cc7dc550-6be3-11eb-9c02-0242ac110002&sid=cc7dc550-6be3-11eb-9c02-0242ac110002&userId=
+#EXTINF:-1 tvg-id="" tvg-name="FAP TV (720p)" tvg-logo="https://i.imgur.com/jZ7g58e.png" group-title="Spanish",FAP TV (720p)
+https://edge.enhdtv.com/faptv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Biz TV (1080p)" tvg-logo="https://i.imgur.com/yaNXOnO.png" group-title="Lifestyle",Biz TV (1080p)
+https://thegateway.app/BizAndYou/BizTV/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bollywood Classic (1080p)" tvg-logo="https://i.imgur.com/ugPo6ca.png" group-title="Sinema",Bollywood Classic (1080p)
+https://shls-live-ak.akamaized.net/out/v1/485100a2150e4f69a338a5c99ca5648e/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 14 Codazzi (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/wNSUMhJ.png" group-title="Spanish",Canal 14 Codazzi (720p) [Not 24/7]
+https://eu1.servers10.com:8081/8056/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 6 (720p)" tvg-logo="https://i.imgur.com/nfKJftW.png" group-title="Spanish",Canal 6 (720p)
+https://d3xpfoln9sj56.cloudfront.net/ts:abr.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Expresa TV (720p)" tvg-logo="https://i.imgur.com/kFVVGrg.png" group-title="Spanish",Expresa TV (720p)
+https://5ca9af4645e15.streamlock.net/teleradio/smil:teleradio.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Life TV Europe" tvg-logo="https://i.imgur.com/JhrTB82.png" group-title="Estonia",Life TV Europe
+https://lifetv.bitflip.ee/live/stream1.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Movie Plus (544p)" tvg-logo="https://i.imgur.com/3OTLJpi.png" group-title="Sinema",Movie Plus (544p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=cs14
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV The Asylum (720p)" tvg-logo="https://i.imgur.com/dx9tt1B.png" group-title="Series",Pluto TV The Asylum (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/591105034c1806b47438342c/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="Canal CHD" tvg-logo="https://i.imgur.com/cNv1MPs.jpeg" group-title="Spanish",Canal CHD
+https://vs20.live.opencaster.com/canalchd2025_8d99626c/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Drama Life (720p)" tvg-logo="https://www.samsung.com/us/smg/content/dam/s7/home/televisions-and-home-theater/tvs/tvplus/all-channels/10062020/Drama_Life_190x190.png?raw=true" group-title="Sinema",Drama Life (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5f24662bebe0f0000767de32/master.m3u8?advertisingId=91a6ae51-6f9d-4fbb-adb0-bdfffa44693e&appVersion=unknown&deviceDNT=0&deviceId=91a6ae51-6f9d-4fbb-adb0-bdfffa44693e&deviceLat=0&deviceLon=0&deviceMake=samsung&deviceModel=samsung&deviceType=samsung-tvplus&deviceUA=samsung/SM-T720/10&deviceVersion=unknown&embedPartner=samsung-tvplus&profileFloor=&profileLimit=&samsung_app_domain=https://play.google.com/store/apps/details?id=com.samsung.android.tvplus&samsung_app_name=Mobile+TV+Plus&us_privacy=1YNY
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Undercover Boss Global (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/XHg2YsW.png" group-title="Series",Pluto TV Undercover Boss Global (720p) [Not 24/7]
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5f0dc00b15eef10007726ef7/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="ENT Family (720p)" tvg-logo="https://static.elektamedia.com/ch/entf.png" group-title="Spanish",ENT Family (720p)
+https://cdn.global.elektamedia.com/live/c7eds/ENT_Family/SA_LIVE_hls_enc/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal N (576p)" tvg-logo="https://i.imgur.com/Xytvw3J.png" group-title="Spanish",Canal N (576p)
+http://8.243.126.131:8000/play/a058/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 11 de la Costa (720p)" tvg-logo="https://i.imgur.com/yYExcq1.jpg" group-title="Spanish",Canal 11 de la Costa (720p)
+https://vivo.solumedia.com:19360/dadaproductora/dadaproductora.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Femenina TV" tvg-logo="https://www.vivalivetv.com/public/files/shows/0/1/3802-294x165-FFFFFF.jpg" group-title="Spanish",Femenina TV
+https://streamunoapp.com:3511/live/femeninatvlive.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Enntivision (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/nePOFZW.png" group-title="Spanish",Enntivision (1080p) [Not 24/7]
+https://edge.essastream.com/enntivision/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV The Addams Family (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/Bl8X7EW.png" group-title="Series",Pluto TV The Addams Family (720p) [Not 24/7]
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5d81607ab737153ea3c1c80e/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Survivor (720p)" tvg-logo="https://i.imgur.com/Zz9SgY8.png" group-title="Series",Pluto TV Survivor (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f21e7b24744c60007c1f6fc/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5f21e7b24744c60007c1f6fc&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=296&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Congreso de los Diputados 3 (360p) [Not 24/7]" tvg-logo="https://i.imgur.com/2LAzcH8.jpg" group-title="Spanish",Congreso de los Diputados 3 (360p) [Not 24/7]
+https://congresodirecto.akamaized.net/hls/live/2038276/canal3/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Golden (720p)" tvg-logo="https://i.imgur.com/NNd1lYl.png" group-title="Spanish",Golden (720p)
+http://177.234.249.135:8888/Golden/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Digital 15 (1080p)" tvg-logo="https://i.imgur.com/v3mkmZa.png" group-title="Spanish",Digital 15 (1080p)
+http://190.122.104.210:5080/LiveApp/streams/Di15.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 26 Aguascalientes (1080p)" tvg-logo="https://i.imgur.com/PAvnVN9.png" group-title="Spanish",Canal 26 Aguascalientes (1080p)
+https://60417ddeaf0d9.streamlock.net/telemetrika3/smil:telemetrika3.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Jewelry TV (KCKS-LD12) (480p)" tvg-logo="https://upload.wikimedia.org/wikipedia/en/5/50/Jewelry_television_logo.png" group-title="Lifestyle",Jewelry TV (KCKS-LD12) (480p)
+https://cdn.igocast.com/channel12_hls/channel12_master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal Catorce (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/iKLGBbA.png" group-title="Spanish",Canal Catorce (1080p) [Not 24/7]
+https://stream.haislin.com/14tv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV The Rifleman (720p)" tvg-logo="https://i.imgur.com/60YejJs.png" group-title="Series",Pluto TV The Rifleman (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5e825550e758c700077b0aef/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5e825550e758c700077b0aef&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=529&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="El Camino TV (480p)" tvg-logo="https://i.imgur.com/ZSktjGB.png" group-title="Spanish",El Camino TV (480p)
+https://5d32e2b9b7eed.streamlock.net:4443/ectv/ectv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="El PuertoTV (720p)" tvg-logo="https://i.imgur.com/FnshExB.jpg" group-title="Spanish",El PuertoTV (720p)
+https://5bf8041cb3fed.streamlock.net/PuertoTV/PuertoTV/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Congreso de los Diputados 4 (360p) [Not 24/7]" tvg-logo="https://i.imgur.com/2LAzcH8.jpg" group-title="Spanish",Congreso de los Diputados 4 (360p) [Not 24/7]
+https://congresodirecto.akamaized.net/hls/live/2038277/canal4/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV The New Detectives (720p)" tvg-logo="https://i.imgur.com/GLXg9ge.png" group-title="Series",Pluto TV The New Detectives (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5aea40b35126c2157123aa64/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5aea40b35126c2157123aa64&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=376&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="BBC Drama (720p)" tvg-logo="https://i.imgur.com/HctHhLL.png" group-title="Series",BBC Drama (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/60dafb9a0df1ba000758d37b/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&serverSideAds=false&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="Angel TV Spanish (720p)" tvg-logo="https://i.imgur.com/qKLEGU7.png" group-title="Spanish",Angel TV Spanish (720p)
+https://janya-digimix.akamaized.net/vglive-sk-351398/spanish/ngrp:angelspanish_all/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 17 RTVD (720p)" tvg-logo="https://i.ibb.co/2YvKhjW4/Quisqueya-17-AZUL.png" group-title="Spanish",Canal 17 RTVD (720p)
+https://protvradiostream.com:1936/rtvd17/ngrp:rtvd17_all/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="HCH (720p)" tvg-logo="https://i.imgur.com/2CB5ezq.png" group-title="Spanish",HCH (720p)
+https://live.streamhch.com/live/streams/hch1.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Wipeout (360p) [Not 24/7]" tvg-logo="https://i.imgur.com/KVTNBFr.png" group-title="Series",Pluto TV Wipeout (360p) [Not 24/7]
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5ed6828192e8b3000743ef61/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=19.4358&deviceLon=-99.1441&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=VE&serverSideAds=false&sessionID=b8e5a857-714a-11eb-b532-0242ac110002&sid=b8e5a857-714a-11eb-b532-0242ac110002&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Canal Diocesano (576p)" tvg-logo="https://i.imgur.com/uWhVKL3.png" group-title="Spanish",Canal Diocesano (576p)
+https://nlb2-live.emitstream.com/hls/5i3pxfuz4az356yu22ij/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Escúchame Radio TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/gt6UvG8.png" group-title="Spanish",Escúchame Radio TV (720p) [Not 24/7]
+https://stmv1.transmissaodigital.com/pedro9800/pedro9800/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Disney Channel Latin America Center (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/ff/2024_Disney_Channel_text_logo.svg" group-title="Spanish",Disney Channel Latin America Center (1080p)
+http://181.78.8.199:8000/play/a0dn/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Farra Play (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/bXWzstH.png" group-title="Spanish",Farra Play (720p) [Not 24/7]
+http://159.203.148.226/live/farra.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 4 RD (1080p)" tvg-logo="https://i.imgur.com/3AqCAji.png" group-title="Spanish",Canal 4 RD (1080p)
+https://protvradiostream.com:1936/canal4rd-1/ngrp:canal4rd-1_all/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="EDN TV (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/5fPsYTz.png" group-title="Spanish",EDN TV (1080p) [Not 24/7]
+https://60417ddeaf0d9.streamlock.net/edntv/videoedntv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Fuego TV [Not 24/7]" tvg-logo="https://i.imgur.com/T9vWjeB.png" group-title="Spanish",Fuego TV [Not 24/7]
+https://streamunoapp.com:3553/live/cromtvlive.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV TEEN SERIES (720p)" tvg-logo="https://i.imgur.com/kgVun5w.png" group-title="Series",Pluto TV TEEN SERIES (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f8eb7e3d2ed18000746d09a/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=48.8582&deviceLon=2.3387&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=FR&serverSideAds=false&sessionID=cc7dc550-6be3-11eb-9c02-0242ac110002&sid=cc7dc550-6be3-11eb-9c02-0242ac110002&userId=

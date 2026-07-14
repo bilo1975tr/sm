@@ -1,0 +1,53 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="KPNX News Channel 12" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/NBC_logo_2022_%28vertical%29.svg/512px-NBC_logo_2022_%28vertical%29.svg.png" group-title="Undefined",KPNX News Channel 12
+https://livevideo.tegnadigital.com/kpnx/v1/master/f9c1bf9ffd6ac86b6173a7c169ff6e3f4efbd693/KPNX/elvs/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Relax" tvg-logo="" group-title="Undefined",Relax
+http://185.57.68.33:8091/232/tracks-v1a1/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Balle Balle (720p)" tvg-logo="https://i.imgur.com/oxkkWH5.png" group-title="Undefined",Balle Balle (720p)
+https://mcncdndigital.com/balleballetv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Mirror Now (720p)" tvg-logo="https://i.imgur.com/N96LwKG.png" group-title="Undefined",Mirror Now (720p)
+https://pubads.g.doubleclick.net/ssai/event/DXkHhH2QSnma-HnE3QJqlA/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Channel 7 (1080p)" tvg-logo="https://i.imgur.com/tehHdZN.png" group-title="Undefined",Channel 7 (1080p)
+http://streaming-hwc.ch7.com/livech7hd/HD_1080p.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tele Quattro (480p) [Not 24/7]" tvg-logo="https://telequattro.medianordest.it/wp-content/uploads/2020/10/T4Logo120.png" group-title="Undefined",Tele Quattro (480p) [Not 24/7]
+http://wms.shared.streamshow.it/telequattro/telequattro/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Ecuavisa (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/Hl5wowk.png" group-title="Undefined",Ecuavisa (1080p) [Not 24/7]
+https://redirector.rudo.video/hls-video/c54ac2799874375c81c1672abb700870537c5223/ecuavisaqo/ecuavisaqo/.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Go USA" tvg-logo="https://i.imgur.com/x90ALip.png" group-title="Undefined",Go USA
+https://brandusa-gousa-1-in.samsung.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="LTO Televisión (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/ibe9iSi.png" group-title="Undefined",LTO Televisión (720p) [Not 24/7]
+https://ltocatamarca.github.io/ltotv.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DRTV (TV Avisen) (720p)" tvg-logo="https://i.ibb.co/c6n2vbW/512px-DR-TV-logo-svg.png" group-title="Undefined",DRTV (TV Avisen) (720p)
+https://drevent01hls.akamaized.net/hls/live/2014198/drevent01/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="El Pingüino TV (720p)" tvg-logo="https://i.imgur.com/ikEs9b8.png" group-title="Undefined",El Pingüino TV (720p)
+https://github.com/MachineSystems/archived_m3u8/raw/main/elpinguino_cl.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Velocidad​ (720p)" tvg-logo="https://i.imgur.com/4HNGHEf.png" group-title="Undefined",Pluto TV Velocidad​ (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5dd6dc7480e3550009133d4a/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=19.4358&deviceLon=-99.1441&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=VE&serverSideAds=false&sessionID=b8e5a857-714a-11eb-b532-0242ac110002&sid=b8e5a857-714a-11eb-b532-0242ac110002&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Viajes (720p)" tvg-logo="https://i.imgur.com/kFbvw9R.png" group-title="Undefined",Pluto TV Viajes (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5dcddfbdb7cf0e0009ae09ea/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=19.4358&deviceLon=-99.1441&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=VE&serverSideAds=false&sessionID=b8e5a857-714a-11eb-b532-0242ac110002&sid=b8e5a857-714a-11eb-b532-0242ac110002&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Charrúa Televisión (720p)" tvg-logo="https://i.imgur.com/KWAuNXn.png" group-title="Undefined",Charrúa Televisión (720p)
+https://stmv.video.gmpro.top/tvcharrua/tvcharrua/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Caracola TV (Peñalolén) (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/QGvfqug.png" group-title="Undefined",Caracola TV (Peñalolén) (720p) [Not 24/7]
+https://wifispeed.trapemn.tv:1936/comunales/caracola-tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TAKARAZUKA SKY STAGE (1080p)" tvg-logo="https://i.imgur.com/Al1A8t2.png" group-title="Undefined",TAKARAZUKA SKY STAGE (1080p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=cs28
+#EXTINF:-1 tvg-id="" tvg-name="Makao TV (360p)" tvg-logo="https://i.imgur.com/asD5y7i.png" group-title="Undefined",Makao TV (360p)
+https://live.obslivestream.com/makaomux/tracks-v2a1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTV Slingeland (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/zhLfW56.png" group-title="Undefined",RTV Slingeland (1080p) [Not 24/7]
+https://ms7.mx-cd.net/dtv-10/105-475831/RTV_Slingeland.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Real Wild" tvg-logo="https://i.imgur.com/T9HHmAO.png" group-title="Undefined",Real Wild
+https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg00426-littledotstudio-realwildnz-samsungnz/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tabi Channel (544p)" tvg-logo="https://i.imgur.com/JBePECx.png" group-title="Undefined",Tabi Channel (544p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=cs12
+#EXTINF:-1 tvg-id="" tvg-name="Nittele G Plus (544p)" tvg-logo="https://i.imgur.com/CfvqUup.png" group-title="Undefined",Nittele G Plus (544p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=cs02
+#EXTINF:-1 tvg-id="" tvg-name="Quang Ngai TV (720p)" tvg-logo="https://i.imgur.com/QckiN3H.png" group-title="Undefined",Quang Ngai TV (720p)
+http://118.107.85.5:1935/live/smil:PTQ.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DryBar Comedy" tvg-logo="" group-title="Undefined",DryBar Comedy
+https://drybar-drybarcomedy-1-ca.samsung.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NBC 5 Seattle WA (KING-DT1) (1080p)" tvg-logo="https://i.imgur.com/fTRLwhP.png" group-title="Undefined",NBC 5 Seattle WA (KING-DT1) (1080p)
+https://livevideo.tegnadigital.com/king/v1/master/f9c1bf9ffd6ac86b6173a7c169ff6e3f4efbd693/KING/elvs/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="This TV Network (480p)" tvg-logo="https://i.imgur.com/FQCVaSR.png" group-title="Undefined",This TV Network (480p)
+https://cdn.igocast.com/channel11_hls/channel11_master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NDTV India (480p) [Not 24/7]" tvg-logo="https://i.imgur.com/PyDjUZB.png" group-title="Undefined",NDTV India (480p) [Not 24/7]
+https://ndtvindiaelemarchana.akamaized.net/hls/live/2003679/ndtvindia/master.m3u8
