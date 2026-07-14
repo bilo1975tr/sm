@@ -235,3 +235,7 @@ http://206.212.244.63/78/index.m3u8
 https://citynewsregional.akamaized.net/hls/live/1024053/Regional_Live_8/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Crime + Investigation CEE" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/4/4d/Crime_%2B_Investigation_Logo_10.2019.svg" group-title="English",Crime + Investigation CEE
 http://88.212.15.19/live/test_cai_hevc/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Encuentro Ⓨ Ⓖ" tvg-logo="https://i.imgur.com/IyP2UIx.png" group-title="Argentina",Encuentro Ⓨ Ⓖ
+https://www.youtube.com/user/encuentro/live
+#EXTINF:-1 tvg-id="" tvg-name="Televisión Pública Ⓨ" tvg-logo="https://i.imgur.com/4hYYpiu.png" group-title="Argentina",Televisión Pública Ⓨ
+https://www.youtube.com/user/TVPublicaArgentina/live
