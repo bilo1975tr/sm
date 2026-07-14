@@ -3,3 +3,9 @@
 https://www.youtube.com/c/FRANCE24Arabic/live
 #EXTINF:-1 tvg-id="" tvg-name="M1 Hiradó Ⓨ" tvg-logo="https://i.imgur.com/neddXUd.png" group-title="Hungary",M1 Hiradó Ⓨ
 https://www.youtube.com/@M1-Hirado/live
+#EXTINF:-1 tvg-id="" tvg-name="History" tvg-logo="https://i.imgur.com/6UWM2ER.png" group-title="Bulgarian",History
+http://213.91.179.28:8000/play/a0c1
+#EXTINF:-1 tvg-id="" tvg-name="TV1" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/6/64/Tv1-new.png" group-title="Bulgaria",TV1
+https://tv1.cloudcdn.bg/temp/livestream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Star Life" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Star_Life_2021.svg/960px-Star_Life_2021.svg.png" group-title="Bulgarian",Star Life
+http://213.91.179.28:8000/play/a0cr
