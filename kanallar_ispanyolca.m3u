@@ -1,0 +1,101 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="Supremateve (720p) [Not 24/7]" tvg-logo="https://canalesdominicanos.live/template/images/radios/small/supremateve.jpeg" group-title="Spanish",Supremateve (720p) [Not 24/7]
+https://ss2.tvrdomi.com:1936/supremateve/supremateve/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tevesur (720p)" tvg-logo="https://i.imgur.com/LcZ2Hhd.jpeg" group-title="Spanish",Tevesur (720p)
+https://live-evg11.tv360.bitel.com.pe/bitel/tevesurSRT/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Guayape TV" tvg-logo="https://i.imgur.com/cteBdAJ.jpg" group-title="Spanish",Guayape TV
+https://tv.bitstreaming.net:8443/live/guayapetv.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Telecomercio TV (720p) [Not 24/7]" tvg-logo="https://imgur.com/FtV5TCs.jpg" group-title="Spanish",Telecomercio TV (720p) [Not 24/7]
+https://streaming.grupomediosdelnorte.com:19360/telecomerciotv/telecomerciotv.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TeleCentro (720p)" tvg-logo="https://i.imgur.com/g61TdZ3.png" group-title="Spanish",TeleCentro (720p)
+https://live-evg7.tv360.bitel.com.pe/bitel/telecentro/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Invasiva TV (720p)" tvg-logo="https://i.imgur.com/R9E6jEC.png" group-title="Spanish",Invasiva TV (720p)
+https://tv-omega-nine.vercel.app/hls/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Teleselva (720p)" tvg-logo="https://i.imgur.com/cu7hTn8.png" group-title="Spanish",Teleselva (720p)
+https://live-evg7.tv360.bitel.com.pe/bitel/teleselva/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="GAMTV.cr (720p)" tvg-logo="https://i.ibb.co/xFCS7wM/GAMTVCR.png" group-title="Spanish",GAMTV.cr (720p)
+https://v2.azulstream.com:8081/gamtv/gamtv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tele Yucatan (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/XkpDSmO.png" group-title="Spanish",Tele Yucatan (1080p) [Geo-blocked]
+https://5ca3e84a76d30.streamlock.net/teleyucatan/videoteleyucatan/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="La Salvacion del Alma TV" tvg-logo="https://www.zradios.com/files/1/1/9/11942-627.jpg" group-title="Spanish",La Salvacion del Alma TV
+https://vs20.live.opencaster.com/lasalvaciondelalmatv_dfc663c0/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV The Walking Dead ESP (720p)" tvg-logo="https://i.imgur.com/u8Qh4zF.png" group-title="Series",Pluto TV The Walking Dead ESP (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5e82bb378601b80007b4bd78/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5e82bb378601b80007b4bd78&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=925&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="MyTime movie network Spain (1080p)" tvg-logo="https://i.imgur.com/pw4NZK1.png" group-title="Spanish",MyTime movie network Spain (1080p)
+https://appletree-mytimespain-rakuten.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTC Television" tvg-logo="https://i.imgur.com/w91IBj7.png" group-title="Spanish",RTC Television
+https://scl.edge.grupoz.cl/rtcstreaming/live/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Itel TV Canal 2" tvg-logo="https://i.imgur.com/OxmpRDx.png" group-title="Spanish",Itel TV Canal 2
+https://proxystream.iteltv.com.ar/output/iteltv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Three's Company (720p)" tvg-logo="https://i.imgur.com/5bTwwpD.png" group-title="Series",Pluto TV Three's Company (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5ef3977e5d773400077de284/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5ef3977e5d773400077de284&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=508&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Santiago TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/10SUxGZ.png" group-title="Spanish",Santiago TV (720p) [Not 24/7]
+https://edge.essastream.com/telemilenio/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="San Nicolas TV (720p)" tvg-logo="https://i.imgur.com/z94YCpH.png" group-title="Spanish",San Nicolas TV (720p)
+https://v4.tustreaming.cl/sannicolastv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="La Fabulosa Radio y TV (720p)" tvg-logo="https://i.imgur.com/GjME5H0.png" group-title="Spanish",La Fabulosa Radio y TV (720p)
+https://eu1.servers10.com:8081/8004/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio TV El Arca del Pacto (1080p)" tvg-logo="https://i.imgur.com/Oq0i3Rb.png" group-title="Spanish",Radio TV El Arca del Pacto (1080p)
+https://video.wilohosting.com:19360/radiotvelarcadelpacto/radiotvelarcadelpacto.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NCTV (1080p)" tvg-logo="https://i.imgur.com/oo5vDBv.png" group-title="Spanish",NCTV (1080p)
+https://pantera1-100gb-cl-movistar.dps.live/nctv/nctv.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rumba TV (1080p)" tvg-logo="https://i.imgur.com/WtVpWwI.png" group-title="Spanish",Rumba TV (1080p)
+http://45.162.193.35:80/RUMBATV/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio Popular TV" tvg-logo="https://i.imgur.com/71U0wTN.png" group-title="Spanish",Radio Popular TV
+https://tv.arkeo.cl:19360/8052/8052.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Hechos Ecuador (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/koMQZNX.png" group-title="Spanish",Hechos Ecuador (1080p) [Not 24/7]
+https://online.hechosecuador.com:5443/WebRTCApp/streams/hechosecuador.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Nacional Tv Peru (720p)" tvg-logo="https://i.imgur.com/ad0GNqa.png" group-title="Spanish",Nacional Tv Peru (720p)
+https://play.agenciastreaming.com:8081/nacionaltv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Prensa Latina TV (1080p)" tvg-logo="https://i.imgur.com/jbm2S9O.jpg" group-title="Spanish",Prensa Latina TV (1080p)
+https://eu1.servers10.com:8081/8192/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Estacion TV (720p)" tvg-logo="https://i.imgur.com/eICyrPP.png" group-title="Spanish",Estacion TV (720p)
+https://unlimited1-cl-isp.dps.live/supersonikatv/supersonikatv.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="La Voz del Tropico (480p) [Geo-blocked]" tvg-logo="https://i.imgur.com/DKDFpHt.png" group-title="Spanish",La Voz del Tropico (480p) [Geo-blocked]
+https://ss2.tvrdomi.com:1936/lavozdeltropico/lavozdeltropico/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ICN Digital" tvg-logo="https://i.imgur.com/UCZVQgj.png" group-title="Spanish",ICN Digital
+https://streaming.icndigital.com/live_output/icn_live_stream_1.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV TV Land Drama (720p)" tvg-logo="https://i.imgur.com/y1rXIAS.png" group-title="Sinema",Pluto TV TV Land Drama (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5d40bebc5e3d2750a2239d7e/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5d40bebc5e3d2750a2239d7e&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=130&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Nick Jr. Latin America (1080p)" tvg-logo="https://i.imgur.com/KT4tdQs.png" group-title="Spanish",Nick Jr. Latin America (1080p)
+http://179.60.51.134:8888/NICK-JR/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Imagen Universal TV" tvg-logo="https://i.imgur.com/DP6HmDV.png" group-title="Spanish",Imagen Universal TV
+https://imagenuniversaltv.net:3771/live/iutvlive.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Sur TV (720p)" tvg-logo="https://i.imgur.com/oAyvK0N.jpeg" group-title="Spanish",Sur TV (720p)
+https://ss2.tvrdomi.com:1936/eradiofonicas/eradiofonicas/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Delta TV" tvg-logo="https://i.imgur.com/FcciYMD.png" group-title="Spanish",Delta TV
+https://st.deltaboliviainstitucion.org:3778/hybrid/play.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Noticias 16 (720p) [Not 24/7]" tvg-logo="" group-title="Spanish",Noticias 16 (720p) [Not 24/7]
+https://edge.essastream.com/noticias16/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio San Cristobal 88.7 FM" tvg-logo="https://i.imgur.com/zaJhBdj.png" group-title="Spanish",Radio San Cristobal 88.7 FM
+https://video.wilohosting.com:19360/sancristobalfm/sancristobalfm.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Genios TV (1080p)" tvg-logo="https://i.imgur.com/iH2Lx6E.png" group-title="Spanish",Genios TV (1080p)
+https://sc3.wasidata.com/Genios2_1902/video.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Santa María Televisión (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/SnbGpoK.png" group-title="Spanish",Santa María Televisión (720p) [Not 24/7]
+https://pantera1-100gb-cl-movistar.dps.live/smtv/smtv.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TC Television (1080p)" tvg-logo="https://i.imgur.com/okK02EN.png" group-title="Spanish",TC Television (1080p)
+http://177.234.249.178:8888/TC/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTS (1080p)" tvg-logo="https://i.imgur.com/PML8cJA.png" group-title="Spanish",RTS (1080p)
+http://177.234.249.178:8888/RTS/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Informe TV (1080p) [Not 24/7]" tvg-logo="https://imgur.com/TmJaXrO.jpg" group-title="Spanish",Informe TV (1080p) [Not 24/7]
+https://edge.essastream.com/informetv/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV The Price is Right (720p)" tvg-logo="https://i.imgur.com/I856RNE.png" group-title="Series",Pluto TV The Price is Right (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5f7791b8372da90007fd45e6/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="Mel Radio TV (360p)" tvg-logo="https://i.imgur.com/uu8Clh2.png" group-title="Spanish",Mel Radio TV (360p)
+https://eu1.servers10.com:8081/8334/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Telecontacto" tvg-logo="https://i.imgur.com/TMvV9dF.png" group-title="Spanish",Telecontacto
+https://streaming.grupomediosdelnorte.com:19360/telecontacto/telecontacto.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV This Old House (720p)" tvg-logo="https://i.imgur.com/nrVLyE6.png" group-title="Series",Pluto TV This Old House (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5d51e791b7dba3b2ae990ab2/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5d51e791b7dba3b2ae990ab2&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=618&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="ITV Deportes (720p)" tvg-logo="https://iili.io/J1kV1Bn.png" group-title="Spanish",ITV Deportes (720p)
+https://thm-it-roku.otteravision.com/thm/it/it.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Super Cable" tvg-logo="https://i.imgur.com/KYtJp8F.png" group-title="Spanish",Super Cable
+http://191.102.39.254:5000/live/5up3r5/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NPY (1080p)" tvg-logo="https://i.imgur.com/pUEkaiW.png" group-title="Spanish",NPY (1080p)
+https://copacogen.desdeparaguay.net/npy/npy_py_alta/playlist.m3u8?admin=tvaccion
+#EXTINF:-1 tvg-id="" tvg-name="Tenarenses TV (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/cPIgs0v.png" group-title="Spanish",Tenarenses TV (1080p) [Not 24/7]
+https://edge.essastream.com/tenarensestvrd/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Televisión Metrópolis 19.2 (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/QaocW5x.png" group-title="Spanish",Televisión Metrópolis 19.2 (1080p) [Not 24/7]
+https://5e85d90130e77.streamlock.net/6014/6014/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Terror (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/eWtoHDM.png" group-title="Sinema",Pluto TV Terror (720p) [Not 24/7]
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5c6dc88fcd232425a6e0f06e/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
