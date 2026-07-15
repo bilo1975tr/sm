@@ -123,3 +123,43 @@ http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-salzwedel_high/playlist.m3
 https://d39g1vxj2ef6in.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-rakuten-stitched/master.m3u8?ads.xumo_channelId=88883113
 #EXTINF:-1 tvg-id="" tvg-name="hr-fernsehen HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/HR-Fernsehen_Logo_2023.svg/960px-HR-Fernsehen_Logo_2023.svg.png" group-title="German",hr-fernsehen HD
 https://dash4.antik.sk/live/test_hr_tizen/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Евразия (Орск) (720p)" tvg-logo="https://i.imgur.com/4JUHIVS.png" group-title="Undefined",Евразия (Орск) (720p)
+http://infochhdcdn.trkeurasia.ru/orsk-infochhd/infochhd/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="孤注一掷清晰版" tvg-logo="" group-title="Undefined",孤注一掷清晰版
+https://hd.ijycnd.com/play/zbqmMMkb/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ABC (544p)" tvg-logo="https://i.imgur.com/I11J99B.png" group-title="Undefined",ABC (544p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gx02
+#EXTINF:-1 tvg-id="" tvg-name="Суббота! (450p) [Geo-blocked]" tvg-logo="https://i.imgur.com/nsk8PpB.png" group-title="Undefined",Суббота! (450p) [Geo-blocked]
+https://zabava-htlive.cdn.ngenix.net/hls/CH_SUPER/variant.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Общественное Телевидение России" tvg-logo="https://i.imgur.com/VaWlnjZ.png" group-title="Undefined",Общественное Телевидение России
+http://s18209.cdn.ngenix.net/hls/CH_R01_OTR/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bblack! Africa" tvg-logo="https://i.imgur.com/s1kLdBG.png" group-title="Undefined",Bblack! Africa
+http://livevideo.vedge.infomaniak.com/livecast/ik:bblackafrica/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="eldo.TV (1080p)" tvg-logo="https://i.imgur.com/4ntor8S.png" group-title="Undefined",eldo.TV (1080p)
+https://eldo-streaming.eldo.lu/eldotv/smil:eldotv.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="30A Answers That Count" tvg-logo="" group-title="Undefined",30A Answers That Count
+https://30a-tv.com/atc.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Звезда Плюс" tvg-logo="https://i.imgur.com/NNmjD9Z.png" group-title="Undefined",Звезда Плюс
+http://tvchannelstream1.tvzvezda.ru/cdn/zvezdaplus/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Fox 15 West Texas Abilene TX (KXVA)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Fox_Networks_Group_US_logo.svg/512px-Fox_Networks_Group_US_logo.svg.png" group-title="Undefined",Fox 15 West Texas Abilene TX (KXVA)
+https://livevideo01.myfoxzone.com/hls/live/2017381/elvs/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="БСТ 24 (Братск)" tvg-logo="https://i.imgur.com/IDotHmQ.png" group-title="Undefined",БСТ 24 (Братск)
+http://bst.bratsk.ru/hls/bst2/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CineView" tvg-logo="" group-title="Undefined",CineView
+https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-rialto-samsungnz/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 5 Pico Truncado (540p)" tvg-logo="https://i.imgur.com/VwUiSVF.png" group-title="Undefined",Canal 5 Pico Truncado (540p)
+https://stream.arcast.com.ar/canal5picotruncado/canal5picotruncado/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Кнопка ТВ" tvg-logo="" group-title="Undefined",Кнопка ТВ
+https://api.alpaca.t62a.com/hls/9116/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Astro Awani (720p)" tvg-logo="https://i.imgur.com/dLzgBUj.png" group-title="Undefined",Astro Awani (720p)
+https://d2idp3hzkhjpih.cloudfront.net/out/v1/4b85d9c2bf97413eb0c9fd875599b837/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="23 ABC Bakersfield CA (KERO) (720p)" tvg-logo="https://i.imgur.com/CMANZWk.png" group-title="Undefined",23 ABC Bakersfield CA (KERO) (720p)
+https://content.uplynk.com/channel/ff809e6d9ec34109abfb333f0d4444b5.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Эхо TV (Рязань) (576p) [Not 24/7]" tvg-logo="https://i.imgur.com/YWKJA1O.png" group-title="Undefined",Эхо TV (Рязань) (576p) [Not 24/7]
+https://live-echotv.cdnvideo.ru/echotv/echotv.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Frii (720p)" tvg-logo="https://i.imgur.com/9sYC2IE.png" group-title="Undefined",Frii (720p)
+https://live-fi.tvkaista.net/frii/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 2 (San Antonio) (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/eLres7d.png" group-title="Undefined",Canal 2 (San Antonio) (720p) [Not 24/7]
+https://unlimited1-us.dps.live/canal2/canal2.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Wattan TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/sf2A9vT.png" group-title="Undefined",Wattan TV (720p) [Not 24/7]
+http://htvmada.mada.ps:8888/wattan/index.m3u8

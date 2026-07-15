@@ -225,3 +225,7 @@ https://stmv2.srvif.com/nicktoons/nicktoons/playlist.m3u8
 https://streaming005.gestec-video.com/hls/canal24.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TV Ra Tim Bum (576p)" tvg-logo="https://i.imgur.com/JIQwz0w.png" group-title="Portuguese",TV Ra Tim Bum (576p)
 http://45.162.64.114/RA_TIM_BUM/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Cats 24/7 (US) (720p)" tvg-logo="https://i.imgur.com/od1taaY.png" group-title="Lifestyle",Cats 24/7 (US) (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/599375885ceaac3cabccbed7/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=599375885ceaac3cabccbed7&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=635&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="Pratidin Time (576p)" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_PRATIDIN_TIME/images/LOGO_HD/image.png" group-title="Assamese",Pratidin Time (576p)
+https://server.thelegitpro.in/pratidintime/pratidintime/index.fmp4.m3u8
