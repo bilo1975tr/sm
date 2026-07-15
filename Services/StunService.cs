@@ -112,8 +112,15 @@ namespace StreamMesh.Services
             });
         }
 
+        private List<RTCIceServer> _cachedIceServers;
+
         private async Task<List<RTCIceServer>> FetchTurnCredentialsAsync()
         {
+            if (_cachedIceServers != null && _cachedIceServers.Count > 0)
+            {
+                return _cachedIceServers;
+            }
+
             try
             {
                 LogService.Log("[P2P] Metered TURN kimlik bilgileri REST API üzerinden çekiliyor...");
@@ -156,6 +163,7 @@ namespace StreamMesh.Services
                         }
                         LogService.Log($"[P2P] Metered TURN API'den {iceServers.Count} sunucu başarıyla yüklendi.");
                         TunnelService.AddTurnLog($"Metered TURN API başarılı. Toplam {iceServers.Count} sunucu çözümlendi.");
+                        _cachedIceServers = iceServers;
                         return iceServers;
                     }
                 }
@@ -166,7 +174,7 @@ namespace StreamMesh.Services
                 TunnelService.AddTurnLog($"Hata: Metered TURN API isteği başarısız oldu. Detay: {ex.Message}");
                 TunnelService.AddTurnLog("Yerel yedek (Fallback) TURN sunucuları yükleniyor...");
                 // Fallback static definitions
-                return new List<RTCIceServer>
+                _cachedIceServers = new List<RTCIceServer>
                 {
                     new RTCIceServer { urls = "stun:stun.relay.metered.ca:80" },
                     new RTCIceServer { urls = "turn:global.relay.metered.ca:80", username = "b749ad8b9a803306d36cda10", credential = "7JYBE4D1KYibxSww" },
@@ -174,6 +182,7 @@ namespace StreamMesh.Services
                     new RTCIceServer { urls = "turn:global.relay.metered.ca:443", username = "b749ad8b9a803306d36cda10", credential = "7JYBE4D1KYibxSww" },
                     new RTCIceServer { urls = "turns:global.relay.metered.ca:443?transport=tcp", username = "b749ad8b9a803306d36cda10", credential = "7JYBE4D1KYibxSww" }
                 };
+                return _cachedIceServers;
             }
         }
 
@@ -552,13 +561,8 @@ namespace StreamMesh.Services
                         pc.setRemoteDescription(new RTCSessionDescriptionInit { sdp = answerSdp, type = RTCSdpType.answer });
                         answerFound = true;
 
-                        if (snap.TryGetValue<List<string>>("answerCandidates", out var answerCandidates) && answerCandidates != null)
-                        {
-                            foreach (var cand in answerCandidates)
-                            {
-                                pc.addIceCandidate(new RTCIceCandidateInit { candidate = cand });
-                            }
-                        }
+                        // Start real-time background candidate polling for answer Candidates
+                        _ = Task.Run(() => PollCandidatesAsync(peerId, pc, signalDocRef, "answerCandidates"));
                         break;
                     }
                 }
@@ -628,19 +632,61 @@ namespace StreamMesh.Services
                         { "updatedAt", Timestamp.FromDateTime(DateTime.UtcNow) }
                     });
 
-                    if (snap.TryGetValue<List<string>>("offerCandidates", out var offerCandidates) && offerCandidates != null)
-                    {
-                        foreach (var cand in offerCandidates)
-                        {
-                            pc.addIceCandidate(new RTCIceCandidateInit { candidate = cand });
-                        }
-                    }
+                    // Start real-time background candidate polling for offer Candidates
+                    _ = Task.Run(() => PollCandidatesAsync(peerId, pc, signalDocRef, "offerCandidates"));
                 }
             }
             catch (Exception ex)
             {
                 LogService.LogError($"[P2P] CheckIncomingOffersAsync from peer {peerId} failed", ex);
                 CleanupPeer(peerId);
+            }
+        }
+
+        private async Task PollCandidatesAsync(string peerId, RTCPeerConnection pc, DocumentReference docRef, string fieldName)
+        {
+            var processedCandidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < 25; i++) // Poll for 50 seconds (25 * 2000ms)
+            {
+                try
+                {
+                    await Task.Delay(2000);
+                    
+                    bool isStillActive;
+                    lock (_peerConnections)
+                    {
+                        isStillActive = _peerConnections.ContainsKey(peerId) && _peerConnections[peerId] == pc;
+                    }
+                    if (!isStillActive) break;
+
+                    if (pc.connectionState == RTCPeerConnectionState.connected)
+                    {
+                        LogService.Log($"[P2P] Peer {peerId} ile bağlantı sağlandı. Aday havuzu izleme sonlandırılıyor.");
+                        break;
+                    }
+                    if (pc.connectionState == RTCPeerConnectionState.closed || pc.connectionState == RTCPeerConnectionState.failed)
+                    {
+                        break;
+                    }
+
+                    var snap = await docRef.GetSnapshotAsync();
+                    if (snap.Exists && snap.TryGetValue<List<string>>(fieldName, out var candidates) && candidates != null)
+                    {
+                        foreach (var cand in candidates)
+                        {
+                            if (string.IsNullOrEmpty(cand)) continue;
+                            if (processedCandidates.Add(cand))
+                            {
+                                LogService.Log($"[P2P] Peer {peerId} için yeni ICE adayı eklendi: {cand}");
+                                pc.addIceCandidate(new RTCIceCandidateInit { candidate = cand });
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError($"[P2P] PollCandidatesAsync error for peer {peerId}", ex);
+                }
             }
         }
 

@@ -180,7 +180,7 @@ namespace StreamMesh.Services
                     // Magic Cookie
                     stunRequest[4] = 0x21; stunRequest[5] = 0x12; stunRequest[6] = 0xA4; stunRequest[7] = 0x42;
                     // Transaction ID (12 bytes)
-                    Guid.NewGuid().ToByteArray().CopyTo(stunRequest, 8);
+                    Array.Copy(Guid.NewGuid().ToByteArray(), 0, stunRequest, 8, 12);
 
                     AddStunLog("[STUN] Binding Request paketi gönderiliyor (20 bayt)...");
                     await client.SendAsync(stunRequest, stunRequest.Length, ep);
