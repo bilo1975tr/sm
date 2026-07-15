@@ -1,3 +1,7 @@
 #EXTM3U
 #EXTINF:-1 tvg-id="" tvg-name="TVRI Jakarta (576i) [Not 24/7]" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/TVRILogo2019.svg/960px-TVRILogo2019.svg.png" group-title="Indonesian",TVRI Jakarta (576i) [Not 24/7]
 https://ott-balancer.tvri.go.id/live/eds/DKI/hls/DKI.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="3:10 Treni (2007)" tvg-logo="https://image.tmdb.org/t/p/w200/c7FFviYQIRljgzdj728khf7wOVT.jpg" group-title="Western",3:10 Treni (2007)
+https://p2.gamephotos.pro/v/8eg5djut6hwd/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="11 Minutes (2022)" tvg-logo="https://image.tmdb.org/t/p/w200/6tGsPlNcqDlduY267EP5jMRFnff.jpg" group-title="Belgesel",11 Minutes (2022)
+https://vs2.photour.org/v/084ids176xxj/master.m3u8

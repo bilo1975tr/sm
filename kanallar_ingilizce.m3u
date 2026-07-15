@@ -1,0 +1,11 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="CNBC Ⓨ" tvg-logo="https://i.imgur.com/BTasyOy.png" group-title="USA",CNBC Ⓨ
+https://www.youtube.com/c/CNBC/live
+#EXTINF:-1 tvg-id="" tvg-name="Arirang World" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/67cfa9368d2d135744732a3aed3baecb3fadcf13/countries/international/arirang-int.png" group-title="UK",Arirang World
+http://amdlive.ctnd.com.edgesuite.net/arirang_1ch/smil:arirang_1ch.smil/chunklist_b2256000_sleng.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVA" tvg-logo="https://i.imgur.com/PtTQ5lv.png" group-title="Ukraine",TVA
+https://hls.cdn.ua/tva.ua_live/livestream/chunklist_.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Lokal-TV Uddevalla / Fyrbodal-TV Ⓨ" tvg-logo="https://i.imgur.com/cnLkbOT.png" group-title="Sweden",Lokal-TV Uddevalla / Fyrbodal-TV Ⓨ
+https://www.youtube.com/@LtvuSeTube/live
+#EXTINF:-1 tvg-id="" tvg-name="Карусель Ⓢ" tvg-logo="https://i.imgur.com/4fFMlVq.png" group-title="Russia",Карусель Ⓢ
+https://streaming102.interskytech.com/live/232.m3u8

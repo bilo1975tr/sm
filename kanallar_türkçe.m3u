@@ -17,3 +17,175 @@ https://d3k8wzt41aflvx.cloudfront.net/RAI2/Live.m3u8
 https://aasthaott.akamaized.net/110923/smil:aasthaprime1.smil/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Thraki Net TV (1080p)" tvg-logo="https://i.imgur.com/3ITSnqT.png" group-title="Greek",Thraki Net TV (1080p)
 https://cdn.onestreaming.com/thrakinettv/thrakinettv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="000 Movie (2010)" tvg-logo="https://image.tmdb.org/t/p/w200/eFfkF9uVqOhAxIKEyNCHfRRdGgj.jpg" group-title="Animasyon",000 Movie (2010)
+https://vs22.photoflix.org/v/Ultramarines.A.Warhammer.40000.Movie.2010.1080p.Blu/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Euronews România Ⓨ" tvg-logo="https://i.imgur.com/jUOVUXt.png" group-title="Romania",Euronews România Ⓨ
+https://www.youtube.com/euronewsro/live
+#EXTINF:-1 tvg-id="" tvg-name="TBS Ⓢ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Tokyo_Broadcasting_System_logo_2020.svg/1200px-Tokyo_Broadcasting_System_logo_2020.svg.png" group-title="Japan",TBS Ⓢ
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gd04&isp=7
+#EXTINF:-1 tvg-id="" tvg-name="101 Dalmaçyalı Sokağı (2019)" tvg-logo="https://image.tmdb.org/t/p/w200/5meA7Ik8h9t2Bd3VR7Pw85pXECV.jpg" group-title="Animasyon",101 Dalmaçyalı Sokağı (2019)
+https://vidmody.com/vs/tt0055254
+#EXTINF:-1 tvg-id="" tvg-name="37. Karakol (2014)" tvg-logo="https://image.tmdb.org/t/p/w200/dXe0HXP66DyTv6mw5pxbGq89knr.jpg" group-title="Sinema",37. Karakol (2014)
+https://vidmody.com/vs/tt2474972
+#EXTINF:-1 tvg-id="" tvg-name="365 Gün: Bugün (2022)" tvg-logo="https://image.tmdb.org/t/p/w200/kkVbZoe9mpEgT7LSKjpG9n78v0V.jpg" group-title="Sinema",365 Gün: Bugün (2022)
+https://vidmody.com/vs/tt12996154
+#EXTINF:-1 tvg-id="" tvg-name="12 to Midnight (2024)" tvg-logo="https://image.tmdb.org/t/p/w200/wMaWQMN046O3Pxu2GlgpDG7staJ.jpg" group-title="Sinema",12 to Midnight (2024)
+https://vs17.photour.org/v/12.To.Midnight.2024.1080p.WEBRip/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Teleleonessa" tvg-logo="https://i.imgur.com/jq3etlV.png" group-title="Italy",Teleleonessa
+http://wms.shared.streamshow.it:1935/teleleonessa/teleleonessa/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tv Luna Napoli" tvg-logo="https://i.imgur.com/jxhuoyE.png" group-title="Italy",Tv Luna Napoli
+https://diretta.arcapuglia.it:8080/live/teleluna/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio Radio Tv" tvg-logo="https://i.imgur.com/iKuRg2b.png" group-title="Italy",Radio Radio Tv
+https://200912.global.ssl.fastly.net/646b335e2291a2022444bb7c/live_22f84390fe1411ed919df3da85a483cc/rewind-14400.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="57 Numaralı Yolcu (1992)" tvg-logo="https://image.tmdb.org/t/p/w200/vegjhRwks98HcQie1UYpYZcit9k.jpg" group-title="Sinema",57 Numaralı Yolcu (1992)
+https://vidmody.com/vs/tt0105104
+#EXTINF:-1 tvg-id="" tvg-name="Videotelecarnia" tvg-logo="https://i.imgur.com/r4K9JHW.png" group-title="Italy",Videotelecarnia
+https://rst2.saiuzwebnetwork.it:8081/vtccarnia/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Yol Ayrımı (2016)" tvg-logo="https://image.tmdb.org/t/p/w200/e3ABDvO9053kW82c75KeVgqu6er.jpg" group-title="Sinema",Yol Ayrımı (2016)
+https://p2.photostack.net/v/28ic63s1bl55/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="9-1-1: Lone Star (2020)" tvg-logo="https://image.tmdb.org/t/p/w200/BOTITv548LYGB4xRD3rHfbwkqm.jpg" group-title="Sinema",9-1-1: Lone Star (2020)
+https://vidmody.com/vs/tt5599826
+#EXTINF:-1 tvg-id="" tvg-name="44. Çocuk (2015)" tvg-logo="https://image.tmdb.org/t/p/w200/qVPPi8nGXlDDmWsPFQrG2aZvKsw.jpg" group-title="Suç",44. Çocuk (2015)
+https://vidmody.com/vs/tt1014763
+#EXTINF:-1 tvg-id="" tvg-name="SBS TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/SBS_Korea_Logo_%28Word_Only%29.svg/512px-SBS_Korea_Logo_%28Word_Only%29.svg.png" group-title="Korea",SBS TV
+https://allanf181.github.io/adaptive-streams/streams/kr/SBSTV.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="4N1K 2 (2018)" tvg-logo="https://image.tmdb.org/t/p/w200/usZhPpdh1dU0Av9VNWovvTojzqD.jpg" group-title="Sinema",4N1K 2 (2018)
+https://vidmody.com/vs/tt8084510
+#EXTINF:-1 tvg-id="" tvg-name="Moby Dick (2011)" tvg-logo="https://image.tmdb.org/t/p/w200/wGnBI8o5Wbd7ZsXJb1emZtqeNtW.jpg" group-title="Sinema",Moby Dick (2011)
+https://vs8.photour.org/v/lbghlltf5fzy/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Delta Tv" tvg-logo="https://i.imgur.com/mfwVXt7.png" group-title="Italy",Delta Tv
+http://hbbtv-server.zivoli.it:8080/hls/deltatv/deltatv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="L1 Ⓢ" tvg-logo="https://i.imgur.com/Jyhn1iP.png" group-title="Netherlands",L1 Ⓢ
+http://d34pj260kw1xmk.cloudfront.net/live/l1/tv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="LX 2048 (2020)" tvg-logo="https://image.tmdb.org/t/p/w200/u5VqBL0TtNmV1kxwoQ2L2dWPLiM.jpg" group-title="Sinema",LX 2048 (2020)
+https://vs4.photour.org/v/3c4f5kf4s2ka/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="'L' fung bou" tvg-logo="https://www.hdfilmizle.life/v/37206/poster/thumb/l-storm.jpg" group-title="Sinema",'L' fung bou
+https://vs3.photour.org/v/vjt1p12wtu53/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="100 Days to Live (2019)" tvg-logo="https://image.tmdb.org/t/p/w200/eB6nWq0dd3VGtJVKeFdYMfZ3alb.jpg" group-title="Sinema",100 Days to Live (2019)
+https://vs8.photour.org/v/f6xl1cmvtgid/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Asahi Ⓢ" tvg-logo="https://i.imgur.com/rls8NVc.png" group-title="Japan",TV Asahi Ⓢ
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gd06&isp=7
+#EXTINF:-1 tvg-id="" tvg-name="Rete Mia" tvg-logo="https://i.imgur.com/kCJ621Q.png" group-title="Italy",Rete Mia
+https://5db313b643fd8.streamlock.net/rete/rete/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="9 April (2022)" tvg-logo="https://image.tmdb.org/t/p/w200/hASQZdyeQCrhNAAlmxwuxIeaYcy.jpg" group-title="Diğer",9 April (2022)
+https://vidmody.com/vs/tt3542188
+#EXTINF:-1 tvg-id="" tvg-name="7 Kocalı Hürmüz (2009)" tvg-logo="https://image.tmdb.org/t/p/w200/fLgQO8D6oPfZCnQSs6kmHVmIkBw.jpg" group-title="Sinema",7 Kocalı Hürmüz (2009)
+https://vidmody.com/vs/tt1523583
+#EXTINF:-1 tvg-id="" tvg-name="NH Nieuws" tvg-logo="https://i.imgur.com/SQPVOwn.png" group-title="Netherlands",NH Nieuws
+https://rrr.sz.xlcdn.com/?account=nhnieuws&file=live&type=live&service=wowza&protocol=https&output=playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="101 Dalmaçyalı 2: Patch'in Londra Macerası (2003)" tvg-logo="https://image.tmdb.org/t/p/w200/uB0DQU4Cog8tYrkiOEVTmDw6Qnn.jpg" group-title="Aile",101 Dalmaçyalı 2: Patch'in Londra Macerası (2003)
+https://vidmody.com/vs/tt0324941
+#EXTINF:-1 tvg-id="" tvg-name="4N1K: Düğün (2021)" tvg-logo="https://image.tmdb.org/t/p/w200/u9vmlPNI3sSguEir5nmdUXNI0kR.jpg" group-title="Sinema",4N1K: Düğün (2021)
+https://vidmody.com/vs/tt13000788
+#EXTINF:-1 tvg-id="" tvg-name="5 Kat Yukarı (2014)" tvg-logo="https://image.tmdb.org/t/p/w200/2WI5oq2QswLB0kJFOcL7ZA5ndKr.jpg" group-title="Sinema",5 Kat Yukarı (2014)
+https://vidmody.com/vs/tt2933544
+#EXTINF:-1 tvg-id="" tvg-name="4 Tetikçi (2022)" tvg-logo="https://image.tmdb.org/t/p/w200/8ZnzcjEEQDMCab0DtQphXd6XoLI.jpg" group-title="Sinema",4 Tetikçi (2022)
+https://vidmody.com/vs/tt15528292
+#EXTINF:-1 tvg-id="" tvg-name="2046" tvg-logo="https://www.hdfilmizle.life/v/31044/poster/thumb/2046.jpg" group-title="Sinema",2046
+https://p3.photofunia.pro/v/3283392024v4/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="The Path to 9/11 (2006)" tvg-logo="https://image.tmdb.org/t/p/w200/njDpXC7cYi3qZ15sh3r9MXalX5b.jpg" group-title="Sinema",The Path to 9/11 (2006)
+https://vidmody.com/vs/tt4917224
+#EXTINF:-1 tvg-id="" tvg-name="9'dan 5'e (1980)" tvg-logo="https://image.tmdb.org/t/p/w200/3nm6kWMFzxGtJb4UEuDB0lDWpcD.jpg" group-title="Sinema",9'dan 5'e (1980)
+https://vidmody.com/vs/tt0080319
+#EXTINF:-1 tvg-id="" tvg-name="9 Bullets (2022)" tvg-logo="https://image.tmdb.org/t/p/w200/8h8R2D6AVTZCCA6NIvioObkhXsb.jpg" group-title="Sinema",9 Bullets (2022)
+https://vidmody.com/vs/tt13680520
+#EXTINF:-1 tvg-id="" tvg-name="5 to 7 (2014)" tvg-logo="https://image.tmdb.org/t/p/w200/sQM9OKpj876pDWFbkfRIrpQG6fZ.jpg" group-title="Sinema",5 to 7 (2014)
+https://vidmody.com/vs/tt2486678
+#EXTINF:-1 tvg-id="" tvg-name="RTV Utrecht" tvg-logo="https://i.imgur.com/c0I24N6.png" group-title="Netherlands",RTV Utrecht
+http://media.rtvutrecht.nl/live/rtvutrecht/rtvutrecht/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tvrs Tv" tvg-logo="https://i.imgur.com/6p7hTmY.jpg" group-title="Italy",Tvrs Tv
+https://cdn8.streamshow.it/cloud-tvrs/tvrs/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="3 Bears Christmas (2019)" tvg-logo="https://image.tmdb.org/t/p/w200/t7RWYLh5vuHY6zIf794gyjrRQG3.jpg" group-title="Aile",3 Bears Christmas (2019)
+https://vidmody.com/vs/tt7987702
+#EXTINF:-1 tvg-id="" tvg-name="Radio Bruno Tv" tvg-logo="https://i.imgur.com/y4vKE83.png" group-title="Italy",Radio Bruno Tv
+https://router.xdevel.com/video0s975758-473/stream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="39 Basamak (1935)" tvg-logo="https://image.tmdb.org/t/p/w200/88kjggSgwDUGCvURUB0tYRa9fVj.jpg" group-title="Gizem",39 Basamak (1935)
+https://vidmody.com/vs/tt1282016
+#EXTINF:-1 tvg-id="" tvg-name="Casa Sanremo Tv" tvg-logo="https://i.imgur.com/WL3SFTs.png" group-title="Italy",Casa Sanremo Tv
+https://router.xdevel.com/video0s975911-633/stream/playlist_dvr.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="11:55 (2017)" tvg-logo="https://image.tmdb.org/t/p/w200/cq8YSZwPXK0M4HwofurhNOfUaFt.jpg" group-title="Sinema",11:55 (2017)
+https://vidmody.com/vs/tt4250438
+#EXTINF:-1 tvg-id="" tvg-name="TRL Tele Radio Leo" tvg-logo="https://i.imgur.com/qAagkJT.png" group-title="Italy",TRL Tele Radio Leo
+https://5db313b643fd8.streamlock.net/TRL/TRL/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="9 Kere Leyla (2020)" tvg-logo="https://image.tmdb.org/t/p/w200/k7SAgAdSVxBPD78ccY5VQMqVzEX.jpg" group-title="Sinema",9 Kere Leyla (2020)
+https://vidmody.com/vs/tt11792734
+#EXTINF:-1 tvg-id="" tvg-name="3 Vakte Kadar (2018)" tvg-logo="https://image.tmdb.org/t/p/w200/fzGyK0CEYKtEqIe0UGz6b6Wcpq3.jpg" group-title="Sinema",3 Vakte Kadar (2018)
+https://vidmody.com/vs/tt8495626
+#EXTINF:-1 tvg-id="" tvg-name="4N1K İlk Aşk (2018)" tvg-logo="https://image.tmdb.org/t/p/w200/rXyKDyojRZCZJlspuK6Vi0miomK.jpg" group-title="Sinema",4N1K İlk Aşk (2018)
+https://vidmody.com/vs/tt6809030
+#EXTINF:-1 tvg-id="" tvg-name="1 Million Followers (2024)" tvg-logo="https://image.tmdb.org/t/p/w200/fGINjf8jdJ5t4kqESNE3OMaVBSc.jpg" group-title="Sinema",1 Million Followers (2024)
+https://vs13.photoflax.org/v/1.Million.Followers.2024.1080p.WEBRip/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rete 8 Sport" tvg-logo="https://i.imgur.com/uUAjWlF.png" group-title="Italy",Rete 8 Sport
+https://64b16f23efbee.streamlock.net/rete8sport/rete8sport/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Video Regione Sicilia" tvg-logo="https://i.imgur.com/0szwnR3.png" group-title="Italy",Video Regione Sicilia
+https://57214cb172d84f8cb311b91513952b03.msvdn.net/live/S40896499/ZuaLjACsWIL4/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tele Liguria Sud" tvg-logo="https://i.imgur.com/BeLAYJ6.jpg" group-title="Italy",Tele Liguria Sud
+https://64b16f23efbee.streamlock.net/teleliguriasud/teleliguriasud/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Giovanni Paolo Tv" tvg-logo="https://i.imgur.com/GH5eJE6.png" group-title="Italy",Giovanni Paolo Tv
+https://media2021.rtvweb.com/giovannipaolotv/web/chunklist_w663456797.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="100% Kurt (2020)" tvg-logo="https://image.tmdb.org/t/p/w200/EUFnI9lj8c4SsT94EyQMR73Dzy.jpg" group-title="Animasyon",100% Kurt (2020)
+https://vidmody.com/vs/tt8774798
+#EXTINF:-1 tvg-id="" tvg-name="100 dni do matury (2025)" tvg-logo="https://image.tmdb.org/t/p/w200/vxS3Jx24pThJb3p9FbacVdBxtCy.jpg" group-title="Sinema",100 dni do matury (2025)
+https://vs19.photoflix.org/v/100.Dni.Do.Matury.2025.1080p.WEBRi/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Antenna 3 Massa" tvg-logo="https://i.imgur.com/CHDU86j.png" group-title="Italy",Antenna 3 Massa
+https://media2021.rtvweb.com/antenna3massa/a3/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Arirang" tvg-logo="https://i.imgur.com/RuHZ6Dx.png" group-title="Korea",Arirang
+http://amdlive.ctnd.com.edgesuite.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tele Jonio" tvg-logo="https://i.imgur.com/qJeDV8R.png" group-title="Italy",Tele Jonio
+http://59d7d6f47d7fc.streamlock.net/telejonio/telejonio/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="47 Ronin'in Kılıcı (2022)" tvg-logo="https://image.tmdb.org/t/p/w200/bIp7UbNKaBBxA9086jLCCRuXA6W.jpg" group-title="Fantezi",47 Ronin'in Kılıcı (2022)
+https://vidmody.com/vs/tt12610794
+#EXTINF:-1 tvg-id="" tvg-name="3-Headed Shark Attack (2015)" tvg-logo="https://image.tmdb.org/t/p/w200/qiwQDfhNyvtTVEO7lZVTUhkkgpp.jpg" group-title="Sinema",3-Headed Shark Attack (2015)
+https://vidmody.com/vs/tt4685096
+#EXTINF:-1 tvg-id="" tvg-name="36 Adaletin Merkezi (2004)" tvg-logo="https://image.tmdb.org/t/p/w200/ihH98ojpzH1984Lb2IIFZ5wp4mo.jpg" group-title="Suç",36 Adaletin Merkezi (2004)
+https://vidmody.com/vs/tt0390808
+#EXTINF:-1 tvg-id="" tvg-name="Telecity Lombardia" tvg-logo="https://i.imgur.com/ECvJ3ZD.jpeg" group-title="Italy",Telecity Lombardia
+https://64b16f23efbee.streamlock.net/telecitylombardia/telecitylombardia/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="101 Yaşında Hesabı Ödemeden Ortadan Kaybolan Adam (2016)" tvg-logo="https://image.tmdb.org/t/p/w200/aZkhPeJrhBKIKzBzIgB80eJh5FD.jpg" group-title="Sinema",101 Yaşında Hesabı Ödemeden Ortadan Kaybolan Adam (2016)
+https://vidmody.com/vs/tt4940370
+#EXTINF:-1 tvg-id="" tvg-name="Akō Rōshi (1964)" tvg-logo="https://image.tmdb.org/t/p/w200/xUmE1LGb4W81LNZ3Hp95VxkbzKf.jpg" group-title="Sinema",Akō Rōshi (1964)
+https://vidmody.com/vs/tt1335975
+#EXTINF:-1 tvg-id="" tvg-name="9 1/2 Hafta (1986)" tvg-logo="https://image.tmdb.org/t/p/w200/aE1iunrgO8UHfoXKJcjCy4Ih17n.jpg" group-title="Sinema",9 1/2 Hafta (1986)
+https://vidmody.com/vs/tt0091635
+#EXTINF:-1 tvg-id="" tvg-name="Killer's Mission (1969)" tvg-logo="https://image.tmdb.org/t/p/w200/pelyTwbiu7N6C00xkI9y4rRd3vq.jpg" group-title="Sinema",Killer's Mission (1969)
+https://vs7.photour.org/v/unvlntgewgi9/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Deportes13 Ⓖ" tvg-logo="https://i.imgur.com/GRpxoPf.png" group-title="Chile",Deportes13 Ⓖ
+https://redirector.rudo.video/hls-video/ey6283je82983je9823je8jowowiekldk9838274/13d/13d.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="1. Bölüm" tvg-logo="https://www.hdfilmizle.life/v/14216/poster/thumb/batman-the-long-halloween-part-one.jpg" group-title="Sinema",1. Bölüm
+https://vs8.photour.org/v/kfz55a958v8f/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="5 Eylül (2024)" tvg-logo="https://image.tmdb.org/t/p/w200/6BKjnKwJ0TbF3qeTxi93j1INtZH.jpg" group-title="Sinema",5 Eylül (2024)
+https://vidmody.com/vs/tt28082769
+#EXTINF:-1 tvg-id="" tvg-name="WLTV" tvg-logo="https://i.imgur.com/aL8jKtU.png" group-title="Italy",WLTV
+https://5db313b643fd8.streamlock.net/WLTV/WLTV/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="3 Gün İçinde Öleceksin (2006)" tvg-logo="https://image.tmdb.org/t/p/w200/wufcDkUcXujJhKe6VA8XXg65tTs.jpg" group-title="Sinema",3 Gün İçinde Öleceksin (2006)
+https://vidmody.com/vs/tt0808315
+#EXTINF:-1 tvg-id="" tvg-name="4:44 Last Day on Earth (2012)" tvg-logo="https://image.tmdb.org/t/p/w200/vSeQ7eXy1tmig0jkX63wACDiLM4.jpg" group-title="Sinema",4:44 Last Day on Earth (2012)
+https://vidmody.com/vs/tt1707391
+#EXTINF:-1 tvg-id="" tvg-name="45-25 #KusursuzCinayet (2019)" tvg-logo="https://image.tmdb.org/t/p/w200/zCbmEuo9S9v8L5JLhcI8CdpldB9.jpg" group-title="Sinema",45-25 #KusursuzCinayet (2019)
+https://vidmody.com/vs/tt10465972
+#EXTINF:-1 tvg-id="" tvg-name="20'inci Yüzyıl Kadınları" tvg-logo="https://www.hdfilmizle.life/v/41271/poster/thumb/20-yuzyilin-kadinlari.jpg" group-title="Dram",20'inci Yüzyıl Kadınları
+https://vs8.photour.org/v/6elxth75ovcc/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="000 km. (2022)" tvg-logo="https://image.tmdb.org/t/p/w200/zLOLUg2suTCU2bnZut6BmeT3aGv.jpg" group-title="Sinema",000 km. (2022)
+https://p1.photofunny.org/v/kw9cf0062f6z/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="400 Gün (2015)" tvg-logo="https://image.tmdb.org/t/p/w200/bytJ8zETXG92xAjlFdZTxW3bnTx.jpg" group-title="Gizem",400 Gün (2015)
+https://vidmody.com/vs/tt3774790
+#EXTINF:-1 tvg-id="" tvg-name="Telecity Piemonte" tvg-logo="https://i.imgur.com/CrlzHjv.jpeg" group-title="Italy",Telecity Piemonte
+https://64b16f23efbee.streamlock.net/telecitypiemonte/telecitypiemonte/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tv 12" tvg-logo="https://i.imgur.com/oxv08pJ.png" group-title="Italy",Tv 12
+https://59d7d6f47d7fc.streamlock.net/tv12/tv12/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Maria Wern (2008)" tvg-logo="https://image.tmdb.org/t/p/w200/zFrX07DZMLPQq3VzBYUIv3JB1By.jpg" group-title="Sinema",Maria Wern (2008)
+https://vidmody.com/vs/tt0331811
+#EXTINF:-1 tvg-id="" tvg-name="11 Dakika (2015)" tvg-logo="https://image.tmdb.org/t/p/w200/8QCu4TbEsEHRprHYvHy2StskJXM.jpg" group-title="Sinema",11 Dakika (2015)
+https://vidmody.com/vs/tt3865478
+#EXTINF:-1 tvg-id="" tvg-name="57 Saniye (2023)" tvg-logo="https://image.tmdb.org/t/p/w200/dfS5qHWFuXyZQnwYREwb7N4qU5p.jpg" group-title="Sinema",57 Saniye (2023)
+https://vidmody.com/vs/tt18083578
+#EXTINF:-1 tvg-id="" tvg-name="100m Criminal Conviction (2021)" tvg-logo="https://image.tmdb.org/t/p/w200/mO5dk8tsfukxmGotZp9JaFQhF4a.jpg" group-title="Suç",100m Criminal Conviction (2021)
+https://vs4.photour.org/v/ra1mqqnr3ti6/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="La Tenda Tv" tvg-logo="https://i.imgur.com/XnBp0hT.png" group-title="Italy",La Tenda Tv
+https://2-fss-1.streamhoster.com/pl_148/206202-2980948-1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="39 Derecede Aşk (2024)" tvg-logo="https://image.tmdb.org/t/p/w200/59xWH8T7yVLbavfrwUwTVsLJE0r.jpg" group-title="Sinema",39 Derecede Aşk (2024)
+https://vidmody.com/vs/tt34605805
+#EXTINF:-1 tvg-id="" tvg-name="39. Dosya (2009)" tvg-logo="https://image.tmdb.org/t/p/w200/e0qZgfGZ4PMYLuoqefTWzMBe9Vl.jpg" group-title="Sinema",39. Dosya (2009)
+https://vidmody.com/vs/tt0795351
+#EXTINF:-1 tvg-id="" tvg-name="NHK G (Tokyo) Ⓢ" tvg-logo="https://i.imgur.com/fAZ2BEZ.png" group-title="Japan",NHK G (Tokyo) Ⓢ
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gd01&isp=7

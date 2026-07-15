@@ -1,0 +1,5 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="Parlamenti TAB közvetítés" tvg-logo="" group-title="Hungary",Parlamenti TAB közvetítés
+https://tab.parlament.hu:446/edgelive/smil:mkogytab.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Parlamenti közvetítés" tvg-logo="" group-title="Hungary",Parlamenti közvetítés
+https://plenaris.parlament.hu:446/edgelive/smil:mkogyplen.smil/playlist.m3u8
