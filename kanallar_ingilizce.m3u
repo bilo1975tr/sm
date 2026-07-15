@@ -325,3 +325,57 @@ http://40.160.24.52/BRAVO_WEST/index.m3u8
 https://cdn-euronews.akamaized.net/live/eds/euronews-ru/25071/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Cape Town TV (576p)" tvg-logo="https://i.imgur.com/Y8FK1Kk.png" group-title="English",Cape Town TV (576p)
 https://cdn.freevisiontv.co.za/sttv/smil:ctv.stream.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ABC Kids" tvg-logo="https://static.wikia.nocookie.net/logopedia/images/2/29/ABC_Kids_%282020%29.svg/revision/latest/scale-to-width-down/512" group-title="English",ABC Kids
+https://c.mjh.nz/abc-kids.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Суспільне Дніпро" tvg-logo="https://i.imgur.com/nMHd9FK.png" group-title="Ukraine",Суспільне Дніпро
+http://cdnua05.hls.tv/648/hls/f62d71219200da4130d13b21d23fb23c/4786/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Science (720p)" tvg-logo="https://i.imgur.com/uhunRoU.png" group-title="Science",Pluto TV Science (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5d9492c77ea6f99188738ff1/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="AWE International (720p)" tvg-logo="https://i.imgur.com/VhxtMUQ.png" group-title="English",AWE International (720p)
+https://a-cdn.klowdtv.com/live1/aweint/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Peace TV Bangla (1080p)" tvg-logo="https://i.imgur.com/1ztVXUi.png" group-title="Bengali",Peace TV Bangla (1080p)
+https://dzkyvlfyge.erbvr.com/PeaceTvBangla/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Paranormal (720p)" tvg-logo="https://i.imgur.com/ApN6nfw.png" group-title="Belgesel",Pluto TV Paranormal (720p)
+https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5adf96e3e738977e2c31cb04/master.m3u8?advertisingId=&appName=web&appStoreUrl=&appVersion=DNT&app_name=&architecture=&buildVersion=&deviceDNT=0&deviceId=5adf96e3e738977e2c31cb04&deviceLat=&deviceLon=&deviceMake=web&deviceModel=web&deviceType=web&deviceVersion=DNT&includeExtendedEvents=false&marketingRegion=US&serverSideAds=false&sid=669&terminate=false&userId=
+#EXTINF:-1 tvg-id="" tvg-name="ABC TV NT (720p)" tvg-logo="https://i.imgur.com/DPVQSjM.png" group-title="English",ABC TV NT (720p)
+https://c.mjh.nz/abc-nt.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Akaku 55 (Hawaii) (1080p)" tvg-logo="https://www.akaku.org/wp-content/uploads/bb-plugin/cache/Channel55-147x150-square.png" group-title="English",Akaku 55 (Hawaii) (1080p)
+https://castus-vod-dev.s3.amazonaws.com/vod_clients/akaku/live/ch3/video.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="EN TV" tvg-logo="https://i.imgur.com/KnKTjev.png" group-title="Genel",EN TV
+http://82.212.74.100:8000/live/8130.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Anger Management Channel (1080p)" tvg-logo="https://i.imgur.com/VXZgrNy.png" group-title="English",Anger Management Channel (1080p)
+https://amg00353-lionsgatestudio-angermgmt-samsungau-o9jg9.amagi.tv/playlist/amg00353-lionsgatestudio-angermgmt-samsungau/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Adventure Earth (1080p)" tvg-logo="https://d3b6luslimvglo.cloudfront.net/images/79/rlaxximages/channels-rescaled/icon-white/adventureearth_white.png" group-title="English",Adventure Earth (1080p)
+https://a57e9c69976649b582a8d7604c00e69a.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/RlaxxTV-eu_AdventureEarth/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Advocate Broadcasting Network (576p)" tvg-logo="https://i.imgur.com/ZkBEAp7.png" group-title="English",Advocate Broadcasting Network (576p)
+https://viewmedia7219.bozztv.com/wmedia/viewmedia100/web_045/Stream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Fuji TV NEXT (544p)" tvg-logo="https://i.imgur.com/j95aeSA.png" group-title="Genel",Fuji TV NEXT (544p)
+http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=cs26
+#EXTINF:-1 tvg-id="" tvg-name="Белгород 24" tvg-logo="https://i.imgur.com/EEirvyx.png" group-title="Russia",Белгород 24
+http://belnovosti.cdn.easyhoster.ru:8080/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Dutch Caribbean TV (720p)" tvg-logo="https://i.ibb.co/JQMLXfr/LOGO-DC-CON-NOMBRE-2019-1024x817.png" group-title="Genel",Dutch Caribbean TV (720p)
+https://cur.watch/api/get_stream/dctv/basilachill/mystream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV MTV Biggest Pop (720p)" tvg-logo="https://i.imgur.com/AOaZmlS.png" group-title="Müzik",Pluto TV MTV Biggest Pop (720p)
+https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5d14fd1a252d35decbc4080c/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS
+#EXTINF:-1 tvg-id="" tvg-name="BBC America (720p)" tvg-logo="https://i.imgur.com/pTiiPz0.png" group-title="English",BBC America (720p)
+http://23.239.31.26:8989/bbcamerica/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AccessVision Channel 17 (720p)" tvg-logo="https://i.imgur.com/vi4TCdb.png" group-title="English",AccessVision Channel 17 (720p)
+https://livestream.telvue.com/accvision2/f7b44cfafd5c52223d5498196c8a2e7b.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NTK TV" tvg-logo="https://www.ntktv.ua/bitrix/templates/ntk_copy/images/logo.png" group-title="Ukraine",NTK TV
+http://stream.ntktv.ua/s/ntk/ntk.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Якутия 24" tvg-logo="https://i.imgur.com/2BAQklm.png" group-title="Russia",Якутия 24
+https://live-saha.cdnvideo.ru/saha2/yak24rtmp_live.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Enterr 10 Bangla (720p) [Not 24/7]" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_ENTERR10_BANGLA/images/LOGO_HD/image.png" group-title="Bengali",Enterr 10 Bangla (720p) [Not 24/7]
+https://live-bangla.akamaized.net/liveabr/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AfroLandTV (1080p)" tvg-logo="https://i.imgur.com/jvnkrEF.png" group-title="English",AfroLandTV (1080p)
+https://alt-al.otteravision.com/alt/al/al.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Nova 24 TV Ⓨ" tvg-logo="https://i.imgur.com/M2207Vh.png" group-title="Slovenia",Nova 24 TV Ⓨ
+https://www.youtube.com/@Nova24TVSlovenija/live
+#EXTINF:-1 tvg-id="" tvg-name="BabyTV Netherlands (576p)" tvg-logo="https://i.imgur.com/4BDJ5FT.png" group-title="English",BabyTV Netherlands (576p)
+http://185.102.171.218/BabyTV/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="America’s Funniest Home Videos (1080p)" tvg-logo="https://i.imgur.com/TOB9vmW.png" group-title="English",America’s Funniest Home Videos (1080p)
+https://d1mp1kdk5zi1ie.cloudfront.net/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BabyTV US (576p)" tvg-logo="https://i.imgur.com/4BDJ5FT.png" group-title="English",BabyTV US (576p)
+http://206.212.244.63/641/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Euronews по-русски Ⓨ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Euronews_2022.svg/640px-Euronews_2022.svg.png" group-title="Russia",Euronews по-русски Ⓨ
+https://www.youtube.com/euronewsru/live

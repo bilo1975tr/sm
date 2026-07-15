@@ -1,0 +1,3 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="TVM 3" tvg-logo="https://i.imgur.com/3v6iZE6.png" group-title="Switzerland",TVM 3
+http://livevideo.infomaniak.com/streaming/livecast/tvm3/playlist.m3u8
