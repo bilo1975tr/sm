@@ -199,3 +199,29 @@ https://janya-digimix.akamaized.net/vglive-sk-999451/chinese/ngrp:angelchinese_a
 http://69.30.245.50/live/cctv6.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="CCTV-4 Asia (720p)" tvg-logo="https://i.imgur.com/tWt4Wou.png" group-title="Chinese",CCTV-4 Asia (720p)
 http://74.91.26.218:82/live/cctv4hd.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Nova Era TV (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/IK3F9Uq.png" group-title="Portuguese",Nova Era TV (1080p) [Not 24/7]
+http://wz3.dnip.com.br:1935/novaeratv/novaeratv.sdp/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NickOnline (360p)" tvg-logo="https://x1colegal.com/logo.png" group-title="Portuguese",NickOnline (360p)
+https://x1colegal.com/hls/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVRI Nusa Tenggara Barat (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/TVRILogo2019.svg/960px-TVRILogo2019.svg.png" group-title="Indonesian",TVRI Nusa Tenggara Barat (720p)
+https://ott-balancer.tvri.go.id/live/eds/NTB/hls/NTB.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Porto Canal (720p)" tvg-logo="https://i.imgur.com/DwziwMY.png" group-title="Portuguese",Porto Canal (720p)
+https://pull-live-156-1.global.ssl.fastly.net/pc5865dc25400thmb-ea6bf03b14fa318f7133/smil:pc1-jhrgyuoqe5865db-68tkgb14fa318f7133f03.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Viçosa (480p)" tvg-logo="https://i.imgur.com/TZF55f9.png" group-title="Portuguese",TV Viçosa (480p)
+http://wz4.dnip.com.br/fratevitv/fratevitv.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="8NTV (1080p)" tvg-logo="https://i.imgur.com/7ecgGIG.png" group-title="Spanish",8NTV (1080p)
+https://60417ddeaf0d9.streamlock.net/ntv/videontv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVRI West Papua (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/TVRILogo2019.svg/960px-TVRILogo2019.svg.png" group-title="Indonesian",TVRI West Papua (1080p)
+https://ott-balancer.tvri.go.id/live/eds/Pabar/hls/Pabar.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVRI Kalimantan Timur (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/TVRILogo2019.svg/960px-TVRILogo2019.svg.png" group-title="Indonesian",TVRI Kalimantan Timur (720p)
+https://ott-balancer.tvri.go.id/live/eds/Kaltim/hls/Kaltim.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Maná Igreja Online (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/0IUvfcJ.png" group-title="Portuguese",Maná Igreja Online (1080p) [Not 24/7]
+https://w1.manasat.com/igrejaonline/smil:igrejaonline.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Albricias TV (720p)" tvg-logo="https://i.imgur.com/NZxu3z8.jpeg" group-title="Spanish",Albricias TV (720p)
+https://live-evg10.tv360.bitel.com.pe/bitel/albriciastv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="NickToons Brasil (480p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Nicktoons_logo_%282023%29.svg/330px-Nicktoons_logo_%282023%29.svg.png" group-title="Portuguese",NickToons Brasil (480p)
+https://stmv2.srvif.com/nicktoons/nicktoons/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="8 La Marina TV (576p)" tvg-logo="https://i.imgur.com/BTJvvBK.png" group-title="Spanish",8 La Marina TV (576p)
+https://streaming005.gestec-video.com/hls/canal24.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Ra Tim Bum (576p)" tvg-logo="https://i.imgur.com/JIQwz0w.png" group-title="Portuguese",TV Ra Tim Bum (576p)
+http://45.162.64.114/RA_TIM_BUM/index.m3u8

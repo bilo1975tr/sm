@@ -99,3 +99,27 @@ https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5f3d2bcd0fadc30007
 https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/60d3574e97f10800078455de/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&serverSideAds=false&studio_id=viacom&tags=ROKU_CONTENT_TAGS
 #EXTINF:-1 tvg-id="" tvg-name="Euronews Deutsch Ⓨ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Euronews_2022.svg/640px-Euronews_2022.svg.png" group-title="Germany",Euronews Deutsch Ⓨ
 https://www.youtube.com/euronewsde/live
+#EXTINF:-1 tvg-id="" tvg-name="Gardening with Monty Don" tvg-logo="" group-title="Undefined",Gardening with Monty Don
+https://all3media-gardening-with-monty-don-us.xumo.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kronehit (1080p)" tvg-logo="https://i.imgur.com/dQJQv1X.png" group-title="German",Kronehit (1080p)
+https://bitcdn-kronehit.bitmovin.com/v2/hls/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="arte HD" tvg-logo="https://i.imgur.com/ecXMjNl.png" group-title="German",arte HD
+https://dash4.antik.sk/live/test_arte_avc_25p/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Grjngo Films de Western (1080p)" tvg-logo="" group-title="Undefined",Grjngo Films de Western (1080p)
+https://d46c0ebf9ef94053848fdd7b1f2f6b90.mediatailor.eu-central-1.amazonaws.com/v1/master/81bfcafb76f9c947b24574657a9ce7fe14ad75c0/live-prod/a5fc1b02-5945-11ef-a2df-87241c204d22/0/master.m3u8?country=fr&vendor=rakuten
+#EXTINF:-1 tvg-id="" tvg-name="KulturMD (1080p)" tvg-logo="https://i.imgur.com/io7cJ1Z.png" group-title="German",KulturMD (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/kulturmd_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RAN1 (1080p)" tvg-logo="https://i.imgur.com/zRg2BEa.png" group-title="German",RAN1 (1080p)
+http://58bd5b7a98e04.streamlock.net/medienasa-live/ran1_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Fireplace Vibes (2160p)" tvg-logo="" group-title="Undefined",Fireplace Vibes (2160p)
+https://d21izs34d0y5tl.cloudfront.net/Fireplace_4K_SONO20.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="GolfPass (1080p)" tvg-logo="" group-title="Undefined",GolfPass (1080p)
+https://d2icntm6fhxrry.cloudfront.net/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="KiKA (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/vZdNp5S.png" group-title="German",KiKA (1080p) [Not 24/7]
+https://kikahls.akamaized.net/hls/live/2022690/livetvkika_ww/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="OK Salzwedel (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/jDmiTOS.png" group-title="German",OK Salzwedel (1080p) [Not 24/7]
+http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-salzwedel_high/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="FilmRise DeGrassi la nouvelle génération" tvg-logo="" group-title="Undefined",FilmRise DeGrassi la nouvelle génération
+https://d39g1vxj2ef6in.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-rakuten-stitched/master.m3u8?ads.xumo_channelId=88883113
+#EXTINF:-1 tvg-id="" tvg-name="hr-fernsehen HD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/HR-Fernsehen_Logo_2023.svg/960px-HR-Fernsehen_Logo_2023.svg.png" group-title="German",hr-fernsehen HD
+https://dash4.antik.sk/live/test_hr_tizen/playlist.m3u8

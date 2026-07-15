@@ -47,3 +47,7 @@ https://aloula-redirect.vercel.app/10/playlist.m3u8
 https://streamer103.neterra.tv/thisisbulgaria/live.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="MBC Masr USA (1080p)" tvg-logo="https://i.imgur.com/o2elx0u.png" group-title="Arabic",MBC Masr USA (1080p)
 https://shd-gcp-live.edgenextcdn.net/live/bitmovin-mbc-masr-usa/cd8d40acdab28aac0582faa3bd3983f1/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Zalaegerszegi TV (360p)" tvg-logo="https://i.imgur.com/MLVPf0i.png" group-title="Hungarian",Zalaegerszegi TV (360p)
+https://cloudfront44.lexanetwork.com:1344/freerelay/zegtv.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV9 Marathi (720p)" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_TV9_MARATHI/images/LOGO_HD/image.png" group-title="Marathi",TV9 Marathi (720p)
+https://dyjmyiv3bp2ez.cloudfront.net/pub-iotv9marlygv8h/liveabr/playlist.m3u8
