@@ -13,3 +13,7 @@ http://213.91.179.28:8000/play/a0cr
 https://www.youtube.com/channel/UC4Ct8gIf9f0n4mdyGsFiZRA/live
 #EXTINF:-1 tvg-id="" tvg-name="Radio 1 Ⓨ" tvg-logo="" group-title="Hungary",Radio 1 Ⓨ
 https://www.youtube.com/watch?v=uH-R3i4vvWI
+#EXTINF:-1 tvg-id="" tvg-name="ABP Asmita (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/ABP_Asmita_logo.svg/500px-ABP_Asmita_logo.svg.png" group-title="Gujarati",ABP Asmita (1080p)
+https://d2l4ar6y3mrs4k.cloudfront.net/live-streaming/asmita-livetv/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="News18 Gujarati (1080p)" tvg-logo="https://xstreamcp-assets-msp.streamready.in/assets/LIVETV/LIVECHANNEL/LIVETV_LIVETVCHANNEL_NEWS18_GUJARATI/images/LOGO_HD/image.png" group-title="Gujarati",News18 Gujarati (1080p)
+https://n18syndication.akamaized.net/bpk-tv/News18_Gujarati_NW18_MOB/output01/master.m3u8

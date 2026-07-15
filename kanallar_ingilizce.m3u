@@ -265,3 +265,63 @@ https://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5fb5836fe
 http://cdnua05.hls.tv/645/hls/f62d71219200da4130d13b21d23fb23c/4791/stream.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Суспільне Тернопіль" tvg-logo="https://i.imgur.com/rxXyCY7.png" group-title="Ukraine",Суспільне Тернопіль
 http://cdnua05.hls.tv/647/hls/f62d71219200da4130d13b21d23fb23c/4789/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BritBox Mysteries (1080p)" tvg-logo="https://i.imgur.com/PJdzoLN.png" group-title="English",BritBox Mysteries (1080p)
+https://aegis-cloudfront-1.tubi.video/c95700f8-e51c-4a36-ad46-56f70fc9f1d9/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AKC TV (1080p)" tvg-logo="https://i.imgur.com/XRTfoSp.png" group-title="English",AKC TV (1080p)
+https://broadcast.blivenyc.com/speed/broadcast/22/desktop-playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CBN Gospel (720p)" tvg-logo="https://i.imgur.com/SHBAblV.png" group-title="English",CBN Gospel (720p)
+https://59d39900ebfb8.streamlock.net/ccbn/ccbn/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ausbiz TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/8vGGdB0.png" group-title="English",ausbiz TV (720p) [Not 24/7]
+https://d9quh89lh7dtw.cloudfront.net/public-output/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BET Soul (576p)" tvg-logo="https://i.imgur.com/VeuTWUb.png" group-title="English",BET Soul (576p)
+http://206.212.244.63/21/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CFTO-DT (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/CTV_logo_2018.svg/960px-CTV_logo_2018.svg.png" group-title="English",CFTO-DT (720p)
+http://stream.cammonitorplus.net/1712/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CBS (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/CBS_logo_%282020%29.svg/960px-CBS_logo_%282020%29.svg.png" group-title="English",CBS (1080p)
+http://stream.cammonitorplus.net/1783/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Business Rockstars (720p)" tvg-logo="https://i.imgur.com/vfAMWLJ.png" group-title="English",Business Rockstars (720p)
+https://stream-us-east-1.getpublica.com/playlist.m3u8?network_id=2220
+#EXTINF:-1 tvg-id="" tvg-name="BBC Earth Greece (1080p)" tvg-logo="https://i.imgur.com/nGSsUd4.png" group-title="English",BBC Earth Greece (1080p)
+http://185.102.171.218/BBCEarth/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CBN News Channel (1080p)" tvg-logo="https://i.imgur.com/9f9YMsA.png" group-title="English",CBN News Channel (1080p)
+https://fastly.live.brightcove.com/6380396819112/us-east-1/734546207001/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0IjoiczFpM3ZpLmVncmVzcy50N2M3emwiLCJhY2NvdW50X2lkIjoiNzM0NTQ2MjA3MDAxIiwiZWhuIjoiZmFzdGx5LmxpdmUuYnJpZ2h0Y292ZS5jb20iLCJpc3MiOiJibGl2ZS1wbGF5YmFjay1zb3VyY2UtYXBpIiwic3ViIjoicGF0aG1hcHRva2VuIiwiYXVkIjpbIjczNDU0NjIwNzAwMSJdLCJqdGkiOiI2MzgwMzk2ODE5MTEyIn0.GDYp4IWtzwPkupEWeeOavnioVknO-Ev3UGlHvM1rE6I/playlist-hls.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TNT (576p)" tvg-logo="https://i.imgur.com/T4A6rEI.png" group-title="Russian",TNT (576p)
+http://94.230.129.31:8080/THT/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV-3 (576p)" tvg-logo="https://i.imgur.com/JLAvq8O.png" group-title="Russian",TV-3 (576p)
+http://178.124.179.122:8080/TB-3/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ABC TV WA (720p)" tvg-logo="https://i.imgur.com/DPVQSjM.png" group-title="English",ABC TV WA (720p)
+https://c.mjh.nz/abc-wa.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Buzzfeed Unsolved" tvg-logo="https://images-0.rakuten.tv/storage/global-live-channel/translation/artwork/e16cfcc7-2040-4bd5-8339-16d499f8799e-width200-quality90.png" group-title="English",Buzzfeed Unsolved
+https://d39g1vxj2ef6in.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-rakuten-stitched/master.m3u8?ads.xumo_channelId=88883099
+#EXTINF:-1 tvg-id="" tvg-name="CBN Family (1080p)" tvg-logo="https://i.imgur.com/wDPkKT1.png" group-title="English",CBN Family (1080p)
+https://fastly.live.brightcove.com/6380399588112/us-east-1/734546207001/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0IjoiczFpM3ZpLmVncmVzcy50N2M3emwiLCJhY2NvdW50X2lkIjoiNzM0NTQ2MjA3MDAxIiwiZWhuIjoiZmFzdGx5LmxpdmUuYnJpZ2h0Y292ZS5jb20iLCJpc3MiOiJibGl2ZS1wbGF5YmFjay1zb3VyY2UtYXBpIiwic3ViIjoicGF0aG1hcHRva2VuIiwiYXVkIjpbIjczNDU0NjIwNzAwMSJdLCJqdGkiOiI2MzgwMzk5NTg4MTEyIn0.LYfIeObmX4AEStY_xCnPZwMJHXgOAPFMTKfztq-9F8U/playlist-hls.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CheddarU (720p)" tvg-logo="https://i.imgur.com/o5SA7rz.png" group-title="English",CheddarU (720p)
+http://40.160.24.52/CHEDDAR_BUSINESS/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Viasat Kino Comedy (720p)" tvg-logo="https://i.imgur.com/qVYt8kP.png" group-title="English",Viasat Kino Comedy (720p)
+http://ukr.ukrainske.tv/493/keytvainua/video.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Top Gear (720p)" tvg-logo="https://i.imgur.com/S6Su6QH.png" group-title="English",Top Gear (720p)
+https://jmp2.uk/plu-636adc255bcf470007d6e0e2.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ABC TV TAS (720p)" tvg-logo="https://i.imgur.com/DPVQSjM.png" group-title="English",ABC TV TAS (720p)
+https://c.mjh.nz/abc-tas.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ATXN2 (1080p)" tvg-logo="https://i.imgur.com/tSMtDlz.png" group-title="English",ATXN2 (1080p)
+https://cdn-atxn-01.vos360.video/Content/HLS/Live/channel(f97b5ddc-b7e4-dff8-9f10-8c16d0833639)/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ABC TV QLD (720p)" tvg-logo="https://i.imgur.com/DPVQSjM.png" group-title="English",ABC TV QLD (720p)
+https://c.mjh.nz/abc-qld.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Caribbean Hot 7 TV (720p)" tvg-logo="https://i.ibb.co/sjTS4xD/logo116x90-2.png" group-title="English",Caribbean Hot 7 TV (720p)
+https://586a9edea75f1.streamlock.net/caribbeanhot7tv/ch7-1.stream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ABC TV VIC (720p)" tvg-logo="https://i.imgur.com/DPVQSjM.png" group-title="English",ABC TV VIC (720p)
+https://c.mjh.nz/abc-vic.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Watch it KID! (720p)" tvg-logo="https://i.imgur.com/YNx0j1b.png" group-title="English",Watch it KID! (720p)
+https://stream-us-east-1.getpublica.com/playlist.m3u8?network_id=2245
+#EXTINF:-1 tvg-id="" tvg-name="ATXN3 (1080p)" tvg-logo="https://i.imgur.com/tSMtDlz.png" group-title="English",ATXN3 (1080p)
+https://cdn-atxn-01.vos360.video/Content/HLS/Live/channel(c55d1594-ad62-7434-aa17-4d71adb80f99)/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bilyonaryo News Channel (1080p)" tvg-logo="https://i.imgur.com/iTH9Z0j.png" group-title="English",Bilyonaryo News Channel (1080p)
+https://streams.comclark.com/transcode/bilyonaryo/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TSV (1080p)" tvg-logo="https://i.imgur.com/6p4weSK.png" group-title="Russian",TSV (1080p)
+https://tsv.md/stream/hls/tsv-online/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Bravo West (1080p)" tvg-logo="https://i.imgur.com/JmTIRLF.png" group-title="English",Bravo West (1080p)
+http://40.160.24.52/BRAVO_WEST/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Euronews Russian (720p)" tvg-logo="https://i.imgur.com/8t9mdg9.png" group-title="Russian",Euronews Russian (720p)
+https://cdn-euronews.akamaized.net/live/eds/euronews-ru/25071/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Cape Town TV (576p)" tvg-logo="https://i.imgur.com/Y8FK1Kk.png" group-title="English",Cape Town TV (576p)
+https://cdn.freevisiontv.co.za/sttv/smil:ctv.stream.smil/playlist.m3u8
