@@ -189,3 +189,21 @@ https://vidmody.com/vs/tt34605805
 https://vidmody.com/vs/tt0795351
 #EXTINF:-1 tvg-id="" tvg-name="NHK G (Tokyo) Ⓢ" tvg-logo="https://i.imgur.com/fAZ2BEZ.png" group-title="Japan",NHK G (Tokyo) Ⓢ
 http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gd01&isp=7
+#EXTINF:-1 tvg-id="" tvg-name="Jim" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/9/92/Jim_color_RGB.png" group-title="Finland",Jim
+https://live-fi.tvkaista.net/jim/live.m3u8?src=freetv
+#EXTINF:-1 tvg-id="" tvg-name="N1 Bosna i Hercegovina" tvg-logo="https://i.imgur.com/72oMSWz.png" group-title="Bosnia and Herzegovina",N1 Bosna i Hercegovina
+https://best-str.umn.cdn.united.cloud/stream?channel=n1bos&p=n1Sh4redSecre7iNf0&sp=n1info&stream=sp1400&u=n1info
+#EXTINF:-1 tvg-id="" tvg-name="CCTV-4 中文国际（亚） Ⓨ" tvg-logo="https://i.imgur.com/ovUSVEQ.png" group-title="China",CCTV-4 中文国际（亚） Ⓨ
+https://www.youtube.com/channel/UC4K_LI-Tn3-LshNgG0-YypQ/live
+#EXTINF:-1 tvg-id="" tvg-name="SBT Ⓨ" tvg-logo="https://logodownload.org/wp-content/uploads/2013/12/sbt-logo.png" group-title="Brazil",SBT Ⓨ
+https://www.youtube.com/watch?v=ABVQXgr2LW4
+#EXTINF:-1 tvg-id="" tvg-name="India Today Ⓨ" tvg-logo="https://i.imgur.com/C7KK3Fd.png" group-title="India",India Today Ⓨ
+https://www.youtube.com/watch?v=sYZtOFzM78M
+#EXTINF:-1 tvg-id="" tvg-name="Radio ZETA" tvg-logo="https://i.imgur.com/0MgCm1n.png" group-title="Italy",Radio ZETA
+https://dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S9346184/XEx1LqlYbNic/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Global News" tvg-logo="https://i.imgur.com/IpfmG93.png" group-title="Canada",Global News
+https://i.mjh.nz/PlutoTV/62cbef9ebb857100072fc187-alt.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DD News Ⓨ" tvg-logo="https://i.imgur.com/znnVCEf.png" group-title="India",DD News Ⓨ
+https://www.youtube.com/c/ddnews/live
+#EXTINF:-1 tvg-id="" tvg-name="RadioFreccia" tvg-logo="https://i.imgur.com/J5N9F7Z.png" group-title="Italy",RadioFreccia
+https://dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S3160845/0tuSetc8UFkF/playlist.m3u8

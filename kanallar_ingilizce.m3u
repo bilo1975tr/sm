@@ -9,3 +9,5 @@ https://hls.cdn.ua/tva.ua_live/livestream/chunklist_.m3u8
 https://www.youtube.com/@LtvuSeTube/live
 #EXTINF:-1 tvg-id="" tvg-name="Карусель Ⓢ" tvg-logo="https://i.imgur.com/4fFMlVq.png" group-title="Russia",Карусель Ⓢ
 https://streaming102.interskytech.com/live/232.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="LN+ Ⓨ" tvg-logo="https://i.imgur.com/vJYzGt1.png" group-title="Argentina",LN+ Ⓨ
+https://www.youtube.com/c/LaNacionMas/live

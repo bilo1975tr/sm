@@ -1,0 +1,5 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="franceinfo: Ⓨ" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Franceinfo.svg/640px-Franceinfo.svg.png" group-title="France",franceinfo: Ⓨ
+https://www.youtube.com/c/franceinfo/live
+#EXTINF:-1 tvg-id="" tvg-name="Euronews Français Ⓨ" tvg-logo="https://i.imgur.com/3Lr5iAj.png" group-title="France",Euronews Français Ⓨ
+https://www.youtube.com/euronewsfr/live
