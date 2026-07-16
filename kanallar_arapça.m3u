@@ -5,3 +5,5 @@ https://tab.parlament.hu:446/edgelive/smil:mkogytab.smil/playlist.m3u8
 https://plenaris.parlament.hu:446/edgelive/smil:mkogyplen.smil/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="EWTN TV" tvg-logo="https://katolikus.tv/wp-content/themes/bonum/img/ewtn-badge.jpg" group-title="Hungary",EWTN TV
 https://hls.iptvservice.eu/hls/ewtn-hd.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Mahallede Güzel Bir Gün (2019)" tvg-logo="https://image.tmdb.org/t/p/w200/uFB628pIBCMIlhqtzCytjzkHAOh.jpg" group-title="Tarih",Mahallede Güzel Bir Gün (2019)
+https://vs8.photour.org/v/109184coaorg/master.m3u8
