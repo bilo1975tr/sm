@@ -1,0 +1,17 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="BIZ Cinema (1080p)" tvg-logo="https://biztv.uz/static/media/biz-cinema.286b83dc.png" group-title="Uzbek",BIZ Cinema (1080p)
+https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Sport" tvg-logo="https://i.imgur.com/2WJE9CM.png" group-title="Uzbek",Sport
+https://stream8.cinerama.uz/1004/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Quran" tvg-logo="https://upload.wikimedia.org/wikipedia/fa/d/df/Quarntvlogo.png" group-title="Persian",Quran
+https://ncdn.telewebion.ir/quran/live/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Qazvin" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/QazvinTV.svg/960px-QazvinTV.svg.png" group-title="Persian",Qazvin
+https://ncdn.telewebion.ir/qazvin/live/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Renessans TV (576p)" tvg-logo="https://i.imgur.com/cVlcqCX.png" group-title="Uzbek",Renessans TV (576p)
+https://stream8.cinerama.uz/1221/tracks-v1a1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BIZ TV (1080p)" tvg-logo="https://biztv.uz/static/media/logo.5f993187.png" group-title="Uzbek",BIZ TV (1080p)
+https://fl.biztv.media/biz_tv_720_uni8jhub4h8fub4idejswh8dh3j94finbu4nidj39inwsj92in3d/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Top News (720p)" tvg-logo="https://i.imgur.com/tRFnV9M.png" group-title="Thai",Top News (720p)
+https://live.topnews.co.th/hls/topnews_a_720.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BIZ Music (1080p)" tvg-logo="https://i.ibb.co/DfsCJwk/Uz-biz-music-5462.jpg" group-title="Uzbek",BIZ Music (1080p)
+https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8

@@ -1,0 +1,35 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="TVB Vietnam (1080p)" tvg-logo="https://raw.githubusercontent.com/songwenhui239/Songwenhui239/refs/heads/main/TVB%20Vietnam.jpeg" group-title="Vietnamese",TVB Vietnam (1080p)
+https://amg01868-amg01868c3-tvbanywhere-us-4491.playouts.now.amagi.tv/playlist/amg01868-tvbusa-tvbvietnam-tvbanywhereus/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RIT TV (1080p)" tvg-logo="https://i.imgur.com/Unjs1wi.png" group-title="Portuguese",RIT TV (1080p)
+https://acesso.ecast.site:3648/live/ritlive.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Adorar (720p)" tvg-logo="https://storage.googleapis.com/soultv-prod-media/media/brand/Logo_Adorar_100x100_s5tW1gW.png" group-title="Portuguese",TV Adorar (720p)
+https://cdn-tiva-isaocorp-cloudecast-com.smartbit.co/tvadorar/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Aldeia (720p)" tvg-logo="https://i.imgur.com/rsfnv4Z.png" group-title="Portuguese",TV Aldeia (720p)
+https://stmv1.samcast.com.br/giovane7843/giovane7843/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Petlovers TV" tvg-logo="https://petloverstv.com.br/storage/357/config/yqP4nOugWRxRFCmgLqXF4gRKyM9ybsAOfHgUaqPt.png" group-title="Portuguese",Petlovers TV
+https://video04.logicahost.com.br/petloverstv/petloverstv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Evangelizar (720p)" tvg-logo="https://i.imgur.com/IrYR7Kp.png" group-title="Portuguese",TV Evangelizar (720p)
+http://45.162.64.114/EVANGELIZAR/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Grande Natal (1080p)" tvg-logo="https://i.imgur.com/MTuErdw.png" group-title="Portuguese",TV Grande Natal (1080p)
+http://tvgrandenatalhd.duckdns.org:8080/hls/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Senado (720p)" tvg-logo="https://i.imgur.com/duy6waL.png" group-title="Portuguese",TV Senado (720p)
+http://45.162.64.114/TV_SENADO/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pet Club TV (1080p)" tvg-logo="https://i.imgur.com/ykPNNwQ.png" group-title="Yue Chinese",Pet Club TV (1080p)
+https://petclub-samsungaus.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Maná Moçambique (1080p)" tvg-logo="https://i.imgur.com/R5YrV5s.png" group-title="Portuguese",TV Maná Moçambique (1080p)
+https://w2.manasat.com/tvmana-mz/smil:tvmana-mz.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="HanoiTV1 (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/Je3K25E.png" group-title="Vietnamese",HanoiTV1 (1080p) [Geo-blocked]
+https://cloudstreamhntv.tek4tv.vn/capture/smil:HN1.smil/chunklist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVitapé (720p)" tvg-logo="https://i.imgur.com/XeqcwKe.png" group-title="Portuguese",TVitapé (720p)
+https://stream01.msolutionbrasil.com.br/hls/tvitape/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Intercomarcal TV (576p) [Not 24/7]" tvg-logo="https://i.imgur.com/KLPSnAT.png" group-title="Spanish",Intercomarcal TV (576p) [Not 24/7]
+https://streamingtvi.gestec-video.com/hls/tvixa.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Bahia (1080i)" tvg-logo="https://i.imgur.com/sJOrvHg.png" group-title="Portuguese",TV Bahia (1080i)
+http://hls1.sua.tv/live/globotvbahiafhdbr2/s.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Life America (720p)" tvg-logo="https://i.imgur.com/HZI0ilU.png" group-title="Portuguese",TV Life America (720p)
+https://streaming.cloudecast.com/hls/tvlifeamerica/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Gazeta (720p)" tvg-logo="https://i.imgur.com/0sksWse.png" group-title="Portuguese",TV Gazeta (720p)
+http://45.162.64.114/GAZETA/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Pampa" tvg-logo="https://i.imgur.com/Cnc1Mqo.png" group-title="Portuguese",TV Pampa
+https://video04.logicahost.com.br/tvpampa/tvpampa/playlist.m3u8
