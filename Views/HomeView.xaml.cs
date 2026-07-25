@@ -21,11 +21,12 @@ namespace StreamMesh.Views
         private int _totalPages = 1;
         private System.Windows.Threading.DispatcherTimer _viewerCountTimer;
 
+        private bool _isChannelsLoaded = false;
+
         public HomeView()
         {
             InitializeComponent();
             _databaseService = new DatabaseService();
-            LoadChannels();
 
             _viewerCountTimer = new System.Windows.Threading.DispatcherTimer();
             _viewerCountTimer.Interval = TimeSpan.FromSeconds(20);
@@ -54,6 +55,7 @@ namespace StreamMesh.Views
                 Dispatcher.Invoke(() => 
                 {
                     _allChannels = channels;
+                    _isChannelsLoaded = true;
                     UpdateViewerCountsAsync();
                     if (_currentPage < 1) _currentPage = 1;
 
@@ -123,12 +125,15 @@ namespace StreamMesh.Views
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadChannels();
+            if (!_isChannelsLoaded || _allChannels == null)
+            {
+                LoadChannels();
+            }
         }
 
         private void UserControl_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            if (this.Visibility == Visibility.Visible)
+            if (this.Visibility == Visibility.Visible && (!_isChannelsLoaded || _allChannels == null))
             {
                 LoadChannels();
             }
@@ -149,6 +154,20 @@ namespace StreamMesh.Views
 
         private List<Channel> _filteredChannels;
 
+        private void ViewModeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ViewModeComboBox?.SelectedItem is ComboBoxItem item && item.Tag != null)
+            {
+                string mode = item.Tag.ToString();
+                bool isPoster = mode == "Poster";
+                Channel.IsPosterMode = isPoster;
+                if (_filteredChannels != null)
+                {
+                    FilterChannels();
+                }
+            }
+        }
+
         private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_filteredChannels != null)
@@ -158,87 +177,98 @@ namespace StreamMesh.Views
             }
         }
 
-        private void FilterChannels()
+        private async void FilterChannels()
         {
             if (_allChannels == null) return;
 
-            string searchText = SearchBox.Text.ToLower();
-            _filteredChannels = string.IsNullOrWhiteSpace(searchText) 
-                ? _allChannels 
-                : _allChannels.Where(c => 
-                    (c.Name != null && c.Name.ToLower().Contains(searchText)) || 
-                    (c.GroupTitle != null && c.GroupTitle.ToLower().Contains(searchText))).ToList();
+            // UI thread parametrelerini yakala
+            string searchText = SearchBox?.Text?.ToLower() ?? "";
+            string catTag = _selectedCategoryTag;
+            int curPage = _currentPage;
+            int pageSize = _pageSize;
 
-            if (_selectedCategoryTag == "Favorites")
-            {
-                _filteredChannels = _filteredChannels.Where(c => c.IsFavorite).ToList();
-            }
-            else if (_selectedCategoryTag == "Recent")
-            {
-                var recentProgress = _databaseService.GetAllWatchProgress();
-                _filteredChannels = _filteredChannels
-                    .Where(c => recentProgress.ContainsKey(c.Id))
-                    .OrderByDescending(c => recentProgress[c.Id].LastWatched)
-                    .Take(50)
-                    .ToList();
-            }
-            else if (_selectedCategoryTag != "All")
-            {
-                string targetCategory = "TV";
-                if (_selectedCategoryTag == "Movies") targetCategory = "Film";
-                else if (_selectedCategoryTag == "Series") targetCategory = "Dizi";
-                else if (_selectedCategoryTag == "Radio") targetCategory = "Radyo";
-                else targetCategory = _selectedCategoryTag;
+            string selectedGenre = "Hepsi";
+            string selectedYear = "Hepsi";
+            string selectedImdbText = "Hepsi";
 
-                string catUpper = targetCategory.ToUpper().Trim();
-                if (catUpper.Contains("RADYO") || catUpper.Contains("RADIO"))
+            if (catTag == "Movies")
+            {
+                if (MovieGenreComboBox?.SelectedItem is ComboBoxItem genreItem) selectedGenre = genreItem.Content.ToString();
+                if (MovieYearComboBox?.SelectedItem is ComboBoxItem yearItem) selectedYear = yearItem.Content.ToString();
+                if (MovieImdbComboBox?.SelectedItem is ComboBoxItem imdbItem) selectedImdbText = imdbItem.Content.ToString();
+            }
+
+            string sortType = "Alfabetik (A-Z)";
+            if (SortComboBox?.SelectedItem is ComboBoxItem sortItem)
+            {
+                sortType = sortItem.Content.ToString();
+            }
+
+            var profile = StreamMesh.Services.Auth.UserService.GetProfile();
+            var recentProgress = _databaseService.GetAllWatchProgress();
+            var sourceChannels = _allChannels.ToList();
+
+            await System.Threading.Tasks.Task.Run(() =>
+            {
+                var filtered = string.IsNullOrWhiteSpace(searchText) 
+                    ? sourceChannels 
+                    : sourceChannels.Where(c => 
+                        (c.Name != null && c.Name.ToLower().Contains(searchText)) || 
+                        (c.GroupTitle != null && c.GroupTitle.ToLower().Contains(searchText))).ToList();
+
+                if (catTag == "Favorites")
                 {
-                    _filteredChannels = _filteredChannels.Where(c => 
-                        c.Category != null && 
-                        (c.Category.ToUpper().Contains("RADYO") || c.Category.ToUpper().Contains("RADIO"))
-                    ).ToList();
+                    filtered = filtered.Where(c => c.IsFavorite).ToList();
                 }
-                else
+                else if (catTag == "Recent")
                 {
-                    _filteredChannels = _filteredChannels.Where(c => 
-                        c.Category != null && 
-                        (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
-                    ).ToList();
+                    filtered = filtered
+                        .Where(c => recentProgress.ContainsKey(c.Id))
+                        .OrderByDescending(c => recentProgress[c.Id].LastWatched)
+                        .Take(50)
+                        .ToList();
                 }
-            }
-
-            // Film özel filtrelerini uygula
-            bool isMovieCat = _selectedCategoryTag == "Movies";
-            
-            if (isMovieCat)
-            {
-                // 1. Film Türü Filtresi (İçerir mantığıyla süzüyoruz)
-                if (MovieGenreComboBox != null && MovieGenreComboBox.SelectedItem is ComboBoxItem genreItem)
+                else if (catTag != "All")
                 {
-                    string selectedGenre = genreItem.Content.ToString();
-                    if (selectedGenre != "Hepsi")
+                    string targetCategory = "TV";
+                    if (catTag == "Movies") targetCategory = "Film";
+                    else if (catTag == "Series") targetCategory = "Dizi";
+                    else if (catTag == "Radio") targetCategory = "Radyo";
+                    else targetCategory = catTag;
+
+                    string catUpper = targetCategory.ToUpper().Trim();
+                    if (catUpper.Contains("RADYO") || catUpper.Contains("RADIO"))
                     {
-                        _filteredChannels = _filteredChannels.Where(c => 
-                            c.MovieGenre != null && 
-                            c.MovieGenre.IndexOf(selectedGenre, StringComparison.OrdinalIgnoreCase) >= 0
+                        filtered = filtered.Where(c => 
+                            c.Category != null && 
+                            (c.Category.ToUpper().Contains("RADYO") || c.Category.ToUpper().Contains("RADIO"))
+                        ).ToList();
+                    }
+                    else
+                    {
+                        filtered = filtered.Where(c => 
+                            c.Category != null && 
+                            (c.Category.ToUpper().Contains(catUpper) || catUpper.Contains(c.Category.ToUpper()))
                         ).ToList();
                     }
                 }
 
-                // 2. Yapım Yılı Filtresi
-                if (MovieYearComboBox != null && MovieYearComboBox.SelectedItem is ComboBoxItem yearItem)
+                // Film özel filtreleri
+                if (catTag == "Movies")
                 {
-                    string selectedYear = yearItem.Content.ToString();
+                    if (selectedGenre != "Hepsi")
+                    {
+                        filtered = filtered.Where(c => 
+                            c.MovieGenre != null && 
+                            c.MovieGenre.IndexOf(selectedGenre, StringComparison.OrdinalIgnoreCase) >= 0
+                        ).ToList();
+                    }
+
                     if (selectedYear != "Hepsi")
                     {
-                        _filteredChannels = _filteredChannels.Where(c => c.MovieYear != null && c.MovieYear.Equals(selectedYear, StringComparison.OrdinalIgnoreCase)).ToList();
+                        filtered = filtered.Where(c => c.MovieYear != null && c.MovieYear.Equals(selectedYear, StringComparison.OrdinalIgnoreCase)).ToList();
                     }
-                }
 
-                // 3. Minimum IMDb Puanı Filtresi (IMDb süzgeci)
-                if (MovieImdbComboBox != null && MovieImdbComboBox.SelectedItem is ComboBoxItem imdbItem)
-                {
-                    string selectedImdbText = imdbItem.Content.ToString();
                     if (selectedImdbText != "Hepsi")
                     {
                         double minImdb = 0.0;
@@ -247,7 +277,7 @@ namespace StreamMesh.Views
                         else if (selectedImdbText.Contains("7.0")) minImdb = 7.0;
                         else if (selectedImdbText.Contains("6.0")) minImdb = 6.0;
 
-                        _filteredChannels = _filteredChannels.Where(c => 
+                        filtered = filtered.Where(c => 
                         {
                             if (double.TryParse(c.ImdbRating, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double rating))
                             {
@@ -257,155 +287,171 @@ namespace StreamMesh.Views
                         }).ToList();
                     }
                 }
-            }
 
-            // Dil filtresini (profile.Languages) ve dil dengelemeyi/normalizasyonu uygula
-            var profile = StreamMesh.Services.Auth.UserService.GetProfile();
-            if (profile != null && profile.Languages != null && profile.Languages.Count > 0)
-            {
-                bool showAllLangs = profile.Languages.Any(l => 
-                    !string.IsNullOrEmpty(l) && 
-                    (l.Equals("Tümü", StringComparison.OrdinalIgnoreCase) || 
-                     l.Equals("Hepsi", StringComparison.OrdinalIgnoreCase) || 
-                     l.Equals("All", StringComparison.OrdinalIgnoreCase))
-                );
-
-                if (!showAllLangs)
+                // Dil filtresi (Çoklu dil virgüllü destek)
+                if (profile != null && profile.Languages != null && profile.Languages.Count > 0)
                 {
-                    var activeLangs = profile.Languages
-                        .Where(l => !string.IsNullOrEmpty(l) && l != "Hiçbiri")
-                        .Select(NormalizeLanguage)
-                        .ToList();
+                    bool showAllLangs = profile.Languages.Any(l => 
+                        !string.IsNullOrEmpty(l) && 
+                        (l.Equals("Tümü", StringComparison.OrdinalIgnoreCase) || 
+                         l.Equals("Hepsi", StringComparison.OrdinalIgnoreCase) || 
+                         l.Equals("All", StringComparison.OrdinalIgnoreCase))
+                    );
 
-                    if (activeLangs.Count > 0)
+                    if (!showAllLangs)
                     {
-                        _filteredChannels = _filteredChannels.Where(c => 
-                            string.IsNullOrEmpty(c.Language) || 
-                            c.Language == "Bilinmiyor" || 
-                            activeLangs.Contains(NormalizeLanguage(c.Language))
-                        ).ToList();
+                        var activeLangs = profile.Languages
+                            .Where(l => !string.IsNullOrEmpty(l) && l != "Hiçbiri")
+                            .Select(Channel.NormalizeLanguage)
+                            .ToList();
+
+                        if (activeLangs.Count > 0)
+                        {
+                            filtered = filtered.Where(c => 
+                            {
+                                if (string.IsNullOrEmpty(c.Language) || c.Language == "Bilinmiyor" || c.Language == "und")
+                                    return true;
+
+                                var chLangs = c.Language.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                                        .Select(Channel.NormalizeLanguage);
+                                return chLangs.Any(l => activeLangs.Contains(l));
+                            }).ToList();
+                        }
                     }
                 }
-            }
 
-            // Dizi kategorisindeki kanalları serilerine göre akıllıca tek kart altında grupla
-            var groupedResult = new List<Channel>();
-            var diziList = _filteredChannels.Where(c => c.Category != null && c.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).ToList();
-            var otherList = _filteredChannels.Where(c => c.Category == null || !c.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).ToList();
+                // Dizi gruplama
+                var groupedResult = new List<Channel>();
+                var diziList = filtered.Where(c => c.Category != null && c.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).ToList();
+                var otherList = filtered.Where(c => c.Category == null || !c.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).ToList();
 
-            if (diziList.Count > 0)
-            {
-                var groups = diziList.GroupBy(c => {
-                    var det = Channel.ParseSeriesDetails(c.Name, c.Url);
-                    return (det.SeriesName.ToLowerInvariant().Trim(), det.Year);
-                }).ToList();
-
-                foreach (var g in groups)
+                if (diziList.Count > 0)
                 {
-                    var episodes = g.OrderBy(e => {
-                        var det = Channel.ParseSeriesDetails(e.Name, e.Url);
-                        return det.Season * 10000 + det.Episode;
+                    var groups = diziList.GroupBy(c => {
+                        var det = Channel.ParseSeriesDetails(c.Name, c.Url);
+                        return (det.SeriesName.ToLowerInvariant().Trim(), det.Year);
                     }).ToList();
 
-                    var firstEp = episodes[0];
-                    var seriesDet = Channel.ParseSeriesDetails(firstEp.Name, firstEp.Url);
-
-                    var repChannel = new Channel
+                    foreach (var g in groups)
                     {
-                        Id = firstEp.Id,
-                        Name = seriesDet.SeriesName,
-                        Category = "Dizi",
-                        LogoUrl = firstEp.LogoUrl,
-                        GroupTitle = "Dizi",
-                        Language = firstEp.Language,
-                        IsFavorite = episodes.Any(e => e.IsFavorite),
-                        IsVerified = episodes.All(e => e.IsVerified),
-                        CreatedAt = episodes.Max(e => e.CreatedAt),
-                        Url = firstEp.Url,
-                        IsSeriesGroup = true,
-                        SeriesEpisodes = episodes,
-                        SeriesName = seriesDet.SeriesName,
-                        TotalSeasonsCount = episodes.Select(e => Channel.ParseSeriesDetails(e.Name, e.Url).Season).Distinct().Count(),
-                        TotalEpisodesCount = episodes.Count,
-                        PersonalWatchCount = episodes.Sum(e => e.PersonalWatchCount),
-                        ViewersCount = episodes.Sum(e => e.ViewersCount)
-                    };
+                        var episodes = g.OrderBy(e => {
+                            var det = Channel.ParseSeriesDetails(e.Name, e.Url);
+                            return det.Season * 10000 + det.Episode;
+                        }).ToList();
 
-                    groupedResult.Add(repChannel);
+                        var firstEp = episodes[0];
+                        var seriesDet = Channel.ParseSeriesDetails(firstEp.Name, firstEp.Url);
+
+                        var repChannel = new Channel
+                        {
+                            Id = firstEp.Id,
+                            Name = seriesDet.SeriesName,
+                            Category = "Dizi",
+                            LogoUrl = firstEp.LogoUrl,
+                            GroupTitle = "Dizi",
+                            Language = firstEp.Language,
+                            IsFavorite = episodes.Any(e => e.IsFavorite),
+                            IsVerified = episodes.All(e => e.IsVerified),
+                            CreatedAt = episodes.Max(e => e.CreatedAt),
+                            Url = firstEp.Url,
+                            IsSeriesGroup = true,
+                            SeriesEpisodes = episodes,
+                            SeriesName = seriesDet.SeriesName,
+                            TotalSeasonsCount = episodes.Select(e => Channel.ParseSeriesDetails(e.Name, e.Url).Season).Distinct().Count(),
+                            TotalEpisodesCount = episodes.Count,
+                            PersonalWatchCount = episodes.Sum(e => e.PersonalWatchCount),
+                            ViewersCount = episodes.Sum(e => e.ViewersCount)
+                        };
+
+                        groupedResult.Add(repChannel);
+                    }
                 }
-            }
-            groupedResult.AddRange(otherList);
-            _filteredChannels = groupedResult;
+                groupedResult.AddRange(otherList);
+                filtered = groupedResult;
 
-            // Apply Sorting
-            if (SortComboBox != null && SortComboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                string sortType = selectedItem.Content.ToString();
+                // Sıralama
                 switch (sortType)
                 {
                     case "Alfabetik (A-Z)":
-                        _filteredChannels = _filteredChannels.OrderBy(c => c.Name).ToList();
+                        filtered = filtered.OrderBy(c => c.Name).ToList();
                         break;
                     case "Alfabetik (Z-A)":
-                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.Name).ToList();
+                        filtered = filtered.OrderByDescending(c => c.Name).ToList();
                         break;
                     case "Eklenme (Yeni)":
-                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.CreatedAt).ToList();
+                        filtered = filtered.OrderByDescending(c => c.CreatedAt).ToList();
                         break;
                     case "Eklenme (Eski)":
-                        _filteredChannels = _filteredChannels.OrderBy(c => c.CreatedAt).ToList();
+                        filtered = filtered.OrderBy(c => c.CreatedAt).ToList();
                         break;
                     case "Favoriler Önce":
-                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.Name).ToList();
+                        filtered = filtered.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.Name).ToList();
                         break;
                     case "Çok İzlenenler":
-                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.ViewersCount).ToList();
+                        filtered = filtered.OrderByDescending(c => c.ViewersCount).ToList();
                         break;
                     case "Sizin Çok İzledikleriniz":
-                        _filteredChannels = _filteredChannels.OrderByDescending(c => c.PersonalWatchCount).ToList();
+                        filtered = filtered.OrderByDescending(c => c.PersonalWatchCount).ToList();
+                        break;
+                    default:
+                        filtered = filtered.OrderBy(c => c.Name).ToList();
                         break;
                 }
-            }
-            else
-            {
-                _filteredChannels = _filteredChannels.OrderBy(c => c.Name).ToList();
-            }
 
-            _totalPages = (int)Math.Ceiling(_filteredChannels.Count / (double)_pageSize);
-            if (_totalPages == 0) _totalPages = 1;
-            if (_currentPage > _totalPages) _currentPage = _totalPages;
+                int totalPages = (int)Math.Ceiling(filtered.Count / (double)pageSize);
+                if (totalPages == 0) totalPages = 1;
+                if (curPage > totalPages) curPage = totalPages;
 
-            var paged = _filteredChannels.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
+                var paged = filtered.Skip((curPage - 1) * pageSize).Take(pageSize).ToList();
 
-            var epgService = new StreamMesh.Services.EpgService();
-            StreamMesh.Services.LogService.Log($"[HomeView] Sayfadaki {paged.Count} kanal için TOPLU EPG aranıyor...");
-            
-            var epgDict = epgService.GetCurrentEpgsForChannels(paged);
+                // EPG eşleştirme
+                var epgService = new StreamMesh.Services.EpgService();
+                var epgDict = epgService.GetCurrentEpgsForChannels(paged);
 
-            foreach (var ch in paged)
-            {
-                if (epgDict.TryGetValue(ch.Id, out var curEpg))
+                foreach (var ch in paged)
                 {
-                    ch.CurrentEpgTitle = curEpg.Title;
-                    ch.CurrentEpgTime = $"{curEpg.StartTime:HH:mm} - {curEpg.EndTime:HH:mm}";
+                    if (epgDict.TryGetValue(ch.Id, out var curEpg))
+                    {
+                        ch.CurrentEpgTitle = curEpg.Title;
+                        ch.CurrentEpgTime = $"{curEpg.StartTime:HH:mm} - {curEpg.EndTime:HH:mm}";
+                    }
+                    else
+                    {
+                        ch.CurrentEpgTitle = "EPG Bulunamadı";
+                        ch.CurrentEpgTime = "--:--";
+                    }
                 }
-                else
-                {
-                    ch.CurrentEpgTitle = "EPG Bulunamadı";
-                    ch.CurrentEpgTime = "--:--";
-                }
-            }
 
-            ChannelGrid.ItemsSource = paged;
-            TotalCountText.Text = string.Format(LocalizationManager.Instance["Home_Total"], _filteredChannels.Count);
-            
-            // Eğer Localization içinde Home_Page yoksa null dönebiliyor bu yüzden direkt gösteriyoruz
-            if (PageInfoText != null)
-            {
-                PageInfoText.Text = $"{_currentPage} / {_totalPages}";
-            }
-            PrevPageBtn.IsEnabled = _currentPage > 1;
-            NextPageBtn.IsEnabled = _currentPage < _totalPages;
+                // UI güncellemesi
+                Dispatcher.Invoke(() =>
+                {
+                    _filteredChannels = filtered;
+                    _totalPages = totalPages;
+                    _currentPage = curPage;
+
+                    ChannelGrid.ItemsSource = paged;
+                    TotalCountText.Text = string.Format(LocalizationManager.Instance["Home_Total"], _filteredChannels.Count);
+
+                    if (PageInfoText != null)
+                    {
+                        PageInfoText.Text = $"{_currentPage} / {_totalPages}";
+                    }
+                    if (PrevPageBtn != null) PrevPageBtn.IsEnabled = _currentPage > 1;
+                    if (NextPageBtn != null) NextPageBtn.IsEnabled = _currentPage < _totalPages;
+                });
+
+                // Arka plan metadata zenginleştirme
+                System.Threading.Tasks.Task.Run(async () =>
+                {
+                    foreach (var ch in paged)
+                    {
+                        if (ch.Category == "Film" || ch.Category == "Dizi" || ch.Category == "Movies" || ch.Category == "Series")
+                        {
+                            await MetadataService.EnrichChannelMetadataAsync(ch, _databaseService);
+                        }
+                    }
+                });
+            });
         }
 
         private void Category_Click(object sender, RoutedEventArgs e)

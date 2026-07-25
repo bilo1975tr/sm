@@ -13,7 +13,7 @@ namespace StreamMesh.Services
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private string _currentLanguage = "Türkçe";
+        private string _currentLanguage = "tr";
         public string CurrentLanguage 
         {
             get => _currentLanguage;
@@ -42,12 +42,14 @@ namespace StreamMesh.Services
 
         private LocalizationManager()
         {
-            LoadTranslations("Türkçe");
+            LoadTranslations("tr");
         }
 
-        public void LoadTranslations(string languageName)
+        public void LoadTranslations(string languageCode)
         {
             _currentDictionary.Clear();
+            
+            string lang = (languageCode ?? "tr").ToLowerInvariant().Trim();
             
             // Default Turkish
             // -- Login --
@@ -141,7 +143,7 @@ namespace StreamMesh.Services
             _currentDictionary["Stats_SysConsole"] = "🖥 Sistem ve Ağ Konsolu";
             _currentDictionary["Stats_Waiting"] = "Bekleniyor";
 
-            if (languageName == "Almanca")
+            if (lang == "de" || lang == "deutsch" || lang == "almanca")
             {
                 _currentDictionary["Title"] = "StreamMesh - Anmelden / Registrieren";
                 _currentDictionary["StreamMeshNetwork"] = "StreamMesh Cloud Beitreten";
@@ -230,7 +232,7 @@ namespace StreamMesh.Services
                 _currentDictionary["Stats_SysConsole"] = "🖥 System- und Netzwerkkonsole";
                 _currentDictionary["Stats_Waiting"] = "Warten";
             }
-            else if (languageName == "İngilizce")
+            else if (lang == "en" || lang == "english" || lang == "ingilizce" || lang == "i̇ngilizce")
             {
                 _currentDictionary["Title"] = "StreamMesh - Login / Register";
                 _currentDictionary["StreamMeshNetwork"] = "Join StreamMesh Cloud";

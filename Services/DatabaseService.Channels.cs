@@ -28,8 +28,8 @@ namespace StreamMesh.Services
                     connection.Open();
                     var command = connection.CreateCommand();
                     command.CommandText = @"
-                        INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified, IsLocked, Notes, IsPremium)
-                        VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified, @IsLocked, @Notes, @IsPremium)
+                        INSERT INTO Channels (Id, Name, EpgId, EpgUrl, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite, IsVerified, IsLocked, Notes, IsPremium, ImdbId, Overview, BackdropUrl, [Cast])
+                        VALUES (@Id, @Name, @EpgId, @EpgUrl, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, @IsFavorite, @IsVerified, @IsLocked, @Notes, @IsPremium, @ImdbId, @Overview, @BackdropUrl, @Cast)
                         ON CONFLICT(Id) DO UPDATE SET
                             Name=excluded.Name,
                             EpgId=excluded.EpgId,
@@ -45,7 +45,11 @@ namespace StreamMesh.Services
                             IsVerified=excluded.IsVerified,
                             IsLocked=excluded.IsLocked,
                             Notes=excluded.Notes,
-                            IsPremium=excluded.IsPremium;
+                            IsPremium=excluded.IsPremium,
+                            ImdbId=excluded.ImdbId,
+                            Overview=excluded.Overview,
+                            BackdropUrl=excluded.BackdropUrl,
+                            [Cast]=excluded.[Cast];
                     ";
                     command.Parameters.AddWithValue("@Id", channel.Id);
                     command.Parameters.AddWithValue("@Name", channel.Name ?? string.Empty);
@@ -65,6 +69,10 @@ namespace StreamMesh.Services
                     command.Parameters.AddWithValue("@IsLocked", channel.IsLocked ? 1 : 0);
                     command.Parameters.AddWithValue("@Notes", channel.Notes ?? string.Empty);
                     command.Parameters.AddWithValue("@IsPremium", channel.IsPremium ? 1 : 0);
+                    command.Parameters.AddWithValue("@ImdbId", channel.ImdbId ?? string.Empty);
+                    command.Parameters.AddWithValue("@Overview", channel.Overview ?? string.Empty);
+                    command.Parameters.AddWithValue("@BackdropUrl", channel.BackdropUrl ?? string.Empty);
+                    command.Parameters.AddWithValue("@Cast", channel.Cast ?? string.Empty);
                     
                     command.ExecuteNonQuery();
                     ClearChannelCache();
@@ -505,7 +513,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium FROM Channels ORDER BY AddedDate DESC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium, ImdbId, Overview, BackdropUrl, [Cast] FROM Channels ORDER BY AddedDate DESC";
                 
                 using (var reader = command.ExecuteReader())
                 {
@@ -520,7 +528,7 @@ namespace StreamMesh.Services
                             LogoUrl = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                             SourceType = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                             Category = reader.IsDBNull(6) ? "TV" : reader.GetString(6),
-                            Language = reader.IsDBNull(7) ? "Bilinmiyor" : reader.GetString(7),
+                            Language = reader.IsDBNull(7) ? "und" : reader.GetString(7),
                             PlaylistUrl = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                             IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
@@ -530,7 +538,11 @@ namespace StreamMesh.Services
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
                             IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
                             Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
-                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1
+                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1,
+                            ImdbId = reader.FieldCount > 18 && !reader.IsDBNull(18) ? reader.GetString(18) : string.Empty,
+                            Overview = reader.FieldCount > 19 && !reader.IsDBNull(19) ? reader.GetString(19) : string.Empty,
+                            BackdropUrl = reader.FieldCount > 20 && !reader.IsDBNull(20) ? reader.GetString(20) : string.Empty,
+                            Cast = reader.FieldCount > 21 && !reader.IsDBNull(21) ? reader.GetString(21) : string.Empty
                         });
                     }
                 }
@@ -550,7 +562,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium, ImdbId, Overview, BackdropUrl, [Cast] FROM Channels WHERE PlaylistUrl = @Url ORDER BY Name ASC";
                 command.Parameters.AddWithValue("@Url", playlistUrl);
                 
                 using (var reader = command.ExecuteReader())
@@ -566,7 +578,7 @@ namespace StreamMesh.Services
                             LogoUrl = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                             SourceType = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                             Category = reader.IsDBNull(6) ? "TV" : reader.GetString(6),
-                            Language = reader.IsDBNull(7) ? "Bilinmiyor" : reader.GetString(7),
+                            Language = reader.IsDBNull(7) ? "und" : reader.GetString(7),
                             PlaylistUrl = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                             IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
@@ -576,7 +588,11 @@ namespace StreamMesh.Services
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
                             IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
                             Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
-                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1
+                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1,
+                            ImdbId = reader.FieldCount > 18 && !reader.IsDBNull(18) ? reader.GetString(18) : string.Empty,
+                            Overview = reader.FieldCount > 19 && !reader.IsDBNull(19) ? reader.GetString(19) : string.Empty,
+                            BackdropUrl = reader.FieldCount > 20 && !reader.IsDBNull(20) ? reader.GetString(20) : string.Empty,
+                            Cast = reader.FieldCount > 21 && !reader.IsDBNull(21) ? reader.GetString(21) : string.Empty
                         });
                     }
                 }
@@ -654,7 +670,7 @@ namespace StreamMesh.Services
             {
                 connection.Open();
                 var command = connection.CreateCommand();
-                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium FROM Channels WHERE Id = @Id";
+                command.CommandText = "SELECT Id, Name, Url, GroupTitle, LogoUrl, SourceType, Category, Language, PlaylistUrl, IsFavorite, EpgId, IsVerified, AddedDate, EpgUrl, PersonalWatchCount, IsLocked, Notes, IsPremium, ImdbId, Overview, BackdropUrl, [Cast] FROM Channels WHERE Id = @Id";
                 command.Parameters.AddWithValue("@Id", id);
                 
                 using (var reader = command.ExecuteReader())
@@ -670,7 +686,7 @@ namespace StreamMesh.Services
                             LogoUrl = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
                             SourceType = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                             Category = reader.IsDBNull(6) ? "TV" : reader.GetString(6),
-                            Language = reader.IsDBNull(7) ? "Bilinmiyor" : reader.GetString(7),
+                            Language = reader.IsDBNull(7) ? "und" : reader.GetString(7),
                             PlaylistUrl = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                             IsFavorite = !reader.IsDBNull(9) && reader.GetInt32(9) == 1,
                             EpgId = reader.IsDBNull(10) ? string.Empty : reader.GetString(10),
@@ -680,7 +696,11 @@ namespace StreamMesh.Services
                             PersonalWatchCount = reader.IsDBNull(14) ? 0 : reader.GetInt32(14),
                             IsLocked = !reader.IsDBNull(15) && reader.GetInt32(15) == 1,
                             Notes = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
-                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1
+                            IsPremium = !reader.IsDBNull(17) && reader.GetInt32(17) == 1,
+                            ImdbId = reader.FieldCount > 18 && !reader.IsDBNull(18) ? reader.GetString(18) : string.Empty,
+                            Overview = reader.FieldCount > 19 && !reader.IsDBNull(19) ? reader.GetString(19) : string.Empty,
+                            BackdropUrl = reader.FieldCount > 20 && !reader.IsDBNull(20) ? reader.GetString(20) : string.Empty,
+                            Cast = reader.FieldCount > 21 && !reader.IsDBNull(21) ? reader.GetString(21) : string.Empty
                         };
                     }
                 }

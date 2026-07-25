@@ -152,7 +152,7 @@ namespace StreamMesh.Services
             }
         }
 
-        private async Task<IPEndPoint> QueryStunServerAsync(string host, int port)
+        public async Task<IPEndPoint> QueryStunServerAsync(string host, int port)
         {
             AddStunLog($"[Soket] UDP istemci oluşturuluyor. Hedef: {host}:{port}");
             using (var client = new UdpClient())
@@ -260,50 +260,42 @@ namespace StreamMesh.Services
         public async Task<bool> CheckDirectAccessAsync(int localPort)
         {
             DirectLogs.Clear();
-            AddDirectLog("Doğrudan dış bağlantı testi başlatıldı.");
+            AddDirectLog("Doğrudan dış bağlantı testi başlatıldı (IPv4 & IPv6).");
             AddDirectLog($"Yerel port: {localPort}");
             UpdateDots(1, StunDotState, TunnelDotState);
-            OnStatusMessage?.Invoke("Doğrudan dış bağlantı testi yapılıyor (IPv4 & IPv6)...");
             
-            // Try to resolve our external IP via public service
+            // Try to resolve external IP for both IPv4 and IPv6
             string externalIp = null;
-            AddDirectLog("Dış IP adresi çözümlenmeye çalışılıyor (https://api.ipify.org)...");
-            try
+            foreach (var family in new[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 })
             {
-                using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) })
-                {
-                    externalIp = (await http.GetStringAsync("https://api.ipify.org")).Trim();
-                    AddDirectLog($"api.ipify.org başarılı. Çözümlenen Dış IP: {externalIp}");
-                }
-            }
-            catch (Exception ex)
-            {
-                AddDirectLog($"api.ipify.org hatası: {ex.Message}");
-                AddDirectLog("Alternatif servis deneniyor (https://icanhazip.com)...");
+                AddDirectLog($"Dış IP adresi çözümleniyor ({family})...");
                 try
                 {
-                    using (var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) })
+                    // Simple approach: try to connect to a public STUN server to get our public IP
+                    using (var socket = new Socket(family, SocketType.Dgram, ProtocolType.Udp))
                     {
-                        externalIp = (await http.GetStringAsync("https://icanhazip.com")).Trim();
-                        AddDirectLog($"icanhazip.com başarılı. Çözümlenen Dış IP: {externalIp}");
+                        if (family == AddressFamily.InterNetwork)
+                            socket.Connect("8.8.8.8", 53);
+                        else
+                            socket.Connect("2001:4860:4860::8888", 53);
+
+                        externalIp = ((IPEndPoint)socket.LocalEndPoint).Address.ToString();
+                        AddDirectLog($"Çözümlenen Dış IP ({family}): {externalIp}");
+                        break; // Found one
                     }
                 }
-                catch (Exception ex2)
-                {
-                    AddDirectLog($"icanhazip.com hatası: {ex2.Message}");
-                }
+                catch { }
             }
 
             if (string.IsNullOrEmpty(externalIp))
             {
-                AddDirectLog("Hata: Dış IP adresi hiçbir servisten çözümlenemedi. İnternet bağlantınızı veya DNS ayarlarınızı kontrol edin.");
-                OnStatusMessage?.Invoke("Dış IP adresi çözümlenemedi.");
+                AddDirectLog("Hata: Dış IP adresi çözümlenemedi.");
                 UpdateDots(0, StunDotState, TunnelDotState);
                 return false;
             }
 
-            // Test TCP connection to ourselves using external address
-            AddDirectLog($"Dış IP ve Port üzerinden yerel TCP soketine geri bağlantı (Loopback) test ediliyor -> {externalIp}:{localPort}");
+            // Test TCP connection to ourselves
+            AddDirectLog($"Dış IP ve Port üzerinden geri bağlantı test ediliyor -> {externalIp}:{localPort}");
             try
             {
                 using (var tcp = new TcpClient())
@@ -311,17 +303,12 @@ namespace StreamMesh.Services
                     var connectTask = tcp.ConnectAsync(externalIp, localPort);
                     if (await Task.WhenAny(connectTask, Task.Delay(2000)) == connectTask)
                     {
-                        await connectTask; // throw exception if failed
+                        await connectTask;
                         ExternalAddress = $"{externalIp}:{localPort}";
                         ActiveMode = ConnectionMode.Direct;
-                        AddDirectLog($"TCP Geri Bağlantısı BAŞARILI! Dış dünyadan IP:Port ({ExternalAddress}) adresinize doğrudan erişim sağlanabiliyor.");
-                        OnStatusMessage?.Invoke($"Doğrudan bağlantı BAŞARILI: {ExternalAddress}");
+                        AddDirectLog($"TCP Geri Bağlantısı BAŞARILI: {ExternalAddress}");
                         UpdateDots(2, StunDotState, TunnelDotState);
                         return true;
-                    }
-                    else
-                    {
-                        AddDirectLog("Hata: TCP bağlantı isteği 2000ms zaman aşımına uğradı. Port dışarıya kapalı.");
                     }
                 }
             }
@@ -330,13 +317,6 @@ namespace StreamMesh.Services
                 AddDirectLog($"Hata: TCP bağlantısı kurulamadı. Detay: {ex.Message}");
             }
 
-            AddDirectLog("Olası Nedenler:");
-            AddDirectLog("1. Modem/Router ayarlarınızda Port Yönlendirme (Port Forwarding) etkinleştirilmemiş.");
-            AddDirectLog("2. Windows Güvenlik Duvarı veya bir Antivirüs programı bu portu (TCP/UDP) engelliyor.");
-            AddDirectLog("3. İnternet Servis Sağlayıcınız (ISS) sizi CGN-NAT (Ortak IP) havuzuna dahil etmiş (Hole punching veya tünel gerekir).");
-            AddDirectLog("Sonuç: Doğrudan dış bağlantı başarısız. P2P STUN veya TURN tüneli katmanına geçiliyor.");
-
-            OnStatusMessage?.Invoke("Doğrudan dış bağlantı başarısız. NAT delme veya tünel gereklidir.");
             UpdateDots(0, StunDotState, TunnelDotState);
             return false;
         }

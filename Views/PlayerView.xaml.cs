@@ -61,6 +61,8 @@ namespace StreamMesh.Views
         private int _saveProgressCounter = 0;
         private System.Threading.CancellationTokenSource _movieAiCts;
 
+        private bool _isChannelsLoaded = false;
+
         public PlayerView()
         {
             InitializeComponent();
@@ -98,7 +100,15 @@ namespace StreamMesh.Views
 
             this.PreviewKeyDown += PlayerView_PreviewKeyDown;
             this.Focusable = true;
-            this.Loaded += (s, e) => this.Focus();
+            this.Loaded += (s, e) => 
+            {
+                this.Focus();
+                if (!_isChannelsLoaded)
+                {
+                    _isChannelsLoaded = true;
+                    LoadChannelsFromDb();
+                }
+            };
 
             try
             {
@@ -133,8 +143,6 @@ namespace StreamMesh.Views
                 LogService.LogError("VLC could not be initialized", ex);
                 MessageBox.Show("İşlem sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-            LoadChannelsFromDb();
         }
 
         private async void LoadChannelsFromDb()
@@ -388,7 +396,9 @@ namespace StreamMesh.Views
                     try
                     {
                         bool isYoutube = finalUrl.Contains("youtube.com") || finalUrl.Contains("youtu.be");
-                        bool isAceStream = finalUrl.StartsWith("acestream://") || (finalUrl.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(finalUrl, @"^[a-fA-F0-9]+$"));
+                        bool isAceStream = finalUrl.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase) ||
+                                           (!string.IsNullOrEmpty(channel.SourceType) && channel.SourceType.IndexOf("ACE", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                                           (finalUrl.Length >= 32 && System.Text.RegularExpressions.Regex.IsMatch(finalUrl, @"^[a-fA-F0-9]+$"));
 
                         if (channel.SourceType == "YOUTUBE" || isYoutube)
                         {

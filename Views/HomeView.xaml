@@ -59,6 +59,11 @@
                     </StackPanel>
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <ComboBox x:Name="ViewModeComboBox" Width="130" Height="35" Margin="0,0,10,0" SelectionChanged="ViewModeComboBox_SelectionChanged" ToolTip="Kart Görünüm Modu">
+                            <ComboBoxItem Content="🖼️ Afiş Modu" Tag="Poster" IsSelected="True" />
+                            <ComboBoxItem Content="📺 Logo Modu" Tag="Logo" />
+                        </ComboBox>
+
                         <ComboBox x:Name="SortComboBox" Width="140" Height="35" Margin="0,0,10,0" SelectionChanged="SortComboBox_SelectionChanged">
                             <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True" />
                             <ComboBoxItem Content="Alfabetik (Z-A)" />

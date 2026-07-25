@@ -28,6 +28,14 @@ namespace StreamMesh.Services
         public void Stop()
         {
             if (_cts == null) return;
+            try
+            {
+                StunService.Instance.BroadcastBye();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("ViewerTracker stop bye failed", ex);
+            }
             _cts.Cancel();
             _cts.Dispose();
             _cts = null;

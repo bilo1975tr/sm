@@ -34,6 +34,11 @@ namespace StreamMesh.Services
             }
         }
 
+        public static void LogInfo(string message)
+        {
+            Log(message, "INFO");
+        }
+
         public static void LogError(string message, Exception ex = null)
         {
             string detail = ex != null ? $"\nException: {ex.Message}\nStacktrace: {ex.StackTrace}" : "";

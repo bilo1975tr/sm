@@ -12,7 +12,7 @@ namespace StreamMesh.Models
         private string _logoUrl = string.Empty;
         private string _groupTitle = "Genel";
         private string _category = "TV";
-        private string _language = "Bilinmiyor";
+        private string _language = "und";
         private string _sourceType = "M3U"; // M3U, YOUTUBE, ACESTREAM
         private string _playlistUrl = string.Empty;
         private string _epgId = string.Empty;
@@ -25,6 +25,38 @@ namespace StreamMesh.Models
         private bool _isPremium = false;
         private string _notes = string.Empty;
         private DateTime _createdAt = DateTime.Now;
+
+        public static bool IsPosterMode { get; set; } = true;
+
+        // Metadata Fields
+        private string _imdbId = string.Empty;
+        private string _overview = string.Empty;
+        private string _backdropUrl = string.Empty;
+        private string _cast = string.Empty;
+
+        public string ImdbId
+        {
+            get => _imdbId;
+            set { if (_imdbId != value) { _imdbId = value; OnPropertyChanged(); } }
+        }
+
+        public string Overview
+        {
+            get => _overview;
+            set { if (_overview != value) { _overview = value; OnPropertyChanged(); } }
+        }
+
+        public string BackdropUrl
+        {
+            get => _backdropUrl;
+            set { if (_backdropUrl != value) { _backdropUrl = value; OnPropertyChanged(); } }
+        }
+
+        public string Cast
+        {
+            get => _cast;
+            set { if (_cast != value) { _cast = value; OnPropertyChanged(); } }
+        }
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
@@ -120,13 +152,88 @@ namespace StreamMesh.Models
                 {
                     _language = normalized;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(LanguageDisplayName));
                 }
             }
         }
 
+        public string LanguageDisplayName => GetLanguageDisplayName(Language);
+
+        private static readonly Dictionary<string, string> IsoToDisplayName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "tr", "Türkçe" },
+            { "en", "English" },
+            { "de", "Deutsch" },
+            { "fr", "Français" },
+            { "es", "Español" },
+            { "ru", "Русский" },
+            { "it", "Italiano" },
+            { "ar", "العربية" },
+            { "ku", "Kurdî" },
+            { "az", "Azərbaycan" },
+            { "nl", "Nederlands" },
+            { "pt", "Português" },
+            { "zh", "中文" },
+            { "ja", "日本語" },
+            { "ko", "한국어" },
+            { "pl", "Polski" },
+            { "uk", "Українська" },
+            { "el", "Ελληνικά" },
+            { "sv", "Svenska" },
+            { "ro", "Română" },
+            { "hu", "Magyar" },
+            { "cs", "Čeština" },
+            { "bg", "Български" },
+            { "sr", "Srpski" },
+            { "hr", "Hrvatski" },
+            { "und", "Bilinmiyor" }
+        };
+
+        public static string GetLanguageDisplayName(string isoCode)
+        {
+            if (string.IsNullOrWhiteSpace(isoCode)) return "Bilinmiyor";
+            var parts = isoCode.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var names = new List<string>();
+            foreach (var part in parts)
+            {
+                string p = part.Trim().ToLowerInvariant();
+                if (IsoToDisplayName.TryGetValue(p, out var name))
+                    names.Add(name);
+                else
+                    names.Add(p.ToUpperInvariant());
+            }
+            return names.Count > 0 ? string.Join(", ", names) : "Bilinmiyor";
+        }
+
         public static string NormalizeLanguage(string lang)
         {
-            if (string.IsNullOrWhiteSpace(lang)) return "Bilinmiyor";
+            if (string.IsNullOrWhiteSpace(lang)) return "und";
+
+            if (lang.Contains(","))
+            {
+                var parts = lang.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                var normalizedParts = new List<string>();
+                foreach (var part in parts)
+                {
+                    string norm = NormalizeSingleLanguage(part);
+                    if (!string.IsNullOrEmpty(norm) && norm != "und" && !normalizedParts.Contains(norm))
+                    {
+                        normalizedParts.Add(norm);
+                    }
+                }
+                if (normalizedParts.Count > 0)
+                {
+                    return string.Join(",", normalizedParts);
+                }
+                return "und";
+            }
+
+            return NormalizeSingleLanguage(lang);
+        }
+
+        private static string NormalizeSingleLanguage(string lang)
+        {
+            if (string.IsNullOrWhiteSpace(lang)) return "und";
             
             string lower = lang.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim();
 
@@ -145,30 +252,28 @@ namespace StreamMesh.Models
                 baseCode = lower.Substring(0, separatorIndex).Trim();
             }
 
-            if (lower.Contains("türk") || lower.Contains("turk") || baseCode == "tr" || baseCode == "tur" || lower.Contains("turkish")) return "Türkçe";
-            if (lower.Contains("ingilizce") || lower.Contains("english") || lower.Contains("ingiliz") || baseCode == "en" || baseCode == "eng" || baseCode == "usa" || baseCode == "uk") return "İngilizce";
-            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german") || baseCode == "de" || baseCode == "ger" || baseCode == "deu") return "Almanca";
-            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français") || baseCode == "fr" || baseCode == "fra" || lower.Contains("fransizca")) return "Fransızca";
-            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español") || baseCode == "es" || baseCode == "esp") return "İspanyolca";
-            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский") || baseCode == "ru" || baseCode == "rus" || lower.Contains("rusca")) return "Rusça";
-            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano") || baseCode == "it" || baseCode == "ita") return "İtalyanca";
-            if (lower.Contains("arapça") || lower.Contains("arabic") || baseCode == "ar" || baseCode == "ara" || lower.Contains("arapca")) return "Arapça";
-            if (lower.Contains("kürtçe") || lower.Contains("kurtçe") || lower.Contains("kurdish") || baseCode == "ku" || baseCode == "kur" || lower.Contains("kurtce")) return "Kürtçe";
-            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri") || baseCode == "az" || baseCode == "aze") return "Azerice";
-            if (lower == "bilinmiyor" || lower == "unknown" || lower == "none" || lower == "hiçbiri") return "Bilinmiyor";
+            if (IsoToDisplayName.ContainsKey(baseCode)) return baseCode.ToLowerInvariant();
 
-            // Eğer özel bir dille eşleşmediyse, ilk harfini büyük yapıp döndürelim (örn: Portekizce, Yunanca vb)
-            string cleanVal = lang;
-            int pIdx = cleanVal.IndexOf('(');
-            if (pIdx > 0) cleanVal = cleanVal.Substring(0, pIdx).Trim();
-            
-            if (cleanVal.Length > 0)
-            {
-                return char.ToUpper(cleanVal[0], new System.Globalization.CultureInfo("tr-TR")) + 
-                       (cleanVal.Length > 1 ? cleanVal.Substring(1).ToLower(new System.Globalization.CultureInfo("tr-TR")) : "");
-            }
+            if (lower.Contains("türk") || lower.Contains("turk") || baseCode == "tr" || baseCode == "tur" || lower.Contains("turkish")) return "tr";
+            if (lower.Contains("ingilizce") || lower.Contains("english") || lower.Contains("ingiliz") || baseCode == "en" || baseCode == "eng" || baseCode == "usa" || baseCode == "uk") return "en";
+            if (lower.Contains("almanca") || lower.Contains("deutsch") || lower.Contains("german") || baseCode == "de" || baseCode == "ger" || baseCode == "deu") return "de";
+            if (lower.Contains("fransızca") || lower.Contains("french") || lower.Contains("français") || baseCode == "fr" || baseCode == "fra" || lower.Contains("fransizca")) return "fr";
+            if (lower.Contains("ispanyolca") || lower.Contains("spanish") || lower.Contains("español") || baseCode == "es" || baseCode == "esp") return "es";
+            if (lower.Contains("rusça") || lower.Contains("russian") || lower.Contains("русский") || baseCode == "ru" || baseCode == "rus" || lower.Contains("rusca")) return "ru";
+            if (lower.Contains("italyanca") || lower.Contains("italian") || lower.Contains("italiano") || baseCode == "it" || baseCode == "ita") return "it";
+            if (lower.Contains("arapça") || lower.Contains("arabic") || baseCode == "ar" || baseCode == "ara" || lower.Contains("arapca")) return "ar";
+            if (lower.Contains("kürtçe") || lower.Contains("kurtçe") || lower.Contains("kurdish") || baseCode == "ku" || baseCode == "kur" || lower.Contains("kurtce")) return "ku";
+            if (lower.Contains("azerice") || lower.Contains("azerbaijani") || lower.Contains("azeri") || baseCode == "az" || baseCode == "aze") return "az";
+            if (lower.Contains("felemenkçe") || lower.Contains("dutch") || baseCode == "nl" || baseCode == "nld") return "nl";
+            if (lower.Contains("portekizce") || lower.Contains("portuguese") || baseCode == "pt" || baseCode == "por") return "pt";
+            if (lower.Contains("çince") || lower.Contains("chinese") || baseCode == "zh" || baseCode == "zho") return "zh";
+            if (lower.Contains("japonca") || lower.Contains("japanese") || baseCode == "ja" || baseCode == "jpn") return "ja";
+            if (lower.Contains("korece") || lower.Contains("korean") || baseCode == "ko" || baseCode == "kor") return "ko";
+            if (lower == "bilinmiyor" || lower == "unknown" || lower == "none" || lower == "hiçbiri") return "und";
 
-            return "Bilinmiyor";
+            if (baseCode.Length == 2) return baseCode.ToLowerInvariant();
+
+            return "und";
         }
 
         public string SourceType

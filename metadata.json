@@ -1,0 +1,8 @@
+{
+  "name": "StreamMesh Portal",
+  "description": "StreamMesh IPTV, EPG ve P2P Tünelleme Yönetim Portalı",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

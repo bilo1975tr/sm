@@ -64,8 +64,10 @@ namespace StreamMesh.Services
 
         public string GetHttpUrl(string contentId)
         {
-            // acestream:// kaldır
-            if (contentId.StartsWith("acestream://"))
+            if (string.IsNullOrWhiteSpace(contentId)) return string.Empty;
+
+            contentId = contentId.Trim();
+            if (contentId.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
             {
                 contentId = contentId.Substring("acestream://".Length);
             }

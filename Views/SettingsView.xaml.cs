@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using StreamMesh.Models;
 using StreamMesh.Services;
 using StreamMesh.Services.Auth;
 
@@ -118,6 +121,8 @@ namespace StreamMesh.Views
             });
         }
 
+        private List<LanguageSelectionItem> _languageItems;
+
         private void SetCurrentLanguageInCombo()
         {
             try
@@ -135,94 +140,79 @@ namespace StreamMesh.Views
                 var profile = UserService.GetProfile();
                 if (profile != null)
                 {
-                    CountryCombo.ItemsSource = LocalizationManager.SystemCultures;
-                    Lang1Combo.ItemsSource = LocalizationManager.SystemLanguagesWithNone;
-                    Lang2Combo.ItemsSource = LocalizationManager.SystemLanguagesWithNone;
-
-                    var defaultCountry = LocalizationManager.SystemCultures.FirstOrDefault(c => c.Contains("Türkçe")) ?? LocalizationManager.SystemCultures.FirstOrDefault();
+                    CountryCombo.ItemsSource = LocalizationManager.AllCountries;
+                    var defaultCountry = LocalizationManager.AllCountries.FirstOrDefault(c => c == "Türkiye") ?? LocalizationManager.AllCountries.FirstOrDefault();
                     CountryCombo.SelectedItem = string.IsNullOrEmpty(profile.Country) ? defaultCountry : profile.Country;
                     
-                    if (profile.Languages != null)
-                    {
-                        string lang1 = profile.Languages.Count > 1 ? profile.Languages[1] : "Hiçbiri";
-                        string lang2 = profile.Languages.Count > 2 ? profile.Languages[2] : "Hiçbiri";
-
-                        SelectLanguageInCombo(Lang1Combo, lang1);
-                        SelectLanguageInCombo(Lang2Combo, lang2);
-                    }
+                    PopulateMultiSelectLanguages(profile.Languages);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogError("SetCurrentLanguageInCombo error", ex);
+            }
         }
 
-        private void SelectLanguageInCombo(ComboBox combo, string target)
+        private void PopulateMultiSelectLanguages(List<string> userLanguages)
         {
-            if (string.IsNullOrEmpty(target) || target == "Hiçbiri")
+            var isoCodes = new[] { "tr", "en", "de", "fr", "es", "ru", "it", "ar", "ku", "az", "nl", "pt", "zh", "ja", "ko", "pl", "uk", "el", "sv", "ro", "hu", "cs", "bg", "sr", "hr" };
+            
+            var userNorms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (userLanguages != null)
             {
-                combo.SelectedItem = "Hiçbiri";
-                return;
-            }
-
-            // Önce birebir eşleşme ara
-            foreach (var item in combo.Items)
-            {
-                if (item?.ToString() == target)
+                foreach (var l in userLanguages)
                 {
-                    combo.SelectedItem = item;
-                    return;
+                    userNorms.Add(Channel.NormalizeLanguage(l));
                 }
             }
 
-            // Normalleştirilmiş eşleşme ara
-            string targetNorm = StreamMesh.Models.Channel.NormalizeLanguage(target).ToLower(new System.Globalization.CultureInfo("tr-TR"));
-            foreach (var item in combo.Items)
+            _languageItems = new List<LanguageSelectionItem>();
+            foreach (var iso in isoCodes)
             {
-                string itemStr = item?.ToString();
-                if (!string.IsNullOrEmpty(itemStr))
+                _languageItems.Add(new LanguageSelectionItem
                 {
-                    string itemNorm = StreamMesh.Models.Channel.NormalizeLanguage(itemStr).ToLower(new System.Globalization.CultureInfo("tr-TR"));
-                    if (itemNorm == targetNorm)
-                    {
-                        combo.SelectedItem = item;
-                        return;
-                    }
-                }
+                    IsoCode = iso,
+                    DisplayName = Channel.GetLanguageDisplayName(iso),
+                    IsSelected = userNorms.Contains(iso)
+                });
             }
 
-            // Bulunamadıysa dinamik olarak ekle ve seç
-            var list = combo.ItemsSource as System.Collections.Generic.List<string>;
-            if (list != null)
+            LanguagesMultiSelectListBox.ItemsSource = _languageItems;
+        }
+
+        private void LanguageCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            SaveUserLanguages();
+        }
+
+        private void SaveUserLanguages()
+        {
+            var profile = UserService.GetProfile();
+            if (profile == null || _languageItems == null) return;
+
+            var selectedIsos = _languageItems
+                .Where(x => x.IsSelected)
+                .Select(x => x.IsoCode)
+                .ToList();
+
+            if (selectedIsos.Count == 0)
             {
-                var newList = new System.Collections.Generic.List<string>(list);
-                newList.Add(target);
-                combo.ItemsSource = newList;
-                combo.SelectedItem = target;
+                selectedIsos.Add("tr");
             }
-            else
-            {
-                combo.SelectedItem = "Hiçbiri";
-            }
+
+            profile.Languages = selectedIsos;
+            UserService.SaveProfile(profile);
         }
 
         private void ProfileCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!this.IsLoaded) return; // Ignore events during initialization
+            if (!this.IsLoaded) return;
             var profile = UserService.GetProfile();
             if (profile != null)
             {
-                var defaultCountry = LocalizationManager.SystemCultures.FirstOrDefault(c => c.Contains("Türkçe")) ?? LocalizationManager.SystemCultures.FirstOrDefault();
+                var defaultCountry = LocalizationManager.AllCountries.FirstOrDefault(c => c == "Türkiye") ?? LocalizationManager.AllCountries.FirstOrDefault();
                 string country = CountryCombo.SelectedItem as string ?? defaultCountry;
-                string lang1 = Lang1Combo.SelectedItem as string ?? "Hiçbiri";
-                string lang2 = Lang2Combo.SelectedItem as string ?? "Hiçbiri";
-
                 profile.Country = country;
-                
-                var langs = new System.Collections.Generic.List<string> { country };
-                if (lang1 != "Hiçbiri" && !string.IsNullOrEmpty(lang1)) langs.Add(lang1);
-                if (lang2 != "Hiçbiri" && !string.IsNullOrEmpty(lang2)) langs.Add(lang2);
-                
-                profile.Languages = langs.Distinct().ToList();
-
                 UserService.SaveProfile(profile);
             }
         }
@@ -289,7 +279,7 @@ namespace StreamMesh.Views
                 string lang = selectedItem.Tag?.ToString();
                 if (!string.IsNullOrEmpty(lang))
                 {
-                    LocalizationManager.Instance.LoadTranslations(lang);
+                    LocalizationManager.Instance.CurrentLanguage = lang;
                     var userProfile = UserService.GetProfile();
                     if (userProfile != null)
                     {
@@ -1003,6 +993,24 @@ namespace StreamMesh.Views
             // Reload settings lists as sources might have been added
             LoadM3uSources();
             LoadEpgSources();
+        }
+    }
+
+    public class LanguageSelectionItem : System.ComponentModel.INotifyPropertyChanged
+    {
+        private bool _isSelected;
+        public string IsoCode { get; set; }
+        public string DisplayName { get; set; }
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set { if (_isSelected != value) { _isSelected = value; OnPropertyChanged(); } }
+        }
+
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propName = null)
+        {
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propName));
         }
     }
 }

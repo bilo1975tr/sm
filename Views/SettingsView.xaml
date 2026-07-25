@@ -201,16 +201,16 @@
                         <StackPanel Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[Set_LangSelect], FallbackValue='Dil Seçimi'}" VerticalAlignment="Center" Width="150" Foreground="#FFFFFF"/>
                             <ComboBox x:Name="LanguageCombo" Width="200" Height="35" SelectionChanged="LanguageCombo_SelectionChanged" VerticalContentAlignment="Center">
-                                <ComboBoxItem Content="Türkçe" Tag="Türkçe"/>
-                                <ComboBoxItem Content="English" Tag="English"/>
-                                <ComboBoxItem Content="Deutsch" Tag="Deutsch"/>
-                                <ComboBoxItem Content="Français" Tag="Français"/>
-                                <ComboBoxItem Content="Español" Tag="Español"/>
-                                <ComboBoxItem Content="Italiano" Tag="Italiano"/>
-                                <ComboBoxItem Content="Português" Tag="Português"/>
-                                <ComboBoxItem Content="Pусский" Tag="Pусский"/>
-                                <ComboBoxItem Content="العربية" Tag="العربية"/>
-                                <ComboBoxItem Content="中文" Tag="中文"/>
+                                <ComboBoxItem Content="Türkçe" Tag="tr"/>
+                                <ComboBoxItem Content="English" Tag="en"/>
+                                <ComboBoxItem Content="Deutsch" Tag="de"/>
+                                <ComboBoxItem Content="Français" Tag="fr"/>
+                                <ComboBoxItem Content="Español" Tag="es"/>
+                                <ComboBoxItem Content="Italiano" Tag="it"/>
+                                <ComboBoxItem Content="Português" Tag="pt"/>
+                                <ComboBoxItem Content="Pусский" Tag="ru"/>
+                                <ComboBoxItem Content="العربية" Tag="ar"/>
+                                <ComboBoxItem Content="中文" Tag="zh"/>
                             </ComboBox>
                         </StackPanel>
                         
@@ -224,19 +224,17 @@
                             <ComboBox x:Name="CountryCombo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#f8fafc" />
                         </StackPanel>
 
-                        <!-- Extra Languages -->
+                        <!-- Extra Languages MultiSelect -->
                         <TextBlock Text="{Binding Source={x:Static services:LocalizationManager.Instance}, Path=[KnownLangs], FallbackValue='Bildiğiniz Diğer Diller'}" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,20,0,10"/>
-                        <TextBlock Text="Bu dillerdeki içerikler de size gösterilecektir." Foreground="#FFFFFF" Margin="0,0,0,10"/>
+                        <TextBlock Text="Seçtiğiniz dillerdeki tüm kanallar ve içerikler filtrelenerek gösterilecektir." Foreground="#FFFFFF" Margin="0,0,0,10"/>
                         
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Ek Dil 1" VerticalAlignment="Center" Width="150" Foreground="#FFFFFF"/>
-                            <ComboBox x:Name="Lang1Combo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#f8fafc"/>
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="Ek Dil 2" VerticalAlignment="Center" Width="150" Foreground="#FFFFFF"/>
-                            <ComboBox x:Name="Lang2Combo" Width="200" Height="35" SelectionChanged="ProfileCombo_SelectionChanged" VerticalContentAlignment="Center" Background="#1e293b" Foreground="#f8fafc"/>
-                        </StackPanel>
+                        <ListBox x:Name="LanguagesMultiSelectListBox" Height="160" Width="320" HorizontalAlignment="Left" Background="#0f172a" Foreground="#f8fafc" BorderBrush="#334155" Padding="5">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Foreground="#f8fafc" Margin="5,3" Click="LanguageCheckBox_Click"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
 
                         <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
 
@@ -294,32 +292,35 @@
 
                                 <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
 
-                                <TextBlock Text="🌐 Akıllı Ağ ve Tünelleme Katmanı" FontWeight="Bold" FontSize="18" Foreground="#38bdf8" Margin="0,0,0,10"/>
-                                <TextBlock Text="NAT tipinizi otomatik tespit edin veya WebRTC P2P / TURN (Metered) katmanını kullanarak güvenli bağlantı kurun." Foreground="#e2e8f0" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                                <Expander Header="⚙️ Gelişmiş Ağ Ayarları ve Loglar" Foreground="#38bdf8" FontWeight="Bold" FontSize="16" IsExpanded="False" Margin="0,5">
+                                    <StackPanel Margin="0,10,0,0">
+                                        <TextBlock Text="NAT tipinizi otomatik tespit edin veya WebRTC P2P / TURN (Metered) katmanını kullanarak güvenli bağlantı kurun." Foreground="#e2e8f0" TextWrapping="Wrap" Margin="0,0,0,15" FontWeight="Normal" FontSize="13"/>
 
-                                <Grid Margin="0,5">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="NAT Tipi tespiti:" VerticalAlignment="Center" Foreground="#FFFFFF"/>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <TextBlock x:Name="NatTypeStatusText" Text="Bilinmiyor (Analiz edilmedi)" VerticalAlignment="Center" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,15,0"/>
-                                        <Button x:Name="DetectNatBtn" Content="NAT Tipini Analiz Et" Click="DetectNatBtn_Click" Padding="12,5" Style="{StaticResource PrimaryButtonStyle}" Background="#4b5563"/>
+                                        <Grid Margin="0,5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="NAT Tipi tespiti:" VerticalAlignment="Center" Foreground="#FFFFFF" FontWeight="Normal" FontSize="13"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <TextBlock x:Name="NatTypeStatusText" Text="Bilinmiyor (Analiz edilmedi)" VerticalAlignment="Center" FontWeight="Bold" Foreground="#f59e0b" Margin="0,0,15,0" FontSize="13"/>
+                                                <Button x:Name="DetectNatBtn" Content="NAT Tipini Analiz Et" Click="DetectNatBtn_Click" Padding="12,5" Style="{StaticResource PrimaryButtonStyle}" Background="#4b5563"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid Margin="0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Aktif Bağlantı Modu:" VerticalAlignment="Center" Foreground="#FFFFFF" FontWeight="Normal" FontSize="13"/>
+                                            <TextBlock Grid.Column="1" x:Name="ConnectionModeText" Text="Doğrudan Yerel IP" VerticalAlignment="Center" FontWeight="Bold" Foreground="#10b981" FontSize="13"/>
+                                        </Grid>
+
+                                        <TextBlock Text="Tünel ve Bağlantı Logları:" FontWeight="Bold" Foreground="#94a3b8" Margin="0,15,0,5" FontSize="13"/>
+                                        <TextBox x:Name="TunnelLogsBox" Height="120" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Background="#0f172a" Foreground="#a7f3d0" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Padding="8"/>
                                     </StackPanel>
-                                </Grid>
-
-                                <Grid Margin="0,10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="150"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Aktif Bağlantı Modu:" VerticalAlignment="Center" Foreground="#FFFFFF"/>
-                                    <TextBlock Grid.Column="1" x:Name="ConnectionModeText" Text="Doğrudan Yerel IP" VerticalAlignment="Center" FontWeight="Bold" Foreground="#10b981"/>
-                                </Grid>
-
-                                <TextBlock Text="Tünel ve Bağlantı Logları:" FontWeight="Bold" Foreground="#94a3b8" Margin="0,15,0,5"/>
-                                <TextBox x:Name="TunnelLogsBox" Height="120" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Background="#0f172a" Foreground="#a7f3d0" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Padding="8"/>
+                                </Expander>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

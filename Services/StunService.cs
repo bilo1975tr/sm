@@ -62,54 +62,30 @@ namespace StreamMesh.Services
         {
             TunnelService.StunLogs.Clear();
             TunnelService.AddStunLog("STUN IP/Port çözme sorgusu başlatıldı.");
-            return await Task.Run(() =>
+            
+            try
             {
-                try
+                LogService.Log("[P2P] STUN sorgusu başlatılıyor...");
+                var ep = await TunnelService.Instance.QueryStunServerAsync("stun.l.google.com", 19302);
+                if (ep != null)
                 {
-                    LogService.Log("[P2P] STUN sorgusu başlatılıyor...");
-                    TunnelService.AddStunLog("DNS araması yapılıyor: stun.l.google.com");
-                    
-                    // SIPSorcery STUN istemcisi ile genel IP çözme işlemi (Önceden çalışan Google STUN sunucusu)
-                    var stunAddresses = Dns.GetHostAddresses("stun.l.google.com");
-                    if (stunAddresses.Length == 0)
-                    {
-                        throw new Exception("STUN sunucusu DNS çözümlenemedi.");
-                    }
-
-                    var targetAddress = stunAddresses[0];
-                    TunnelService.AddStunLog($"DNS başarılı. STUN IP adresi: {targetAddress}");
-                    var stunEp = new IPEndPoint(targetAddress, 19302);
-                    TunnelService.AddStunLog($"UDP Soket oluşturuluyor ve {stunEp} adresine bağlanılıyor...");
-                    using (var socket = new Socket(targetAddress.AddressFamily, SocketType.Dgram, ProtocolType.Udp))
-                    {
-                        socket.Connect(stunEp);
-                        
-                        // STUN durumunu güncelliyoruz -> Sarı (Deneniyor)
-                        TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, 1, TunnelService.Instance.TunnelDotState);
-                        
-                        var localEp = socket.LocalEndPoint?.ToString();
-                        if (!string.IsNullOrEmpty(localEp))
-                        {
-                            TunnelService.AddStunLog($"Soket başarılı bir şekilde bağlandı. Atanan yerel/genel uç nokta: {localEp}");
-                            TunnelService.AddStunLog("STUN NAT delme tespiti BAŞARILI!");
-                            // STUN başarılı -> Yeşil (2)
-                            TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, 2, TunnelService.Instance.TunnelDotState);
-                            return localEp;
-                        }
-                        
-                        throw new Exception("LocalEndPoint çözümlenemedi (boş veya geçersiz).");
-                    }
+                    TunnelService.AddStunLog($"STUN başarılı. Atanan genel uç nokta: {ep}");
+                    TunnelService.AddStunLog("STUN NAT delme tespiti BAŞARILI!");
+                    TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, 2, TunnelService.Instance.TunnelDotState);
+                    return ep.ToString();
                 }
-                catch (Exception ex)
+                else
                 {
-                    LogService.LogError("[P2P] STUN IP/Port çözme başarısız oldu.", ex);
-                    TunnelService.AddStunLog($"Hata: STUN çözme başarısız oldu. Detay: {ex.Message}");
-                    TunnelService.AddStunLog("Lütfen UDP/IP paketlerinizin engellenmediğinden ve internet bağlantınızın aktif olduğundan emin olun.");
-                    // STUN başarısız -> Kırmızı (0)
-                    TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, 0, TunnelService.Instance.TunnelDotState);
-                    return null;
+                    throw new Exception("STUN yanıtı alınamadı.");
                 }
-            });
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[P2P] STUN IP/Port çözme başarısız oldu.", ex);
+                TunnelService.AddStunLog($"Hata: STUN çözme başarısız oldu. Detay: {ex.Message}");
+                TunnelService.Instance.UpdateDots(TunnelService.Instance.DirectDotState, 0, TunnelService.Instance.TunnelDotState);
+                return null;
+            }
         }
 
         private List<RTCIceServer> _cachedIceServers;
@@ -217,6 +193,12 @@ namespace StreamMesh.Services
 
         public void BroadcastStatus(string activeChannelId)
         {
+            if (string.IsNullOrEmpty(activeChannelId))
+            {
+                BroadcastBye();
+                return;
+            }
+
             _localActiveChannelId = activeChannelId;
 
             var payload = new P2PPayload
@@ -249,13 +231,57 @@ namespace StreamMesh.Services
             }
         }
 
+        public void BroadcastBye()
+        {
+            try
+            {
+                string previousChannel = _localActiveChannelId;
+                _localActiveChannelId = "";
+
+                var payload = new P2PPayload
+                {
+                    Type = "bye",
+                    ClientId = _clientId,
+                    ChannelId = previousChannel,
+                    Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+
+                string json = System.Text.Json.JsonSerializer.Serialize(payload);
+                byte[] compressed = CompressString(json);
+
+                LogService.Log($"[P2P] BroadcastBye sent for client {_clientId}");
+
+                lock (_dataChannels)
+                {
+                    foreach (var kp in _dataChannels)
+                    {
+                        try
+                        {
+                            kp.Value.send(compressed);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogService.LogError($"[P2P] BroadcastBye to peer {kp.Key} failed", ex);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[P2P] BroadcastBye failed", ex);
+            }
+        }
+
         public void BroadcastMeshSync()
         {
             Dictionary<string, string> currentStates;
             lock (_peerActiveChannels)
             {
                 currentStates = new Dictionary<string, string>(_peerActiveChannels);
-                currentStates[_clientId] = _localActiveChannelId;
+                if (!string.IsNullOrEmpty(_localActiveChannelId))
+                {
+                    currentStates[_clientId] = _localActiveChannelId;
+                }
             }
 
             var payload = new P2PPayload
@@ -296,9 +322,22 @@ namespace StreamMesh.Services
 
                 lock (_peerActiveChannels)
                 {
-                    if (payload.Type == "status")
+                    if (payload.Type == "bye")
                     {
-                        _peerActiveChannels[payload.ClientId] = payload.ChannelId;
+                        _peerActiveChannels.Remove(payload.ClientId);
+                        _peerLastSeen.Remove(payload.ClientId);
+                        LogService.Log($"[P2P] Received 'bye' message from peer {payload.ClientId}. Removed active channel.");
+                    }
+                    else if (payload.Type == "status")
+                    {
+                        if (string.IsNullOrWhiteSpace(payload.ChannelId))
+                        {
+                            _peerActiveChannels.Remove(payload.ClientId);
+                        }
+                        else
+                        {
+                            _peerActiveChannels[payload.ClientId] = payload.ChannelId;
+                        }
                         _peerLastSeen[payload.ClientId] = DateTime.UtcNow;
                     }
                     else if (payload.Type == "mesh_sync" && payload.States != null)
@@ -310,8 +349,15 @@ namespace StreamMesh.Services
 
                             if (peerId == _clientId) continue;
 
-                            _peerActiveChannels[peerId] = channelId;
-                            _peerLastSeen[peerId] = DateTime.UtcNow;
+                            if (string.IsNullOrWhiteSpace(channelId))
+                            {
+                                _peerActiveChannels.Remove(peerId);
+                            }
+                            else
+                            {
+                                _peerActiveChannels[peerId] = channelId;
+                                _peerLastSeen[peerId] = DateTime.UtcNow;
+                            }
                         }
                     }
                 }
@@ -333,7 +379,8 @@ namespace StreamMesh.Services
                     counts[_localActiveChannelId] = 1;
                 }
 
-                var cutoff = DateTime.UtcNow.AddSeconds(-90);
+                // Reduced timeout threshold from 90s to 30s for fast responsiveness
+                var cutoff = DateTime.UtcNow.AddSeconds(-30);
                 var activePeers = _peerLastSeen
                     .Where(kp => kp.Value > cutoff)
                     .Select(kp => kp.Key)
@@ -358,7 +405,8 @@ namespace StreamMesh.Services
         {
             lock (_peerActiveChannels)
             {
-                var cutoff = DateTime.UtcNow.AddSeconds(-90);
+                // Reduced timeout threshold from 90s to 30s
+                var cutoff = DateTime.UtcNow.AddSeconds(-30);
                 int activePeersCount = _peerLastSeen.Count(kp => kp.Value > cutoff);
                 return activePeersCount + 1; // Include ourselves
             }
@@ -451,7 +499,7 @@ namespace StreamMesh.Services
                         if (doc.TryGetValue<Timestamp>("updatedAt", out var updatedAt))
                         {
                             var age = nowUtc - updatedAt.ToDateTime();
-                            if (age.TotalSeconds > 90)
+                            if (age.TotalSeconds > 30)
                             {
                                 try { await doc.Reference.DeleteAsync(); } catch {}
                                 try

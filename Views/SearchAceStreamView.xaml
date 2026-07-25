@@ -14,47 +14,106 @@
             <TextBlock Text="AceStream, FreetuxTV ve IPTVcat veritabanlarından içerik arayın" FontSize="14" Foreground="#cbd5e1" Margin="0,5,0,0"/>
         </StackPanel>
 
-        <!-- Search Bar -->
+        <!-- Search Bar & Filters -->
         <Border Grid.Row="1" Background="#1e293b" CornerRadius="12" Padding="15" Margin="0,0,0,20" BorderBrush="#334155" BorderThickness="1">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <TextBox x:Name="SearchBox" Grid.Column="0" Height="40" FontSize="16" Padding="10,0" VerticalContentAlignment="Center" KeyDown="SearchBox_KeyDown" />
-                
-                <ComboBox x:Name="SourceCombo" Grid.Column="1" Width="150" Height="40" Margin="10,0,0,0" SelectedIndex="0" VerticalContentAlignment="Center">
-                    <ComboBoxItem Content="Tüm Kaynaklar"/>
-                    <ComboBoxItem Content="AceStream"/>
-                    <ComboBoxItem Content="FreetuxTV"/>
-                    <ComboBoxItem Content="IPTVcat"/>
-                </ComboBox>
+            <StackPanel>
+                <!-- Top Row: Search Box and Main Actions -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBox x:Name="SearchBox" Grid.Column="0" Height="40" FontSize="15" Padding="10,0" VerticalContentAlignment="Center" KeyDown="SearchBox_KeyDown" ToolTip="Aranacak kanal, film veya dizi adını yazın (Boş bırakıp filtrelerle de arayabilirsiniz)" />
+                    
+                    <Button x:Name="SearchButton" Grid.Column="1" Content="🔍 Arama Yap" Width="130" Height="40" Margin="10,0,0,0" Background="#38bdf8" Foreground="White" FontWeight="Bold" Click="SearchButton_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="8"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                    
+                    <Button x:Name="AddAllButton" Grid.Column="2" Content="➕ Hepsini Ekle" Width="130" Height="40" Margin="10,0,0,0" Background="#10b981" Foreground="White" FontWeight="Bold" Click="AddAllButton_Click" Visibility="Collapsed">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="8"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                </Grid>
 
-                <Button x:Name="SearchButton" Grid.Column="2" Content="Arama Yap" Width="120" Height="40" Margin="10,0,0,0" Background="#38bdf8" Foreground="White" FontWeight="Bold" Click="SearchButton_Click">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
-                
-                <Button x:Name="AddAllButton" Grid.Column="3" Content="Hepsini Ekle" Width="120" Height="40" Margin="10,0,0,0" Background="#10b981" Foreground="White" FontWeight="Bold" Click="AddAllButton_Click" Visibility="Collapsed">
-                    <Button.Resources>
-                        <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="8"/>
-                        </Style>
-                    </Button.Resources>
-                </Button>
-            </Grid>
+                <!-- Bottom Row: Filters (Category, Language, Sort, Source) -->
+                <WrapPanel Orientation="Horizontal">
+                    <!-- Category Filter -->
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,5">
+                        <TextBlock Text="Kategori" FontSize="11" Foreground="#94a3b8" Margin="2,0,0,3" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="CategoryCombo" Width="140" Height="35" SelectedIndex="0" VerticalContentAlignment="Center">
+                            <ComboBoxItem Content="Tüm Kategoriler" Tag="all"/>
+                            <ComboBoxItem Content="🎬 Filmler" Tag="movies"/>
+                            <ComboBoxItem Content="📺 Diziler" Tag="series"/>
+                            <ComboBoxItem Content="📡 Canlı TV / Kanallar" Tag="tv"/>
+                            <ComboBoxItem Content="🎵 Müzik / Radyo" Tag="music"/>
+                            <ComboBoxItem Content="⚽ Spor" Tag="sports"/>
+                            <ComboBoxItem Content="🎨 Animasyon / Anime" Tag="animation"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Language Filter -->
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,5">
+                        <TextBlock Text="Dil" FontSize="11" Foreground="#94a3b8" Margin="2,0,0,3" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="LanguageCombo" Width="140" Height="35" SelectedIndex="0" VerticalContentAlignment="Center">
+                            <ComboBoxItem Content="Tüm Diller" Tag="all"/>
+                            <ComboBoxItem Content="🇹🇷 Türkçe (TR)" Tag="tr"/>
+                            <ComboBoxItem Content="🇩🇪 Almanca (DE)" Tag="de"/>
+                            <ComboBoxItem Content="🇬🇧 İngilizce (EN)" Tag="en"/>
+                            <ComboBoxItem Content="🇪🇸 İspanyolca (ES)" Tag="es"/>
+                            <ComboBoxItem Content="🇫🇷 Fransızca (FR)" Tag="fr"/>
+                            <ComboBoxItem Content="🇮🇹 İtalyanca (IT)" Tag="it"/>
+                            <ComboBoxItem Content="🇷🇺 Rusça (RU)" Tag="ru"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Sort Filter -->
+                    <StackPanel Orientation="Vertical" Margin="0,0,15,5">
+                        <TextBlock Text="Sıralama" FontSize="11" Foreground="#94a3b8" Margin="2,0,0,3" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="SortCombo" Width="195" Height="35" SelectedIndex="0" VerticalContentAlignment="Center">
+                            <ComboBoxItem Content="🔥 En Çok İzlenenler / Popüler" Tag="availability|desc"/>
+                            <ComboBoxItem Content="⚡ En Yüksek Kalite (Bitrate)" Tag="bitrate|desc"/>
+                            <ComboBoxItem Content="✨ En Yeniler" Tag="created_at|desc"/>
+                            <ComboBoxItem Content="📜 En Eskiler" Tag="created_at|asc"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Source Filter -->
+                    <StackPanel Orientation="Vertical" Margin="0,0,0,5">
+                        <TextBlock Text="Kaynak" FontSize="11" Foreground="#94a3b8" Margin="2,0,0,3" FontWeight="SemiBold"/>
+                        <ComboBox x:Name="SourceCombo" Width="230" Height="35" SelectedIndex="0" VerticalContentAlignment="Center">
+                            <ComboBoxItem Content="Tüm Kaynaklar" Tag="all"/>
+                            <ComboBoxItem Content="⚡ AceStream Motoru (Yerel - 127.0.0.1)" Tag="ace_engine"/>
+                            <ComboBoxItem Content="🌐 AceStream Web Dizini (search-ace.stream)" Tag="ace_web"/>
+                            <ComboBoxItem Content="📡 FreetuxTV Veritabanı" Tag="freetuxtv"/>
+                            <ComboBoxItem Content="🔗 IPTVcat Dizin Arama" Tag="iptvcat"/>
+                        </ComboBox>
+                    </StackPanel>
+                </WrapPanel>
+            </StackPanel>
         </Border>
 
         <!-- Results Grid -->
         <Border Grid.Row="2" Background="#1e293b" CornerRadius="12" BorderBrush="#334155" BorderThickness="1" ClipToBounds="True">
             <Grid>
-                <ListView x:Name="ResultsList" Background="Transparent" BorderThickness="0" Foreground="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" x:Name="ResultCountBorder" Background="#0f172a" Padding="15,8" Visibility="Collapsed" BorderBrush="#334155" BorderThickness="0,0,0,1">
+                    <TextBlock x:Name="ResultCountText" Text="Bulunan içerik sayısı: 0" Foreground="#38bdf8" FontWeight="Bold" FontSize="14"/>
+                </Border>
+
+                <ListView x:Name="ResultsList" Grid.Row="1" Background="Transparent" BorderThickness="0" Foreground="White" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="Kaynak" Width="100">
