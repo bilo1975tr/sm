@@ -1,0 +1,87 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="Wap TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/Djng8pI.png" group-title="English",Wap TV (720p) [Not 24/7]
+https://newproxy3.vidivu.tv/waptv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="News12+ Long Island (1080p) [Geo-blocked]" tvg-logo="https://i.ibb.co/p6FPNcCk/news12plus-LI.jpg" group-title="English",News12+ Long Island (1080p) [Geo-blocked]
+https://mdc.ott.alticeusa.net/live4.ott.optimum.net/live4-uploads/N12PLUS_H_LI_A1/index_new.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Westerns 4U (1080p)" tvg-logo="" group-title="English",Westerns 4U (1080p)
+http://181.224.255.210:8001/play/a0rq/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Watch it Scream! (720p)" tvg-logo="https://i.imgur.com/bz3Caum.png" group-title="English",Watch it Scream! (720p)
+https://stream-us-east-1.getpublica.com/playlist.m3u8?network_id=2246
+#EXTINF:-1 tvg-id="" tvg-name="Yachting TV (1080p)" tvg-logo="https://i.imgur.com/YxO60B1.png" group-title="English",Yachting TV (1080p)
+https://streams2.sofast.tv/vglive-sk-461164/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Baraka Television (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/IKXddHN.png" group-title="French",Baraka Television (720p) [Not 24/7]
+https://stream.berosat.live:19360/baraka-hd/baraka-hd.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Teuta" tvg-logo="https://i.imgur.com/sWVqBuW.png" group-title="Montenegrin",TV Teuta
+http://143.244.204.5/tvteuta/tracks-v1a1/mono.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Yu-Gi-Oh! (1080p)" tvg-logo="https://i.imgur.com/Tl6aW2u.png" group-title="English",Yu-Gi-Oh! (1080p)
+https://amg01796-amg01796c19-rakuten-gb-7486.playouts.now.amagi.tv/playlist/amg01796-fastmediafast-yugioh2en-rakutengb/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV BRICS English (1080p)" tvg-logo="https://i.imgur.com/8rKNuS6.png" group-title="English",TV BRICS English (1080p)
+https://engbrics.mediacdn.ru/cdn/brics/english/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WTVJ-DT1 (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/WTVJ_2023.svg/960px-WTVJ_2023.svg.png" group-title="English",WTVJ-DT1 (1080p)
+https://nbculocallive.akamaized.net/hls/live/2037498/miami/stream1/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WCBI (Columbus MI) (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/CBS_logo_%282020%29.svg/960px-CBS_logo_%282020%29.svg.png" group-title="English",WCBI (Columbus MI) (720p)
+https://townnews.g-mana.live/media/4efc62fa-ad0b-445c-a839-4d1e7636988e/main.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Diaspora 24 [Geo-blocked]" tvg-logo="https://i.imgur.com/4devfx1.png" group-title="French",Diaspora 24 [Geo-blocked]
+https://vdo3.pro-fhi.net:3218/stream/play.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVCARiB Gospel (480p) [Not 24/7]" tvg-logo="https://i.imgur.com/fvGlwKo.png" group-title="English",TVCARiB Gospel (480p) [Not 24/7]
+https://cdn.mycloudstream.io/hls/live/broadcast/wokrhjkd/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Unidentified (1080p)" tvg-logo="https://i.imgur.com/naYszow.jpg" group-title="English",Unidentified (1080p)
+https://d3ify425qsio2d.cloudfront.net/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Gulli" tvg-logo="https://i.imgur.com/kqYssbW.png" group-title="French",Gulli
+http://99.27.51.147:8080/Gulli/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Trace Urban France (1080p)" tvg-logo="https://i.imgur.com/DLIbUMx.png" group-title="English",Trace Urban France (1080p)
+https://channels.trace.plus/Traceprod/URBAN_FR_hd/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vantage Classic (720p)" tvg-logo="https://vantagetv.ee/vantage_classic.png" group-title="English",Vantage Classic (720p)
+https://cdn-backup.lulzy.eu/vclassic_stream/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Viasat History [Not 24/7]" tvg-logo="https://i.imgur.com/wRP9XA7.png" group-title="English",Viasat History [Not 24/7]
+http://315e5a5d.ottrast.com/iptv/8XFKA8883W9M5K/12101/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vantage Dance (720p)" tvg-logo="https://vantagetv.ee/vantage_dance.png" group-title="English",Vantage Dance (720p)
+https://cdn-backup.lulzy.eu/vdance_stream/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Whiplash II (480p)" tvg-logo="https://whiplash.cc/assets/img/channels/whiplash2.png" group-title="English",Whiplash II (480p)
+https://cdn.whiplash.cc/whiplash-2/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Trace Jama (1080p)" tvg-logo="https://i.imgur.com/pthX34m.png" group-title="English",Trace Jama (1080p)
+https://channels.trace.plus/Traceprod/JAMA_hd/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WDAF-TV 4.2 (576p)" tvg-logo="https://i.imgur.com/ocs2DeU.png" group-title="English",WDAF-TV 4.2 (576p)
+http://206.212.244.63/9/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Trace Urban Southern Africa (1080p)" tvg-logo="https://i.imgur.com/DLIbUMx.png" group-title="French",Trace Urban Southern Africa (1080p)
+https://channels.trace.plus/Traceprod/URBAN_SA_hd/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vegas Life TV (1080p)" tvg-logo="https://i.imgur.com/G7lONcu.png" group-title="English",Vegas Life TV (1080p)
+https://cdn.vegasplus.us/vegas/vltv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="VOA TV Africa (1080p)" tvg-logo="https://i.imgur.com/rtRnlqN.png" group-title="English",VOA TV Africa (1080p)
+https://voa-ingest.akamaized.net/hls/live/2033874/tvmc06/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vantage Music (720p) [Geo-blocked]" tvg-logo="https://vantagetv.ee/vantage_music.png" group-title="English",Vantage Music (720p) [Geo-blocked]
+https://cdn-backup.lulzy.eu/vmusic_stream/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Yu-Gi-Oh! en espanol (1080p)" tvg-logo="https://i.imgur.com/VH8RiHg.png" group-title="English",Yu-Gi-Oh! en espanol (1080p)
+https://amg01796-amg01796c18-rakuten-es-7491.playouts.now.amagi.tv/playlist/amg01796-fastmediafast-yugiohees-rakutenes/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AB1 (720p)" tvg-logo="https://i.imgur.com/9C7UsOe.png" group-title="French",AB1 (720p)
+http://145.239.5.177/332/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WBTV News (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/CBS_logo_%282020%29.svg/960px-CBS_logo_%282020%29.svg.png" group-title="English",WBTV News (720p)
+https://d2ugl2g2gz1giy.cloudfront.net/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Trace Vanilla Islands (1080p)" tvg-logo="https://i.imgur.com/ngF58fe.png" group-title="French",Trace Vanilla Islands (1080p)
+https://channels.trace.plus/Traceprod/VANILLA_hd/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TeleMIX (720p)" tvg-logo="https://i.ibb.co/HpX99Ks/unnamed.jpg" group-title="French",TeleMIX (720p)
+https://haititivi.com/haiti/telemix1/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Unsolved Mysteries (720p)" tvg-logo="https://i.imgur.com/De3khrX.png" group-title="English",Unsolved Mysteries (720p)
+https://d31z96rdrmwfsp.cloudfront.net/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WCBS-TV 2.1 (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/CBS_2.svg/960px-CBS_2.svg.png" group-title="English",WCBS-TV 2.1 (720p)
+http://206.212.244.63/32/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vevo 70s (1080p)" tvg-logo="https://images.pluto.tv/channels/5f32f26bcd8aea00071240e5/featuredImage.jpg" group-title="English",Vevo 70s (1080p)
+https://amg00056-vevotv-vevo70saunz-samsungau-xzszd.amagi.tv/playlist/amg00056-vevotv-vevo70saunz-samsungau/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Wild TV (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Wild_TV_logo_2020.png/960px-Wild_TV_logo_2020.png" group-title="English",Wild TV (1080p)
+https://dfhsahpa45kk2.cloudfront.net/scheduler/scheduleMaster/476.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kajou TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/2XzghdT.png" group-title="French",Kajou TV (720p) [Not 24/7]
+https://video1.getstreamhosting.com:1936/8055/8055/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="W14DK-D 14.1 TV Delmarva" tvg-logo="https://i.imgur.com/TjQP7kS.png" group-title="English",W14DK-D 14.1 TV Delmarva
+https://2-fss-2.streamhoster.com/pl_118/amlst:204972-1949480/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vevo Retro Rock (1080p)" tvg-logo="https://i.imgur.com/H1Aap4E.png" group-title="English",Vevo Retro Rock (1080p)
+https://d2lyea6if8kkz9.cloudfront.net/playlist/amg00056-vevotv-vevoretrorockau-samsungau/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="VICE TV (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Vice_TV_logo.svg/960px-Vice_TV_logo.svg.png" group-title="English",VICE TV (1080p)
+http://23.237.104.106:8080/USA_VICETV/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TSTV (720p)" tvg-logo="" group-title="English",TSTV (720p)
+https://reflector.watchtstv.com/hls/livestream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="White Plains Community Media (360p)" tvg-logo="https://i.imgur.com/XGQfBbW.png" group-title="English",White Plains Community Media (360p)
+https://stream.swagit.com/live-edge/whiteplainsny/smil:std-4x3-1-b/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Zylo Fréquence Novelas (1080p)" tvg-logo="https://i.imgur.com/fEjNAps.png" group-title="French",Zylo Fréquence Novelas (1080p)
+https://d20oth1416y9a1.cloudfront.net/playlist/amg00711-zylofast-frequencenovelas-rakutenus/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Window TV (720p)" tvg-logo="https://whiplash.cc/assets/img/channels/windowtv.png" group-title="English",Window TV (720p)
+https://cdn.whiplash.cc/whiplash-windowtv/index.m3u8
