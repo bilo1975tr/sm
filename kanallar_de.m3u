@@ -219,3 +219,33 @@ https://dash4.antik.sk/live/test_hr_tizen/playlist.m3u8
 https://d1pz8zear993v8.cloudfront.net/hlsme/kathtv.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Franken Fernsehen (Nürnberg) (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/3pGGLLD.png" group-title="German",Franken Fernsehen (Nürnberg) (1080p) [Not 24/7]
 https://frankentv.iptv-playoutcenter.de/frankentv/frankentv.stream_1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Suyai TV (720p)" tvg-logo="https://suyaitv.cl/wp-content/uploads/2024/10/ico_Suyai_TV_512.png" group-title="Undefined",Suyai TV (720p)
+https://origin.skarnetchile.com:8081/suyai-tv-hd/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Real Housewives Vault (1080p)" tvg-logo="" group-title="Undefined",Real Housewives Vault (1080p)
+https://xumo-xumoent-vc-123-8gq0q.fast.nbcuni.com/live/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Sci-Fi UK (1080p)" tvg-logo="" group-title="Undefined",Rakuten TV Sci-Fi UK (1080p)
+https://sci-fi-rakuten-tv-uk.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6241/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MTV3 (720p)" tvg-logo="https://i.imgur.com/C5rQbBM.png" group-title="Undefined",MTV3 (720p)
+https://live-fi.tvkaista.net/mtv3/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Scares by Shudder" tvg-logo="" group-title="Undefined",Scares by Shudder
+https://amc-scaresbyshudder-1-us.xumo.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Shooting Sports Life (720p)" tvg-logo="" group-title="Undefined",Shooting Sports Life (720p)
+https://a-cdn.klowdtv.com/live2/ssl_720p/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MyTime Movie Network France (1080p)" tvg-logo="" group-title="Undefined",MyTime Movie Network France (1080p)
+https://mytimemoviefrance-rakuten.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Stingray Hitlist (1080p)" tvg-logo="https://i.imgur.com/lgpIwId.png" group-title="Undefined",Stingray Hitlist (1080p)
+https://d39g1vxj2ef6in.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-rakuten-stitched/master.m3u8?ads.xumo_channelId=88883054
+#EXTINF:-1 tvg-id="" tvg-name="Silent Witness and New Tricks (720p)" tvg-logo="" group-title="Undefined",Silent Witness and New Tricks (720p)
+https://aegis-cloudfront-1.tubi.video/d37465d7-dfbc-45cd-98a2-8d47968b5fb5/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Films Thriller (720p)" tvg-logo="" group-title="Undefined",Rakuten TV Films Thriller (720p)
+https://thriller-rakuten-tv-fr.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6479/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Thrillers UK (1080p)" tvg-logo="" group-title="Undefined",Rakuten TV Thrillers UK (1080p)
+https://thriller-rakuten-tv-uk.fast.rakuten.tv/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6482/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Serially Crime (720p)" tvg-logo="" group-title="Undefined",Serially Crime (720p)
+https://ixmediasrl-seriallycrime-1-it.rakuten.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Sportoutdoor.tv" tvg-logo="https://i.imgur.com/fwOuEBl.png" group-title="Undefined",Sportoutdoor.tv
+https://gto2000-sportoutdoortv-1-it.samsung.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Real Crime Uncovered (720p)" tvg-logo="" group-title="Undefined",Real Crime Uncovered (720p)
+https://a-cdn.klowdtv.com/live3/realcrimeuncovered_720p/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Swerve Combat (720p)" tvg-logo="" group-title="Undefined",Swerve Combat (720p)
+https://a-cdn.klowdtv.com/live3/swervecombat_720p/playlist.m3u8

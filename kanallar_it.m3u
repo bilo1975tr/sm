@@ -13,3 +13,9 @@ https://stream-live.lrt.lt/klasika/master.m3u8
 http://stream.mcquack.net/374/index.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="TV6 (576p)" tvg-logo="https://i.imgur.com/oC0jiFW.png" group-title="Lithuanian",TV6 (576p)
 http://stream.mcquack.net/375/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV3 (1080p)" tvg-logo="https://i.imgur.com/7nipq0y.png" group-title="Lithuanian",TV3 (1080p)
+http://stream.mcquack.net/29/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="LNK (1080p)" tvg-logo="https://i.imgur.com/arCZ56g.png" group-title="Lithuanian",LNK (1080p)
+http://stream.mcquack.net/30/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kantipur TV (1080p)" tvg-logo="https://i.imgur.com/HEVo2Gc.png" group-title="Maithili",Kantipur TV (1080p)
+https://ktvhdsg.ekantipur.com:8443/high_quality_85840165/hd/playlist.m3u8

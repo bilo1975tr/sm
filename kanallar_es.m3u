@@ -115,3 +115,39 @@ https://tv.laboralsst.com.br/hls/stream.m3u8
 https://v3.siar.us/ficomchannel/live/playlist.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="RRI Net (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/RRI_NET_2023.svg/960px-RRI_NET_2023.svg.png" group-title="Indonesian",RRI Net (1080p)
 https://private-streaming.rri.go.id/memfs/6f77c7b5-feb2-4935-9f89-e7e9fca0a54a_output_0.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="CGNTV Japan (1080p)" tvg-logo="https://i.imgur.com/5LNZeVq.png" group-title="Japanese",CGNTV Japan (1080p)
+https://d2p4mrcwl6ly4.cloudfront.net/out/v1/8d50f69fdbbf411a8d302743e4263716/CGNWebLiveJP.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Gloobinho (1080p)" tvg-logo="https://i.imgur.com/UWkHErt.png" group-title="Portuguese",Gloobinho (1080p)
+http://143.14.178.40:7777/Gloobinho_HD/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ConecTV Brasil (720p)" tvg-logo="https://i.imgur.com/XN6jjMR.png" group-title="Portuguese",ConecTV Brasil (720p)
+https://stream01.msolutionbrasil.com.br/hls/conectv/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AgroMais (720p)" tvg-logo="https://i.imgur.com/sFcOZeo.png" group-title="Portuguese",AgroMais (720p)
+http://45.162.64.114/AGROMAIS/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ESPN 4 (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/ESPN_4_logo.svg/960px-ESPN_4_logo.svg.png" group-title="Portuguese",ESPN 4 (1080p)
+http://181.78.197.59:8000/play/a07n/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Adult Swim Latin America Brazil (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Adult_Swim_2003_logo.svg/960px-Adult_Swim_2003_logo.svg.png" group-title="Portuguese",Adult Swim Latin America Brazil (720p)
+http://45.190.28.50/TRUTV_HD/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AgroCanal (720p)" tvg-logo="https://i.imgur.com/5XyopHf.png" group-title="Portuguese",AgroCanal (720p)
+http://45.162.64.114/AGRO_CANAL/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ON FM (720p)" tvg-logo="https://onfmwordpressfiles.ams3.digitaloceanspaces.com/wp-content/uploads/2023/03/17130121/logo-on-fm.png" group-title="Portuguese",ON FM (720p)
+https://5ce9406b73c33.streamlock.net/ONFM/livestream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal FDR" tvg-logo="https://i.imgur.com/7SE4CkE.png" group-title="Portuguese",Canal FDR
+https://v-us-01.wisestream.io/memfs/e4ade538-7924-4359-81ef-b9d4dd229e91.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVRI Sulawesi Selatan (480p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/TVRILogo2019.svg/960px-TVRILogo2019.svg.png" group-title="Indonesian",TVRI Sulawesi Selatan (480p)
+https://ott-balancer.tvri.go.id/live/eds/Sulsel/hls/Sulsel.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="GNT (1080p)" tvg-logo="https://i.imgur.com/XymcvMy.png" group-title="Portuguese",GNT (1080p)
+http://143.14.178.40:7777/GNT_HD/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ESPN 3 (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/ESPN3_Logo.png/960px-ESPN3_Logo.png" group-title="Portuguese",ESPN 3 (720p)
+http://181.78.197.59:8000/play/a081/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Disney Channel Latin America Mexico (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/ff/2024_Disney_Channel_text_logo.svg" group-title="Portuguese",Disney Channel Latin America Mexico (720p)
+http://45.166.93.156:9999/play/a0f3/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AWTV (1080p) [Geo-blocked]" tvg-logo="https://i.imgur.com/2tdMyef.png" group-title="Portuguese",AWTV (1080p) [Geo-blocked]
+https://awtv.nuvemplay.live/hls/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Fish TV (720p)" tvg-logo="https://www.fishtv.com/public/site/images/logos/fishtv.svg" group-title="Portuguese",Fish TV (720p)
+http://45.162.64.114/FISH_TV/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Arte 1 (1080p)" tvg-logo="https://i.imgur.com/Ivnk7A6.png" group-title="Portuguese",Arte 1 (1080p)
+http://143.14.178.40:7777/Arte_1_HD/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Canal 25 Jundiai (720p)" tvg-logo="https://i.imgur.com/7igGMwH.png" group-title="Portuguese",Canal 25 Jundiai (720p)
+https://cdn-tiva-stream01-msolutionbrasil-com-br.smartbit.co/hls/canal25/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Chroma TV (480p)" tvg-logo="https://i.imgur.com/SnaIMgj.png" group-title="Portuguese",Chroma TV (480p)
+https://5c483b9d1019c.streamlock.net/8054/8054/playlist.m3u8

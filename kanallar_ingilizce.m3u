@@ -1,3 +1,23 @@
 #EXTM3U
 #EXTINF:-1 tvg-id="" tvg-name="SHOW TV" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/f/f1/Logo_of_Show_TV.png" group-title="Genel",SHOW TV
 http://176.65.146.171:9981/stream/channelid/569904314?profile=htsp
+#EXTINF:-1 tvg-id="" tvg-name="Kingsview TV (1080p)" tvg-logo="https://i.imgur.com/py1XOXX.png" group-title="English",Kingsview TV (1080p)
+https://j78dp6reyq5r-hls-live.5centscdn.com/4896_push_1963_001/00cb1f2e4ff89048f2e77e26940c00e6.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MHZ" tvg-logo="https://i.imgur.com/a5fw83n.jpg" group-title="English",MHZ
+https://mhz-samsung-linear-ca.samsung.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Laff (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/1/1e/LAFF_logo.png" group-title="English",Laff (1080p)
+http://40.160.24.53/LAFF_TV/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Minimax (576p) (576p)" tvg-logo="https://i.imgur.com/WWOlm1x.png" group-title="English",Minimax (576p) (576p)
+http://88.212.15.19/live/test_minimax/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Leominster TV Government (720p)" tvg-logo="https://i.imgur.com/aHkRDQw.png" group-title="English",Leominster TV Government (720p)
+https://livestream.telvue.com/leominster3/f7b44cfafd5c52223d5498196c8a2e7b.sdp/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MBC America (1080p)" tvg-logo="https://i.imgur.com/RRc23ra.png" group-title="English",MBC America (1080p)
+https://cdn-us-east-prod-ingest-infra-dacast-com.akamaized.net/624ff8f9-db18-da92-4d42-896fa2ff3eb3/source/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Lighting Lives Blessing Nations His Word (LLBN) (720p)" tvg-logo="https://i.imgur.com/GbyHlS2.png" group-title="English",Lighting Lives Blessing Nations His Word (LLBN) (720p)
+https://brightstar-hisword-pull-secure.akamaized.net/brightstarhisword/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MMA TV.com (1080p)" tvg-logo="https://i.imgur.com/QhdxNsB.png" group-title="English",MMA TV.com (1080p)
+https://streams2.sofast.tv/vglive-sk-462904/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Mezzo (1080p)" tvg-logo="https://i.imgur.com/auNdGeW.png" group-title="English",Mezzo (1080p)
+https://live-3.otcnet.ru/Mezzo/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kordia TV (1080p)" tvg-logo="https://i.imgur.com/BQ0qWzX.png" group-title="English",Kordia TV (1080p)
+https://ptvlive.kordia.net.nz/out/v1/3fc2254c865a457c8d7fbbce227a2aae/index.m3u8
