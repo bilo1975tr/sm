@@ -1,0 +1,227 @@
+<UserControl x:Class="StreamMesh.UI.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:utils="clr-namespace:StreamMesh.Core.Utils"
+             mc:Ignorable="d" d:DesignHeight="800" d:DesignWidth="1000">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Set_Title]}"
+                   FontSize="32" FontWeight="Bold" Foreground="White" Margin="0,0,0,25"/>
+
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <TabControl.Resources>
+                <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+                <Style TargetType="TabItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border Name="Border" Padding="20,12" Margin="0,0,8,10" Background="#1e293b" CornerRadius="10" BorderBrush="#334155" BorderThickness="1">
+                                    <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#38bdf8" />
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="#0284c7" />
+                                        <Setter Property="Foreground" Value="#0f172a" />
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Foreground" Value="White"/>
+                </Style>
+            </TabControl.Resources>
+
+            <TabItem Header="Yayın Kaynakları">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="M3U / Oynatma Listesi Ekle" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBox x:Name="M3uUrlBox" Height="40" Padding="10"/>
+                                <Button Grid.Column="1" Content="Yükle" Width="100" Margin="15,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Click="AddSource_Click"/>
+                            </Grid>
+                            <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
+                            <TextBlock Text="Aktif Yayın Kaynakları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,10,0,10" FontSize="18"/>
+                            <ListBox x:Name="M3uSourcesList" Height="250" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,5" Padding="10">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Url}" Foreground="White" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                        <Border Background="{Binding Color}" CornerRadius="4" Padding="4,1" Margin="0,0,10,0">
+                                                            <TextBlock Text="{Binding Origin}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Content="Kaldır" Background="#7f1d1d" Foreground="#ff8a8a" Width="70" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveSource_Click" CommandParameter="{Binding Url}" Visibility="{Binding CanDelete, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Content="🚨 Tüm Kütüphaneyi Sıfırla" Width="220" Height="45" Style="{StaticResource PrimaryButtonStyle}" Background="#ef4444" Click="ClearAll_Click"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="IPTV Hesapları">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Xtream / IPTV Hesabı Ekle" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,10,0"><TextBlock Text="Sunucu URL" Foreground="Gray" FontSize="10"/><TextBox x:Name="XtreamUrlBox" Height="35"/></StackPanel>
+                                <StackPanel Grid.Column="1" Margin="0,0,10,0"><TextBlock Text="Kullanıcı" Foreground="Gray" FontSize="10"/><TextBox x:Name="XtreamUserBox" Height="35"/></StackPanel>
+                                <StackPanel Grid.Column="2"><TextBlock Text="Şifre" Foreground="Gray" FontSize="10"/><TextBox x:Name="XtreamPassBox" Height="35"/></StackPanel>
+                            </Grid>
+                            <Button Content="+ Hesabı Ekle" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddIptvAccount_Click"/>
+                            <Rectangle Height="1" Fill="#334155" Margin="0,20"/>
+                        </StackPanel>
+                        <ListBox Grid.Row="1" x:Name="IptvAccountsList" Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#0f172a" CornerRadius="10" Padding="15" Margin="0,0,0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel><TextBlock Text="{Binding Name}" Foreground="White" FontSize="16" FontWeight="Bold"/><TextBlock Text="{Binding ServerUrl}" Foreground="Gray" FontSize="11"/></StackPanel>
+                                            <Button Grid.Column="1" Content="Sil" Background="#7f1d1d" Width="60" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveIptv_Click" CommandParameter="{Binding Id}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="EPG Rehber">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <StackPanel>
+                        <TextBlock Text="EPG / XMLTV Kaynağı Ekle" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="EpgUrlBox" Height="40" Padding="10"/>
+                            <Button Grid.Column="1" Content="Ekle" Width="100" Margin="15,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Click="AddEpgSource_Click"/>
+                        </Grid>
+                        <ListBox x:Name="EpgSourcesList" Height="250" Background="#0f172a" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,5" Padding="10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Url}" Foreground="White" VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="Kaldır" Background="#7f1d1d" Width="70" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveEpgSource_Click" CommandParameter="{Binding Url}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Oynatıcı Ayarları">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <StackPanel>
+                        <TextBlock Text="VLC Ayarları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                        <TextBlock Text="Tampon Bellek" Foreground="Gray" Margin="0,0,0,5"/>
+                        <TextBox x:Name="CachingBox" Width="150" Height="35" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+                        <TextBlock Text="User-Agent" Foreground="Gray" Margin="0,0,0,5"/>
+                        <TextBox x:Name="UserAgentBox" Height="35" Margin="0,0,0,15"/>
+                        <CheckBox x:Name="HwAccelCheck" Content="GPU Hızlandırma" Foreground="White" Margin="0,10,0,25"/>
+                        <Button Content="Kaydet" Width="150" Style="{StaticResource PrimaryButtonStyle}" Click="SaveSettings_Click"/>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="AceStream &amp; Bileşenler">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <StackPanel>
+                        <TextBlock Text="⚡ AceStream P2P Motoru &amp; Eklenti Bileşenleri" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                        <TextBlock Text="P2P yayınları izlemek ve AceStream kanallarını oynatmak için bilgisayarınızda AceStream Motoru kurulmalıdır." Foreground="#94a3b8" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                        <Border Background="#0f172a" CornerRadius="10" Padding="15" Margin="0,0,0,20">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="AceStream Engine Durumu:" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                                        <TextBlock x:Name="AceStatusText" Text="Kontrol ediliyor..." Foreground="#e2e8f0" FontSize="13" Margin="0,4,0,0"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="🔄 Durumu Yenile" Padding="12,8" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="CheckAceStatus_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Otomatik İndirme Kaynağı:" Foreground="White" FontSize="13" Margin="0,0,0,5"/>
+                        <TextBox Text="https://github.com/bilo1975tr/sm/releases/download/v1.0/AceStream.zip" IsReadOnly="True" Height="35" Padding="8,5" Background="#0f172a" Foreground="#cbd5e1" Margin="0,0,0,15"/>
+
+                        <ProgressBar x:Name="AceDownloadProgress" Height="8" Foreground="#38bdf8" Background="#0f172a" Visibility="Collapsed" Margin="0,0,0,15"/>
+
+                        <Button x:Name="InstallAceButton" Content="⬇️ AceStream Motorunu Otomatik İndir ve Kur" Height="45" Width="320" HorizontalAlignment="Left" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Click="InstallAceStream_Click"/>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Medya Sunucusu">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <StackPanel>
+                        <TextBlock Text="Media Server" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <StackPanel><TextBlock Text="Port" Foreground="Gray"/><TextBox x:Name="ServerPortBox" Text="8080" Width="80" HorizontalAlignment="Left"/></StackPanel>
+                            <Button Grid.Column="1" x:Name="ServerControlBtn" Content="Sunucuyu Başlat" Width="150" Style="{StaticResource PrimaryButtonStyle}" Click="ToggleServer_Click"/>
+                        </Grid>
+                        <TextBox x:Name="M3uServerLink" IsReadOnly="True" Margin="0,0,0,10"/><TextBox x:Name="WebServerLink" IsReadOnly="True"/>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Uygulama &amp; AI">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <StackPanel>
+                        <TextBlock Text="AI Asistan" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                        <ComboBox x:Name="AiProviderCombo" Height="35" Margin="0,0,0,10" SelectionChanged="AiProvider_SelectionChanged">
+                            <ComboBoxItem Content="Ollama" IsSelected="True"/><ComboBoxItem Content="LM Studio"/>
+                        </ComboBox>
+                        <TextBox x:Name="AiUrlBox" Height="35" Margin="0,0,0,10"/>
+                        <TextBox x:Name="AiModelBox" Height="35" Margin="0,0,0,10"/>
+                        <Button Content="🤖 Modelleri Listele / Getir" Height="40" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="FetchModels_Click" Margin="0,0,0,15"/>
+                        <TextBlock Text="TMDB API" Foreground="#38bdf8" Margin="0,10,0,5"/>
+                        <TextBox x:Name="TmdbApiKeyBox" Height="35" Margin="0,0,0,10"/>
+                        <TextBlock x:Name="TmdbQuotaText" Text="Kota" Foreground="White"/>
+                        <Button Content="Kaydet" Width="150" Style="{StaticResource PrimaryButtonStyle}" Click="SaveSettings_Click"/>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Bulut Güncelleme">
+                <Border Background="#1e293b" Padding="25" CornerRadius="15">
+                    <StackPanel>
+                        <TextBlock Text="Bulut Güncelleme" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                        <ProgressBar x:Name="SyncProgress" Height="10" Margin="0,0,0,10"/><TextBlock x:Name="SyncStatusText" Text="Bekleniyor" Foreground="White"/>
+                        <Button Content="Başlat" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="StartCloudSync_Click" Margin="0,20,0,0"/>
+                    </StackPanel>
+                </Border>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

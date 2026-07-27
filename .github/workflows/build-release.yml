@@ -13,64 +13,114 @@ on:
   workflow_dispatch: # Allows manual trigger from Actions tab
 
 permissions:
-  contents: write    # Required for creating releases
+  contents: write    # Required for creating releases and committing updated VERSION
 
 jobs:
-  build_exe:
-    name: Build Windows Application
+  build_release:
+    name: Build & Release Windows Application
     runs-on: windows-latest
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x' # App.xaml ve csproj'dan anlaşıldığı üzere .NET 8 kullanılıyor
+          dotnet-version: '8.0.x'
           
-      - name: Read Version
-        id: version
-        shell: bash
+      - name: Auto-Increment Version
+        id: versioning
+        shell: powershell
         run: |
-          if [ -f "VERSION" ]; then
-            VERSION=$(cat VERSION)
-          else
-            VERSION="1.0"
-          fi
-          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
-          # Versiyon içindeki boşlukları '-' ile değiştirerek dosya adına uygun hale getir
-          SAFE_VERSION=$(echo "$VERSION" | tr ' ' '-')
-          echo "SAFE_VERSION=$SAFE_VERSION" >> $GITHUB_ENV
+          if (Test-Path "VERSION") {
+            $raw = (Get-Content -Path "VERSION" -Raw).Trim()
+          } else {
+            $raw = "0.0"
+          }
+          
+          $parts = $raw.Split('.')
+          [int]$major = 0
+          [int]$minor = 0
+          
+          if ($parts.Length -ge 2) {
+            [int]::TryParse($parts[0], [ref]$major) | Out-Null
+            [int]::TryParse($parts[1], [ref]$minor) | Out-Null
+          }
+          
+          $minor += 1
+          if ($minor -gt 1000) {
+            $major += 1
+            $minor = 0
+          }
+          
+          $newVersion = "$major.$minor"
+          Set-Content -Path "VERSION" -Value $newVersion
+          
+          echo "APP_VERSION=$newVersion" >> $env:GITHUB_ENV
+          echo "SAFE_VERSION=$newVersion" >> $env:GITHUB_ENV
+          Write-Host "New Version: $newVersion"
 
-      - name: Build & Publish App
+      - name: Build & Publish Single File Executable
         shell: cmd
         run: |
           dotnet clean -c Release
           dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:IncludeNativeLibrariesForSelfExtract=true
 
-      - name: Create ZIP Archive
+      - name: Create Inno Setup Installer EXE
+        shell: powershell
+        run: |
+          $isccPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (Test-Path $isccPath) {
+            & $isccPath /DAppVersion="${env:APP_VERSION}" setup.iss
+          } else {
+            Write-Warning "Inno Setup compiler (ISCC.exe) not found at standard path, trying PATH..."
+            iscc /DAppVersion="${env:APP_VERSION}" setup.iss
+          }
+
+      - name: Create Portable ZIP Archive
         shell: powershell
         run: |
           $publishPath = "bin\Release\net8.0-windows\win-x64\publish\*"
           Copy-Item -Path "VERSION" -Destination "bin\Release\net8.0-windows\win-x64\publish\"
-          $zipPath = "StreamMesh-${env:SAFE_VERSION}.zip"
+          $zipPath = "StreamMesh-v${env:SAFE_VERSION}-Portable.zip"
           Compress-Archive -Path $publishPath -DestinationPath $zipPath -Force
 
-      - name: Upload Artifact (For Dashboard)
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: StreamMesh-EXE-${{ env.SAFE_VERSION }}
-          path: StreamMesh-${{ env.SAFE_VERSION }}.zip
+          name: StreamMesh-v${{ env.SAFE_VERSION }}
+          path: |
+            StreamMesh-Setup-v${{ env.SAFE_VERSION }}.exe
+            StreamMesh-v${{ env.SAFE_VERSION }}-Portable.zip
 
-      - name: Create Release
+      - name: Commit Updated Version Back to Git
+        shell: bash
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          if ! git diff --staged --quiet; then
+            git commit -m "bump: Auto-increment version to v${{ env.APP_VERSION }}"
+            git push origin HEAD:${{ github.ref_name }} || true
+          fi
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
-          tag_name: v${{ env.SAFE_VERSION }}-${{ github.run_number }}
-          name: StreamMesh ${{ env.APP_VERSION }}
-          body: "🚀 Otomatik Yayınlanan StreamMesh Sürümü: **${{ env.APP_VERSION }}**\n\nBu sürüm GitHub Actions tarafından derlenmiş ve paylaşıma açılmıştır."
-          files: StreamMesh-${{ env.SAFE_VERSION }}.zip
+          tag_name: v${{ env.SAFE_VERSION }}
+          name: StreamMesh v${{ env.APP_VERSION }}
+          body: |
+            🚀 **StreamMesh Otomatik Kurulum ve Yayın Sürümü: v${{ env.APP_VERSION }}**
+            
+            - **Kurulum Sihirbazı (İstediğiniz yere kurar, yönetici yetkisi gerektirmez):** `StreamMesh-Setup-v${{ env.APP_VERSION }}.exe`
+            - **Taşınabilir ZIP Sürümü:** `StreamMesh-v${{ env.APP_VERSION }}-Portable.zip`
+          files: |
+            StreamMesh-Setup-v${{ env.SAFE_VERSION }}.exe
+            StreamMesh-v${{ env.SAFE_VERSION }}-Portable.zip
           draft: false
           prerelease: false
         env:

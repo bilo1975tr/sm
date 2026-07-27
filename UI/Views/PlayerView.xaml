@@ -1,0 +1,51 @@
+<UserControl x:Class="StreamMesh.UI.Views.PlayerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:conv="clr-namespace:StreamMesh.Converters"
+             mc:Ignorable="d" d:DesignHeight="720" d:DesignWidth="1280">
+
+    <UserControl.Resources>
+        <conv:LogoCacheConverter x:Key="LogoCacheConverter" />
+    </UserControl.Resources>
+
+    <Grid Background="Black">
+        <Image x:Name="VideoImage" Stretch="Uniform"/>
+
+        <!-- OSD Panel -->
+        <Border VerticalAlignment="Bottom" Height="150" Background="#CC000000" Margin="40" CornerRadius="25" BorderBrush="#334155" BorderThickness="1" x:Name="OsdPanel">
+            <Grid Margin="30,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Channel Logo -->
+                <Border Width="90" Height="90" Background="#1e293b" CornerRadius="12" VerticalAlignment="Center">
+                    <Image x:Name="OsdLogo" Stretch="Uniform" Margin="12"/>
+                </Border>
+
+                <!-- EPG Info -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="25,0">
+                    <TextBlock x:Name="OsdTitle" Text="Kanal Yükleniyor..." FontSize="32" FontWeight="Bold" Foreground="White"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <Border Background="#38bdf8" CornerRadius="4" Padding="5,1">
+                            <TextBlock x:Name="OsdCategory" Text="Yükleniyor" Foreground="Black" FontWeight="Bold" FontSize="10"/>
+                        </Border>
+                        <TextBlock Text="  " />
+                        <TextBlock x:Name="OsdCurrentEpg" Text="Yayın akışı bilgisi yükleniyor..." Foreground="#cbd5e1" FontSize="14"/>
+                    </StackPanel>
+                    <TextBlock x:Name="OsdNextEpg" Text="Sıradaki: --:-- Bilgi yok" FontSize="12" Foreground="Gray"/>
+                </StackPanel>
+
+                <!-- Controls -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="🔇" FontSize="20" Style="{StaticResource PrimaryButtonStyle}" Width="55" Height="55" Background="#334155" Margin="0,0,12,0"/>
+                    <Button Content="⏹" FontSize="20" Style="{StaticResource PrimaryButtonStyle}" Width="55" Height="55" Background="#ef4444"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

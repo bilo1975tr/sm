@@ -1,0 +1,15 @@
+<Window x:Class="StreamMesh.UI.Windows.SplashWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="StreamMesh" Height="300" Width="500"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" WindowStartupLocation="CenterScreen">
+    <Border Background="#0f172a" CornerRadius="16" BorderBrush="#334155" BorderThickness="1">
+        <Grid Margin="30">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="StreamMesh" FontSize="48" FontWeight="Bold" Foreground="#38bdf8" HorizontalAlignment="Center"/>
+                <TextBlock Text="Yükleniyor..." Foreground="#94a3b8" HorizontalAlignment="Center" Margin="0,10,0,20"/>
+                <ProgressBar Height="4" IsIndeterminate="True" Foreground="#38bdf8" Background="#1e293b" BorderThickness="0"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

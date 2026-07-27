@@ -1,22 +1,23 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 
 namespace StreamMesh.Converters
 {
-    public class LogoCacheConverter : IValueConverter
+    public class BooleanToBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string? url = value as string;
-            if (string.IsNullOrEmpty(url)) return null;
+            bool val = value is bool b && b;
+            string param = parameter as string ?? "";
 
-            try
+            if (param == "Fav")
             {
-                return new BitmapImage(new Uri(url));
+                return val ? new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 215, 0)) : System.Windows.Media.Brushes.Gray;
             }
-            catch { return null; }
+
+            return val ? System.Windows.Media.Brushes.Green : System.Windows.Media.Brushes.Red;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -1,0 +1,45 @@
+<Window x:Class="StreamMesh.UI.Windows.ChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="StreamMesh AI Asistan" Height="600" Width="500"
+        Background="#0F172A" Foreground="#F8FAFC"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Style x:Key="MessageBubbleStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="15"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="10,5"/>
+            <Setter Property="MaxWidth" Value="380"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer x:Name="ChatScroll" Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="0,0,0,10">
+            <StackPanel x:Name="MessagesList" VerticalAlignment="Bottom"/>
+        </ScrollViewer>
+
+        <!-- Status Bar -->
+        <Border x:Name="StatusBorder" Grid.Row="1" Background="#1E293B" CornerRadius="8" Padding="15,8" Margin="0,0,0,10" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="StatusText" Text="AI Düşünüyor..." Foreground="#38BDF8" FontSize="12" FontWeight="SemiBold"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="InputPrompt" Height="40" Padding="12,8"
+                     Background="#1E293B" Foreground="#F8FAFC" BorderBrush="#334155" BorderThickness="1"/>
+            <Button Grid.Column="1" x:Name="SendButton" Content="Gönder" Width="80" Height="40"
+                    Style="{StaticResource PrimaryButtonStyle}" Margin="10,0,0,0" Click="Send_Click"/>
+        </Grid>
+    </Grid>
+</Window>

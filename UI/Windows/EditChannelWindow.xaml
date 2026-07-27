@@ -1,0 +1,180 @@
+<Window x:Class="StreamMesh.UI.Windows.EditChannelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:StreamMesh.Converters"
+        Title="Gelişmiş Kanal Düzenleyici" Height="680" Width="850"
+        Background="#0f172a" Foreground="White" WindowStartupLocation="CenterOwner"
+        WindowStyle="None" AllowsTransparency="True">
+
+    <Window.Resources>
+        <conv:LogoCacheConverter x:Key="LogoCacheConverter" />
+
+        <!-- Modern TabItem Style (Underline) -->
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" Padding="20,10" Margin="0,0,10,0" Background="Transparent" BorderThickness="0,0,0,2">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#38bdf8"/>
+                                <Setter Property="Foreground" Value="#38bdf8"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="Gray"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ListBox Style -->
+        <Style x:Key="SourceListBoxStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="#1e293b"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="0,5,0,10"/>
+            <Setter Property="Padding" Value="5"/>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="20" Background="#0f172a" BorderBrush="#334155" BorderThickness="1">
+        <Grid Margin="25">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Custom Title Bar -->
+            <Grid Grid.Row="0" Margin="0,0,0,25">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Kanal Yönetimi" FontSize="28" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Çoklu yayın kaynağı ve otomatik eşleme sihirbazı" FontSize="12" Foreground="#64748b"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="🪄 Otomatik Veri Eşle" Width="160" Height="40"
+                            Style="{StaticResource PrimaryButtonStyle}" Click="AutoMatch_Click" Background="#334155" Margin="0,0,15,0"/>
+                    <Button Content="✕" Width="40" Height="40" Background="Transparent" Foreground="Gray" FontSize="20" BorderThickness="0" Click="Cancel_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Content Area -->
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+                <TabItem Header="TEMEL BİLGİLER">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,20">
+                            <TextBlock Text="Kanal Adı" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding ChannelObj.Name, UpdateSourceTrigger=PropertyChanged}" Height="45" FontSize="18" FontWeight="Bold" Padding="15,8"/>
+
+                            <Grid Margin="0,20,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Kategori" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding ChannelObj.Category, UpdateSourceTrigger=PropertyChanged}" Height="40"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="Grup / Paket" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding ChannelObj.GroupTitle, UpdateSourceTrigger=PropertyChanged}" Height="40"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Dil (ISO Kodları: tr, en, de...)" Foreground="#94a3b8" Margin="0,20,0,8" FontSize="11" FontWeight="SemiBold"/>
+                            <TextBox Text="{Binding ChannelObj.Language, UpdateSourceTrigger=PropertyChanged}" Height="40" Tag="Örn: tr,en"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="YAYIN KAYNAKLARI">
+                    <Grid Margin="0,20">
+                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <ListBox x:Name="UrlList" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempUrlList}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveUrl_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Button Grid.Row="1" Content="+ Yeni Yayın URL Ekle" HorizontalAlignment="Left" Width="200" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddUrl_Click" Background="#1e293b"/>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="LOGOLAR">
+                    <Grid Margin="0,20">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                            <ListBox x:Name="LogoList" Height="320" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempLogoList}" SelectionChanged="LogoList_SelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveLogo_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Content="+ Yeni Logo URL Ekle" HorizontalAlignment="Left" Width="200" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddLogo_Click" Background="#1e293b"/>
+                        </StackPanel>
+
+                        <Border Grid.Column="1" Background="#1e293b" CornerRadius="15" Padding="20" BorderBrush="#334155" BorderThickness="1" VerticalAlignment="Top">
+                            <StackPanel>
+                                <TextBlock Text="Görsel Önizleme" HorizontalAlignment="Center" Margin="0,0,0,15" Foreground="#94a3b8" FontWeight="SemiBold"/>
+                                <Border Background="#0f172a" Width="160" Height="160" CornerRadius="12" BorderBrush="#334155" BorderThickness="1">
+                                    <Grid>
+                                        <TextBlock Text="🖼️" FontSize="40" Opacity="0.1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Image Source="{Binding SelectedLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="15"/>
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="Logoyu doğrulamak için listeden seçin." TextWrapping="Wrap" TextAlignment="Center" FontSize="11" Foreground="#64748b" Margin="0,20,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="EPG EŞLEME">
+                    <Grid Margin="0,20">
+                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <ListBox x:Name="EpgList" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempEpgList}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveEpg_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Button Grid.Row="1" Content="+ Yeni EPG ID Ekle" HorizontalAlignment="Left" Width="200" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddEpg_Click" Background="#1e293b"/>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <Button Content="Vazgeç" Width="120" Height="45" Margin="0,0,15,0" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="Cancel_Click"/>
+                <Button Content="Değişiklikleri Kaydet" Width="180" Height="45" Style="{StaticResource PrimaryButtonStyle}" Click="Save_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

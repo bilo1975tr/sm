@@ -1,0 +1,156 @@
+<UserControl x:Class="StreamMesh.UI.Views.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:utils="clr-namespace:StreamMesh.Core.Utils"
+             xmlns:conv="clr-namespace:StreamMesh.Converters"
+             mc:Ignorable="d" d:DesignHeight="720" d:DesignWidth="1280">
+
+    <UserControl.Resources>
+        <conv:LogoCacheConverter x:Key="LogoCacheConverter" />
+    </UserControl.Resources>
+
+    <Grid Background="#141414">
+        <!-- Backdrop -->
+        <Image Source="{Binding CurrentBackdrop}" Stretch="UniformToFill" Opacity="0.2">
+            <Image.Effect><BlurEffect Radius="30"/></Image.Effect>
+        </Image>
+        <Rectangle><Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="Transparent" Offset="0"/><GradientStop Color="#141414" Offset="0.8"/></LinearGradientBrush></Rectangle.Fill></Rectangle>
+
+        <Grid Margin="30">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_MyLibrary]}"
+                               FontSize="32" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding TotalCountText}" FontSize="14" Foreground="#38bdf8" Margin="0,5,0,0"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="🔄 Yenile" Style="{StaticResource PrimaryButtonStyle}" Width="100" Margin="0,0,20,0" Click="Refresh_Click" Background="#334155"/>
+
+                    <Grid>
+                        <TextBox x:Name="SearchBox" Width="250" Height="40" Padding="35,8,10,8"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewKeyDown="SearchBox_PreviewKeyDown"/>
+                        <TextBlock Text="🔍" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="12,0,0,0" Foreground="Gray" IsHitTestVisible="False"/>
+                        <TextBlock Text="Akıllı Arama (Tab: AI)" Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="35,0,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text.Length, ElementName=SearchBox}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+
+            <!-- Toolbar / Categories -->
+            <Border Grid.Row="1" Background="#1e293b" CornerRadius="12" Padding="12" Margin="0,0,0,20" BorderBrush="#334155" BorderThickness="1">
+                <Grid>
+                    <StackPanel x:Name="CategoryPanel" Orientation="Horizontal">
+                        <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90"/>
+                        <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="110" Background="#334155"/>
+                        <Button Content="TV" Tag="TV" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="80" Background="#334155"/>
+                        <Button Content="Filmler" Tag="Movies" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90" Background="#334155"/>
+                        <Button Content="Diziler" Tag="Series" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90" Background="#334155"/>
+                        <Button Content="Radyo" Tag="Radio" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Width="90" Background="#334155"/>
+                    </StackPanel>
+
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <ComboBox Width="140" Height="35" Margin="0,0,10,0" x:Name="SortComboBox" SelectionChanged="Sort_SelectionChanged">
+                            <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True"/>
+                            <ComboBoxItem Content="Alfabetik (Z-A)"/>
+                            <ComboBoxItem Content="Yeni Eklenenler"/>
+                            <ComboBoxItem Content="Favoriler Önce"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Library Content -->
+            <ListView x:Name="ChannelGrid" Grid.Row="2" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                <ListView.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/></ItemsPanelTemplate></ListView.ItemsPanel>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#1e293b" CornerRadius="15" Width="200" Height="270" Margin="10" BorderThickness="1" BorderBrush="#334155" x:Name="CardBorder" ClipToBounds="True"
+                                MouseLeftButtonUp="Card_Click" MouseEnter="Card_MouseEnter" MouseLeave="Card_MouseLeave"
+                                AllowDrop="True" Drop="Card_Drop" PreviewMouseMove="Card_MouseMove" PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
+                                    <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
+                                    <Separator/>
+                                    <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="140"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+
+                                <!-- Poster Area -->
+                                <Border Grid.Row="0" Background="#0f172a" CornerRadius="15,15,0,0">
+                                    <Grid>
+                                        <TextBlock Text="📺" FontSize="45" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.15"/>
+                                        <Image Source="{Binding LogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="15"/>
+
+                                        <!-- Quick Action Overlays -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
+                                            <Button Content="⭐" Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Foreground="{Binding IsFavorite, Converter={StaticResource BooleanToBrushConverter}, ConverterParameter='Fav'}" Click="FavContext_Click" CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand"/>
+                                            <Button Content="✏️" Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Foreground="White" Click="EditContext_Click" CommandParameter="{Binding}" Cursor="Hand"/>
+                                        </StackPanel>
+
+                                        <!-- Stats Badges -->
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8">
+                                            <Border Background="#CCe11d48" CornerRadius="6" Padding="6,2" Visibility="{Binding HasViewers, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <TextBlock Text="{Binding ViewersCount, StringFormat='👁 {0}'}" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Info Area -->
+                                <StackPanel Grid.Row="1" Margin="15,12">
+                                    <TextBlock Text="{Binding CleanName}" FontWeight="Bold" FontSize="15" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding GroupTitle}" Foreground="#94a3b8" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+
+                                    <StackPanel Margin="0,10,0,0">
+                                        <TextBlock Text="{Binding CurrentEpgTime}" FontSize="10" Foreground="#38bdf8" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding CurrentEpgTitle}" FontSize="11" Foreground="#cbd5e1" TextTrimming="CharacterEllipsis" MaxHeight="32"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#38bdf8"/>
+                                <Setter TargetName="CardBorder" Property="Background" Value="#334155"/>
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.ItemContainerStyle><Style TargetType="ListViewItem"><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style></ListView.ItemContainerStyle>
+            </ListView>
+
+            <!-- Pagination -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <Button x:Name="PrevBtn" Content="&lt; Önceki" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="40" Margin="0,0,20,0" Click="Prev_Click"/>
+                <TextBlock x:Name="PageText" Text="Sayfa 1 / 1" VerticalAlignment="Center" Foreground="Gray" FontSize="16" FontWeight="SemiBold"/>
+                <Button x:Name="NextBtn" Content="Sonraki &gt;" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="40" Margin="20,0,0,0" Click="Next_Click"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

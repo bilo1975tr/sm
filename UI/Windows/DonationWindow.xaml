@@ -1,0 +1,21 @@
+<Window x:Class="StreamMesh.UI.Windows.DonationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Destek ve VIP" Height="400" Width="500"
+        Background="#0f172a" Foreground="White" WindowStartupLocation="CenterOwner">
+    <Grid Margin="30">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="💎 StreamMesh VIP" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+            <TextBlock Text="Uygulamayı geliştirilmesine destek olun ve VIP özelliklerden yararlanın." TextWrapping="Wrap" TextAlignment="Center" Foreground="Gray" Margin="0,0,0,30"/>
+
+            <Border Background="#1e293b" CornerRadius="12" Padding="20" BorderBrush="#38bdf8" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Destek Kanalları" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <TextBlock Text="• Kripto Para (USDT/BTC)" Margin="0,0,0,5"/>
+                    <TextBlock Text="• Papara / IBAN" Margin="0,0,0,15"/>
+                    <Button Content="Bilgileri Kopyala" Style="{StaticResource PrimaryButtonStyle}" Click="Close_Click"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</Window>
