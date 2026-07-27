@@ -58,10 +58,12 @@
             <Grid Grid.Row="0" Margin="0,0,0,25">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="Kanal Yönetimi" FontSize="28" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="Çoklu yayın kaynağı ve otomatik eşleme sihirbazı" FontSize="12" Foreground="#64748b"/>
+                    <TextBlock Text="Çoklu yayın kaynağı, alternatif isim/logo ve otomatik birleştirme sihirbazı" FontSize="12" Foreground="#64748b"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="✨ Çift Kanalları Birleştir" Width="180" Height="40"
+                            Style="{StaticResource PrimaryButtonStyle}" Click="MergeDuplicates_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold" Margin="0,0,10,0"/>
                     <Button Content="🪄 Otomatik Veri Eşle" Width="160" Height="40"
                             Style="{StaticResource PrimaryButtonStyle}" Click="AutoMatch_Click" Background="#334155" Margin="0,0,15,0"/>
                     <Button Content="✕" Width="40" Height="40" Background="Transparent" Foreground="Gray" FontSize="20" BorderThickness="0" Click="Cancel_Click"/>
@@ -70,13 +72,31 @@
 
             <!-- Content Area -->
             <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
-                <TabItem Header="TEMEL BİLGİLER">
+                <TabItem Header="TEMEL BİLGİLER &amp; İSİMLER">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="0,20">
-                            <TextBlock Text="Kanal Adı" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
-                            <TextBox Text="{Binding ChannelObj.Name, UpdateSourceTrigger=PropertyChanged}" Height="45" FontSize="18" FontWeight="Bold" Padding="15,8"/>
+                            <TextBlock Text="Alternatif Kanal İsimleri (En üstteki varsayılandır)" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
+                            <ListBox x:Name="NameList" Height="150" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempNameList}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="⭐ Varsayılan" ToolTip="Bu ismi ana isim yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryName_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                                <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveName_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Content="+ Yeni Alternatif İsim Ekle" HorizontalAlignment="Left" Width="200" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="AddName_Click" Background="#1e293b" Margin="0,0,0,15"/>
 
-                            <Grid Margin="0,20,0,0">
+                            <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
                                     <TextBlock Text="Kategori" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
@@ -102,9 +122,14 @@
                                 <DataTemplate>
                                     <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
                                         <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
                                             <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
-                                            <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveUrl_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                            <Button Grid.Column="1" Content="⭐ Ana Kaynak Yap" ToolTip="Bu yayını birincil kaynak yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryUrl_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                            <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveUrl_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -123,9 +148,14 @@
                                     <DataTemplate>
                                         <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
                                             <Grid>
-                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
                                                 <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
-                                                <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveLogo_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                                <Button Grid.Column="1" Content="⭐ Ana Logo Yap" ToolTip="Bu logoyu birincil logo yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryLogo_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                                <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveLogo_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -157,9 +187,14 @@
                                 <DataTemplate>
                                     <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
                                         <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
                                             <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
-                                            <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveEpg_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                            <Button Grid.Column="1" Content="⭐ Ana EPG Yap" ToolTip="Bu EPG ID'yi birincil yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryEpg_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                            <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveEpg_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

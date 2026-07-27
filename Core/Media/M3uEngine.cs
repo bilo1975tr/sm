@@ -40,6 +40,14 @@ namespace StreamMesh.Core.Media
                             if (end != -1) current.LogoUrl = line.Substring(start, end - start);
                         }
 
+                        int epgIdx = line.IndexOf("tvg-id=\"");
+                        if (epgIdx != -1)
+                        {
+                            int start = epgIdx + 8;
+                            int end = line.IndexOf("\"", start);
+                            if (end != -1) current.EpgId = line.Substring(start, end - start);
+                        }
+
                         int groupIdx = line.IndexOf("group-title=\"");
                         if (groupIdx != -1)
                         {
@@ -63,7 +71,7 @@ namespace StreamMesh.Core.Media
                 }
             }
             catch { }
-            return channels;
+            return ChannelAggregator.Instance.AggregateChannels(channels);
         }
     }
 }

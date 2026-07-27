@@ -217,7 +217,7 @@ namespace StreamMesh.Core.Database
             {
                 await connection.OpenAsync();
                 var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount FROM Channels";
+                cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl FROM Channels";
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
@@ -229,7 +229,8 @@ namespace StreamMesh.Core.Database
                         SourceType = reader.IsDBNull(9) ? "M3U" : reader.GetString(9), PlaylistUrl = reader.IsDBNull(10) ? "" : reader.GetString(10),
                         ImdbId = reader.IsDBNull(11) ? "" : reader.GetString(11), Overview = reader.IsDBNull(12) ? "" : reader.GetString(12),
                         BackdropUrl = reader.IsDBNull(13) ? "" : reader.GetString(13), Cast = reader.IsDBNull(14) ? "" : reader.GetString(14),
-                        PersonalWatchCount = reader.GetInt32(15), ViewersCount = reader.GetInt32(16)
+                        PersonalWatchCount = reader.GetInt32(15), ViewersCount = reader.GetInt32(16),
+                        EpgId = reader.IsDBNull(17) ? "" : reader.GetString(17), EpgUrl = reader.IsDBNull(18) ? "" : reader.GetString(18)
                     });
                 }
             }
@@ -245,7 +246,7 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl";
                     cmd.Parameters.AddWithValue("@Id", ch.Id); cmd.Parameters.AddWithValue("@Name", ch.Name); cmd.Parameters.AddWithValue("@Url", ch.Url);
                     cmd.Parameters.AddWithValue("@Logo", ch.LogoUrl); cmd.Parameters.AddWithValue("@Group", ch.GroupTitle); cmd.Parameters.AddWithValue("@Cat", ch.Category);
                     cmd.Parameters.AddWithValue("@Lang", ch.Language); cmd.Parameters.AddWithValue("@Fav", ch.IsFavorite ? 1 : 0);
@@ -253,6 +254,7 @@ namespace StreamMesh.Core.Database
                     cmd.Parameters.AddWithValue("@Playlist", ch.PlaylistUrl); cmd.Parameters.AddWithValue("@Imdb", ch.ImdbId); cmd.Parameters.AddWithValue("@Overview", ch.Overview);
                     cmd.Parameters.AddWithValue("@Backdrop", ch.BackdropUrl); cmd.Parameters.AddWithValue("@Cast", ch.Cast);
                     cmd.Parameters.AddWithValue("@Pwc", ch.PersonalWatchCount); cmd.Parameters.AddWithValue("@Vc", ch.ViewersCount);
+                    cmd.Parameters.AddWithValue("@EpgId", ch.EpgId ?? ""); cmd.Parameters.AddWithValue("@EpgUrl", ch.EpgUrl ?? "");
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
@@ -262,32 +264,53 @@ namespace StreamMesh.Core.Database
         public async Task SyncIncomingChannelsAsync(List<Channel> incoming)
         {
             if (incoming == null || incoming.Count == 0) return;
-            await AsyncDbLock.WaitAsync();
-            try
+
+            var existing = await GetAllChannelsAsync();
+            var combined = new List<Channel>(existing);
+            combined.AddRange(incoming);
+
+            var aggregated = StreamMesh.Core.Media.ChannelAggregator.Instance.AggregateChannels(combined);
+
+            foreach (var ch in aggregated)
             {
-                using (var connection = new SqliteConnection(ConnectionString))
+                await SaveChannelAsync(ch);
+            }
+        }
+
+        public async Task<int> AutoAggregateDatabaseAsync()
+        {
+            var existing = await GetAllChannelsAsync();
+            if (existing.Count <= 1) return 0;
+
+            var aggregated = StreamMesh.Core.Media.ChannelAggregator.Instance.AggregateChannels(existing);
+            int mergedCount = existing.Count - aggregated.Count;
+
+            if (mergedCount > 0)
+            {
+                await AsyncDbLock.WaitAsync();
+                try
                 {
-                    await connection.OpenAsync();
-                    using var transaction = connection.BeginTransaction();
-                    var cmd = connection.CreateCommand();
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, GroupTitle, LogoUrl, SourceType, AddedDate, Category, Language, PlaylistUrl, IsFavorite) VALUES (@Id, @Name, @Url, @GroupTitle, @LogoUrl, @SourceType, @AddedDate, @Category, @Language, @PlaylistUrl, 0) ON CONFLICT(Id) DO UPDATE SET Url=excluded.Url, LogoUrl=CASE WHEN Channels.LogoUrl='' THEN excluded.LogoUrl ELSE Channels.LogoUrl END";
-                    var pId = cmd.Parameters.Add("@Id", SqliteType.Text); var pName = cmd.Parameters.Add("@Name", SqliteType.Text);
-                    var pUrl = cmd.Parameters.Add("@Url", SqliteType.Text); var pGroup = cmd.Parameters.Add("@GroupTitle", SqliteType.Text);
-                    var pLogo = cmd.Parameters.Add("@LogoUrl", SqliteType.Text); var pSrcType = cmd.Parameters.Add("@SourceType", SqliteType.Text);
-                    var pDate = cmd.Parameters.Add("@AddedDate", SqliteType.Integer); var pCat = cmd.Parameters.Add("@Category", SqliteType.Text);
-                    var pLang = cmd.Parameters.Add("@Language", SqliteType.Text); var pPlaylist = cmd.Parameters.Add("@PlaylistUrl", SqliteType.Text);
-                    long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    foreach (var ch in incoming)
+                    using (var connection = new SqliteConnection(ConnectionString))
                     {
-                        pId.Value = ch.Id; pName.Value = ch.Name; pUrl.Value = ch.Url; pGroup.Value = ch.GroupTitle;
-                        pLogo.Value = ch.LogoUrl; pSrcType.Value = ch.SourceType; pDate.Value = now;
-                        pCat.Value = ch.Category; pLang.Value = ch.Language; pPlaylist.Value = ch.PlaylistUrl;
-                        await cmd.ExecuteNonQueryAsync();
+                        await connection.OpenAsync();
+                        using var tx = connection.BeginTransaction();
+
+                        var clearCmd = connection.CreateCommand();
+                        clearCmd.CommandText = "DELETE FROM Channels";
+                        await clearCmd.ExecuteNonQueryAsync();
+
+                        tx.Commit();
                     }
-                    transaction.Commit();
+                }
+                finally { AsyncDbLock.Release(); }
+
+                foreach (var ch in aggregated)
+                {
+                    await SaveChannelAsync(ch);
                 }
             }
-            finally { AsyncDbLock.Release(); }
+
+            return mergedCount;
         }
 
         public async Task SaveEpgProgramsAsync(List<EpgProgram> programs)

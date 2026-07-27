@@ -112,14 +112,29 @@ namespace StreamMesh.Models
         public string Name
         {
             get => _name;
-            set { if (_name != value) { _name = value; OnPropertyChanged(); OnPropertyChanged(nameof(CleanName)); } }
+            set { if (_name != value) { _name = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); OnPropertyChanged(nameof(CleanName)); OnPropertyChanged(nameof(NamesCount)); OnPropertyChanged(nameof(HasMultipleNames)); } }
         }
+
+        public string PrimaryName
+        {
+            get
+            {
+                var list = GetNamesList();
+                return list.Count > 0 ? list[0] : (Name ?? "");
+            }
+        }
+
+        public int NamesCount => GetNamesList().Count;
+        public bool HasMultipleNames => NamesCount > 1;
 
         public string EpgId
         {
             get => _epgId;
-            set { if (_epgId != value) { _epgId = value; OnPropertyChanged(); } }
+            set { if (_epgId != value) { _epgId = value; OnPropertyChanged(); OnPropertyChanged(nameof(EpgsCount)); OnPropertyChanged(nameof(HasMultipleEpgs)); } }
         }
+
+        public int EpgsCount => GetEpgIdList().Count;
+        public bool HasMultipleEpgs => EpgsCount > 1;
 
         public string EpgUrl
         {
@@ -136,7 +151,7 @@ namespace StreamMesh.Models
         public string Url
         {
             get => _url;
-            set { if (_url != value) { _url = value; OnPropertyChanged(); OnPropertyChanged(nameof(SourcesCount)); } }
+            set { if (_url != value) { _url = value; OnPropertyChanged(); OnPropertyChanged(nameof(SourcesCount)); OnPropertyChanged(nameof(HasMultipleSources)); } }
         }
 
         public int SourcesCount => string.IsNullOrEmpty(_url) ? 0 : _url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -145,8 +160,11 @@ namespace StreamMesh.Models
         public string LogoUrl
         {
             get => _logoUrl;
-            set { if (_logoUrl != value) { _logoUrl = value; OnPropertyChanged(); } }
+            set { if (_logoUrl != value) { _logoUrl = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogosCount)); OnPropertyChanged(nameof(HasMultipleLogos)); } }
         }
+
+        public int LogosCount => GetLogoList().Count;
+        public bool HasMultipleLogos => LogosCount > 1;
 
         public string GroupTitle
         {
@@ -265,7 +283,8 @@ namespace StreamMesh.Models
         {
             get
             {
-                if (Category != "Film") return Name;
+                string targetName = PrimaryName;
+                if (Category != "Film") return targetName;
                 return ParsedMovieDetails.CleanName;
             }
         }
@@ -318,10 +337,115 @@ namespace StreamMesh.Models
 
         public override string ToString() => $"{Name} ({GroupTitle})";
 
-        // Advanced Multi-Source Helpers
-        public List<string> GetUrlList() => (Url ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
-        public List<string> GetLogoList() => (LogoUrl ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
-        public List<string> GetEpgIdList() => (EpgId ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
+        // Advanced Multi-Source & Multi-Alternative Helpers
+        public List<string> GetNamesList()
+        {
+            if (string.IsNullOrWhiteSpace(Name)) return new List<string>();
+            return Name.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                       .Select(n => n.Trim())
+                       .Where(n => !string.IsNullOrEmpty(n))
+                       .Distinct(StringComparer.OrdinalIgnoreCase)
+                       .ToList();
+        }
+
+        public List<string> GetUrlList()
+        {
+            if (string.IsNullOrWhiteSpace(Url)) return new List<string>();
+            return Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                      .Select(u => u.Trim())
+                      .Where(u => !string.IsNullOrEmpty(u))
+                      .Distinct(StringComparer.OrdinalIgnoreCase)
+                      .ToList();
+        }
+
+        public List<string> GetLogoList()
+        {
+            if (string.IsNullOrWhiteSpace(LogoUrl)) return new List<string>();
+            return LogoUrl.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                          .Select(l => l.Trim())
+                          .Where(l => !string.IsNullOrEmpty(l))
+                          .Distinct(StringComparer.OrdinalIgnoreCase)
+                          .ToList();
+        }
+
+        public List<string> GetEpgIdList()
+        {
+            if (string.IsNullOrWhiteSpace(EpgId)) return new List<string>();
+            return EpgId.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(e => e.Trim())
+                        .Where(e => !string.IsNullOrEmpty(e))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+        }
+
+        public void AddAlternativeName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+            var list = GetNamesList();
+            if (!list.Contains(name.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                list.Add(name.Trim());
+                Name = string.Join(", ", list);
+            }
+        }
+
+        public void AddAlternativeUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return;
+            var list = GetUrlList();
+            if (!list.Contains(url.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                list.Add(url.Trim());
+                Url = string.Join(",", list);
+            }
+        }
+
+        public void AddAlternativeLogo(string logoUrl)
+        {
+            if (string.IsNullOrWhiteSpace(logoUrl)) return;
+            var list = GetLogoList();
+            if (!list.Contains(logoUrl.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                list.Add(logoUrl.Trim());
+                LogoUrl = string.Join(",", list);
+            }
+        }
+
+        public void AddAlternativeEpgId(string epgId)
+        {
+            if (string.IsNullOrWhiteSpace(epgId)) return;
+            var list = GetEpgIdList();
+            if (!list.Contains(epgId.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                list.Add(epgId.Trim());
+                EpgId = string.Join(",", list);
+            }
+        }
+
+        public void MergeWith(Channel other)
+        {
+            if (other == null) return;
+
+            // 1. Merge Names
+            foreach (var n in other.GetNamesList()) AddAlternativeName(n);
+
+            // 2. Merge URLs
+            foreach (var u in other.GetUrlList()) AddAlternativeUrl(u);
+
+            // 3. Merge Logos
+            foreach (var l in other.GetLogoList()) AddAlternativeLogo(l);
+
+            // 4. Merge EPG IDs
+            foreach (var e in other.GetEpgIdList()) AddAlternativeEpgId(e);
+
+            // 5. Merge Metadata if missing
+            if (string.IsNullOrWhiteSpace(ImdbId) && !string.IsNullOrWhiteSpace(other.ImdbId)) ImdbId = other.ImdbId;
+            if (string.IsNullOrWhiteSpace(Overview) && !string.IsNullOrWhiteSpace(other.Overview)) Overview = other.Overview;
+            if (string.IsNullOrWhiteSpace(BackdropUrl) && !string.IsNullOrWhiteSpace(other.BackdropUrl)) BackdropUrl = other.BackdropUrl;
+            if (string.IsNullOrWhiteSpace(Cast) && !string.IsNullOrWhiteSpace(other.Cast)) Cast = other.Cast;
+            if ((string.IsNullOrWhiteSpace(Category) || Category == "TV") && !string.IsNullOrWhiteSpace(other.Category) && other.Category != "TV") Category = other.Category;
+            if ((string.IsNullOrWhiteSpace(Language) || Language == "und") && !string.IsNullOrWhiteSpace(other.Language) && other.Language != "und") Language = other.Language;
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

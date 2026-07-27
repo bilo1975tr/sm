@@ -119,6 +119,7 @@
 
         <Style TargetType="Window">
             <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Icon" Value="pack://application:,,,/logos/StreamMesh_logo.png"/>
         </Style>
     </Application.Resources>
 </Application>

@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using StreamMesh.UI.Views;
 using StreamMesh.Core.Network;
 using StreamMesh.Models;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.UI.Windows
 {
@@ -22,6 +23,10 @@ namespace StreamMesh.UI.Windows
         private readonly StunEngine _stun = new StunEngine();
         private DispatcherTimer _peerTimer;
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
+        private bool _isExplicitExit = false;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        private static extern bool DestroyIcon(IntPtr handle);
 
         public MainWindow()
         {
@@ -62,39 +67,118 @@ namespace StreamMesh.UI.Windows
             }
         }
 
+        private System.Drawing.Icon GetTrayIcon()
+        {
+            try
+            {
+                string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos", "StreamMesh_logo.png");
+                System.Drawing.Bitmap? bmp = null;
+
+                if (System.IO.File.Exists(logoPath))
+                {
+                    bmp = new System.Drawing.Bitmap(logoPath);
+                }
+                else
+                {
+                    var uri = new Uri("pack://application:,,,/logos/StreamMesh_logo.png", UriKind.Absolute);
+                    var streamInfo = System.Windows.Application.GetResourceStream(uri);
+                    if (streamInfo != null)
+                    {
+                        bmp = new System.Drawing.Bitmap(streamInfo.Stream);
+                    }
+                }
+
+                if (bmp != null)
+                {
+                    using (bmp)
+                    using (var resizedBmp = new System.Drawing.Bitmap(bmp, new System.Drawing.Size(32, 32)))
+                    {
+                        IntPtr hIcon = resizedBmp.GetHicon();
+                        using (var tempIcon = System.Drawing.Icon.FromHandle(hIcon))
+                        {
+                            var finalIcon = (System.Drawing.Icon)tempIcon.Clone();
+                            DestroyIcon(hIcon);
+                            return finalIcon;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("TrayIcon creation failed", ex);
+            }
+
+            try
+            {
+                string mainExe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                if (!string.IsNullOrEmpty(mainExe) && System.IO.File.Exists(mainExe))
+                {
+                    var exeIcon = System.Drawing.Icon.ExtractAssociatedIcon(mainExe);
+                    if (exeIcon != null) return exeIcon;
+                }
+            }
+            catch { }
+
+            return System.Drawing.SystemIcons.Application;
+        }
+
         private void SetupTrayIcon()
         {
             try
             {
                 _notifyIcon = new System.Windows.Forms.NotifyIcon();
-                string iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_icon.ico");
-                if (System.IO.File.Exists(iconPath))
-                {
-                    _notifyIcon.Icon = new System.Drawing.Icon(iconPath);
-                }
-
+                _notifyIcon.Icon = GetTrayIcon();
                 _notifyIcon.Visible = true;
-                _notifyIcon.Text = "StreamMesh Hybrid";
+                _notifyIcon.Text = "StreamMesh Hybrid v1.0.1";
+
+                _notifyIcon.MouseClick += (s, e) => {
+                    if (e.Button == System.Windows.Forms.MouseButtons.Left)
+                    {
+                        ShowWindow();
+                    }
+                };
+
                 _notifyIcon.DoubleClick += (s, e) => { ShowWindow(); };
 
                 var menu = new System.Windows.Forms.ContextMenuStrip();
-                menu.Items.Add("Göster", null, (s, e) => { ShowWindow(); });
-                menu.Items.Add("Çıkış", null, (s, e) => {
-                    _notifyIcon.Visible = false;
-                    System.Windows.Application.Current.Shutdown();
+                menu.Items.Add("StreamMesh Göster", null, (s, e) => { ShowWindow(); });
+                menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+                menu.Items.Add("Tamamen Çıkış Yap", null, (s, e) => {
+                    ExitApplication();
                 });
                 _notifyIcon.ContextMenuStrip = menu;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogError("SetupTrayIcon failed", ex);
+            }
+        }
+
+        public void ExitApplication()
+        {
+            _isExplicitExit = true;
+            if (_notifyIcon != null)
+            {
+                _notifyIcon.Visible = false;
+                _notifyIcon.Dispose();
+                _notifyIcon = null;
+            }
+            System.Windows.Application.Current.Shutdown();
         }
 
         protected override void OnClosing(CancelEventArgs e)
         {
+            if (_isExplicitExit)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
             e.Cancel = true;
             Hide();
-            if (_notifyIcon != null)
+            if (_notifyIcon != null && _notifyIcon.Visible)
             {
-                _notifyIcon.ShowBalloonTip(2000, "StreamMesh", "Uygulama arka planda çalışmaya devam ediyor.", System.Windows.Forms.ToolTipIcon.Info);
+                _notifyIcon.ShowBalloonTip(2000, "StreamMesh", "StreamMesh tepside (arka planda) çalışmaya devam ediyor.", System.Windows.Forms.ToolTipIcon.Info);
             }
         }
 
