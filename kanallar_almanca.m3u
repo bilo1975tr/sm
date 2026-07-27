@@ -27,3 +27,97 @@ https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/e0
 https://sdn-global-live-streaming-packager-cache.3qsdn.com/13456/13456_264_live.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="WeShort (1080p)" tvg-logo="" group-title="Undefined",WeShort (1080p)
 https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/ea019bed-a45e-4dfe-a452-84f5f2f76ea9/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Spark TV Luz & Amor (1080p)" tvg-logo="" group-title="Undefined",Spark TV Luz & Amor (1080p)
+https://candlelightmedia-sparklightlove-6-us.roku.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vevo Hip Hop & R&B (1080p)" tvg-logo="" group-title="Undefined",Vevo Hip Hop & R&B (1080p)
+https://d7i20u8nlyf1b.cloudfront.net/VevoHipHopRB_GB.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Xtreme Outdoor Presented by HISTORY (720p)" tvg-logo="" group-title="Undefined",Xtreme Outdoor Presented by HISTORY (720p)
+https://dxagbr7yc4m1d.cloudfront.net/v1/aenetworks_skills_thrills_1/samsungheadend_us/latest/main/hls/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Sensical Jr (1080p)" tvg-logo="" group-title="Undefined",Sensical Jr (1080p)
+https://d1p10fe1a9f857.cloudfront.net/Sensical_Jr.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vevo Pop Italy (1080p)" tvg-logo="" group-title="Undefined",Vevo Pop Italy (1080p)
+https://amg00056-amg00056c8-rakuten-it-3239.playouts.now.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WBTV The FBI (720p) [Geo-blocked]" tvg-logo="" group-title="Undefined",WBTV The FBI (720p) [Geo-blocked]
+https://live-manifest.production-public.tubi.io/live/0e9b3dc6-8b19-4854-b0d1-df85b9ffa282/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WBTV How To (720p) [Geo-blocked]" tvg-logo="" group-title="Undefined",WBTV How To (720p) [Geo-blocked]
+https://live-manifest.production-public.tubi.io/live/8ca40844-aba2-49f8-a58c-37e5597b170e/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Real Crime Beta (1080p)" tvg-logo="" group-title="Undefined",Real Crime Beta (1080p)
+https://lds-realcrimebeta-rakuten.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Soap Turco (720p)" tvg-logo="" group-title="Undefined",Soap Turco (720p)
+https://fast-channels-network-soapturco-1-it.rakuten.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="wedotv Cars (720p)" tvg-logo="" group-title="Undefined",wedotv Cars (720p)
+https://a-cdn.klowdtv.com/live3/cars_720p/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="武进生活 (576p) [Not 24/7]" tvg-logo="" group-title="Undefined",武进生活 (576p) [Not 24/7]
+https://live.wjyanghu.com/live/CH2.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="江津经济生活 (480p)" tvg-logo="" group-title="Undefined",江津经济生活 (480p)
+http://222.179.155.21:1935/ch0.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="浙江 Ⅰ 绍兴影视 (720p)" tvg-logo="" group-title="Undefined",浙江 Ⅰ 绍兴影视 (720p)
+http://live.shaoxing.com.cn/video/s10001-sxtv3/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Sparkle Movies (720p)" tvg-logo="" group-title="Undefined",Sparkle Movies (720p)
+https://candlelightmedia-sparklemovies-1-gb.samsung.wurl.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Witness to Justice (720p)" tvg-logo="" group-title="Undefined",Witness to Justice (720p)
+https://dxwldsv8fdzik.cloudfront.net/v1/aenetworks_witnesstojustice_1/samsungheadend_us/latest/main/hls/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Pulse TV (1080p)" tvg-logo="" group-title="Undefined",Pulse TV (1080p)
+https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-pulse-samsungnz/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rotterdam Podium TV (480p)" tvg-logo="" group-title="Undefined",Rotterdam Podium TV (480p)
+http://ms10.mx-cd.net/tv/141-573565/Podium_Rotterdam.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Zoomer TV (1080p)" tvg-logo="" group-title="Undefined",Zoomer TV (1080p)
+https://dq126dsoud56d.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/Zoomer-DistroTV/316.m3u8?ads.vf=DoYjaTaR5sC
+#EXTINF:-1 tvg-id="" tvg-name="WWE Superstar Central (1080p)" tvg-logo="" group-title="Undefined",WWE Superstar Central (1080p)
+https://dpv6ceilvhyrw.cloudfront.net/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WBTV HBO Boxing (1080p) [Geo-blocked]" tvg-logo="" group-title="Undefined",WBTV HBO Boxing (1080p) [Geo-blocked]
+https://live-manifest.production-public.tubi.io/live/9fe78734-1db2-49b4-af7b-3c89f5f256ad/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="GOOD TV CH38 特會系列：青年特會 (720p) [Not 24/7]" tvg-logo="" group-title="Undefined",GOOD TV CH38 特會系列：青年特會 (720p) [Not 24/7]
+https://live.streamingfast.net/osmflivech38.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Sonic The Hedgehog (720p)" tvg-logo="" group-title="Undefined",Sonic The Hedgehog (720p)
+https://d2f1o3sb3u36tf.cloudfront.net/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="浙江教科" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/0_all_logos_mosaic.md" group-title="Undefined",浙江教科
+https://ali-m-l.cztv.com/channels/lantian/channel004/1080p.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="English TV (1080p)" tvg-logo="" group-title="Undefined",English TV (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/a5e9aebd-1df4-4e56-be4f-33a891756f9b/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Starke Frauen (1080p)" tvg-logo="" group-title="Undefined",Starke Frauen (1080p)
+https://mainstreamstarkefrauen-rakuten.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="浙江 Ⅰ 绍兴综合 (576p)" tvg-logo="" group-title="Undefined",浙江 Ⅰ 绍兴综合 (576p)
+http://live.shaoxing.com.cn/video/s10001-sxtv1/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kung Fu+ (1080p)" tvg-logo="" group-title="Undefined",Kung Fu+ (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/06862a07-6a92-4b4d-abc3-5fea131713b5/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Yu-Gi-Oh! Italy (1080p)" tvg-logo="" group-title="Undefined",Yu-Gi-Oh! Italy (1080p)
+https://amg01796-amg01796c17-rakuten-it-7492.playouts.now.amagi.tv/playlist/amg01796-fastmediafast-yugioh3it-rakutenit/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Vevo Pop Germany (1080p)" tvg-logo="" group-title="Undefined",Vevo Pop Germany (1080p)
+https://amg00056-amg00056c7-rakuten-de-3245.playouts.now.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Wild Nature (1080p)" tvg-logo="" group-title="Undefined",Wild Nature (1080p)
+https://dhiy0zcig7ty1.cloudfront.net/scheduler/scheduleMaster/491.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Setareh TV" tvg-logo="" group-title="Undefined",Setareh TV
+https://setarehhls.wns.live/hls/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Heritage Tourism (1080p)" tvg-logo="" group-title="Undefined",Heritage Tourism (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/cff3309e-ded1-40dd-a6dc-e3a6d0a92d72/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Hoop TV (1080p)" tvg-logo="" group-title="Undefined",Hoop TV (1080p)
+https://streams2.sofast.tv/WiseM3U8_28/sofast/cleanhls/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WFMZ Traffic" tvg-logo="" group-title="Undefined",WFMZ Traffic
+https://cdn.jaybirdtv.com/wfmz/channel/7/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TBC1 (1080p)" tvg-logo="https://i.imgur.com/OmiVZ1u.png" group-title="Undefined",TBC1 (1080p)
+https://stream-134630.castr.net/5fe35eae8c53540cab83659a/live_67aeec90584911f1ab60174d68f7c06e/index.fmp4.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="欧美大片1" tvg-logo="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/argentina/13max-hd-ar.png" group-title="Undefined",欧美大片1
+http://epg.112114.xyz/douyu/20415
+#EXTINF:-1 tvg-id="" tvg-name="Horror TV (1080p)" tvg-logo="" group-title="Undefined",Horror TV (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/93dc292b-cbcf-4988-ab97-94feced4c14b/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RCM (1080p)" tvg-logo="" group-title="Undefined",RCM (1080p)
+https://samsungau-rialtosamsungaustralia-al2rg.amagi.tv/playlist/samsungau-rialtosamsungaustralia/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WBTV Classic Cinema (720p) [Geo-blocked]" tvg-logo="" group-title="Undefined",WBTV Classic Cinema (720p) [Geo-blocked]
+https://live-manifest.production-public.tubi.io/live/c9a11be6-98bc-4a1b-a8f0-6236bffa7286/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Stingray Naturescape (1080p)" tvg-logo="https://i.imgur.com/882kd90.png" group-title="Undefined",Stingray Naturescape (1080p)
+https://d39g1vxj2ef6in.cloudfront.net/v1/master/3fec3e5cac39a52b2132f9c66c83dae043dc17d4/prod-rakuten-stitched/master.m3u8?ads.xumo_channelId=88883056
+#EXTINF:-1 tvg-id="" tvg-name="Shooting Sports Life (1080p)" tvg-logo="" group-title="Undefined",Shooting Sports Life (1080p)
+https://linear-1312.frequency.stream/dist/stirr/1312/hls/master/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Y'a Que La Vérité Qui Compte La Chaîne (1080p)" tvg-logo="" group-title="Undefined",Y'a Que La Vérité Qui Compte La Chaîne (1080p)
+https://rakutenaa-fastmedia-yaquelaverite-rakuten-81p2x.amagi.tv/playlist/rakutenAA-fastmedia-yaquelaverite-rakuten/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Jupiter TV (1080p)" tvg-logo="" group-title="Undefined",Jupiter TV (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/c7e85b21-ea01-42b4-85db-15dcfec98942/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="XITE Celebrates (1080p)" tvg-logo="" group-title="Undefined",XITE Celebrates (1080p)
+https://dt1s4l2cmiyit.cloudfront.net/XITE_Celebrates.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="GOOD TV CH45 卡通 (720p) [Not 24/7]" tvg-logo="" group-title="Undefined",GOOD TV CH45 卡通 (720p) [Not 24/7]
+https://live.streamingfast.net/osmflivech45.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="荣昌综合 (404p) [Not 24/7]" tvg-logo="" group-title="Undefined",荣昌综合 (404p) [Not 24/7]
+http://183.64.181.25:40023/rongchang01.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="HeartFelt TV (1080p)" tvg-logo="" group-title="Undefined",HeartFelt TV (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/74c455d4-625a-448a-8ba7-d086e6462245/manifest.m3u8
