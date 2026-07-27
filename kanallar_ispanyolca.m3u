@@ -1,0 +1,17 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="STV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/EIrXgT8.png" group-title="Indonesian",STV (720p) [Not 24/7]
+http://122.248.43.242:1935/SAMARINDATV/_definst_/myStream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tonghua TV (1080p)" tvg-logo="https://www.tvchinese.net/uploads/tv/thtv1.jpg" group-title="Chinese",Tonghua TV (1080p)
+http://lsfb.avap.jilintv.cn/zqvk7vpj/channel/43ea5771aa44421591f9dfd2b71f1b9b/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="M Entertainment Channel (720p)" tvg-logo="https://i.imgur.com/6PcdTZ2.png" group-title="Burmese",M Entertainment Channel (720p)
+https://mmtvs.exliatycl.online/mchannel/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ETV (720p)" tvg-logo="https://i.imgur.com/5URjPgG.png" group-title="Estonian",ETV (720p)
+https://sb.err.ee/live/etv.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVRI Sulawesi Barat (720p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/TVRILogo2019.svg/960px-TVRILogo2019.svg.png" group-title="Indonesian",TVRI Sulawesi Barat (720p)
+https://ott-balancer.tvri.go.id/live/eds/Sulbar/hls/Sulbar.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DD Assam (504p)" tvg-logo="https://dtil.tmsimg.com/assets/s142777_ld_h15_aa.png?lock=720x540" group-title="Assamese",DD Assam (504p)
+https://d2lk5u59tns74c.cloudfront.net/out/v1/d380bf5c167b4319a46cdd8204bc26b2/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Delfi TV" tvg-logo="https://i.imgur.com/IFoHP5M.png" group-title="Estonian",Delfi TV
+https://s1.dcdn.lt/live/televizija/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TVRI Papua (480p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/TVRILogo2019.svg/960px-TVRILogo2019.svg.png" group-title="Indonesian",TVRI Papua (480p)
+https://ott-balancer.tvri.go.id/live/eds/Papua/hls/Papua.m3u8

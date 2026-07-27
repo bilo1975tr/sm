@@ -17,3 +17,13 @@ https://cc9f70371e7144e7acae4de8b5832d7a.mediatailor.eu-west-1.amazonaws.com/v1/
 https://9affb6144c4c4cdca25d58908cb55a64.mediatailor.eu-west-1.amazonaws.com/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6195/master.m3u8
 #EXTINF:-1 tvg-id="" tvg-name="Rabbids Invasion (1080p)" tvg-logo="" group-title="Undefined",Rabbids Invasion (1080p)
 https://dikkyk1ckkhzq.cloudfront.net/RabiddsInvasion_GB.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Trufa (1080p)" tvg-logo="" group-title="Undefined",Trufa (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/728c02aa-8bf4-4711-a911-30c6d1ad8570/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Antenne Steiermark (720p)" tvg-logo="https://i.imgur.com/qnappvd.jpeg" group-title="German",Antenne Steiermark (720p)
+https://60efd7a2b4d02.streamlock.net/a_steiermark/ngrp:livestream_all/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Xtrem Sports (1080p)" tvg-logo="" group-title="Undefined",Xtrem Sports (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/e0b81a5c-6ab5-48cd-aaa9-f82de4ab5bf9/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Deluxe Music (720p)" tvg-logo="https://i.imgur.com/HimuPPb.png" group-title="German",Deluxe Music (720p)
+https://sdn-global-live-streaming-packager-cache.3qsdn.com/13456/13456_264_live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WeShort (1080p)" tvg-logo="" group-title="Undefined",WeShort (1080p)
+https://streams2.sofast.tv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/ea019bed-a45e-4dfe-a452-84f5f2f76ea9/manifest.m3u8

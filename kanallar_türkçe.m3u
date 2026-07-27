@@ -1,0 +1,111 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="" tvg-name="Teletricolore (480p) [Not 24/7]" tvg-logo="https://i.imgur.com/GajzIN6.png" group-title="Italian",Teletricolore (480p) [Not 24/7]
+https://59d7d6f47d7fc.streamlock.net/rs2/rs2/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Campane 1 (720p)" tvg-logo="https://i.imgur.com/GsdVpll.png" group-title="Italian",TV Campane 1 (720p)
+https://eu1.servers10.com:8081/8032/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rakuten TV Nordic Films (1080p)" tvg-logo="https://images-3.rakuten.tv/storage/global-live-channel/translation/artwork/ff79e878-3eea-45fc-b0cd-55d6acce9b18-width200-quality90.jpeg" group-title="Finnish",Rakuten TV Nordic Films (1080p)
+https://4aa9ef08b70d4b0c8f3519c5950b1930.mediatailor.eu-west-1.amazonaws.com/v1/master/0547f18649bd788bec7b67b746e47670f558b6b2/production-LiveChannel-6303/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="YLE TV 1 (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/6yXZwUL.png" group-title="Finnish",YLE TV 1 (1080p) [Not 24/7]
+https://yletvworld.akamaized.net/hls/live/622540/yletv1w/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="3CatInfo (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/3CatInfo_logo.svg/960px-3CatInfo_logo.svg.png" group-title="Catalan",3CatInfo (1080p)
+https://directes-tv-int.3catdirectes.cat/live-origin/canal324-hls/master.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Prima (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Prima_2013.png/960px-Prima_2013.png" group-title="Czech",Prima (1080p)
+http://88.212.15.19/live/prima_avc_25p/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio Televizija Banovina (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/gCFgC5D.png" group-title="Croatian",Radio Televizija Banovina (1080p) [Not 24/7]
+https://pool.alter-media.hr:1936/live/myStream/playlist.m3u8?DVR=
+#EXTINF:-1 tvg-id="" tvg-name="Rai Italia South Americas (1080p)" tvg-logo="https://i.imgur.com/1nN4rEP.png" group-title="Italian",Rai Italia South Americas (1080p)
+https://d3k8wzt41aflvx.cloudfront.net/RAISA/Live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTTR Trento (720p)" tvg-logo="https://i.imgur.com/6DyzN8M.png" group-title="Italian",RTTR Trento (720p)
+https://5f204aff97bee.streamlock.net/RTTRlive/livestream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Podium.TV 3 (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/bAhMhuz.jpg" group-title="Dutch",Podium.TV 3 (1080p) [Not 24/7]
+https://rrr.sz.xlcdn.com/?account=ndc_mediagroep&file=NDC3&output=playlist.m3u8&service=wowza&type=live
+#EXTINF:-1 tvg-id="" tvg-name="Haarlem105 RTV (720p)" tvg-logo="https://i.imgur.com/xyOVVZ0.png" group-title="Dutch",Haarlem105 RTV (720p)
+https://d2qm50imcbcfqx.cloudfront.net/nlpo/clr-nlpo/haarlem105/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio Freccia TV (1080p)" tvg-logo="https://i.imgur.com/RxeRlar.png" group-title="Italian",Radio Freccia TV (1080p)
+https://dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S3160845/0tuSetc8UFkF/playlist_video.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Disney Channel" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/3/3d/2022_Disney_Channel_logo.svg" group-title="Czech",Disney Channel
+http://88.212.15.19/live/test_disney/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Omroep Lingewaard (720p)" tvg-logo="https://i.imgur.com/FqyTFVN.png" group-title="Dutch",Omroep Lingewaard (720p)
+https://highvolume02.streampartner.nl/omroeplingewaard_1/omroeplingewaard_1/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Wavez FM" tvg-logo="https://i.imgur.com/uyROZSS.png" group-title="Dutch",Wavez FM
+https://media.streambrothers.com:1936/uszqnhpjpa/uszqnhpjpa/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Telemontecarlo (720p)" tvg-logo="https://i.imgur.com/B0NbjcT.png" group-title="Italian",Telemontecarlo (720p)
+https://stream10.xdevel.com/video17s975955-2173/stream/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Camera dei Deputati (via RR) (240p)" tvg-logo="https://i.imgur.com/hv4zi9N.png" group-title="Italian",Camera dei Deputati (via RR) (240p)
+https://video-ar.radioradicale.it/diretta/camera2/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Jim (720p)" tvg-logo="https://i.imgur.com/PkMgY0K.png" group-title="Finnish",Jim (720p)
+https://live-fi.tvkaista.net/jim/live.m3u8?hd=true
+#EXTINF:-1 tvg-id="" tvg-name="Liv (720p)" tvg-logo="https://i.imgur.com/k6NsXBj.png" group-title="Finnish",Liv (720p)
+https://live-fi.tvkaista.net/liv/live.m3u8?hd=true
+#EXTINF:-1 tvg-id="" tvg-name="JRTV Järviradio (720p)" tvg-logo="https://jarviradio.fi/jrtv2/wp-content/uploads/2022/01/jrtv1.jpg" group-title="Finnish",JRTV Järviradio (720p)
+https://streamer.radiotaajuus.fi/memfs/47f113bf-04ea-493b-a9d4-52945fd9db31.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Tele Quattro (720p)" tvg-logo="https://telequattro.medianordest.it/wp-content/uploads/2020/10/T4Logo120.png" group-title="Italian",Tele Quattro (720p)
+https://59d7d6f47d7fc.streamlock.net/telequattro/telequattro/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Kanal 35 (720p)" tvg-logo="https://live.ntv.az/kanal35.png" group-title="Azerbaijani",Kanal 35 (720p)
+https://str2.yodacdn.net/kanal35/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Salto 2 (720p)" tvg-logo="https://i.imgur.com/6H3ycdL.png" group-title="Dutch",Salto 2 (720p)
+https://d11lnfpmek70tc.cloudfront.net/nlpo/clr-nlpo/bad78523/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTV Oost (720p)" tvg-logo="https://i.imgur.com/nTR6q9H.png" group-title="Dutch",RTV Oost (720p)
+https://d34cg2bnc08ruf.cloudfront.net/live/rtvoost/tv/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="DTV Oss & Bernheze (1080p)" tvg-logo="https://i.imgur.com/JL1f9Tx.png" group-title="Dutch",DTV Oss & Bernheze (1080p)
+https://rrr.sz.xlcdn.com/?account=dtvmaasland&file=dtv1&output=playlist.m3u8&protocol=https&service=wowza&type=live
+#EXTINF:-1 tvg-id="" tvg-name="Radio JND (1080p)" tvg-logo="https://i.imgur.com/nyVlZeL.png" group-title="Dutch",Radio JND (1080p)
+https://radiojnd.cdn.hostin.cc/radiojnd/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTV 1 (720p)" tvg-logo="https://i.imgur.com/lRCsPWT.png" group-title="Dutch",RTV 1 (720p)
+https://dy7fxpkq4ggk8.cloudfront.net/nlpo/clr-nlpo/rtv1/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Diadora TV" tvg-logo="https://i.imgur.com/qZzsASl.png" group-title="Croatian",Diadora TV
+https://diadoratv.stream/live/diadora/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Arena Sport 1" tvg-logo="https://i.imgur.com/2qf67zW.png" group-title="Czech",Arena Sport 1
+http://88.212.15.19/live/test_arenasport/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="MadeinBO TV (1080p)" tvg-logo="https://i.imgur.com/47X44DD.png" group-title="Italian",MadeinBO TV (1080p)
+https://srvx1.selftv.video/dmchannel/live/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="BR6 TV (720p)" tvg-logo="https://i.imgur.com/NKtAiXu.png" group-title="Dutch",BR6 TV (720p)
+https://58c04fb1d143f.streamlock.net/slob/slob/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TR: SZC TV HD" tvg-logo="https://i.hizliresim.com/ljzg5ez.png" group-title="TR-HABER",TR: SZC TV HD
+http://190502.tomtv.eu:80/LiudmilaSheremet/233v9m9kjc/232355
+#EXTINF:-1 tvg-id="" tvg-name="Pluto TV Teen (720p)" tvg-logo="https://images.pluto.tv/channels/63eb944dc111bc0008fe7021/colorLogoPNG_1761820520562.png" group-title="Italian",Pluto TV Teen (720p)
+https://jmp2.uk/plu-63eb573ba99571000897135b.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="SBTV (1080p) [Not 24/7]" tvg-logo="https://i.imgur.com/MIampxZ.png" group-title="Croatian",SBTV (1080p) [Not 24/7]
+https://live.leveex.hr/hls/live.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="m2o TV (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Radio_m2o_-_Logo_2019.svg/500px-Radio_m2o_-_Logo_2019.svg.png" group-title="Italian",m2o TV (1080p)
+https://4c4b867c89244861ac216426883d1ad0.msvdn.net/live/S62628868/uhdWBlkC1AoO/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TV Nova (720p)" tvg-logo="https://i.imgur.com/gFjJ7YB.png" group-title="Croatian",TV Nova (720p)
+https://stream.agatin.hr:3727/live/tvnovalive.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Icaro TV (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/nWBWzNy.png" group-title="Italian",Icaro TV (720p) [Not 24/7]
+https://59d7d6f47d7fc.streamlock.net/icarotv/icarotv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rararadio (720p)" tvg-logo="https://i.imgur.com/vTpfxUG.png" group-title="Dutch",Rararadio (720p)
+https://58c04fb1d143f.streamlock.net/rararadio/rararadio/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="WeertFM TV (720p)" tvg-logo="https://i.imgur.com/8bt6xt2.png" group-title="Dutch",WeertFM TV (720p)
+https://ms2.mx-cd.net/tv/151-573495/WeertFM_TV.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="La C TV (720p)" tvg-logo="https://i.imgur.com/TF4LKp0.png" group-title="Italian",La C TV (720p)
+https://f5842579ff984c1c98d63b8d789673eb.msvdn.net/live/S47282891/JWjL3xqPf4bX/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="LaC News 24 (720p)" tvg-logo="https://www.omnys.com/media/news/lac-news24-icona.png" group-title="Italian",LaC News 24 (720p)
+https://f5842579ff984c1c98d63b8d789673eb.msvdn.net/live/S27391994/HVvPMzy/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="ČT 2" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/%C4%8CT2_logo_2012.svg/960px-%C4%8CT2_logo_2012.svg.png" group-title="Czech",ČT 2
+http://88.212.15.19/live/test_ct2_25p/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Gold TV Sat (576p)" tvg-logo="https://i.imgur.com/gQzNIg5.png" group-title="Italian",Gold TV Sat (576p)
+https://streaming.softwarecreation.it/GoldTvSat/GoldTvSat/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="San Marino RTV (720p)" tvg-logo="https://i.imgur.com/ZJSWusT.png" group-title="Italian",San Marino RTV (720p)
+https://d2hrvno5bw6tg2.cloudfront.net/smrtv-ch01/smil:ch-01.smil/chunklist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTV Purmerend (720p)" tvg-logo="https://i.imgur.com/dLKSpqz.png" group-title="Dutch",RTV Purmerend (720p)
+https://ms2.mx-cd.net/dtv-10/268-2641474/RTV_Purmerend_TV.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TeleTicino (720p)" tvg-logo="https://i.imgur.com/u6dLKa9.png" group-title="Italian",TeleTicino (720p)
+https://vstream-cdn.ch/hls/teleticino.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="SuperTennis (1080p)" tvg-logo="https://upload.wikimedia.org/wikipedia/it/thumb/6/6a/SuperTennis_-_Logo_2016.svg/960px-SuperTennis_-_Logo_2016.svg.png" group-title="Italian",SuperTennis (1080p)
+https://live-embed.supertennix.hiway.media/restreamer/supertennix_client/gpu-a-c0-16/restreamer/outgest/aa3673f1-e178-44a9-a947-ef41db73211a/manifest.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Studio Rheden (1080p)" tvg-logo="https://i.imgur.com/swfxaac.png" group-title="Dutch",Studio Rheden (1080p)
+https://stream.studiorhedenlive.nl/hlstv/stream.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Omroep Venray (720p)" tvg-logo="https://i.imgur.com/uVqTbi2.png" group-title="Dutch",Omroep Venray (720p)
+https://d3j015sg8r68y.cloudfront.net/nlpo/clr-nlpo/omroepvenray/index.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="TR: CNN TURK FHD" tvg-logo="http://logo.multicms.info/tvlogo/cnnturk.png" group-title="TR-HABER",TR: CNN TURK FHD
+http://190502.tomtv.eu:80/LiudmilaSheremet/233v9m9kjc/149
+#EXTINF:-1 tvg-id="" tvg-name="Extra TV (1080p)" tvg-logo="https://i.imgur.com/5edYPBO.png" group-title="Croatian",Extra TV (1080p)
+https://streaming.social3.hr/ExtraTVudzdhr5/uUankWqpXD/1.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="RTV Parkstad (1080p)" tvg-logo="https://i.imgur.com/zsTuF9y.png" group-title="Dutch",RTV Parkstad (1080p)
+https://live.streamteam.eu:8443/parkstad/parkstad/tv/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="AXN CEE Czech Republic" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/960px-AXN_logo_%282015%29.svg.png" group-title="Czech",AXN CEE Czech Republic
+http://88.212.15.19/live/test_axn/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Rete Oro (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/3oYiBSz.png" group-title="Italian",Rete Oro (720p) [Not 24/7]
+https://5926fc9c7c5b2.streamlock.net/9094/9094/playlist.m3u8
+#EXTINF:-1 tvg-id="" tvg-name="Radio Number One (720p) [Not 24/7]" tvg-logo="https://i.imgur.com/8cpuaG5.png" group-title="Italian",Radio Number One (720p) [Not 24/7]
+https://56b50ada2d659.streamlock.net/RN1TV/livestream/playlist.m3u8
