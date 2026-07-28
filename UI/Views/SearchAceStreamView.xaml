@@ -16,56 +16,74 @@
             <TextBlock Text="Arama kaynağını seçin (AceStream P2P, Otomatik IPTV, IPTV-Org veya Tümü) ve kanalları tek tıkla kütüphanenize aktarın." FontSize="13" Foreground="#94a3b8" Margin="0,5,0,0"/>
         </StackPanel>
 
-        <Grid Grid.Row="1" Margin="0,0,0,20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="1" Margin="0,0,0,20">
+            <!-- Üst Filtre Satırı: Kaynak, Kategori, Dil -->
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Kaynak Seçimi (Source Selector) -->
-            <ComboBox x:Name="SourceComboBox" Height="45" FontSize="14" VerticalContentAlignment="Center" Margin="0,0,12,0" SelectedIndex="0" Background="#1e293b" Foreground="White" BorderBrush="#334155" Padding="10,0">
-                <ComboBox.Resources>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.WindowBrushKey}" Color="#1e293b"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.WindowTextBrushKey}" Color="#FFFFFF"/>
-                </ComboBox.Resources>
-                <ComboBox.ItemContainerStyle>
-                    <Style TargetType="ComboBoxItem">
-                        <Setter Property="Background" Value="#1e293b"/>
-                        <Setter Property="Foreground" Value="White"/>
-                        <Setter Property="Padding" Value="10,8"/>
-                        <Setter Property="FontSize" Value="14"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#0284c7"/>
-                                <Setter Property="Foreground" Value="White"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#38bdf8"/>
-                                <Setter Property="Foreground" Value="#0f172a"/>
-                                <Setter Property="FontWeight" Value="Bold"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ComboBox.ItemContainerStyle>
-                <ComboBoxItem Content="🌐 Tüm Kaynaklar" IsSelected="True"/>
-                <ComboBoxItem Content="🐱 IPTVCat Arama Motoru"/>
-                <ComboBoxItem Content="🐧 FreeTuxTV Veritabanı"/>
-                <ComboBoxItem Content="⚡ AceStream P2P Ağ"/>
-                <ComboBoxItem Content="📡 Otomatik IPTV Listeleri"/>
-                <ComboBoxItem Content="🌍 IPTV-Org Küresel Liste"/>
-            </ComboBox>
+                <!-- Kaynak Seçimi (Source Selector) -->
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Text="Kaynak" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="SourceComboBox" Height="44" FontSize="13" SelectedIndex="0">
+                        <ComboBoxItem Content="🌐 Tüm Kaynaklar" IsSelected="True"/>
+                        <ComboBoxItem Content="⚡ AceStream P2P Ağ"/>
+                        <ComboBoxItem Content="🐱 IPTVCat Arama Motoru"/>
+                        <ComboBoxItem Content="🐧 FreeTuxTV Veritabanı"/>
+                        <ComboBoxItem Content="📡 Otomatik IPTV Listeleri"/>
+                        <ComboBoxItem Content="🌍 IPTV-Org Küresel Liste"/>
+                    </ComboBox>
+                </StackPanel>
 
-            <!-- Arama Kutusu -->
-            <TextBox Grid.Column="1" x:Name="SearchBox" Height="45" Padding="15,10" FontSize="15" KeyDown="SearchBox_KeyDown" Tag="Film, dizi, kanal adı veya AceStream Content ID..."/>
+                <!-- Kategori Seçimi -->
+                <StackPanel Grid.Column="1" Margin="4,0,8,0">
+                    <TextBlock Text="Kategori" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="CategoryComboBox" Height="44" FontSize="13" SelectedIndex="0">
+                        <ComboBoxItem Content="🏷️ Tüm Kategoriler" IsSelected="True"/>
+                        <ComboBoxItem Content="🎬 Filmler"/>
+                        <ComboBoxItem Content="🍿 Diziler"/>
+                        <ComboBoxItem Content="📺 Canlı TV"/>
+                        <ComboBoxItem Content="⚽ Spor"/>
+                        <ComboBoxItem Content="🧬 Belgesel &amp; Eğitim"/>
+                        <ComboBoxItem Content="🎵 Müzik"/>
+                        <ComboBoxItem Content="📰 Haber"/>
+                        <ComboBoxItem Content="🧸 Çocuk"/>
+                    </ComboBox>
+                </StackPanel>
 
-            <!-- Arama Butonu -->
-            <Button Grid.Column="2" Content="🔍 Arama Yap" Width="130" Height="45" Margin="12,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Click="Search_Click"/>
+                <!-- Dil Seçimi -->
+                <StackPanel Grid.Column="2" Margin="4,0,0,0">
+                    <TextBlock Text="Dil / Ülke" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="LanguageComboBox" Height="44" FontSize="13" SelectedIndex="0">
+                        <ComboBoxItem Content="🌍 Tüm Diller" IsSelected="True"/>
+                        <ComboBoxItem Content="🇹🇷 Türkçe"/>
+                        <ComboBoxItem Content="🇬🇧 İngilizce"/>
+                        <ComboBoxItem Content="🇩🇪 Almanca"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
 
-            <!-- Tümünü Kütüphaneye Ekle Butonu -->
-            <Button Grid.Column="3" x:Name="AddAllButton" Content="➕ Tümünü Kütüphaneye Ekle" Height="45" Padding="15,0" Margin="12,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Visibility="Collapsed" Click="AddAllToLibrary_Click"/>
-        </Grid>
+            <!-- Arama Kutusu ve Butonlar -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Arama Kutusu -->
+                <TextBox Grid.Column="0" x:Name="SearchBox" Height="45" Padding="15,10" FontSize="14" KeyDown="SearchBox_KeyDown" Tag="Film, dizi, kanal adı veya AceStream Content ID..."/>
+
+                <!-- Arama Butonu -->
+                <Button Grid.Column="1" Content="🔍 Arama Yap" Width="130" Height="45" Margin="12,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Click="Search_Click"/>
+
+                <!-- Tümünü Kütüphaneye Ekle Butonu -->
+                <Button Grid.Column="2" x:Name="AddAllButton" Content="➕ Tümünü Kütüphaneye Ekle" Height="45" Padding="15,0" Margin="12,0,0,0" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Visibility="Collapsed" Click="AddAllToLibrary_Click"/>
+            </Grid>
+        </StackPanel>
 
         <Grid Grid.Row="2">
             <ListBox x:Name="ResultsList" Background="Transparent" BorderThickness="0" ItemsSource="{Binding Results}">

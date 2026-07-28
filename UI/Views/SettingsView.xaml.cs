@@ -7,8 +7,11 @@ using StreamMesh.Core.Media;
 using StreamMesh.Core.Utils;
 using StreamMesh.Models;
 using StreamMesh.Core.Network;
+using StreamMesh.UI.Windows;
 using System.Linq;
 using System.Threading.Tasks;
+
+using Button = System.Windows.Controls.Button;
 
 namespace StreamMesh.UI.Views
 {
@@ -17,7 +20,7 @@ namespace StreamMesh.UI.Views
         public string Url { get; set; } = "";
         public string Origin { get; set; } = "Yerel";
         public string Color { get; set; } = "#1e293b";
-        public bool CanDelete { get; set; } = true;
+        public int ChannelCount { get; set; } = 0;
     }
 
     public partial class SettingsView : System.Windows.Controls.UserControl
@@ -26,7 +29,6 @@ namespace StreamMesh.UI.Views
         private readonly GitHubSyncEngine _sync = new GitHubSyncEngine();
         private readonly AiEngine _ai = new AiEngine();
         private readonly XtreamService _xtream = new XtreamService();
-        private readonly AceEngine _aceEngine = new AceEngine();
 
         public ObservableCollection<M3uSourceDisplay> Sources { get; set; } = new ObservableCollection<M3uSourceDisplay>();
         public ObservableCollection<IptvAccount> IptvAccounts { get; set; } = new ObservableCollection<IptvAccount>();
@@ -47,7 +49,7 @@ namespace StreamMesh.UI.Views
             };
         }
 
-        private async void LoadSettings()
+        private void LoadSettings()
         {
             if (AiUrlBox != null) AiUrlBox.Text = _db.GetSetting("AiUrl", "http://localhost:11434/api/chat");
             if (AiModelBox != null) AiModelBox.Text = _db.GetSetting("AiModel", "llama3");
@@ -62,70 +64,6 @@ namespace StreamMesh.UI.Views
             RefreshIptvList();
             UpdateQuotaUI();
             UpdateServerStatusUI();
-            await CheckAceStatusAsync();
-        }
-
-        private async Task CheckAceStatusAsync()
-        {
-            if (AceStatusText == null) return;
-
-            bool running = await _aceEngine.IsEngineRunningAsync();
-            bool installed = _aceEngine.IsInstalled();
-
-            if (running)
-            {
-                AceStatusText.Text = "🟢 AceStream Motoru Çalışıyor (HTTP API Aktif - Port 6878)";
-            }
-            else if (installed)
-            {
-                AceStatusText.Text = "🟡 AceStream Yüklü (Motor şu an kapalı, yayın açılınca otomatik başlayacak)";
-            }
-            else
-            {
-                AceStatusText.Text = "🔴 AceStream Motoru Bulunamadı (P2P yayınları için kurulmalıdır)";
-            }
-        }
-
-        private async void CheckAceStatus_Click(object sender, RoutedEventArgs e)
-        {
-            await CheckAceStatusAsync();
-        }
-
-        private async void InstallAceStream_Click(object sender, RoutedEventArgs e)
-        {
-            if (InstallAceButton == null || AceDownloadProgress == null) return;
-
-            InstallAceButton.IsEnabled = false;
-            AceDownloadProgress.Visibility = Visibility.Visible;
-            AceDownloadProgress.Value = 0;
-
-            try
-            {
-                bool success = await _aceEngine.DownloadAndExtractEngineAsync(progress =>
-                {
-                    Dispatcher.Invoke(() => AceDownloadProgress.Value = progress);
-                });
-
-                if (success)
-                {
-                    System.Windows.MessageBox.Show("AceStream motoru ve eklentileri başarıyla yüklendi!", "Kurulum Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
-                    await _aceEngine.StartEngineAsync();
-                }
-                else
-                {
-                    System.Windows.MessageBox.Show("AceStream indirilirken veya kurulurken bir hata oluştu.", "Kurulum Hatası", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show($"Kurulum hatası: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-            finally
-            {
-                InstallAceButton.IsEnabled = true;
-                AceDownloadProgress.Visibility = Visibility.Collapsed;
-                await CheckAceStatusAsync();
-            }
         }
 
         private void RefreshSourcesList()
@@ -137,7 +75,8 @@ namespace StreamMesh.UI.Views
                 bool isCloud = s.Contains("github") || s.Contains("raw.githubusercontent");
                 Sources.Add(new M3uSourceDisplay {
                     Url = s, Origin = isCloud ? "Bulut" : "Yerel",
-                    Color = isCloud ? "#0369a1" : "#1e293b", CanDelete = !isCloud
+                    Color = isCloud ? "#0369a1" : "#1e293b",
+                    ChannelCount = _db.GetChannelCountBySource(s)
                 });
             }
             if (M3uSourcesList != null)
@@ -177,23 +116,19 @@ namespace StreamMesh.UI.Views
                     Password = XtreamPassBox.Text,
                     Name = new Uri(XtreamUrlBox.Text).Host
                 };
-
                 acc.Status = "Bağlanıyor...";
                 _db.SaveIptvAccount(acc);
                 RefreshIptvList();
-
                 bool success = await _xtream.SyncAccountAsync(acc);
                 RefreshIptvList();
-
                 if (success) System.Windows.MessageBox.Show("IPTV Hesabı başarıyla eklendi.");
-                else System.Windows.MessageBox.Show("IPTV bağlantı hatası.");
             }
             catch (Exception ex) { System.Windows.MessageBox.Show("Hata: " + ex.Message); }
         }
 
         private void RemoveIptv_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button b && b.CommandParameter is string id)
+            if (sender is Button b && b.CommandParameter is string id)
             {
                 _db.RemoveIptvAccount(id);
                 RefreshIptvList();
@@ -207,13 +142,11 @@ namespace StreamMesh.UI.Views
                 int port = int.TryParse(ServerPortBox.Text, out int p) ? p : 8080;
                 _db.SetSetting("ServerPort", port.ToString());
                 StreamMesh.App.Server?.Start();
-                StreamMesh.App.Ssdp?.Start(port);
                 _isServerRunning = true;
             }
             else
             {
                 StreamMesh.App.Server?.Stop();
-                StreamMesh.App.Ssdp?.Stop();
                 _isServerRunning = false;
             }
             UpdateServerStatusUI();
@@ -223,11 +156,21 @@ namespace StreamMesh.UI.Views
         {
             if (ServerControlBtn == null) return;
             ServerControlBtn.Content = _isServerRunning ? "Sunucuyu Durdur" : "Sunucuyu Başlat";
-
             string ip = "127.0.0.1";
             string port = ServerPortBox.Text;
             if (M3uServerLink != null) M3uServerLink.Text = $"http://{ip}:{port}/playlist.m3u";
             if (WebServerLink != null) WebServerLink.Text = $"http://{ip}:{port}/web";
+        }
+
+        private void EditSource_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button b && b.CommandParameter is string url)
+            {
+                var win = new SourceEditWindow(url);
+                win.Owner = Window.GetWindow(this);
+                win.ShowDialog();
+                RefreshSourcesList();
+            }
         }
 
         private void AddEpgSource_Click(object sender, RoutedEventArgs e)
@@ -243,7 +186,7 @@ namespace StreamMesh.UI.Views
 
         private void RemoveEpgSource_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button b && b.CommandParameter is string url)
+            if (sender is Button b && b.CommandParameter is string url)
             {
                 _db.RemoveEpgSource(url);
                 RefreshEpgList();
@@ -287,7 +230,7 @@ namespace StreamMesh.UI.Views
 
         private void RemoveSource_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button b && b.CommandParameter is string url)
+            if (sender is Button b && b.CommandParameter is string url)
             {
                 _db.RemoveM3uSource(url);
                 RefreshSourcesList();

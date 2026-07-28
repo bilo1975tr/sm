@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Runtime.InteropServices;
+using System.Linq;
 using LibVLCSharp.Shared;
 using StreamMesh.Models;
 using StreamMesh.Core.Media;
@@ -93,48 +94,53 @@ namespace StreamMesh.UI.Views
 
             try
             {
+                _mediaPlayer.Stop();
                 OsdTitle.Text = channel.Name;
                 OsdCategory.Text = channel.Category;
                 OsdLogo.Source = (ImageSource)LogoConverter.Convert(channel.LogoUrl, typeof(ImageSource), null, null);
 
-                var urls = (channel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
-                bool success = false;
+                var rawUrls = (channel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                var finalUrlsToTry = new List<string>();
 
-                for (int i = 0; i < urls.Length; i++)
+                // Prepare URLs
+                foreach(var raw in rawUrls)
                 {
-                    string finalUrl = urls[i].Trim();
-                    LogService.LogInfo($"Player: Deneniyor ({i+1}/{urls.Length}) -> {finalUrl}");
-
-                    if (channel.SourceType == "YOUTUBE" || finalUrl.Contains("youtube.com"))
-                    {
-                        var direct = await _yt.GetStreamUrlAsync(finalUrl);
-                        if (direct != null) finalUrl = direct;
-                    }
-                    else if (channel.SourceType == "ACESTREAM" || finalUrl.StartsWith("acestream://"))
+                    string u = raw.Trim();
+                    if (u.StartsWith("acestream://") || channel.SourceType == "ACESTREAM")
                     {
                         await _ace.StartEngineAsync();
-                        finalUrl = _ace.GetHttpUrl(finalUrl);
+                        finalUrlsToTry.AddRange(_ace.GetHttpUrls(u));
                     }
-
-                    using var media = new Media(_libVLC, new Uri(finalUrl));
-                    _mediaPlayer.Play(media);
-
-                    await System.Threading.Tasks.Task.Delay(3000);
-                    if (_mediaPlayer.IsPlaying) { success = true; break; }
+                    else if (u.Contains("youtube.com") || channel.SourceType == "YOUTUBE")
+                    {
+                        var direct = await _yt.GetStreamUrlAsync(u);
+                        if (direct != null) finalUrlsToTry.Add(direct);
+                    }
+                    else
+                    {
+                        finalUrlsToTry.Add(u);
+                    }
                 }
 
-                if (!success) System.Windows.MessageBox.Show("Yayın başlatılamadı. Tüm yedek linkler denendi.");
+                bool success = false;
+                foreach (var tryUrl in finalUrlsToTry)
+                {
+                    LogService.LogInfo($"Player: Deneniyor -> {tryUrl}");
+                    using var media = new Media(_libVLC, new Uri(tryUrl));
+                    _mediaPlayer.Play(media);
+
+                    // Wait longer for AceStream or slow streams to buffer
+                    int waitMs = tryUrl.Contains("127.0.0.1") ? 6000 : 3000;
+                    await System.Threading.Tasks.Task.Delay(waitMs);
+
+                    if (_mediaPlayer.IsPlaying) { success = true; break; }
+                    LogService.LogInfo($"Player: Adres yanıt vermedi ({tryUrl}), sonraki deneniyor...");
+                }
+
+                if (!success) System.Windows.MessageBox.Show("Yayın başlatılamadı. Tüm yedek linkler denendi.", "Oynatma Hatası");
             }
             catch (Exception ex) { LogService.LogError("Player: Playback error", ex); }
             finally { _playSemaphore.Release(); }
-        }
-
-        public void Dispose()
-        {
-            _mediaPlayer?.Stop();
-            _mediaPlayer?.Dispose();
-            _libVLC?.Dispose();
-            if (_bufferPtr != IntPtr.Zero) Marshal.FreeHGlobal(_bufferPtr);
         }
 
         public void TogglePause()
@@ -154,7 +160,6 @@ namespace StreamMesh.UI.Views
         {
             var win = Window.GetWindow(this);
             if (win == null) return;
-
             if (win.WindowState == WindowState.Maximized && win.WindowStyle == WindowStyle.None)
             {
                 win.WindowStyle = WindowStyle.SingleBorderWindow;
@@ -167,6 +172,14 @@ namespace StreamMesh.UI.Views
                 win.WindowState = WindowState.Maximized;
                 OsdPanel.Visibility = Visibility.Collapsed;
             }
+        }
+
+        public void Dispose()
+        {
+            _mediaPlayer?.Stop();
+            _mediaPlayer?.Dispose();
+            _libVLC?.Dispose();
+            if (_bufferPtr != IntPtr.Zero) Marshal.FreeHGlobal(_bufferPtr);
         }
     }
 }

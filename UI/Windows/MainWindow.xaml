@@ -46,6 +46,37 @@
             </StackPanel>
         </Border>
 
-        <ContentControl x:Name="MainContent" Grid.Column="1" />
+        <Grid Grid.Column="1">
+            <ContentControl x:Name="MainContent" />
+
+            <!-- Top Right Update & Version Overlay -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,15,20,0" Panel.ZIndex="1000">
+                <!-- Update Notification Button (Hidden by default, shown when remote update available) -->
+                <Button x:Name="UpdateBadgeButton" 
+                        Click="UpdateBadge_Click" 
+                        Visibility="Collapsed" 
+                        Background="#E11D48" Foreground="White" FontWeight="Bold" FontSize="12" 
+                        Padding="12,6" Margin="0,0,10,0" Cursor="Hand" BorderThickness="0"
+                        ToolTip="Yeni sürüm yayınlandı! Tıklayarak otomatik güncelleyin.">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="14"/>
+                        </Style>
+                    </Button.Resources>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⚡" Margin="0,0,6,0" FontSize="13"/>
+                        <TextBlock x:Name="UpdateBadgeText" Text="Yeni Güncelleme Var! (Tıkla ve Güncelle)"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Current Version Badge -->
+                <Border Background="#1E1E1E" CornerRadius="12" Padding="10,5" BorderBrush="#333" BorderThickness="1" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="v" Foreground="#38BDF8" FontSize="11" FontWeight="Bold"/>
+                        <TextBlock x:Name="CurrentVersionBadge" Text="1.0.1" Foreground="#CCC" FontSize="11" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

@@ -24,6 +24,17 @@ namespace StreamMesh.UI.Views
         {
             InitializeComponent();
             DataContext = this;
+            Loaded += SearchAceStreamView_Loaded;
+        }
+
+        private async void SearchAceStreamView_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Auto-start AceStream Engine when search view is opened
+                await _searchEngine.StartAceEngineAsync();
+            }
+            catch { }
         }
 
         private async void Search_Click(object sender, RoutedEventArgs e)
@@ -41,7 +52,15 @@ namespace StreamMesh.UI.Views
 
         private async Task PerformSearchAsync()
         {
-            if (string.IsNullOrWhiteSpace(SearchBox.Text)) return;
+            string selectedSource = (SourceComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "Tüm Kaynaklar";
+            string selectedCategory = (CategoryComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "Tüm Kategoriler";
+            string selectedLanguage = (LanguageComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "Tüm Diller";
+
+            if (string.IsNullOrWhiteSpace(SearchBox.Text) && selectedCategory.Contains("Tüm") && selectedLanguage.Contains("Tüm"))
+            {
+                System.Windows.MessageBox.Show("Lütfen bir arama terimi girin veya bir kategori / dil filtresi seçin.", "Arama Uyarısı", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             Results.Clear();
             AddAllButton.Visibility = Visibility.Collapsed;
@@ -49,8 +68,7 @@ namespace StreamMesh.UI.Views
 
             try
             {
-                string selectedSource = (SourceComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "Tüm Kaynaklar";
-                var list = await _searchEngine.SearchGlobalAsync(SearchBox.Text, selectedSource);
+                var list = await _searchEngine.SearchGlobalAsync(SearchBox.Text, selectedSource, selectedCategory, selectedLanguage);
                 foreach (var item in list)
                 {
                     Results.Add(item);
@@ -59,10 +77,15 @@ namespace StreamMesh.UI.Views
                 if (list.Count > 0)
                 {
                     AddAllButton.Visibility = Visibility.Visible;
+                    // Dynamic message for result count
+                    if (Results.Count > 100)
+                    {
+                        System.Windows.MessageBox.Show($"Harika! Kriterlerinize uygun toplam {Results.Count} kanal listelendi.", "Geniş Arama Sonucu", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("Aranan ifade ile eşleşen kanal veya medya içeriği bulunamadı.", "Arama Sonucu", MessageBoxButton.OK, MessageBoxImage.Information);
+                    System.Windows.MessageBox.Show("Aranan kriterlere uygun kanal veya medya içeriği bulunamadı.", "Arama Sonucu", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)

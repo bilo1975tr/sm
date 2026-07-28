@@ -29,6 +29,17 @@ namespace StreamMesh.Models
         private DateTime _createdAt = DateTime.Now;
         private int _personalWatchCount = 0;
         private int _viewersCount = 0;
+        private string _urlSpeeds = ""; // JSON string for URL-speed mapping
+
+        private int _preferredNameIndex = 0;
+        private int _preferredLogoIndex = 0;
+        private int _preferredEpgIndex = 0;
+
+        public int PreferredNameIndex { get => _preferredNameIndex; set { _preferredNameIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); } }
+        public int PreferredLogoIndex { get => _preferredLogoIndex; set { _preferredLogoIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogoUrl)); } }
+        public int PreferredEpgIndex { get => _preferredEpgIndex; set { _preferredEpgIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(EpgId)); } }
+
+        public string UrlSpeeds { get => _urlSpeeds; set { _urlSpeeds = value; OnPropertyChanged(); } }
 
         public static bool IsPosterMode { get; set; } = true;
 

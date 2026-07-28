@@ -21,6 +21,7 @@ namespace StreamMesh.UI.Windows
         private SearchAceStreamView _searchAceView = new SearchAceStreamView();
 
         private readonly StunEngine _stun = new StunEngine();
+        private readonly UpdateService _updateService = new UpdateService();
         private DispatcherTimer _peerTimer;
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
         private bool _isExplicitExit = false;
@@ -35,6 +36,23 @@ namespace StreamMesh.UI.Windows
             SetupTrayIcon();
             MainContent.Content = _homeView;
 
+            string currentVer = UpdateService.GetCurrentVersion();
+            CurrentVersionBadge.Text = currentVer;
+            Title = $"StreamMesh Hybrid v{currentVer}";
+
+            UpdateService.OnVersionUpdated += (newVer) => {
+                Dispatcher.Invoke(() => {
+                    CurrentVersionBadge.Text = newVer;
+                    Title = $"StreamMesh Hybrid v{newVer}";
+                    if (_notifyIcon != null)
+                    {
+                        _notifyIcon.Text = $"StreamMesh Hybrid v{newVer}";
+                    }
+                });
+            };
+
+            CheckForUpdatesAsync();
+
             _peerTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
             _peerTimer.Tick += async (s, e) => {
                 int count = await _stun.GetOnlinePeerCountAsync();
@@ -43,6 +61,63 @@ namespace StreamMesh.UI.Windows
             _peerTimer.Start();
 
             this.KeyDown += MainWindow_KeyDown;
+        }
+
+        private async void CheckForUpdatesAsync()
+        {
+            try
+            {
+                var (hasUpdate, remoteVer) = await _updateService.CheckForUpdateAsync();
+                if (hasUpdate)
+                {
+                    UpdateBadgeText.Text = $"Yeni Güncelleme Var! (v{remoteVer}) - Tıkla ve Güncelle";
+                    UpdateBadgeButton.Visibility = Visibility.Visible;
+                }
+            }
+            catch { }
+        }
+
+        private async void UpdateBadge_Click(object sender, RoutedEventArgs e)
+        {
+            var result = System.Windows.MessageBox.Show(
+                "Yeni güncelleme bulundu. Otomatik güncelleme başlatılsın mı?\nİçerik ve sistem dosyaları güncellenecektir.",
+                "Otomatik Güncelleme",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                UpdateBadgeButton.IsEnabled = false;
+                UpdateBadgeText.Text = "Güncelleniyor...";
+
+                bool success = await _updateService.PerformUpdateAsync((percent, msg) => {
+                    Dispatcher.Invoke(() => {
+                        UpdateBadgeText.Text = $"Güncelleniyor (%{percent})...";
+                    });
+                });
+
+                if (success)
+                {
+                    string newVer = UpdateService.GetCurrentVersion();
+                    CurrentVersionBadge.Text = newVer;
+                    Title = $"StreamMesh Hybrid v{newVer}";
+                    UpdateBadgeButton.Visibility = Visibility.Collapsed;
+                    System.Windows.MessageBox.Show($"Güncelleme başarıyla tamamlandı!\nGüncel Sürüm: v{newVer}", "Güncelleme Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    UpdateBadgeButton.IsEnabled = true;
+                    UpdateBadgeText.Text = "Yeni Güncelleme Var! (Tıkla ve Güncelle)";
+                    System.Windows.MessageBox.Show("Güncelleme sırasında bir hata oluştu.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("UpdateBadge_Click error", ex);
+                UpdateBadgeButton.IsEnabled = true;
+            }
         }
 
         private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)

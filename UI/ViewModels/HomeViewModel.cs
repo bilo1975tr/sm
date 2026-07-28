@@ -113,8 +113,14 @@ namespace StreamMesh.UI.ViewModels
 
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
-                string s = _searchText.ToLowerInvariant();
-                filtered = filtered.Where(c => c.Name.ToLowerInvariant().Contains(s) || c.GroupTitle.ToLowerInvariant().Contains(s));
+                string s = _searchText.Trim().ToLowerInvariant();
+                filtered = filtered.Where(c => 
+                    (c.Name != null && c.Name.ToLowerInvariant().Contains(s)) ||
+                    (c.GroupTitle != null && c.GroupTitle.ToLowerInvariant().Contains(s)) ||
+                    (c.Category != null && c.Category.ToLowerInvariant().Contains(s)) ||
+                    (c.Url != null && c.Url.ToLowerInvariant().Contains(s)) ||
+                    (c.SourceType != null && c.SourceType.ToLowerInvariant().Contains(s))
+                );
             }
 
             _filteredChannels = filtered.ToList();

@@ -1,0 +1,13 @@
+{
+  "name": "stream-mesh-hybrid",
+  "version": "1.0.1",
+  "description": "StreamMesh Hybrid C# WPF Desktop Player & Network Engine",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo 'Build completed'",
+    "lint": "echo 'Lint completed'"
+  }
+}

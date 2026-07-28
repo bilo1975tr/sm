@@ -51,7 +51,7 @@
                             </Grid>
                             <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
                             <TextBlock Text="Aktif Yayın Kaynakları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,10,0,10" FontSize="18"/>
-                            <ListBox x:Name="M3uSourcesList" Height="250" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
+                            <ListBox x:Name="M3uSourcesList" Height="300" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,5" Padding="10">
@@ -63,9 +63,13 @@
                                                         <Border Background="{Binding Color}" CornerRadius="4" Padding="4,1" Margin="0,0,10,0">
                                                             <TextBlock Text="{Binding Origin}" Foreground="White" FontSize="10" FontWeight="Bold"/>
                                                         </Border>
+                                                        <TextBlock Text="{Binding ChannelCount, StringFormat='{}{0} Kanal'}" Foreground="Gray" FontSize="11"/>
                                                     </StackPanel>
                                                 </StackPanel>
-                                                <Button Grid.Column="1" Content="Kaldır" Background="#7f1d1d" Foreground="#ff8a8a" Width="70" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveSource_Click" CommandParameter="{Binding Url}" Visibility="{Binding CanDelete, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <Button Content="⚙️ Düzenle" Width="90" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="EditSource_Click" CommandParameter="{Binding Url}"/>
+                                                    <Button Content="🗑️ Kaldır" Background="#7f1d1d" Foreground="#ff8a8a" Width="80" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveSource_Click" CommandParameter="{Binding Url}"/>
+                                                </StackPanel>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -145,38 +149,6 @@
                         <TextBox x:Name="UserAgentBox" Height="35" Margin="0,0,0,15"/>
                         <CheckBox x:Name="HwAccelCheck" Content="GPU Hızlandırma" Foreground="White" Margin="0,10,0,25"/>
                         <Button Content="Kaydet" Width="150" Style="{StaticResource PrimaryButtonStyle}" Click="SaveSettings_Click"/>
-                    </StackPanel>
-                </Border>
-            </TabItem>
-
-            <TabItem Header="AceStream &amp; Bileşenler">
-                <Border Background="#1e293b" Padding="25" CornerRadius="15">
-                    <StackPanel>
-                        <TextBlock Text="⚡ AceStream P2P Motoru &amp; Eklenti Bileşenleri" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
-                        <TextBlock Text="P2P yayınları izlemek ve AceStream kanallarını oynatmak için bilgisayarınızda AceStream Motoru kurulmalıdır." Foreground="#94a3b8" FontSize="13" TextWrapping="Wrap" Margin="0,0,0,15"/>
-
-                        <Border Background="#0f172a" CornerRadius="10" Padding="15" Margin="0,0,0,20">
-                            <StackPanel>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="AceStream Engine Durumu:" Foreground="White" FontSize="14" FontWeight="Bold"/>
-                                        <TextBlock x:Name="AceStatusText" Text="Kontrol ediliyor..." Foreground="#e2e8f0" FontSize="13" Margin="0,4,0,0"/>
-                                    </StackPanel>
-                                    <Button Grid.Column="1" Content="🔄 Durumu Yenile" Padding="12,8" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="CheckAceStatus_Click"/>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <TextBlock Text="Otomatik İndirme Kaynağı:" Foreground="White" FontSize="13" Margin="0,0,0,5"/>
-                        <TextBox Text="https://github.com/bilo1975tr/sm/releases/download/v1.0/AceStream.zip" IsReadOnly="True" Height="35" Padding="8,5" Background="#0f172a" Foreground="#cbd5e1" Margin="0,0,0,15"/>
-
-                        <ProgressBar x:Name="AceDownloadProgress" Height="8" Foreground="#38bdf8" Background="#0f172a" Visibility="Collapsed" Margin="0,0,0,15"/>
-
-                        <Button x:Name="InstallAceButton" Content="⬇️ AceStream Motorunu Otomatik İndir ve Kur" Height="45" Width="320" HorizontalAlignment="Left" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Click="InstallAceStream_Click"/>
                     </StackPanel>
                 </Border>
             </TabItem>

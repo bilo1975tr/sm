@@ -70,7 +70,11 @@ namespace StreamMesh.Core.Database
                         Overview TEXT DEFAULT '',
                         BackdropUrl TEXT DEFAULT '',
                         [Cast] TEXT DEFAULT '',
-                        ViewersCount INTEGER DEFAULT 0
+                        ViewersCount INTEGER DEFAULT 0,
+                        UrlSpeeds TEXT DEFAULT '',
+                        PreferredNameIndex INTEGER DEFAULT 0,
+                        PreferredLogoIndex INTEGER DEFAULT 0,
+                        PreferredEpgIndex INTEGER DEFAULT 0
                     );
                     CREATE TABLE IF NOT EXISTS EpgPrograms (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,7 +137,11 @@ namespace StreamMesh.Core.Database
                     "ALTER TABLE Channels ADD COLUMN ImdbId TEXT DEFAULT ''",
                     "ALTER TABLE Channels ADD COLUMN Overview TEXT DEFAULT ''",
                     "ALTER TABLE Channels ADD COLUMN BackdropUrl TEXT DEFAULT ''",
-                    "ALTER TABLE Channels ADD COLUMN [Cast] TEXT DEFAULT ''"
+                    "ALTER TABLE Channels ADD COLUMN [Cast] TEXT DEFAULT ''",
+                    "ALTER TABLE Channels ADD COLUMN UrlSpeeds TEXT DEFAULT ''",
+                    "ALTER TABLE Channels ADD COLUMN PreferredNameIndex INTEGER DEFAULT 0",
+                    "ALTER TABLE Channels ADD COLUMN PreferredLogoIndex INTEGER DEFAULT 0",
+                    "ALTER TABLE Channels ADD COLUMN PreferredEpgIndex INTEGER DEFAULT 0"
                 };
 
                 foreach (var sql in newCols)
@@ -217,7 +225,7 @@ namespace StreamMesh.Core.Database
             {
                 await connection.OpenAsync();
                 var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl FROM Channels";
+                cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex FROM Channels";
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
@@ -230,7 +238,9 @@ namespace StreamMesh.Core.Database
                         ImdbId = reader.IsDBNull(11) ? "" : reader.GetString(11), Overview = reader.IsDBNull(12) ? "" : reader.GetString(12),
                         BackdropUrl = reader.IsDBNull(13) ? "" : reader.GetString(13), Cast = reader.IsDBNull(14) ? "" : reader.GetString(14),
                         PersonalWatchCount = reader.GetInt32(15), ViewersCount = reader.GetInt32(16),
-                        EpgId = reader.IsDBNull(17) ? "" : reader.GetString(17), EpgUrl = reader.IsDBNull(18) ? "" : reader.GetString(18)
+                        EpgId = reader.IsDBNull(17) ? "" : reader.GetString(17), EpgUrl = reader.IsDBNull(18) ? "" : reader.GetString(18),
+                        UrlSpeeds = reader.IsDBNull(19) ? "" : reader.GetString(19),
+                        PreferredNameIndex = reader.GetInt32(20), PreferredLogoIndex = reader.GetInt32(21), PreferredEpgIndex = reader.GetInt32(22)
                     });
                 }
             }
@@ -246,7 +256,7 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex";
                     cmd.Parameters.AddWithValue("@Id", ch.Id); cmd.Parameters.AddWithValue("@Name", ch.Name); cmd.Parameters.AddWithValue("@Url", ch.Url);
                     cmd.Parameters.AddWithValue("@Logo", ch.LogoUrl); cmd.Parameters.AddWithValue("@Group", ch.GroupTitle); cmd.Parameters.AddWithValue("@Cat", ch.Category);
                     cmd.Parameters.AddWithValue("@Lang", ch.Language); cmd.Parameters.AddWithValue("@Fav", ch.IsFavorite ? 1 : 0);
@@ -255,6 +265,8 @@ namespace StreamMesh.Core.Database
                     cmd.Parameters.AddWithValue("@Backdrop", ch.BackdropUrl); cmd.Parameters.AddWithValue("@Cast", ch.Cast);
                     cmd.Parameters.AddWithValue("@Pwc", ch.PersonalWatchCount); cmd.Parameters.AddWithValue("@Vc", ch.ViewersCount);
                     cmd.Parameters.AddWithValue("@EpgId", ch.EpgId ?? ""); cmd.Parameters.AddWithValue("@EpgUrl", ch.EpgUrl ?? "");
+                    cmd.Parameters.AddWithValue("@Us", ch.UrlSpeeds ?? "");
+                    cmd.Parameters.AddWithValue("@Pni", ch.PreferredNameIndex); cmd.Parameters.AddWithValue("@Pli", ch.PreferredLogoIndex); cmd.Parameters.AddWithValue("@Pei", ch.PreferredEpgIndex);
                     await cmd.ExecuteNonQueryAsync();
                 }
             }
@@ -556,6 +568,41 @@ namespace StreamMesh.Core.Database
                 cmd.CommandText = "DELETE FROM IptvAccounts WHERE Id = @Id";
                 cmd.Parameters.AddWithValue("@Id", id); cmd.ExecuteNonQuery();
             }
+        }
+
+        public int GetChannelCountBySource(string url)
+        {
+            using (var connection = new SqliteConnection(ConnectionString))
+            {
+                connection.Open();
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(*) FROM Channels WHERE PlaylistUrl = @Url";
+                cmd.Parameters.AddWithValue("@Url", url);
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        public List<Channel> GetChannelsBySource(string url)
+        {
+            var list = new List<Channel>();
+            using (var connection = new SqliteConnection(ConnectionString))
+            {
+                connection.Open();
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, Category, Language FROM Channels WHERE PlaylistUrl = @Url";
+                cmd.Parameters.AddWithValue("@Url", url);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    list.Add(new Channel {
+                        Id = reader.GetString(0), Name = reader.GetString(1), Url = reader.GetString(2),
+                        LogoUrl = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                        Category = reader.IsDBNull(4) ? "TV" : reader.GetString(4),
+                        Language = reader.IsDBNull(5) ? "und" : reader.GetString(5)
+                    });
+                }
+            }
+            return list;
         }
 
         public void UpdateLogoIndex(List<(string key, string file)> items)

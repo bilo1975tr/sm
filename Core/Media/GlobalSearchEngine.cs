@@ -15,7 +15,7 @@ namespace StreamMesh.Core.Media
     {
         public string Name { get; set; } = "";
         public string Url { get; set; } = "";
-        public string Source { get; set; } = ""; // E.g., "IPTVCat Scraper", "FreeTuxTV", "Otomatik M3U", "IPTV-Org", "AceStream P2P"
+        public string Source { get; set; } = "";
         public string Category { get; set; } = "Genel";
         public string PeersOrDetails { get; set; } = "";
         public string LogoUrl { get; set; } = "";
@@ -26,7 +26,7 @@ namespace StreamMesh.Core.Media
     {
         private static readonly HttpClient _httpClient = new HttpClient
         {
-            Timeout = TimeSpan.FromSeconds(10)
+            Timeout = TimeSpan.FromSeconds(15)
         };
 
         private readonly DatabaseEngine _db = new DatabaseEngine();
@@ -38,11 +38,28 @@ namespace StreamMesh.Core.Media
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
         }
 
-        public async Task<List<SearchResultItem>> SearchGlobalAsync(string query, string sourceFilter = "Tüm Kaynaklar")
+        public async Task StartAceEngineAsync()
         {
-            if (string.IsNullOrWhiteSpace(query)) return new List<SearchResultItem>();
+            await _ace.StartEngineAsync();
+        }
 
-            string q = query.Trim().ToLowerInvariant();
+        public async Task<List<SearchResultItem>> SearchGlobalAsync(string query, string sourceFilter = "Tüm Kaynaklar", string categoryFilter = "Tüm Kategoriler", string languageFilter = "Tüm Diller")
+        {
+            string cleanQuery = (query ?? "").Trim();
+            string searchKeyword = cleanQuery.ToLowerInvariant();
+
+            if (string.IsNullOrWhiteSpace(searchKeyword))
+            {
+                if (!string.IsNullOrWhiteSpace(categoryFilter) && !categoryFilter.Contains("Tüm"))
+                {
+                    searchKeyword = categoryFilter.ToLowerInvariant();
+                }
+                else if (!string.IsNullOrWhiteSpace(languageFilter) && !languageFilter.Contains("Tüm"))
+                {
+                    searchKeyword = languageFilter.ToLowerInvariant();
+                }
+            }
+
             var results = new List<SearchResultItem>();
             var tasks = new List<Task<List<SearchResultItem>>>();
 
@@ -50,23 +67,22 @@ namespace StreamMesh.Core.Media
             bool runIptvCat = runAll || sourceFilter.Contains("IPTVCat") || sourceFilter.Contains("cat");
             bool runFreeTux = runAll || sourceFilter.Contains("FreeTux") || sourceFilter.Contains("Tux");
             bool runAuto = runAll || sourceFilter.Contains("Otomatik") || sourceFilter.Contains("Auto");
-            bool runIptvOrg = runAll || sourceFilter.Contains("IPTV-Org") || sourceFilter.Contains("Açık Kaynak");
             bool runAce = runAll || sourceFilter.Contains("AceStream") || sourceFilter.Contains("P2P");
 
-            // Task 1: IPTVCat Web Scraper
-            if (runIptvCat)
+            // Task 1: IPTVCat Web Scraper (Combined Active + Submitted)
+            if (runIptvCat && !string.IsNullOrWhiteSpace(searchKeyword))
             {
-                tasks.Add(Task.Run(async () => await SearchIptvCatAsync(query)));
+                tasks.Add(Task.Run(async () => await SearchIptvCatAsync(searchKeyword)));
             }
 
             // Task 2: FreeTuxTV Live Database
-            if (runFreeTux)
+            if (runFreeTux && !string.IsNullOrWhiteSpace(searchKeyword))
             {
-                tasks.Add(Task.Run(async () => await SearchFreeTuxTvAsync(q)));
+                tasks.Add(Task.Run(async () => await SearchFreeTuxTvAsync(searchKeyword)));
             }
 
-            // Task 3: Search Auto-Update M3U Feeds
-            if (runAuto)
+            // Task 3: Search Auto-Update M3U Feeds (Deep Search)
+            if (runAuto && !string.IsNullOrWhiteSpace(searchKeyword))
             {
                 tasks.Add(Task.Run(async () =>
                 {
@@ -74,14 +90,13 @@ namespace StreamMesh.Core.Media
                     try
                     {
                         string localPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "auto_update.json");
-                        if (!System.IO.File.Exists(localPath)) localPath = "auto_update.json";
                         if (System.IO.File.Exists(localPath))
                         {
                             string json = await System.IO.File.ReadAllTextAsync(localPath);
                             var cfg = JsonConvert.DeserializeObject<AutoUpdateConfig>(json);
                             if (cfg != null)
                             {
-                                var allUrls = cfg.Tv.Concat(cfg.Film).Concat(cfg.Dizi).Take(6).ToList();
+                                var allUrls = cfg.Tv.Concat(cfg.Film).Concat(cfg.Dizi).Take(20).ToList();
                                 foreach (var url in allUrls)
                                 {
                                     try
@@ -89,7 +104,7 @@ namespace StreamMesh.Core.Media
                                         var parsed = await _m3uEngine.ParseM3uAsync(url, "M3U");
                                         foreach (var ch in parsed)
                                         {
-                                            if (ch.Name.ToLowerInvariant().Contains(q))
+                                            if (string.IsNullOrWhiteSpace(searchKeyword) || ch.Name.ToLowerInvariant().Contains(searchKeyword) || (ch.Category != null && ch.Category.ToLowerInvariant().Contains(searchKeyword)))
                                             {
                                                 m3uItems.Add(new SearchResultItem
                                                 {
@@ -101,12 +116,12 @@ namespace StreamMesh.Core.Media
                                                     LogoUrl = ch.LogoUrl ?? "",
                                                     PeersOrDetails = "M3U Canlı Akış"
                                                 });
-                                                if (m3uItems.Count >= 30) break;
+                                                if (m3uItems.Count >= 250) break;
                                             }
                                         }
                                     }
                                     catch { }
-                                    if (m3uItems.Count >= 30) break;
+                                    if (m3uItems.Count >= 250) break;
                                 }
                             }
                         }
@@ -116,40 +131,7 @@ namespace StreamMesh.Core.Media
                 }));
             }
 
-            // Task 4: Search IPTV-Org Global Database
-            if (runIptvOrg)
-            {
-                tasks.Add(Task.Run(async () =>
-                {
-                    var iptvItems = new List<SearchResultItem>();
-                    try
-                    {
-                        string iptvOrgUrl = "https://iptv-org.github.io/iptv/index.language.m3u";
-                        var parsed = await _m3uEngine.ParseM3uAsync(iptvOrgUrl, "TV");
-                        foreach (var ch in parsed)
-                        {
-                            if (ch.Name.ToLowerInvariant().Contains(q))
-                            {
-                                iptvItems.Add(new SearchResultItem
-                                {
-                                    Name = ch.Name,
-                                    Url = ch.Url,
-                                    Source = "IPTV-Org Küresel Liste",
-                                    Category = "TV",
-                                    GroupTitle = ch.GroupTitle ?? "Dünya Kanalları",
-                                    LogoUrl = ch.LogoUrl ?? "",
-                                    PeersOrDetails = "Açık Kaynak Kanal"
-                                });
-                                if (iptvItems.Count >= 30) break;
-                            }
-                        }
-                    }
-                    catch { }
-                    return iptvItems;
-                }));
-            }
-
-            // Task 5: AceStream Local API & Engine Search
+            // Task 4: AceStream Local API & Engine Search
             if (runAce)
             {
                 tasks.Add(Task.Run(async () =>
@@ -157,17 +139,18 @@ namespace StreamMesh.Core.Media
                     var aceItems = new List<SearchResultItem>();
                     try
                     {
-                        var aceResults = await _ace.SearchAsync(query);
+                        var aceResults = await _ace.SearchAsync(cleanQuery, categoryFilter, languageFilter);
                         foreach (var res in aceResults)
                         {
                             aceItems.Add(new SearchResultItem
                             {
                                 Name = res.Name,
                                 Url = res.Url,
-                                Source = "AceStream P2P Ağ",
-                                Category = "P2P Stream",
+                                Source = string.IsNullOrEmpty(res.SourceName) ? "AceStream P2P Ağ" : res.SourceName,
+                                Category = string.IsNullOrEmpty(res.Category) ? "P2P Stream" : res.Category,
                                 GroupTitle = "AceStream Media",
-                                PeersOrDetails = $"Peers: {res.Peers}"
+                                LogoUrl = res.LogoUrl,
+                                PeersOrDetails = res.Peers
                             });
                         }
                     }
@@ -183,7 +166,15 @@ namespace StreamMesh.Core.Media
                 results.AddRange(await t);
             }
 
-            return results.GroupBy(x => x.Url).Select(g => g.First()).ToList();
+            if (!string.IsNullOrWhiteSpace(cleanQuery) && cleanQuery.Length > 2)
+            {
+                string targetKeyword = cleanQuery.ToLowerInvariant();
+                results = results.Where(x => (x.Name != null && x.Name.ToLowerInvariant().Contains(targetKeyword)) ||
+                                             (x.Category != null && x.Category.ToLowerInvariant().Contains(targetKeyword)) ||
+                                             (x.GroupTitle != null && x.GroupTitle.ToLowerInvariant().Contains(targetKeyword))).ToList();
+            }
+
+            return results.GroupBy(x => x.Url).Select(g => g.First()).OrderByDescending(x => x.Source.Contains("AceStream")).ToList();
         }
 
         private async Task<List<SearchResultItem>> SearchIptvCatAsync(string query)
@@ -193,8 +184,8 @@ namespace StreamMesh.Core.Media
 
             var urlsToFetch = new[]
             {
-                (Url: $"https://iptvcat.com/s/{encoded}", State: "Working"),
-                (Url: $"https://iptvcat.com/s/{encoded}?state=submitted", State: "Submitted")
+                (Url: $"https://iptvcat.com/s/{encoded}", State: "Aktif"),
+                (Url: $"https://iptvcat.com/s/{encoded}?state=submitted", State: "Eklenen")
             };
 
             foreach (var target in urlsToFetch)
@@ -202,60 +193,41 @@ namespace StreamMesh.Core.Media
                 try
                 {
                     var html = await _httpClient.GetStringAsync(target.Url);
+                    var matches = Regex.Matches(html, @"(?:href=""([^""]+)""|data-url=""([^""]+)"")[^>]*>(.*?)</a>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
 
-                    var matches = Regex.Matches(html, @"<tr[^>]*class=""channel""[^>]*>.*?<td[^>]*class=""name""[^>]*>(.*?)</td>.*?href=""(http[^""]+)""", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                    foreach (Match m in matches)
+                    {
+                        string link = !string.IsNullOrEmpty(m.Groups[1].Value) ? m.Groups[1].Value : m.Groups[2].Value;
+                        string title = System.Net.WebUtility.HtmlDecode(Regex.Replace(m.Groups[3].Value, "<.*?>", "").Trim());
 
-                    if (matches.Count == 0)
-                    {
-                        matches = Regex.Matches(html, @"href=""(https?://[^""]+\.(?:m3u8|ts|mp4)[^""]*)""[^>]*>(.*?)</a>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-                        foreach (Match m in matches)
+                        if (string.IsNullOrWhiteSpace(link) || string.IsNullOrWhiteSpace(title)) continue;
+
+                        if (link.Contains(".m3u8") || link.Contains(".ts") || link.Contains("acestream://") || link.Contains("get_stream") || link.Contains("live"))
                         {
-                            string streamUrl = m.Groups[1].Value;
-                            string title = Regex.Replace(m.Groups[2].Value, "<.*?>", "").Trim();
-                            if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(streamUrl))
+                            if (!link.StartsWith("http") && !link.StartsWith("acestream://"))
                             {
-                                if (!list.Any(x => x.Url == streamUrl))
-                                {
-                                    list.Add(new SearchResultItem
-                                    {
-                                        Name = title,
-                                        Url = streamUrl,
-                                        Source = "IPTVCat Arama Motoru",
-                                        Category = "Canlı TV",
-                                        GroupTitle = $"IPTVCat ({target.State})",
-                                        PeersOrDetails = $"Durum: {target.State}"
-                                    });
-                                }
+                                if (link.StartsWith("/")) link = $"https://iptvcat.com{link}";
+                                else link = $"https://iptvcat.com/{link}";
                             }
-                            if (list.Count >= 40) break;
-                        }
-                    }
-                    else
-                    {
-                        foreach (Match m in matches)
-                        {
-                            string title = Regex.Replace(m.Groups[1].Value, "<.*?>", "").Trim();
-                            string streamUrl = m.Groups[2].Value;
-                            if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(streamUrl))
+
+                            if (!list.Any(x => x.Url == link))
                             {
-                                if (!list.Any(x => x.Url == streamUrl))
+                                list.Add(new SearchResultItem
                                 {
-                                    list.Add(new SearchResultItem
-                                    {
-                                        Name = title,
-                                        Url = streamUrl,
-                                        Source = "IPTVCat Arama Motoru",
-                                        Category = "Canlı TV",
-                                        GroupTitle = $"IPTVCat ({target.State})",
-                                        PeersOrDetails = $"Durum: {target.State}"
-                                    });
-                                }
+                                    Name = title,
+                                    Url = link,
+                                    Source = "IPTVCat Arama Motoru",
+                                    Category = "Canlı TV",
+                                    GroupTitle = $"IPTVCat ({target.State})",
+                                    PeersOrDetails = $"Durum: {target.State}"
+                                });
                             }
-                            if (list.Count >= 40) break;
                         }
+                        if (list.Count >= 300) break;
                     }
                 }
                 catch { }
+                if (list.Count >= 300) break;
             }
 
             return list;
@@ -282,7 +254,7 @@ namespace StreamMesh.Core.Media
                             LogoUrl = ch.LogoUrl ?? "",
                             PeersOrDetails = "Açık Liste"
                         });
-                        if (list.Count >= 25) break;
+                        if (list.Count >= 200) break;
                     }
                 }
             }
