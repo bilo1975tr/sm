@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using StreamMesh.Models;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.UI.ViewModels
 {
@@ -54,40 +55,79 @@ namespace StreamMesh.UI.ViewModels
 
         public ObservableCollection<Channel> DisplayedChannels { get; set; } = new ObservableCollection<Channel>();
 
+        public string CurrentPageText => $"Sayfa {_currentPage} / {_totalPages}";
+
+        private bool _isSyncing = false;
+        private bool _isDataDirty = false;
+
         public HomeViewModel()
         {
             LoadData();
+            GitHubSyncEngine.OnSyncStarted += () => {
+                _isSyncing = true;
+                _isDataDirty = false;
+            };
             GitHubSyncEngine.OnSyncCompleted += () => {
-                System.Windows.Application.Current.Dispatcher.Invoke(() => LoadData());
+                _isSyncing = false;
+                if (_isDataDirty) System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadData());
+                _isDataDirty = false;
+            };
+            DatabaseEngine.OnDatabaseUpdated += (s, e) => {
+                if (_isSyncing)
+                {
+                    _isDataDirty = true;
+                }
+                else
+                {
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadData());
+                }
             };
         }
 
         public async void LoadData()
         {
-            var stats = _db.GetDailyQueryStats();
-            DailyApiCount = stats.count;
-
-            _allChannels = await _db.GetAllChannelsAsync();
-            RefreshDisplay();
-            await RefreshEpgAsync();
-        }
-
-        private async Task RefreshEpgAsync()
-        {
-            var epgs = await _epg.GetCurrentEpgsAsync(_allChannels);
-            foreach (var ch in _allChannels)
+            await Task.Run(async () =>
             {
-                if (epgs.TryGetValue(ch.Id, out var p))
+                try
                 {
-                    ch.CurrentEpgTitle = p.Title;
-                    ch.CurrentEpgTime = $"{p.StartTime:HH:mm} - {p.EndTime:HH:mm}";
+                    LogService.LogInfo("HomeViewModel: Kütüphane yükleniyor...");
+                    var stats = _db.GetDailyQueryStats();
+                    var channels = await _db.GetAllChannelsAsync();
+                    LogService.LogInfo($"HomeViewModel: {channels.Count} kanal veritabanından okundu.");
+
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        DailyApiCount = stats.count;
+                        _allChannels = channels;
+                        RefreshDisplay();
+                    });
+
+                    // Fetch current EPGs fast in background
+                    var epgs = await _epg.GetCurrentEpgsAsync(channels);
+                    LogService.LogInfo($"HomeViewModel: {epgs.Count} EPG verisi eşleştirildi.");
+
+                    foreach (var ch in channels)
+                    {
+                        if (epgs.TryGetValue(ch.Id, out var p))
+                        {
+                            ch.CurrentEpgTitle = p.Title;
+                            ch.CurrentEpgTime = $"{p.StartTime:HH:mm} - {p.EndTime:HH:mm}";
+                        }
+                        else
+                        {
+                            ch.CurrentEpgTitle = "Yayın akışı bilgisi yok";
+                            ch.CurrentEpgTime = "--:--";
+                        }
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    ch.CurrentEpgTitle = "Yayın akışı bilgisi yok";
-                    ch.CurrentEpgTime = "--:--";
+                    LogService.LogError("HomeViewModel.LoadData failed", ex);
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() => {
+                        TotalCountText = "Hata: İçerik yüklenemedi. Logları kontrol edin.";
+                    });
                 }
-            }
+            });
         }
 
         public void SetCategory(string tag)
@@ -106,33 +146,66 @@ namespace StreamMesh.UI.ViewModels
             var filtered = _allChannels.AsEnumerable();
 
             if (_activeCategory == "Favorites") filtered = filtered.Where(c => c.IsFavorite);
-            else if (_activeCategory == "TV") filtered = filtered.Where(c => c.Category == "TV");
-            else if (_activeCategory == "Movies") filtered = filtered.Where(c => c.Category == "Film");
-            else if (_activeCategory == "Series") filtered = filtered.Where(c => c.Category == "Dizi");
-            else if (_activeCategory == "Radio") filtered = filtered.Where(c => c.Category == "Radyo");
+            else if (_activeCategory == "TV") filtered = filtered.Where(c => string.Equals(c.Category, "TV", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(c.Category));
+            else if (_activeCategory == "Movies") filtered = filtered.Where(c => string.Equals(c.Category, "Film", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Movie", StringComparison.OrdinalIgnoreCase));
+            else if (_activeCategory == "Series") filtered = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase));
+            else if (_activeCategory == "Radio") filtered = filtered.Where(c => string.Equals(c.Category, "Radyo", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Radio", StringComparison.OrdinalIgnoreCase));
 
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
-                string s = _searchText.Trim().ToLowerInvariant();
-                filtered = filtered.Where(c => 
-                    (c.Name != null && c.Name.ToLowerInvariant().Contains(s)) ||
-                    (c.GroupTitle != null && c.GroupTitle.ToLowerInvariant().Contains(s)) ||
-                    (c.Category != null && c.Category.ToLowerInvariant().Contains(s)) ||
-                    (c.Url != null && c.Url.ToLowerInvariant().Contains(s)) ||
-                    (c.SourceType != null && c.SourceType.ToLowerInvariant().Contains(s))
-                );
+                filtered = filtered.Where(c => ChannelUtils.MatchesQueryFilter(c, _searchText));
             }
 
-            _filteredChannels = filtered.ToList();
+            // V1.8.8: Group Series
+            var finalItems = new List<Channel>();
+            var nonSeries = filtered.Where(c => c.Category != "Dizi").ToList();
+            var seriesItems = filtered.Where(c => c.Category == "Dizi").ToList();
+
+            finalItems.AddRange(nonSeries);
+
+            var groups = seriesItems.GroupBy(s => s.SeriesBaseName).ToList();
+            foreach (var g in groups)
+            {
+                if (string.IsNullOrEmpty(g.Key))
+                {
+                    finalItems.AddRange(g); // If no base name, don't group
+                }
+                else if (g.Count() > 1)
+                {
+                    finalItems.Add(new SeriesGroup(g.Key, g.ToList()));
+                }
+                else
+                {
+                    finalItems.Add(g.First());
+                }
+            }
+
+            _filteredChannels = finalItems.ToList();
             _totalPages = (int)Math.Ceiling(_filteredChannels.Count / (double)_pageSize);
-            if (_totalPages == 0) _totalPages = 1;
+            if (_totalPages < 1) _totalPages = 1;
+
+            if (_currentPage > _totalPages) _currentPage = _totalPages;
+            if (_currentPage < 1) _currentPage = 1;
 
             TotalCountText = $"Toplam: {_filteredChannels.Count} İçerik";
+            OnPropertyChanged(nameof(CurrentPageText));
+
             var pageItems = _filteredChannels.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
 
-            System.Windows.Application.Current.Dispatcher.Invoke(() => {
+            System.Windows.Application.Current?.Dispatcher.Invoke(() => {
                 DisplayedChannels.Clear();
                 foreach (var ch in pageItems) DisplayedChannels.Add(ch);
+            });
+
+            // Asynchronously enrich missing logos for visible page items only
+            _ = Task.Run(async () =>
+            {
+                var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
+                if (missingLogos.Count > 0)
+                {
+                    var enricher = new ChannelEnricher();
+                    await enricher.EnrichChannelsAsync(missingLogos);
+                }
             });
         }
 

@@ -22,6 +22,7 @@ namespace StreamMesh.Core.Network
             {
                 // Porting the signaling and mesh logic from original project...
                 // This involves WebRTC and STUN servers
+                await Task.CompletedTask;
                 return true;
             }
             catch { return false; }

@@ -8,7 +8,7 @@ namespace StreamMesh.Core.Network
 {
     public class TunnelEngine
     {
-        public string ExternalIp { get; private set; }
+        public string ExternalIp { get; private set; } = string.Empty;
 
         public async Task<string> RefreshExternalIpAsync()
         {
@@ -30,14 +30,19 @@ namespace StreamMesh.Core.Network
             try
             {
                 // 2. Try STUN (UDP) - Basic implementation
-                ExternalIp = await GetIpFromStunAsync("stun.l.google.com", 19302);
+                string? stunIp = await GetIpFromStunAsync("stun.l.google.com", 19302);
+                if (!string.IsNullOrEmpty(stunIp))
+                {
+                    ExternalIp = stunIp;
+                    return ExternalIp;
+                }
             }
             catch { }
 
             return ExternalIp;
         }
 
-        private async Task<string> GetIpFromStunAsync(string host, int port)
+        private async Task<string?> GetIpFromStunAsync(string host, int port)
         {
             var addresses = await Dns.GetHostAddressesAsync(host);
             var targetAddr = addresses[0];

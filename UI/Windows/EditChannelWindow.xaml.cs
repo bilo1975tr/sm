@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Text.RegularExpressions;
 using StreamMesh.Models;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
@@ -31,6 +32,21 @@ namespace StreamMesh.UI.Windows
         public ObservableCollection<StringWrapper> TempLogoList { get; set; } = new ObservableCollection<StringWrapper>();
         public ObservableCollection<StringWrapper> TempEpgList { get; set; } = new ObservableCollection<StringWrapper>();
 
+        public ObservableCollection<LogoSearchResult> LogoSearchResults { get; set; } = new ObservableCollection<LogoSearchResult>();
+        public ObservableCollection<EpgChannelSearchResult> EpgSearchResults { get; set; } = new ObservableCollection<EpgChannelSearchResult>();
+
+        private string _languageText = "";
+        public string LanguageText
+        {
+            get => _languageText;
+            set
+            {
+                _languageText = value;
+                _channel.Language = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string? _selectedLogoUrl;
         public string? SelectedLogoUrl
         {
@@ -45,6 +61,13 @@ namespace StreamMesh.UI.Windows
             _channel = channel;
             InitializeComponent();
 
+            // Clean 'und' (undefined) language code
+            if (string.Equals(channel.Language, "und", StringComparison.OrdinalIgnoreCase))
+            {
+                _channel.Language = "tr";
+            }
+            LanguageText = _channel.Language ?? "";
+
             // Load multi-alternative data
             foreach (var n in channel.GetNamesList()) TempNameList.Add(new StringWrapper { Value = n });
             foreach (var u in channel.GetUrlList()) TempUrlList.Add(new StringWrapper { Value = u });
@@ -58,6 +81,85 @@ namespace StreamMesh.UI.Windows
 
             this.DataContext = this;
             this.MouseDown += (s, e) => { if (e.ChangedButton == MouseButton.Left) DragMove(); };
+
+            StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Opened editor for channel '{channel.Name}' (Lang: {LanguageText})");
+        }
+
+        private void LangPill_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is string tag)
+            {
+                LanguageText = tag;
+                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Language set to '{tag}'");
+            }
+        }
+
+        private void ToggleLogoSearch_Click(object sender, RoutedEventArgs e)
+        {
+            LogoSearchPanel.Visibility = LogoSearchPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (LogoSearchPanel.Visibility == Visibility.Visible)
+            {
+                LogoSearchQueryBox.Text = ChannelUtils.GetCleanName(_channel.Name);
+                DoLogoSearch_Click(sender, e);
+            }
+        }
+
+        private async void DoLogoSearch_Click(object sender, RoutedEventArgs e)
+        {
+            string query = LogoSearchQueryBox.Text;
+            string sourceFilter = "ALL";
+            if (LogoSourceCombo.SelectedIndex == 1) sourceFilter = "TV_LOGOS";
+            else if (LogoSourceCombo.SelectedIndex == 2) sourceFilter = "IPTV_ORG";
+            else if (LogoSourceCombo.SelectedIndex == 3) sourceFilter = "CLEARBIT";
+
+            LogoSearchResults.Clear();
+            var results = await LogoSearchEngine.SearchLogosAsync(query, sourceFilter);
+            foreach (var r in results) LogoSearchResults.Add(r);
+
+            StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Logo search completed for '{query}', found {results.Count} candidates.");
+        }
+
+        private void SelectSearchResultLogo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is LogoSearchResult res)
+            {
+                TempLogoList.Insert(0, new StringWrapper { Value = res.Url });
+                SelectedLogoUrl = res.Url;
+                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Added logo URL '{res.Url}' from {res.Source}");
+                System.Windows.MessageBox.Show($"Logo kütüphaneye eklendi ve birincil logo yapıldı:\n{res.Name}", "Logo Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void ToggleEpgSearch_Click(object sender, RoutedEventArgs e)
+        {
+            EpgSearchPanel.Visibility = EpgSearchPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (EpgSearchPanel.Visibility == Visibility.Visible)
+            {
+                EpgSearchQueryBox.Text = ChannelUtils.GetCleanName(_channel.Name);
+                DoEpgSearch_Click(sender, e);
+            }
+        }
+
+        private async void DoEpgSearch_Click(object sender, RoutedEventArgs e)
+        {
+            string query = EpgSearchQueryBox.Text;
+            bool allSources = EpgScopeCombo.SelectedIndex == 0;
+
+            EpgSearchResults.Clear();
+            var results = await _db.SearchEpgChannelsAsync(query, allSources);
+            foreach (var r in results) EpgSearchResults.Add(r);
+
+            StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] EPG search completed for '{query}', scope: {(allSources ? "All" : "Current")}, found {results.Count} EPG items.");
+        }
+
+        private void SelectSearchResultEpg_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is EpgChannelSearchResult res)
+            {
+                TempEpgList.Insert(0, new StringWrapper { Value = res.EpgId });
+                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Added EPG ID '{res.EpgId}' for channel '{_channel.Name}'");
+                System.Windows.MessageBox.Show($"EPG ID eklendi ve birincil olarak seçildi:\n{res.EpgId}", "EPG ID Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void LogoList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -130,26 +232,21 @@ namespace StreamMesh.UI.Windows
         {
             try
             {
-                string name = _channel.Name ?? "";
+                string name = _channel.PrimaryName;
                 if (string.IsNullOrWhiteSpace(name)) return;
 
-                // 1. Logo Match (Improved logic with Index)
-                string searchKey = name.ToLower().Replace(" ", "").Replace("hd", "").Replace("sd", "").Replace("-", "");
-                string? file = _db.FindLogoInIndex(searchKey);
+                // Use the unified index-based logo matching (strictly following tv-logos convention)
+                string? indexedLogo = ChannelEnricher.GetLogoFromIndex(name);
 
-                if (file != null)
+                if (!string.IsNullOrEmpty(indexedLogo))
                 {
-                    string suggestion = $"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/{file}";
                     TempLogoList.Clear();
-                    TempLogoList.Add(new StringWrapper { Value = suggestion });
-                    SelectedLogoUrl = suggestion;
+                    TempLogoList.Add(new StringWrapper { Value = indexedLogo });
+                    SelectedLogoUrl = indexedLogo;
                 }
                 else
                 {
-                    // Fallback to Clearbit
-                    string suggestion = $"https://logo.clearbit.com/{searchKey}.com";
-                    TempLogoList.Add(new StringWrapper { Value = suggestion });
-                    SelectedLogoUrl = suggestion;
+                    System.Windows.MessageBox.Show("Veritabanında uygun bir logo bulunamadı. Lütfen manuel aramayı deneyin.", "Logo Bulunamadı", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
                 // 2. EPG Match

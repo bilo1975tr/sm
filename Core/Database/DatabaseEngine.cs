@@ -16,7 +16,6 @@ namespace StreamMesh.Core.Database
         private string ConnectionString => $"Data Source={_dbPath};Default Timeout=10;Pooling=True;";
 
         private static readonly System.Threading.SemaphoreSlim AsyncDbLock = new System.Threading.SemaphoreSlim(1, 1);
-        private static List<Channel>? _channelCache = null;
         private static readonly object _cacheLock = new object();
 
         public DatabaseEngine()
@@ -29,7 +28,7 @@ namespace StreamMesh.Core.Database
         private void InitializeDatabase()
         {
             var directory = Path.GetDirectoryName(_dbPath);
-            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
 
             using (var connection = new SqliteConnection(ConnectionString))
             {
@@ -66,6 +65,7 @@ namespace StreamMesh.Core.Database
                         IsLocked INTEGER DEFAULT 0,
                         Notes TEXT DEFAULT '',
                         IsPremium INTEGER DEFAULT 0,
+                        IsWatched INTEGER DEFAULT 0,
                         ImdbId TEXT DEFAULT '',
                         Overview TEXT DEFAULT '',
                         BackdropUrl TEXT DEFAULT '',
@@ -134,6 +134,7 @@ namespace StreamMesh.Core.Database
                     "ALTER TABLE Channels ADD COLUMN ViewersCount INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN PersonalWatchCount INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN IsPremium INTEGER DEFAULT 0",
+                    "ALTER TABLE Channels ADD COLUMN IsWatched INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN ImdbId TEXT DEFAULT ''",
                     "ALTER TABLE Channels ADD COLUMN Overview TEXT DEFAULT ''",
                     "ALTER TABLE Channels ADD COLUMN BackdropUrl TEXT DEFAULT ''",
@@ -218,31 +219,98 @@ namespace StreamMesh.Core.Database
             }
         }
 
+        public async Task<List<Channel>> GetSeriesEpisodesAsync(string seriesBaseName)
+        {
+            var list = new List<Channel>();
+            if (string.IsNullOrEmpty(seriesBaseName)) return list;
+
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels WHERE Category='Dizi' AND (Name LIKE @q OR Name LIKE @q2)";
+                    cmd.Parameters.AddWithValue("@q", seriesBaseName + "%");
+                    cmd.Parameters.AddWithValue("@q2", "%" + seriesBaseName + "%");
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        var ch = MapReaderToChannel(reader);
+                        if (ch.SeriesBaseName == seriesBaseName) // Strict check after loose SQL like
+                        {
+                            list.Add(ch);
+                        }
+                    }
+                }
+            }
+            catch { }
+            return list.OrderBy(c => c.SeasonNumber).ThenBy(c => c.EpisodeNumber).ToList();
+        }
+
+        private Channel MapReaderToChannel(SqliteDataReader reader)
+        {
+            var ch = new Channel
+            {
+                Id = reader.IsDBNull(0) ? Guid.NewGuid().ToString() : reader.GetString(0),
+                Name = reader.IsDBNull(1) ? "" : reader.GetString(1),
+                Url = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                LogoUrl = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                GroupTitle = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                Category = reader.IsDBNull(5) ? "TV" : reader.GetString(5),
+                Language = reader.IsDBNull(6) ? "und" : reader.GetString(6),
+                IsFavorite = !reader.IsDBNull(7) && reader.GetInt32(7) == 1,
+                SourceType = reader.IsDBNull(9) ? "M3U" : reader.GetString(9),
+                PlaylistUrl = reader.IsDBNull(10) ? "" : reader.GetString(10),
+                ImdbId = reader.IsDBNull(11) ? "" : reader.GetString(11),
+                Overview = reader.IsDBNull(12) ? "" : reader.GetString(12),
+                BackdropUrl = reader.IsDBNull(13) ? "" : reader.GetString(13),
+                Cast = reader.IsDBNull(14) ? "" : reader.GetString(14),
+                PersonalWatchCount = reader.IsDBNull(15) ? 0 : reader.GetInt32(15),
+                ViewersCount = reader.IsDBNull(16) ? 0 : reader.GetInt32(16),
+                EpgId = reader.IsDBNull(17) ? "" : reader.GetString(17),
+                EpgUrl = reader.IsDBNull(18) ? "" : reader.GetString(18),
+                UrlSpeeds = reader.IsDBNull(19) ? "" : reader.GetString(19),
+                PreferredNameIndex = reader.IsDBNull(20) ? 0 : reader.GetInt32(20),
+                PreferredLogoIndex = reader.IsDBNull(21) ? 0 : reader.GetInt32(21),
+                PreferredEpgIndex = reader.IsDBNull(22) ? 0 : reader.GetInt32(22),
+                IsWatched = !reader.IsDBNull(23) && reader.GetInt32(23) == 1
+            };
+            if (!reader.IsDBNull(8)) { try { ch.CreatedAt = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(8)).DateTime; } catch { } }
+            return ch;
+        }
+
         public async Task<List<Channel>> GetAllChannelsAsync()
         {
             var list = new List<Channel>();
-            using (var connection = new SqliteConnection(ConnectionString))
+            try
             {
-                await connection.OpenAsync();
-                var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex FROM Channels";
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+                using (var connection = new SqliteConnection(ConnectionString))
                 {
-                    list.Add(new Channel {
-                        Id = reader.GetString(0), Name = reader.GetString(1), Url = reader.GetString(2),
-                        LogoUrl = reader.IsDBNull(3) ? "" : reader.GetString(3), GroupTitle = reader.IsDBNull(4) ? "" : reader.GetString(4),
-                        Category = reader.IsDBNull(5) ? "TV" : reader.GetString(5), Language = reader.IsDBNull(6) ? "und" : reader.GetString(6),
-                        IsFavorite = reader.GetInt32(7) == 1, CreatedAt = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(8)).DateTime,
-                        SourceType = reader.IsDBNull(9) ? "M3U" : reader.GetString(9), PlaylistUrl = reader.IsDBNull(10) ? "" : reader.GetString(10),
-                        ImdbId = reader.IsDBNull(11) ? "" : reader.GetString(11), Overview = reader.IsDBNull(12) ? "" : reader.GetString(12),
-                        BackdropUrl = reader.IsDBNull(13) ? "" : reader.GetString(13), Cast = reader.IsDBNull(14) ? "" : reader.GetString(14),
-                        PersonalWatchCount = reader.GetInt32(15), ViewersCount = reader.GetInt32(16),
-                        EpgId = reader.IsDBNull(17) ? "" : reader.GetString(17), EpgUrl = reader.IsDBNull(18) ? "" : reader.GetString(18),
-                        UrlSpeeds = reader.IsDBNull(19) ? "" : reader.GetString(19),
-                        PreferredNameIndex = reader.GetInt32(20), PreferredLogoIndex = reader.GetInt32(21), PreferredEpgIndex = reader.GetInt32(22)
-                    });
+                    await connection.OpenAsync();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels";
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        try
+                        {
+                            var ch = MapReaderToChannel(reader);
+                            list.Add(ch);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            LogService.LogError("DatabaseEngine: Error reading single channel row", innerEx);
+                        }
+                    }
                 }
+                LogService.LogInfo($"DatabaseEngine: GetAllChannelsAsync completed. Found {list.Count} items.");
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("DatabaseEngine.GetAllChannelsAsync failed", ex);
             }
             return list;
         }
@@ -256,7 +324,7 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei, @Watched) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched";
                     cmd.Parameters.AddWithValue("@Id", ch.Id); cmd.Parameters.AddWithValue("@Name", ch.Name); cmd.Parameters.AddWithValue("@Url", ch.Url);
                     cmd.Parameters.AddWithValue("@Logo", ch.LogoUrl); cmd.Parameters.AddWithValue("@Group", ch.GroupTitle); cmd.Parameters.AddWithValue("@Cat", ch.Category);
                     cmd.Parameters.AddWithValue("@Lang", ch.Language); cmd.Parameters.AddWithValue("@Fav", ch.IsFavorite ? 1 : 0);
@@ -267,8 +335,89 @@ namespace StreamMesh.Core.Database
                     cmd.Parameters.AddWithValue("@EpgId", ch.EpgId ?? ""); cmd.Parameters.AddWithValue("@EpgUrl", ch.EpgUrl ?? "");
                     cmd.Parameters.AddWithValue("@Us", ch.UrlSpeeds ?? "");
                     cmd.Parameters.AddWithValue("@Pni", ch.PreferredNameIndex); cmd.Parameters.AddWithValue("@Pli", ch.PreferredLogoIndex); cmd.Parameters.AddWithValue("@Pei", ch.PreferredEpgIndex);
+                    cmd.Parameters.AddWithValue("@Watched", ch.IsWatched ? 1 : 0);
                     await cmd.ExecuteNonQueryAsync();
                 }
+                ClearChannelCache();
+                NotifyDatabaseUpdated();
+            }
+            finally { AsyncDbLock.Release(); }
+        }
+
+        public async Task SaveChannelsBatchAsync(List<Channel> channels)
+        {
+            if (channels == null || channels.Count == 0) return;
+            await AsyncDbLock.WaitAsync();
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using var tx = connection.BeginTransaction();
+
+                    var cmd = connection.CreateCommand();
+                    cmd.Transaction = tx;
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei, @Watched) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched";
+
+                    var pId = cmd.Parameters.Add("@Id", SqliteType.Text);
+                    var pName = cmd.Parameters.Add("@Name", SqliteType.Text);
+                    var pUrl = cmd.Parameters.Add("@Url", SqliteType.Text);
+                    var pLogo = cmd.Parameters.Add("@Logo", SqliteType.Text);
+                    var pGroup = cmd.Parameters.Add("@Group", SqliteType.Text);
+                    var pCat = cmd.Parameters.Add("@Cat", SqliteType.Text);
+                    var pLang = cmd.Parameters.Add("@Lang", SqliteType.Text);
+                    var pFav = cmd.Parameters.Add("@Fav", SqliteType.Integer);
+                    var pDate = cmd.Parameters.Add("@Date", SqliteType.Integer);
+                    var pSrc = cmd.Parameters.Add("@Src", SqliteType.Text);
+                    var pPlaylist = cmd.Parameters.Add("@Playlist", SqliteType.Text);
+                    var pImdb = cmd.Parameters.Add("@Imdb", SqliteType.Text);
+                    var pOverview = cmd.Parameters.Add("@Overview", SqliteType.Text);
+                    var pBackdrop = cmd.Parameters.Add("@Backdrop", SqliteType.Text);
+                    var pCast = cmd.Parameters.Add("@Cast", SqliteType.Text);
+                    var pPwc = cmd.Parameters.Add("@Pwc", SqliteType.Integer);
+                    var pVc = cmd.Parameters.Add("@Vc", SqliteType.Integer);
+                    var pEpgId = cmd.Parameters.Add("@EpgId", SqliteType.Text);
+                    var pEpgUrl = cmd.Parameters.Add("@EpgUrl", SqliteType.Text);
+                    var pUs = cmd.Parameters.Add("@Us", SqliteType.Text);
+                    var pPni = cmd.Parameters.Add("@Pni", SqliteType.Integer);
+                    var pPli = cmd.Parameters.Add("@Pli", SqliteType.Integer);
+                    var pPei = cmd.Parameters.Add("@Pei", SqliteType.Integer);
+                    var pWatched = cmd.Parameters.Add("@Watched", SqliteType.Integer);
+
+                    foreach (var ch in channels)
+                    {
+                        pId.Value = ch.Id ?? Guid.NewGuid().ToString("N");
+                        pName.Value = ch.Name ?? "";
+                        pUrl.Value = ch.Url ?? "";
+                        pLogo.Value = ch.LogoUrl ?? "";
+                        pGroup.Value = ch.GroupTitle ?? "";
+                        pCat.Value = ch.Category ?? "TV";
+                        pLang.Value = ch.Language ?? "und";
+                        pFav.Value = ch.IsFavorite ? 1 : 0;
+                        pDate.Value = new DateTimeOffset(ch.CreatedAt).ToUnixTimeSeconds();
+                        pSrc.Value = ch.SourceType ?? "M3U";
+                        pPlaylist.Value = ch.PlaylistUrl ?? "";
+                        pImdb.Value = ch.ImdbId ?? "";
+                        pOverview.Value = ch.Overview ?? "";
+                        pBackdrop.Value = ch.BackdropUrl ?? "";
+                        pCast.Value = ch.Cast ?? "";
+                        pPwc.Value = ch.PersonalWatchCount;
+                        pVc.Value = ch.ViewersCount;
+                        pEpgId.Value = ch.EpgId ?? "";
+                        pEpgUrl.Value = ch.EpgUrl ?? "";
+                        pUs.Value = ch.UrlSpeeds ?? "";
+                        pPni.Value = ch.PreferredNameIndex;
+                        pPli.Value = ch.PreferredLogoIndex;
+                        pPei.Value = ch.PreferredEpgIndex;
+                        pWatched.Value = ch.IsWatched ? 1 : 0;
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    tx.Commit();
+                }
+                ClearChannelCache();
+                NotifyDatabaseUpdated();
             }
             finally { AsyncDbLock.Release(); }
         }
@@ -276,17 +425,7 @@ namespace StreamMesh.Core.Database
         public async Task SyncIncomingChannelsAsync(List<Channel> incoming)
         {
             if (incoming == null || incoming.Count == 0) return;
-
-            var existing = await GetAllChannelsAsync();
-            var combined = new List<Channel>(existing);
-            combined.AddRange(incoming);
-
-            var aggregated = StreamMesh.Core.Media.ChannelAggregator.Instance.AggregateChannels(combined);
-
-            foreach (var ch in aggregated)
-            {
-                await SaveChannelAsync(ch);
-            }
+            await SaveChannelsBatchAsync(incoming);
         }
 
         public async Task<int> AutoAggregateDatabaseAsync()
@@ -336,20 +475,108 @@ namespace StreamMesh.Core.Database
                     await connection.OpenAsync();
                     using var transaction = connection.BeginTransaction();
                     var cmd = connection.CreateCommand();
+                    cmd.Transaction = transaction;
                     cmd.CommandText = "INSERT INTO EpgPrograms (ChannelName, Title, Description, StartTime, EndTime, SourceUrl) VALUES (@ChannelName, @Title, @Description, @StartTime, @EndTime, @SourceUrl)";
-                    var pName = cmd.Parameters.Add("@ChannelName", SqliteType.Text); var pTitle = cmd.Parameters.Add("@Title", SqliteType.Text);
-                    var pDesc = cmd.Parameters.Add("@Description", SqliteType.Text); var pStart = cmd.Parameters.Add("@StartTime", SqliteType.Text);
-                    var pEnd = cmd.Parameters.Add("@EndTime", SqliteType.Text); var pSrc = cmd.Parameters.Add("@SourceUrl", SqliteType.Text);
+                    var pName = cmd.Parameters.Add("@ChannelName", SqliteType.Text);
+                    var pTitle = cmd.Parameters.Add("@Title", SqliteType.Text);
+                    var pDesc = cmd.Parameters.Add("@Description", SqliteType.Text);
+                    var pStart = cmd.Parameters.Add("@StartTime", SqliteType.Text);
+                    var pEnd = cmd.Parameters.Add("@EndTime", SqliteType.Text);
+                    var pSrc = cmd.Parameters.Add("@SourceUrl", SqliteType.Text);
+
                     foreach (var prog in programs)
                     {
-                        pName.Value = prog.ChannelName; pTitle.Value = prog.Title; pDesc.Value = prog.Description;
-                        pStart.Value = prog.StartTime.ToString("o"); pEnd.Value = prog.EndTime.ToString("o"); pSrc.Value = prog.SourceUrl;
-                        await cmd.ExecuteNonQueryAsync();
+                        pName.Value = prog.ChannelName ?? "";
+                        pTitle.Value = prog.Title ?? "";
+                        pDesc.Value = prog.Description ?? "";
+                        pStart.Value = prog.StartTime.ToString("o");
+                        pEnd.Value = prog.EndTime.ToString("o");
+                        pSrc.Value = prog.SourceUrl ?? "";
+                        cmd.ExecuteNonQuery();
                     }
                     transaction.Commit();
                 }
             }
             finally { AsyncDbLock.Release(); }
+        }
+
+        public async Task<List<EpgChannelSearchResult>> SearchEpgChannelsAsync(string query, bool allSources)
+        {
+            var list = new List<EpgChannelSearchResult>();
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    var cmd = connection.CreateCommand();
+                    if (string.IsNullOrWhiteSpace(query))
+                    {
+                        cmd.CommandText = "SELECT DISTINCT ChannelName FROM EpgPrograms LIMIT 100";
+                    }
+                    else
+                    {
+                        cmd.CommandText = "SELECT DISTINCT ChannelName FROM EpgPrograms WHERE ChannelName LIKE @q LIMIT 100";
+                        cmd.Parameters.AddWithValue("@q", "%" + query.Trim() + "%");
+                    }
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    var channelNames = new List<string>();
+                    while (await reader.ReadAsync())
+                    {
+                        string cn = reader.GetString(0);
+                        if (!string.IsNullOrWhiteSpace(cn)) channelNames.Add(cn);
+                    }
+
+                    foreach (var chName in channelNames)
+                    {
+                        var progCmd = connection.CreateCommand();
+                        progCmd.CommandText = "SELECT Title FROM EpgPrograms WHERE ChannelName = @cn ORDER BY StartTime DESC LIMIT 1";
+                        progCmd.Parameters.AddWithValue("@cn", chName);
+                        var titleObj = await progCmd.ExecuteScalarAsync();
+                        string progTitle = titleObj != null ? titleObj.ToString()! : "Yayın akışı bilgisi yok";
+
+                        list.Add(new EpgChannelSearchResult
+                        {
+                            EpgId = chName,
+                            ChannelName = chName,
+                            CurrentProgram = progTitle,
+                            SourceName = allSources ? "Tüm EPG Kaynakları" : "Mevcut EPG Kaynağı"
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                StreamMesh.Core.Utils.LogService.LogError($"[EpgSearch] Error searching EPG channels for query '{query}'", ex);
+            }
+            return list;
+        }
+
+        public async Task<List<EpgProgram>> GetCurrentEpgProgramsAsync()
+        {
+            var list = new List<EpgProgram>();
+            using (var connection = new SqliteConnection(ConnectionString))
+            {
+                await connection.OpenAsync();
+                var cmd = connection.CreateCommand();
+                var now = DateTime.Now;
+                var startWin = now.AddHours(-2).ToString("o");
+                var endWin = now.AddHours(3).ToString("o");
+
+                cmd.CommandText = "SELECT ChannelName, Title, Description, StartTime, EndTime FROM EpgPrograms WHERE StartTime <= @EndWin AND EndTime >= @StartWin";
+                cmd.Parameters.AddWithValue("@StartWin", startWin);
+                cmd.Parameters.AddWithValue("@EndWin", endWin);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    var ep = new EpgProgram { ChannelName = reader.GetString(0), Title = reader.GetString(1), Description = reader.GetString(2) };
+                    if (DateTime.TryParse(reader.GetString(3), out DateTime st)) ep.StartTime = st;
+                    if (DateTime.TryParse(reader.GetString(4), out DateTime et)) ep.EndTime = et;
+                    list.Add(ep);
+                }
+            }
+            return list;
         }
 
         public async Task<List<EpgProgram>> GetEpgForChannelsAsync(List<string> channelNames)
@@ -410,6 +637,7 @@ namespace StreamMesh.Core.Database
                     foreach (var item in results)
                     {
                         var cmd = connection.CreateCommand();
+                        cmd.Transaction = transaction;
                         cmd.CommandText = "INSERT INTO MetadataPool (SearchQuery, ImdbId, Title, PosterUrl, BackdropUrl, Overview, Cast, Director, TrailerUrl, ReleaseDate, VoteAverage, CreatedAt, MediaType) VALUES (@q, @imdb, @t, @p, @b, @o, @c, @d, @tr, @rd, @v, @ca, @mt)";
                         cmd.Parameters.AddWithValue("@q", query.ToLowerInvariant()); cmd.Parameters.AddWithValue("@imdb", item.ImdbId ?? "");
                         cmd.Parameters.AddWithValue("@t", item.Title ?? ""); cmd.Parameters.AddWithValue("@p", item.PosterUrl ?? "");
@@ -620,6 +848,32 @@ namespace StreamMesh.Core.Database
             }
         }
 
+        public Dictionary<string, string> GetAllLogoIndex()
+        {
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    connection.Open();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT Key, FileName FROM LogoIndex";
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string k = reader.GetString(0);
+                        string f = reader.GetString(1);
+                        if (!string.IsNullOrWhiteSpace(k) && !string.IsNullOrWhiteSpace(f))
+                        {
+                            dict[k] = f;
+                        }
+                    }
+                }
+            }
+            catch { }
+            return dict;
+        }
+
         public string? FindLogoInIndex(string key)
         {
             using (var connection = new SqliteConnection(ConnectionString))
@@ -635,8 +889,33 @@ namespace StreamMesh.Core.Database
         public void ExecuteRawNonQuery(string sql)
         {
             using (var connection = new SqliteConnection(ConnectionString)) { connection.Open(); var cmd = connection.CreateCommand(); cmd.CommandText = sql; cmd.ExecuteNonQuery(); }
+            ClearChannelCache();
+            NotifyDatabaseUpdated();
         }
 
-        public void ClearChannelCache() { lock (_cacheLock) { _channelCache = null; } }
+        public static event EventHandler? OnDatabaseUpdated;
+
+        public static void NotifyDatabaseUpdated()
+        {
+            OnDatabaseUpdated?.Invoke(null, EventArgs.Empty);
+        }
+
+        public void ClearAllSources()
+        {
+            ExecuteRawNonQuery("DELETE FROM M3uSources");
+            ExecuteRawNonQuery("DELETE FROM EpgSources");
+            ClearChannelCache();
+            NotifyDatabaseUpdated();
+        }
+
+        public void ClearAllContents()
+        {
+            ExecuteRawNonQuery("DELETE FROM Channels");
+            ExecuteRawNonQuery("DELETE FROM EpgPrograms");
+            ClearChannelCache();
+            NotifyDatabaseUpdated();
+        }
+
+        public void ClearChannelCache() { /* Cache removed */ }
     }
 }

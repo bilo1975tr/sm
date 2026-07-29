@@ -48,16 +48,26 @@ namespace StreamMesh.Core.Media
             string cleanQuery = (query ?? "").Trim();
             string searchKeyword = cleanQuery.ToLowerInvariant();
 
-            if (string.IsNullOrWhiteSpace(searchKeyword))
+            // V1.8.7: Eğer sorgu köşeli parantez içeriyorsa (örn: [de]), sorguyu olduğu gibi koru.
+            bool hasBrackets = cleanQuery.Contains("[") || cleanQuery.Contains("]");
+
+            if (string.IsNullOrWhiteSpace(cleanQuery) && !hasBrackets)
             {
-                if (!string.IsNullOrWhiteSpace(categoryFilter) && !categoryFilter.Contains("Tüm"))
+                if (!string.IsNullOrWhiteSpace(languageFilter) && !languageFilter.Contains("Tüm"))
+                {
+                    if (languageFilter.Contains("Almanca")) searchKeyword = "[de]";
+                    else if (languageFilter.Contains("Türkçe")) searchKeyword = "[tr]";
+                    else if (languageFilter.Contains("İngilizce")) searchKeyword = "[en]";
+                    else searchKeyword = languageFilter.ToLowerInvariant();
+                }
+                else if (!string.IsNullOrWhiteSpace(categoryFilter) && !categoryFilter.Contains("Tüm"))
                 {
                     searchKeyword = categoryFilter.ToLowerInvariant();
                 }
-                else if (!string.IsNullOrWhiteSpace(languageFilter) && !languageFilter.Contains("Tüm"))
-                {
-                    searchKeyword = languageFilter.ToLowerInvariant();
-                }
+            }
+            else if (hasBrackets)
+            {
+                searchKeyword = cleanQuery.ToLowerInvariant();
             }
 
             var results = new List<SearchResultItem>();
@@ -166,13 +176,11 @@ namespace StreamMesh.Core.Media
                 results.AddRange(await t);
             }
 
-            if (!string.IsNullOrWhiteSpace(cleanQuery) && cleanQuery.Length > 2)
-            {
-                string targetKeyword = cleanQuery.ToLowerInvariant();
-                results = results.Where(x => (x.Name != null && x.Name.ToLowerInvariant().Contains(targetKeyword)) ||
-                                             (x.Category != null && x.Category.ToLowerInvariant().Contains(targetKeyword)) ||
-                                             (x.GroupTitle != null && x.GroupTitle.ToLowerInvariant().Contains(targetKeyword))).ToList();
-            }
+            // Filter gathered results strictly by query and language
+            results = results.Where(x =>
+                ChannelUtils.MatchesQueryFilter(x.Name, x.Category, x.GroupTitle, x.Url, cleanQuery) &&
+                ChannelUtils.MatchesLanguageFilter(x.Name, languageFilter)
+            ).ToList();
 
             return results.GroupBy(x => x.Url).Select(g => g.First()).OrderByDescending(x => x.Source.Contains("AceStream")).ToList();
         }

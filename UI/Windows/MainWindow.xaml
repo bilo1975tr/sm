@@ -6,11 +6,11 @@
         WindowStartupLocation="CenterScreen" Background="#141414" Foreground="White">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="80"/>
+            <ColumnDefinition x:Name="SidebarColumn" Width="80"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#111" BorderBrush="#333" BorderThickness="0,0,1,0">
+        <Border x:Name="SidebarBorder" Grid.Column="0" Background="#111" BorderBrush="#333" BorderThickness="0,0,1,0">
             <StackPanel Margin="0,20">
                 <Image Source="pack://application:,,,/logos/StreamMesh_logo.png" Width="40" Margin="0,0,0,40"/>
 
@@ -50,7 +50,7 @@
             <ContentControl x:Name="MainContent" />
 
             <!-- Top Right Update & Version Overlay -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,15,20,0" Panel.ZIndex="1000">
+            <StackPanel x:Name="TopOverlay" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,15,20,0" Panel.ZIndex="1000">
                 <!-- Update Notification Button (Hidden by default, shown when remote update available) -->
                 <Button x:Name="UpdateBadgeButton" 
                         Click="UpdateBadge_Click" 

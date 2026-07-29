@@ -25,6 +25,7 @@ namespace StreamMesh.Models
         private bool _isVerified = false;
         private bool _isLocked = false;
         private bool _isPremium = false;
+        private bool _isWatched = false;
         private string _notes = string.Empty;
         private DateTime _createdAt = DateTime.Now;
         private int _personalWatchCount = 0;
@@ -93,6 +94,12 @@ namespace StreamMesh.Models
             set { if (_isLocked != value) { _isLocked = value; OnPropertyChanged(); } }
         }
 
+        public bool IsWatched
+        {
+            get => _isWatched;
+            set { if (_isWatched != value) { _isWatched = value; OnPropertyChanged(); } }
+        }
+
         public string Notes
         {
             get => _notes;
@@ -131,7 +138,9 @@ namespace StreamMesh.Models
             get
             {
                 var list = GetNamesList();
-                return list.Count > 0 ? list[0] : (Name ?? "");
+                if (list.Count == 0) return Name ?? "";
+                if (PreferredNameIndex >= 0 && PreferredNameIndex < list.Count) return list[PreferredNameIndex];
+                return list[0];
             }
         }
 
@@ -233,7 +242,14 @@ namespace StreamMesh.Models
         public static string NormalizeLanguage(string lang)
         {
             if (string.IsNullOrWhiteSpace(lang)) return "und";
-            var parts = lang.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            string lowerInput = lang.ToLowerInvariant();
+            if (lowerInput.Contains("[de]") || lowerInput.Contains("(de)") || lowerInput.Contains(" deutsch ") || lowerInput.EndsWith(" de")) return "de";
+            if (lowerInput.Contains("[tr]") || lowerInput.Contains("(tr)") || lowerInput.Contains(" türk ") || lowerInput.Contains(" turkey ")) return "tr";
+            if (lowerInput.Contains("[en]") || lowerInput.Contains("(en)") || lowerInput.Contains(" english ")) return "en";
+            if (lowerInput.Contains("[fr]") || lowerInput.Contains("(fr)") || lowerInput.Contains(" french ")) return "fr";
+
+            var parts = lang.Split(new[] { ',', ' ', '[', ']', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
             var normalizedParts = new List<string>();
             foreach (var part in parts)
             {
@@ -246,7 +262,7 @@ namespace StreamMesh.Models
         private static string NormalizeSingleLanguage(string lang)
         {
             if (string.IsNullOrWhiteSpace(lang)) return "und";
-            string lower = lang.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim();
+            string lower = lang.ToLower(new System.Globalization.CultureInfo("tr-TR")).Trim(' ', '[', ']', '(', ')');
             int parenIndex = lower.IndexOf('(');
             if (parenIndex > 0) lower = lower.Substring(0, parenIndex).Trim();
             string baseCode = lower;
@@ -254,10 +270,10 @@ namespace StreamMesh.Models
             if (separatorIndex > 0) baseCode = lower.Substring(0, separatorIndex).Trim();
 
             if (IsoToDisplayName.ContainsKey(baseCode)) return baseCode.ToLowerInvariant();
-            if (lower.Contains("türk") || lower.Contains("turk")) return "tr";
-            if (lower.Contains("ingil") || lower.Contains("english")) return "en";
-            if (lower.Contains("alman") || lower.Contains("deutsch")) return "de";
-            if (lower.Contains("fransiz") || lower.Contains("french") || lower.Contains("français")) return "fr";
+            if (lower.Contains("türk") || lower.Contains("turk") || lower.Contains("tr")) return "tr";
+            if (lower.Contains("ingil") || lower.Contains("english") || lower.Contains("en")) return "en";
+            if (lower.Contains("alman") || lower.Contains("deutsch") || lower.Contains("de")) return "de";
+            if (lower.Contains("fransiz") || lower.Contains("french") || lower.Contains("français") || lower.Contains("fr")) return "fr";
             return "und";
         }
 
@@ -290,15 +306,11 @@ namespace StreamMesh.Models
         public bool HasMovieGenre => !string.IsNullOrEmpty(MovieGenre);
 
         // Smart Extraction Logic
-        public string CleanName
-        {
-            get
-            {
-                string targetName = PrimaryName;
-                if (Category != "Film") return targetName;
-                return ParsedMovieDetails.CleanName;
-            }
-        }
+        public string CleanName => string.IsNullOrWhiteSpace(Name) ? "" : StreamMesh.Core.Media.ChannelUtils.GetCleanName(Name);
+
+        public int SeasonNumber => ParsedMovieDetails.Season;
+        public int EpisodeNumber => ParsedMovieDetails.Episode;
+        public string SeriesBaseName => ParsedMovieDetails.SeriesTitle;
 
         public string ImdbRating => ParsedMovieDetails.ImdbRating;
         public string MovieYear => ParsedMovieDetails.MovieYear;
@@ -321,6 +333,9 @@ namespace StreamMesh.Models
         private class MovieDetails
         {
             public string CleanName { get; set; } = "";
+            public string SeriesTitle { get; set; } = "";
+            public int Season { get; set; } = 0;
+            public int Episode { get; set; } = 0;
             public string ImdbRating { get; set; } = "";
             public string MovieYear { get; set; } = "";
             public string MovieGenre { get; set; } = "";
@@ -328,7 +343,7 @@ namespace StreamMesh.Models
 
         private MovieDetails ParseNameDetails(string rawName)
         {
-            var details = new MovieDetails { CleanName = rawName ?? "" };
+            var details = new MovieDetails { CleanName = rawName ?? "", SeriesTitle = rawName ?? "" };
             if (string.IsNullOrEmpty(rawName)) return details;
 
             string working = rawName;
@@ -340,6 +355,23 @@ namespace StreamMesh.Models
             // Year
             var yearMatch = Regex.Match(working, @"\((19\d{2}|20\d{2})\)");
             if (yearMatch.Success) { details.MovieYear = yearMatch.Groups[1].Value; working = working.Replace(yearMatch.Value, ""); }
+
+            // S01E01 or 1x01 pattern
+            var seriesMatch = Regex.Match(working, @"(?i)s(\d+)\s?e(\d+)|(\d+)x(\d+)");
+            if (seriesMatch.Success)
+            {
+                if (!string.IsNullOrEmpty(seriesMatch.Groups[1].Value))
+                {
+                    int.TryParse(seriesMatch.Groups[1].Value, out int s); details.Season = s;
+                    int.TryParse(seriesMatch.Groups[2].Value, out int e); details.Episode = e;
+                }
+                else
+                {
+                    int.TryParse(seriesMatch.Groups[3].Value, out int s); details.Season = s;
+                    int.TryParse(seriesMatch.Groups[4].Value, out int e); details.Episode = e;
+                }
+                details.SeriesTitle = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':');
+            }
 
             working = Regex.Replace(working, @"\s+", " ").Trim(' ', ':', '-', '(', ')');
             details.CleanName = string.IsNullOrWhiteSpace(working) ? rawName : working;

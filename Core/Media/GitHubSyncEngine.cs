@@ -20,35 +20,42 @@ namespace StreamMesh.Core.Media
         [JsonProperty("dizi")]
         public List<string> Dizi { get; set; } = new List<string>();
 
+        [JsonProperty("radyo")]
+        public List<string> Radyo { get; set; } = new List<string>();
+
         [JsonProperty("epg")]
         public List<string> Epg { get; set; } = new List<string>();
     }
 
     public class GitHubSyncEngine
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
         private readonly DatabaseEngine _db = new DatabaseEngine();
         private readonly M3uEngine _m3u = new M3uEngine();
 
         public event Action<int, string>? OnProgress;
+        public static event Action? OnSyncStarted;
         public static event Action? OnSyncCompleted;
+        public static void RaiseSyncStarted() => OnSyncStarted?.Invoke();
         public static void RaiseSyncCompleted() => OnSyncCompleted?.Invoke();
 
         public async Task PullFromGitHubAsync()
         {
+            RaiseSyncStarted();
             LogService.LogInfo("GitHubSyncEngine: Otomatik güncelleme başlatıldı.");
-            OnProgress?.Invoke(5, "Yapılandırma dosyası çekiliyor...");
+            OnProgress?.Invoke(2, "Yapılandırma dosyası çekiliyor (auto_update.json)...");
             try
             {
-                // 1. Fetch Config (Remote + Local Fallback)
+                // 1. Fetch Config
                 string configJson = "";
                 string configUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/auto_update.json";
                 try
                 {
-                    var configResponse = await _httpClient.GetAsync(configUrl);
+                    using var configCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    var configResponse = await _httpClient.GetAsync(configUrl, configCts.Token);
                     if (configResponse.IsSuccessStatusCode)
                     {
-                        configJson = await configResponse.Content.ReadAsStringAsync();
+                        configJson = await configResponse.Content.ReadAsStringAsync(configCts.Token);
                     }
                 }
                 catch { }
@@ -70,36 +77,69 @@ namespace StreamMesh.Core.Media
                 }
 
                 var cfg = JsonConvert.DeserializeObject<AutoUpdateConfig>(configJson);
-                if (cfg == null) return;
+                if (cfg == null)
+                {
+                    OnProgress?.Invoke(0, "Hata: Yapılandırma dosyası boş veya geçersiz.");
+                    return;
+                }
 
-                // 2. Process Lists (TV, Film, Dizi)
-                OnProgress?.Invoke(20, "TV kanalları işleniyor...");
-                await ProcessList(cfg.Tv, "TV");
+                int totalSources = (cfg.Tv?.Count ?? 0) + (cfg.Film?.Count ?? 0) + (cfg.Dizi?.Count ?? 0) + (cfg.Radyo?.Count ?? 0) + (cfg.Epg?.Count ?? 0);
+                if (totalSources == 0)
+                {
+                    OnProgress?.Invoke(100, "Güncellenecek yayın kaynağı bulunamadı.");
+                    return;
+                }
 
-                OnProgress?.Invoke(50, "Film listeleri güncelleniyor...");
-                await ProcessList(cfg.Film, "Film");
+                int processedSources = 0;
 
-                OnProgress?.Invoke(70, "Diziler senkronize ediliyor...");
-                await ProcessList(cfg.Dizi, "Dizi");
+                // 2. Process TV Lists
+                if (cfg.Tv != null && cfg.Tv.Count > 0)
+                {
+                    await ProcessListWithProgress(cfg.Tv, "TV", totalSources, () => ++processedSources);
+                }
 
-                // 3. Process EPG Sources
-                OnProgress?.Invoke(85, "EPG rehberleri çekiliyor...");
-                if (cfg.Epg != null)
+                // 3. Process Film Lists
+                if (cfg.Film != null && cfg.Film.Count > 0)
+                {
+                    await ProcessListWithProgress(cfg.Film, "Film", totalSources, () => ++processedSources);
+                }
+
+                // 4. Process Dizi Lists
+                if (cfg.Dizi != null && cfg.Dizi.Count > 0)
+                {
+                    await ProcessListWithProgress(cfg.Dizi, "Dizi", totalSources, () => ++processedSources);
+                }
+
+                // 4.5. Process Radio Lists
+                if (cfg.Radyo != null && cfg.Radyo.Count > 0)
+                {
+                    await ProcessListWithProgress(cfg.Radyo, "Radyo", totalSources, () => ++processedSources);
+                }
+
+                // 5. Process EPG Sources
+                if (cfg.Epg != null && cfg.Epg.Count > 0)
                 {
                     var epgEng = new EpgEngine();
-                    foreach (var url in cfg.Epg)
+                    for (int i = 0; i < cfg.Epg.Count; i++)
                     {
-                        if (string.IsNullOrEmpty(url)) continue;
-                        try
+                        string url = cfg.Epg[i];
+                        if (string.IsNullOrWhiteSpace(url)) continue;
+                        int currentIdx = ++processedSources;
+                        double baseProgress = (double)(currentIdx - 1) / totalSources * 100.0;
+                        double itemWeight = 100.0 / totalSources;
+
+                        _db.AddEpgSource(url);
+                        await epgEng.LoadEpgAsync(url, (subMsg, subPct) =>
                         {
-                            _db.AddEpgSource(url);
-                            await epgEng.LoadEpgAsync(url);
-                        } catch { }
+                            double overallPct = Math.Min(99.0, baseProgress + (subPct / 100.0) * itemWeight);
+                            OnProgress?.Invoke((int)overallPct, $"[{currentIdx}/{totalSources}] EPG Rehberi ({i + 1}/{cfg.Epg.Count}): {subMsg}");
+                        });
                     }
                 }
 
+                DatabaseEngine.NotifyDatabaseUpdated();
                 LogService.LogInfo("GitHubSyncEngine: Güncelleme tamamlandı.");
-                OnProgress?.Invoke(100, "Güncelleme başarıyla tamamlandı.");
+                OnProgress?.Invoke(100, "🎉 Bulut güncelleme başarıyla tamamlandı!");
                 OnSyncCompleted?.Invoke();
             }
             catch (Exception ex)
@@ -109,22 +149,38 @@ namespace StreamMesh.Core.Media
             }
         }
 
-        private async Task ProcessList(List<string> urls, string category)
+        private async Task ProcessListWithProgress(List<string> urls, string categoryLabel, int totalSources, Func<int> incrementCounter)
         {
             if (urls == null) return;
-            foreach (var url in urls)
+            for (int i = 0; i < urls.Count; i++)
             {
-                if (string.IsNullOrEmpty(url)) continue;
+                string url = urls[i];
+                if (string.IsNullOrWhiteSpace(url)) continue;
+
+                int currentIdx = incrementCounter();
+                double baseProgress = (double)(currentIdx - 1) / totalSources * 100.0;
+                double itemWeight = 100.0 / totalSources;
+
                 try
                 {
-                    _db.AddM3uSource(url); // Save URL to source list
-                    var channels = await _m3u.ParseM3uAsync(url, category);
+                    _db.AddM3uSource(url);
+                    var channels = await _m3u.ParseM3uAsync(url, categoryLabel, (subMsg, subPct) =>
+                    {
+                        double overallPct = Math.Min(99.0, baseProgress + (subPct / 100.0) * itemWeight);
+                        OnProgress?.Invoke((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {subMsg}");
+                    });
+
                     if (channels.Count > 0)
                     {
                         await _db.SyncIncomingChannelsAsync(channels);
+                        double finishedPct = Math.Min(99.0, baseProgress + itemWeight);
+                        OnProgress?.Invoke((int)finishedPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {channels.Count} içerik kaydedildi.");
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    OnProgress?.Invoke((int)baseProgress, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}) Hata: {ex.Message}");
+                }
             }
         }
     }

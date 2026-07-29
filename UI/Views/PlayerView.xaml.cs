@@ -10,6 +10,7 @@ using StreamMesh.Models;
 using StreamMesh.Core.Media;
 using StreamMesh.Converters;
 using StreamMesh.Core.Utils;
+using StreamMesh.Core.Database;
 
 namespace StreamMesh.UI.Views
 {
@@ -27,11 +28,67 @@ namespace StreamMesh.UI.Views
         private static readonly LogoCacheConverter LogoConverter = new LogoCacheConverter();
         private readonly System.Threading.SemaphoreSlim _playSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
+        private readonly EpgService _epgService = new EpgService();
+        private System.Windows.Threading.DispatcherTimer? _osdTimer;
+        private System.Windows.Threading.DispatcherTimer? _positionTimer;
+        private Channel? _currentChannel;
+
         public PlayerView()
         {
             InitializeComponent();
             InitializePlayer();
+            InitializeOsdTimer();
+            InitializePositionTimer();
             this.Focusable = true;
+        }
+
+        private void InitializeOsdTimer()
+        {
+            _osdTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3.5) };
+            _osdTimer.Tick += (s, e) =>
+            {
+                if (OsdPanel != null) OsdPanel.Visibility = Visibility.Collapsed;
+                _osdTimer.Stop();
+            };
+        }
+
+        private void InitializePositionTimer()
+        {
+            _positionTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _positionTimer.Tick += (s, e) =>
+            {
+                if (_mediaPlayer == null || !_mediaPlayer.IsPlaying) return;
+                try
+                {
+                    long timeMs = _mediaPlayer.Time;
+                    long lengthMs = _mediaPlayer.Length;
+
+                    if (timeMs >= 0)
+                    {
+                        TimeSpan ts = TimeSpan.FromMilliseconds(timeMs);
+                        TimeCurrentText.Text = ts.ToString(@"hh\:mm\:ss");
+                    }
+
+                    if (lengthMs > 0)
+                    {
+                        TimeTotalText.Text = TimeSpan.FromMilliseconds(lengthMs).ToString(@"hh\:mm\:ss");
+                        TimeSlider.Value = (double)timeMs / lengthMs * 100.0;
+                    }
+                    else
+                    {
+                        TimeTotalText.Text = "CANLI YAYIN";
+                    }
+                }
+                catch { }
+            };
+            _positionTimer.Start();
+        }
+
+        private void Player_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            if (OsdPanel != null) OsdPanel.Visibility = Visibility.Visible;
+            _osdTimer?.Stop();
+            _osdTimer?.Start();
         }
 
         private void InitializePlayer()
@@ -54,6 +111,7 @@ namespace StreamMesh.UI.Views
 
                 _libVLC = new LibVLC(vlcArgs.ToArray());
                 _mediaPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVLC);
+                _mediaPlayer.EndReached += OnEndReached;
                 _mediaPlayer.SetVideoFormat("RV32", 1920, 1080, 1920 * 4);
                 _mediaPlayer.SetVideoCallbacks(LockVideo, null, DisplayVideo);
             }
@@ -90,14 +148,38 @@ namespace StreamMesh.UI.Views
         public async void LoadChannel(Channel channel)
         {
             if (_mediaPlayer == null || _libVLC == null) return;
+            _currentChannel = channel;
             await _playSemaphore.WaitAsync();
 
             try
             {
                 _mediaPlayer.Stop();
-                OsdTitle.Text = channel.Name;
+                OsdTitle.Text = channel.PrimaryName;
                 OsdCategory.Text = channel.Category;
-                OsdLogo.Source = (ImageSource)LogoConverter.Convert(channel.LogoUrl, typeof(ImageSource), null, null);
+
+                var convertedLogo = LogoConverter.Convert(channel.LogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
+                if (convertedLogo != null) OsdLogo.Source = (ImageSource)convertedLogo;
+
+                // Fetch EPG for OSD
+                var epgDict = await _epgService.GetCurrentEpgsAsync(new List<Channel> { channel });
+                if (epgDict.TryGetValue(channel.Id, out var currentProg))
+                {
+                    OsdCurrentEpg.Text = $"{currentProg.StartTime:HH:mm} - {currentProg.EndTime:HH:mm} {currentProg.Title}";
+                }
+                else
+                {
+                    OsdCurrentEpg.Text = "Yayın akışı bilgisi yok";
+                }
+
+                var nextProg = await _epgService.GetNextEpgAsync(channel);
+                if (nextProg != null)
+                {
+                    OsdNextEpg.Text = $"Sıradaki: {nextProg.StartTime:HH:mm} {nextProg.Title}";
+                }
+                else
+                {
+                    OsdNextEpg.Text = "Sıradaki: --:-- Bilgi yok";
+                }
 
                 var rawUrls = (channel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
                 var finalUrlsToTry = new List<string>();
@@ -143,34 +225,111 @@ namespace StreamMesh.UI.Views
             finally { _playSemaphore.Release(); }
         }
 
+        private void OnEndReached(object? sender, EventArgs e)
+        {
+            Dispatcher.Invoke(async () =>
+            {
+                // V1.8.8: Auto-play next episode for series
+                if (_currentChannel != null && _currentChannel.Category == "Dizi")
+                {
+                    // Mark as watched
+                    _currentChannel.IsWatched = true;
+                    await _db.SaveChannelAsync(_currentChannel);
+
+                    var seriesItems = await _db.GetSeriesEpisodesAsync(_currentChannel.SeriesBaseName);
+                    int currentIdx = seriesItems.FindIndex(c => c.Id == _currentChannel.Id);
+                    if (currentIdx >= 0 && currentIdx < seriesItems.Count - 1)
+                    {
+                        var nextEp = seriesItems[currentIdx + 1];
+                        LogService.LogInfo($"Oynatma bitti. Sonraki bölüme geçiliyor: {nextEp.Name}");
+                        LoadChannel(nextEp);
+                        return;
+                    }
+                }
+
+                _mediaPlayer?.Stop();
+            });
+        }
+
+        public void Stop()
+        {
+            _mediaPlayer?.Stop();
+        }
+
+        public void PlayPause_Click(object sender, RoutedEventArgs e)
+        {
+            TogglePause();
+        }
+
         public void TogglePause()
         {
             if (_mediaPlayer == null) return;
-            if (_mediaPlayer.IsPlaying) _mediaPlayer.Pause();
-            else _mediaPlayer.Play();
+            if (_mediaPlayer.IsPlaying)
+            {
+                _mediaPlayer.Pause();
+                if (PlayPauseBtn != null) PlayPauseBtn.Content = "▶ Oynat";
+            }
+            else
+            {
+                _mediaPlayer.Play();
+                if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸ Durdur";
+            }
+        }
+
+        public void Rewind10_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer == null) return;
+            _mediaPlayer.Time = Math.Max(0, _mediaPlayer.Time - 10000);
+        }
+
+        public void Forward10_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer == null) return;
+            _mediaPlayer.Time = _mediaPlayer.Time + 10000;
+        }
+
+        public void GoLive_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer == null) return;
+            if (_mediaPlayer.Length > 0)
+            {
+                _mediaPlayer.Time = _mediaPlayer.Length - 1000;
+            }
+            else if (_currentChannel != null)
+            {
+                LoadChannel(_currentChannel);
+            }
+        }
+
+        public void Mute_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleMute();
         }
 
         public void ToggleMute()
         {
             if (_mediaPlayer == null) return;
             _mediaPlayer.Mute = !_mediaPlayer.Mute;
+            if (MuteBtn != null) MuteBtn.Content = _mediaPlayer.Mute ? "🔇" : "🔊";
+        }
+
+        public void Fullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleFullscreen();
         }
 
         public void ToggleFullscreen()
         {
-            var win = Window.GetWindow(this);
-            if (win == null) return;
-            if (win.WindowState == WindowState.Maximized && win.WindowStyle == WindowStyle.None)
+            StreamMesh.UI.Windows.MainWindow.Instance?.ToggleFullscreen();
+        }
+
+        private void TimeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_mediaPlayer == null || !_mediaPlayer.IsSeekable || _mediaPlayer.Length <= 0) return;
+            if (TimeSlider.IsMouseOver)
             {
-                win.WindowStyle = WindowStyle.SingleBorderWindow;
-                win.WindowState = WindowState.Normal;
-                OsdPanel.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                win.WindowStyle = WindowStyle.None;
-                win.WindowState = WindowState.Maximized;
-                OsdPanel.Visibility = Visibility.Collapsed;
+                long newTime = (long)(_mediaPlayer.Length * (e.NewValue / 100.0));
+                _mediaPlayer.Time = newTime;
             }
         }
 

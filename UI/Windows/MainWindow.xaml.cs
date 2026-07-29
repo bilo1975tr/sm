@@ -120,8 +120,43 @@ namespace StreamMesh.UI.Windows
             }
         }
 
+        private bool _isFullscreen = false;
+
+        public void SetFullscreen(bool isFullscreen)
+        {
+            _isFullscreen = isFullscreen;
+            if (_isFullscreen)
+            {
+                SidebarBorder.Visibility = Visibility.Collapsed;
+                SidebarColumn.Width = new GridLength(0);
+                TopOverlay.Visibility = Visibility.Collapsed;
+                this.WindowStyle = WindowStyle.None;
+                this.WindowState = WindowState.Maximized;
+            }
+            else
+            {
+                SidebarBorder.Visibility = Visibility.Visible;
+                SidebarColumn.Width = new GridLength(80);
+                TopOverlay.Visibility = Visibility.Visible;
+                this.WindowStyle = WindowStyle.SingleBorderWindow;
+                this.WindowState = WindowState.Normal;
+            }
+        }
+
+        public void ToggleFullscreen()
+        {
+            SetFullscreen(!_isFullscreen);
+        }
+
         private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (e.Key == System.Windows.Input.Key.Escape && _isFullscreen)
+            {
+                SetFullscreen(false);
+                e.Handled = true;
+                return;
+            }
+
             if (MainContent.Content == _playerView)
             {
                 if (e.Key == System.Windows.Input.Key.Space)
@@ -129,9 +164,9 @@ namespace StreamMesh.UI.Windows
                     _playerView.TogglePause();
                     e.Handled = true;
                 }
-                else if (e.Key == System.Windows.Input.Key.F)
+                else if (e.Key == System.Windows.Input.Key.F || e.Key == System.Windows.Input.Key.F11)
                 {
-                    _playerView.ToggleFullscreen();
+                    ToggleFullscreen();
                     e.Handled = true;
                 }
                 else if (e.Key == System.Windows.Input.Key.M)

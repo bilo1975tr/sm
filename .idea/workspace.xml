@@ -13,10 +13,10 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 8
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="3H5vqzXQ2TJjfH8oqI2hUJy1oFP" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -28,10 +28,13 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "aem-ide.servers.initialized": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "implementationPlan.dismissed.19bf6270-0e0c-42cc-9cfd-84eb645c1a1a": "true",
-    "kotlin-language-version-configured": "true"
+    "implementationPlan.dismissed.fc1d19ec-f7bd-4eba-bd3a-ee70b8d62b11": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Administrator/Downloads/streammesh"
   }
 }]]></component>
   <component name="TaskManager">

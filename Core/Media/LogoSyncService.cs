@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using StreamMesh.Core.Database;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
 {
@@ -16,7 +17,6 @@ namespace StreamMesh.Core.Media
         {
             string last = _db.GetSetting("LogoSyncDate", "");
             if (DateTime.TryParse(last, out DateTime dt) && (DateTime.Now - dt).TotalDays < 30) return;
-
             await SyncNowAsync();
         }
 
@@ -24,30 +24,43 @@ namespace StreamMesh.Core.Media
         {
             try
             {
+                LogService.LogInfo("[LogoSync] Eski veriler temizleniyor...");
+                _db.ExecuteRawNonQuery("DELETE FROM LogoIndex");
+
                 _client.DefaultRequestHeaders.UserAgent.Clear();
                 _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
-                var response = await _client.GetStringAsync("https://api.github.com/repos/tv-logo/tv-logos/contents/countries/turkey");
-                var items = JArray.Parse(response);
-                var list = new List<(string key, string file)>();
+                string[] countries = { "turkey", "germany" };
+                var allLogos = new List<(string key, string file)>();
 
-                foreach (var item in items)
+                foreach (var country in countries)
                 {
-                    string name = item["name"]?.ToString() ?? "";
-                    if (name.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    try
                     {
-                        string key = name.ToLower().Replace("-tr.png", "").Replace(".png", "").Replace("-", "");
-                        list.Add((key, name));
+                        var response = await _client.GetStringAsync($"https://api.github.com/repos/tv-logo/tv-logos/contents/countries/{country}");
+                        var items = JArray.Parse(response);
+                        foreach (var item in items)
+                        {
+                            string fileName = item["name"]?.ToString() ?? "";
+                            if (fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string key = fileName.ToLowerInvariant().Replace(".png", "");
+                                string fullUrl = $"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/{country}/{fileName}";
+                                allLogos.Add((key, fullUrl));
+                            }
+                        }
                     }
+                    catch { }
                 }
 
-                if (list.Count > 0)
+                if (allLogos.Count > 0)
                 {
-                    _db.UpdateLogoIndex(list);
+                    _db.UpdateLogoIndex(allLogos);
                     _db.SetSetting("LogoSyncDate", DateTime.Now.ToString("o"));
+                    LogService.LogInfo($"[LogoSync] {allLogos.Count} adet yeni standartta logo yüklendi.");
                 }
             }
-            catch (Exception ex) { Utils.LogService.LogError("LogoSync Error", ex); }
+            catch (Exception ex) { LogService.LogError("LogoSync Error", ex); }
         }
     }
 }

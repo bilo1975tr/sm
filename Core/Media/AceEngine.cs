@@ -60,17 +60,38 @@ namespace StreamMesh.Core.Media
             }
 
             string apiCategory = MapCategoryToAceApi(category);
-            try { await SearchServerSideApiAsync(list, cleanQuery, apiCategory, 0); await SearchServerSideApiAsync(list, cleanQuery, apiCategory, 250); } catch { }
-            try { await SearchLocalEngineApiAsync(list, cleanQuery, apiCategory, 0); await SearchLocalEngineApiAsync(list, cleanQuery, apiCategory, 250); } catch { }
-            if (list.Count < 20) try { await SearchServerSideAllSnapshotAsync(list, cleanQuery, apiCategory); } catch { }
-            try { await SearchWebIndexesAsync(list, cleanQuery); } catch { }
 
-            if (!string.IsNullOrWhiteSpace(cleanQuery) && cleanQuery.Length > 2)
+            // V1.8.7: Eğer sorgu parantez içeriyorsa (örn: [de]), parantezleri silerek yapılan
+            // bulanık aramayı (cleanStripped) iptal et. Sadece tam sorguyu gönder.
+            bool hasBrackets = cleanQuery.Contains("[") || cleanQuery.Contains("]");
+            string cleanStripped = hasBrackets ? cleanQuery : cleanQuery.Replace("[", " ").Replace("]", " ").Replace("(", " ").Replace(")", " ").Trim();
+
+            try { await SearchServerSideApiAsync(list, cleanQuery, apiCategory, 0); } catch { }
+            if (cleanStripped != cleanQuery && !string.IsNullOrWhiteSpace(cleanStripped) && !hasBrackets)
             {
-                string targetKeyword = cleanQuery.ToLowerInvariant();
-                list = list.Where(x => (x.Name != null && x.Name.ToLowerInvariant().Contains(targetKeyword)) || (x.Category != null && x.Category.ToLowerInvariant().Contains(targetKeyword))).ToList();
+                try { await SearchServerSideApiAsync(list, cleanStripped, apiCategory, 0); } catch { }
             }
-            return list.OrderByDescending(x => x.Peers.Contains("Yüksek")).ToList();
+            try { await SearchLocalEngineApiAsync(list, cleanQuery, apiCategory, 0); } catch { }
+            
+            // If results are low, search extra pages and full database snapshot
+            if (list.Count < 30)
+            {
+                try { await SearchServerSideApiAsync(list, cleanQuery, apiCategory, 250); } catch { }
+                try { await SearchServerSideAllSnapshotAsync(list, cleanQuery, apiCategory); } catch { }
+            }
+            try { await SearchWebIndexesAsync(list, cleanQuery); } catch { }
+            if (cleanStripped != cleanQuery && !string.IsNullOrWhiteSpace(cleanStripped) && !hasBrackets)
+            {
+                try { await SearchWebIndexesAsync(list, cleanStripped); } catch { }
+            }
+
+            // Strict query and language filtering
+            list = list.Where(x => 
+                ChannelUtils.MatchesQueryFilter(x.Name, x.Category, "", x.Url, cleanQuery) &&
+                ChannelUtils.MatchesLanguageFilter(x.Name, language)
+            ).ToList();
+
+            return list.OrderByDescending(x => x.Peers.Contains("Yüksek") || x.Peers.Contains("Aktif")).ToList();
         }
 
         private string MapCategoryToAceApi(string cat)

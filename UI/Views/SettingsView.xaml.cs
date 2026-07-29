@@ -44,7 +44,12 @@ namespace StreamMesh.UI.Views
                 Dispatcher.Invoke(() => {
                     if (SyncProgress != null) SyncProgress.Value = p;
                     if (SyncStatusText != null) SyncStatusText.Text = msg;
-                    if (p == 100) { RefreshSourcesList(); RefreshEpgList(); }
+                    if (p >= 100 || msg.StartsWith("Hata") || msg.StartsWith("🎉"))
+                    {
+                        if (StartSyncBtn != null) StartSyncBtn.IsEnabled = true;
+                        RefreshSourcesList();
+                        RefreshEpgList();
+                    }
                 });
             };
         }
@@ -250,18 +255,29 @@ namespace StreamMesh.UI.Views
 
         private async void StartCloudSync_Click(object sender, RoutedEventArgs e)
         {
-            await _sync.PullFromGitHubAsync();
+            if (StartSyncBtn != null) StartSyncBtn.IsEnabled = false;
+            await Task.Run(async () => await _sync.PullFromGitHubAsync());
         }
 
-        private void ClearAll_Click(object sender, RoutedEventArgs e)
+        private void ClearSources_Click(object sender, RoutedEventArgs e)
         {
-            if (System.Windows.MessageBox.Show("Tüm kanallar ve kaynaklar silinecek. Emin misiniz?", "🚨 Kritik Uyarı", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (System.Windows.MessageBox.Show("Tüm M3U ve EPG XML yayın kaynakları silinecek. Emin misiniz?", "🚨 Kaynakları Sil", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                _db.ExecuteRawNonQuery("DELETE FROM Channels");
-                _db.ExecuteRawNonQuery("DELETE FROM M3uSources");
-                _db.ExecuteRawNonQuery("DELETE FROM EpgSources");
+                _db.ClearAllSources();
                 RefreshSourcesList();
                 RefreshEpgList();
+                System.Windows.MessageBox.Show("Tüm yayın ve EPG kaynakları silindi.", "Bilgi");
+            }
+        }
+
+        private void ClearContents_Click(object sender, RoutedEventArgs e)
+        {
+            if (System.Windows.MessageBox.Show("Tüm kanallar, filmler, diziler ve EPG yayın akışı verileri silinecek. Emin misiniz?", "🚨 İçerikleri Sil", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                _db.ClearAllContents();
+                RefreshSourcesList();
+                RefreshEpgList();
+                System.Windows.MessageBox.Show("Tüm kütüphane içerikleri silindi.", "Bilgi");
             }
         }
     }

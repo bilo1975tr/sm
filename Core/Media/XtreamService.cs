@@ -32,7 +32,7 @@ namespace StreamMesh.Core.Media
                     _db.SaveIptvAccount(acc);
 
                     // Start background sync for contents
-                    Task.Run(() => FetchAllContentsAsync(acc));
+                    _ = Task.Run(() => FetchAllContentsAsync(acc));
                     return true;
                 }
                 else
@@ -83,7 +83,7 @@ namespace StreamMesh.Core.Media
                         PlaylistUrl = acc.ServerUrl
                     };
 
-                    string streamId = item["stream_id"]?.ToString() ?? item["series_id"]?.ToString();
+                    string streamId = item["stream_id"]?.ToString() ?? item["series_id"]?.ToString() ?? string.Empty;
                     string ext = item["container_extension"]?.ToString() ?? "m3u8";
 
                     if (type == "live") ch.Url = $"{baseUrl}/live/{acc.Username}/{acc.Password}/{streamId}.ts";

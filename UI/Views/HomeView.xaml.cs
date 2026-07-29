@@ -23,6 +23,7 @@ namespace StreamMesh.UI.Views
             InitializeComponent();
             _vm = new HomeViewModel();
             DataContext = _vm;
+            Loaded += (s, e) => _vm.LoadData();
         }
 
         private void Card_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
@@ -39,6 +40,14 @@ namespace StreamMesh.UI.Views
         {
             if (sender is FrameworkElement fe && fe.DataContext is Channel item)
             {
+                if (item is SeriesGroup series)
+                {
+                    var seriesWin = new SeriesDetailsWindow(series);
+                    seriesWin.Owner = Window.GetWindow(this);
+                    seriesWin.ShowDialog();
+                    return;
+                }
+
                 string cat = (item.Category ?? "").Trim().ToUpperInvariant();
                 if (cat == "TV" || cat == "RADYO" || cat == "GENEL")
                 {

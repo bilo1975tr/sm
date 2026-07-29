@@ -25,6 +25,9 @@ namespace StreamMesh.Core.Utils
             {
                 lock (_lock)
                 {
+                    string dir = Path.GetDirectoryName(LogPath) ?? "";
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
                     string line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{level}] {message}{Environment.NewLine}";
                     File.AppendAllText(LogPath, line);
                 }

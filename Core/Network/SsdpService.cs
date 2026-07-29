@@ -8,7 +8,7 @@ namespace StreamMesh.Core.Network
 {
     public class SsdpService
     {
-        private UdpClient _udp;
+        private UdpClient? _udp;
         private bool _isRunning = false;
         private readonly string _uuid = Guid.NewGuid().ToString();
 
@@ -26,7 +26,7 @@ namespace StreamMesh.Core.Network
         public void Stop()
         {
             _isRunning = false;
-            _udp.Close();
+            _udp?.Close();
         }
 
         private async Task ListenLoop()
@@ -62,7 +62,7 @@ NTS: ssdp:alive
 USN: uuid:{_uuid}::upnp:rootdevice";
 
             byte[] buffer = Encoding.UTF8.GetBytes(msg);
-            while (_isRunning)
+            while (_isRunning && _udp != null)
             {
                 await _udp.SendAsync(buffer, buffer.Length, ep);
                 await Task.Delay(30000);

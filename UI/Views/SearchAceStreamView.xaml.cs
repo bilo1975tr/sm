@@ -98,6 +98,15 @@ namespace StreamMesh.UI.Views
             }
         }
 
+        private string GetSelectedOrDetectedLanguage(string channelName)
+        {
+            string selectedLang = (LanguageComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "";
+            if (selectedLang.Contains("Türkçe")) return "tr";
+            if (selectedLang.Contains("İngilizce")) return "en";
+            if (selectedLang.Contains("Almanca")) return "de";
+            return Channel.NormalizeLanguage(channelName);
+        }
+
         private async void AddAllToLibrary_Click(object sender, RoutedEventArgs e)
         {
             if (Results.Count == 0) return;
@@ -111,13 +120,15 @@ namespace StreamMesh.UI.Views
                 {
                     Name = item.Name,
                     Url = item.Url,
-                    Category = item.Category,
+                    Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
                     GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Arama Sonuçları" : item.GroupTitle,
                     LogoUrl = item.LogoUrl,
+                    Language = GetSelectedOrDetectedLanguage(item.Name),
                     SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
                 }).ToList();
 
                 await _db.SyncIncomingChannelsAsync(channels);
+                DatabaseEngine.NotifyDatabaseUpdated();
                 System.Windows.MessageBox.Show($"{channels.Count} adet kanal ve medya akışı başarıyla kütüphanenize eklendi.", "Toplu Ekleme Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -137,6 +148,7 @@ namespace StreamMesh.UI.Views
                     Category = item.Category,
                     GroupTitle = item.GroupTitle,
                     LogoUrl = item.LogoUrl,
+                    Language = GetSelectedOrDetectedLanguage(item.Name),
                     SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
                 };
                 MainWindow.Instance?.LoadChannelToPlayer(ch);
@@ -151,13 +163,15 @@ namespace StreamMesh.UI.Views
                 {
                     Name = item.Name,
                     Url = item.Url,
-                    Category = item.Category,
+                    Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
                     GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Eklenen Kanallar" : item.GroupTitle,
                     LogoUrl = item.LogoUrl,
+                    Language = GetSelectedOrDetectedLanguage(item.Name),
                     SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
                 };
 
                 await _db.SaveChannelAsync(ch);
+                DatabaseEngine.NotifyDatabaseUpdated();
                 System.Windows.MessageBox.Show($"'{ch.Name}' başarıyla kütüphanenize eklendi.", "Kütüphaneye Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }

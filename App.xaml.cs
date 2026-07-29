@@ -30,14 +30,23 @@ namespace StreamMesh
 
         protected override void OnStartup(System.Windows.StartupEventArgs e)
         {
-            // 0. Single Instance Check (Prevent overlapping app instances)
+            // 0. Single Instance Check (Prevent overlapping app instances & clean zombie processes)
             _appMutex = new Mutex(true, MUTEX_NAME, out bool createdNew);
             if (!createdNew)
             {
-                BringExistingInstanceToForeground();
-                System.Windows.MessageBox.Show("StreamMesh zaten çalışıyor! Uygulama penceresi ön plana getirildi.", "StreamMesh", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                Shutdown();
-                return;
+                bool broughtToFront = BringExistingInstanceToForeground();
+                if (!broughtToFront)
+                {
+                    // Previous process was a zombie (hung in background without window). Terminate it cleanly.
+                    KillGhostInstances();
+                    _appMutex = new Mutex(true, MUTEX_NAME, out createdNew);
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("StreamMesh zaten çalışıyor! Uygulama penceresi ön plana getirildi.", "StreamMesh", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    Shutdown();
+                    return;
+                }
             }
 
             AppDomain.CurrentDomain.UnhandledException += (s, ev) =>
@@ -67,8 +76,9 @@ namespace StreamMesh
             // 6. AceStream Engine Auto-Start
             Task.Run(async () => await new AceEngine().StartEngineAsync());
 
-            // 3. Background Cloud Sync
+            // 3. Background Cloud Sync (Delayed by 15s to allow fast startup)
             Task.Run(async () => {
+                await Task.Delay(15000);
                 var sync = new GitHubSyncEngine();
                 await sync.PullFromGitHubAsync();
             });
@@ -76,7 +86,7 @@ namespace StreamMesh
             base.OnStartup(e);
         }
 
-        private static void BringExistingInstanceToForeground()
+        private static bool BringExistingInstanceToForeground()
         {
             try
             {
@@ -88,7 +98,25 @@ namespace StreamMesh
                     {
                         ShowWindow(proc.MainWindowHandle, SW_RESTORE);
                         SetForegroundWindow(proc.MainWindowHandle);
-                        break;
+                        return true;
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private static void KillGhostInstances()
+        {
+            try
+            {
+                var currentProc = Process.GetCurrentProcess();
+                var processes = Process.GetProcessesByName(currentProc.ProcessName);
+                foreach (var proc in processes)
+                {
+                    if (proc.Id != currentProc.Id)
+                    {
+                        proc.Kill();
                     }
                 }
             }
@@ -109,6 +137,7 @@ namespace StreamMesh
             catch { }
 
             base.OnExit(e);
+            Environment.Exit(0);
         }
     }
 }
