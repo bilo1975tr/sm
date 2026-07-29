@@ -79,9 +79,13 @@ namespace StreamMesh.UI.ViewModels
                 }
                 else
                 {
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadData());
+                    // V1.8.8: Small delay to debounce rapid updates
+                    _ = Task.Delay(1000).ContinueWith(_ => System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadData()));
                 }
             };
+
+            // Trigger one-time cleanup on startup
+            _ = Task.Run(async () => await _db.CleanupDuplicatesAsync());
         }
 
         public async void LoadData()
@@ -203,8 +207,16 @@ namespace StreamMesh.UI.ViewModels
                 var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
                 if (missingLogos.Count > 0)
                 {
-                    var enricher = new ChannelEnricher();
-                    await enricher.EnrichChannelsAsync(missingLogos);
+                    DatabaseEngine.SuppressEvents = true; // Prevent loop
+                    try
+                    {
+                        var enricher = new ChannelEnricher();
+                        await enricher.EnrichChannelsAsync(missingLogos);
+                    }
+                    finally
+                    {
+                        DatabaseEngine.SuppressEvents = false;
+                    }
                 }
             });
         }

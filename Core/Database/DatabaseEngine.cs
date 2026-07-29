@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using StreamMesh.Models;
 using StreamMesh.Core.Utils;
+using StreamMesh.Core.Media;
 
 namespace StreamMesh.Core.Database
 {
@@ -17,6 +18,7 @@ namespace StreamMesh.Core.Database
 
         private static readonly System.Threading.SemaphoreSlim AsyncDbLock = new System.Threading.SemaphoreSlim(1, 1);
         private static readonly object _cacheLock = new object();
+        public static bool SuppressEvents { get; set; } = false;
 
         public DatabaseEngine()
         {
@@ -425,7 +427,62 @@ namespace StreamMesh.Core.Database
         public async Task SyncIncomingChannelsAsync(List<Channel> incoming)
         {
             if (incoming == null || incoming.Count == 0) return;
-            await SaveChannelsBatchAsync(incoming);
+
+            // V1.8.8: Aggressive merging before saving
+            var urls = incoming.SelectMany(c => c.GetUrlList()).Distinct().ToList();
+            var epgs = incoming.SelectMany(c => c.GetEpgIdList()).Where(e => !string.IsNullOrEmpty(e)).Distinct().ToList();
+
+            var existing = new List<Channel>();
+            if (urls.Count > 0 || epgs.Count > 0)
+            {
+                try
+                {
+                    using (var connection = new SqliteConnection(ConnectionString))
+                    {
+                        await connection.OpenAsync();
+
+                        // Chunking to avoid SQLite limits and syntax errors with massive strings
+                        if (urls.Count > 0)
+                        {
+                            for (int i = 0; i < urls.Count; i += 400)
+                            {
+                                var chunk = urls.Skip(i).Take(400).ToList();
+                                string urlIn = string.Join("','", chunk.Select(u => u.Replace("'", "''")));
+                                var cmd = connection.CreateCommand();
+                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels WHERE Url IN ('{urlIn}')";
+                                using var reader = await cmd.ExecuteReaderAsync();
+                                while (await reader.ReadAsync()) existing.Add(MapReaderToChannel(reader));
+                            }
+                        }
+
+                        if (epgs.Count > 0)
+                        {
+                            for (int i = 0; i < epgs.Count; i += 400)
+                            {
+                                var chunk = epgs.Skip(i).Take(400).ToList();
+                                string epgIn = string.Join("','", chunk.Select(e => e.Replace("'", "''")));
+                                var cmd = connection.CreateCommand();
+                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels WHERE EpgId IN ('{epgIn}')";
+                                using var reader = await cmd.ExecuteReaderAsync();
+                                while (await reader.ReadAsync())
+                                {
+                                    var ch = MapReaderToChannel(reader);
+                                    if (existing.All(x => x.Id != ch.Id)) existing.Add(ch);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("DatabaseEngine.SyncIncomingChannelsAsync: Metadata fetch failed", ex);
+                }
+            }
+
+            var combined = incoming.Concat(existing).ToList();
+            var aggregated = ChannelAggregator.Instance.AggregateChannels(combined);
+
+            await SaveChannelsBatchAsync(aggregated);
         }
 
         public async Task<int> AutoAggregateDatabaseAsync()
@@ -455,10 +512,8 @@ namespace StreamMesh.Core.Database
                 }
                 finally { AsyncDbLock.Release(); }
 
-                foreach (var ch in aggregated)
-                {
-                    await SaveChannelAsync(ch);
-                }
+                // V1.8.8: Use batch save instead of loop for performance
+                await SaveChannelsBatchAsync(aggregated);
             }
 
             return mergedCount;
@@ -897,7 +952,15 @@ namespace StreamMesh.Core.Database
 
         public static void NotifyDatabaseUpdated()
         {
+            if (SuppressEvents) return;
             OnDatabaseUpdated?.Invoke(null, EventArgs.Empty);
+        }
+
+        public async Task CleanupDuplicatesAsync()
+        {
+            LogService.LogInfo("DatabaseEngine: Global aggregation cleanup starting...");
+            int merged = await AutoAggregateDatabaseAsync();
+            LogService.LogInfo($"DatabaseEngine: Global aggregation cleanup completed. Merged {merged} channels into existing cards.");
         }
 
         public void ClearAllSources()

@@ -16,7 +16,7 @@ namespace StreamMesh.Core.Media
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
         }
 
-        public async Task<List<Channel>> ParseM3uAsync(string urlOrPath, string categoryHint = "TV", Action<string, double>? progressCallback = null)
+        public async Task<List<Channel>> ParseM3uAsync(string urlOrPath, string categoryHint = "TV", bool forceCategory = false, Action<string, double>? progressCallback = null)
         {
             var channels = new List<Channel>();
             string content = "";
@@ -91,6 +91,7 @@ namespace StreamMesh.Core.Media
                     if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase))
                     {
                         current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath };
+                        if (forceCategory) current.Notes = "FORCE_CAT";
 
                         int logoIdx = line.IndexOf("tvg-logo=\"", StringComparison.OrdinalIgnoreCase);
                         if (logoIdx != -1)
@@ -129,7 +130,13 @@ namespace StreamMesh.Core.Media
                         if (!string.IsNullOrEmpty(url))
                         {
                             current.Url = url;
-                            current.Id = Guid.NewGuid().ToString("N");
+
+                            // V1.8.8: Generate deterministic ID from URL to prevent duplicates
+                            using (var sha1 = System.Security.Cryptography.SHA1.Create())
+                            {
+                                byte[] hash = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(url));
+                                current.Id = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                            }
 
                             SmartNormalizationEngine.Instance.NormalizeChannel(current);
                             channels.Add(current);

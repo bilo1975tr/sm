@@ -20,6 +20,12 @@ namespace StreamMesh.Core.Media
             channel.Language = Channel.NormalizeLanguage(channel.Language);
 
             // V1.8.8: Standardize categories to [TV, Film, Dizi, Radyo]
+            if (channel.Notes == "FORCE_CAT")
+            {
+                channel.Notes = ""; // Clear marker
+                return;
+            }
+
             string cat = (channel.Category ?? "").ToUpperInvariant();
             string name = (channel.Name ?? "").ToUpperInvariant();
 

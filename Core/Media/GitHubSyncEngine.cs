@@ -164,7 +164,7 @@ namespace StreamMesh.Core.Media
                 try
                 {
                     _db.AddM3uSource(url);
-                    var channels = await _m3u.ParseM3uAsync(url, categoryLabel, (subMsg, subPct) =>
+                    var channels = await _m3u.ParseM3uAsync(url, categoryLabel, true, (subMsg, subPct) =>
                     {
                         double overallPct = Math.Min(99.0, baseProgress + (subPct / 100.0) * itemWeight);
                         OnProgress?.Invoke((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {subMsg}");

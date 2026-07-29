@@ -97,8 +97,8 @@ namespace StreamMesh.UI.Views
             {
                 LibVLCSharp.Shared.Core.Initialize();
 
-                string caching = _db.GetSetting("VlcCaching", "2000");
-                string userAgent = _db.GetSetting("VlcUserAgent", "Mozilla/5.0");
+                string caching = _db.GetSetting("VlcCaching", "3000");
+                string userAgent = _db.GetSetting("VlcUserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 bool hwAccel = _db.GetSetting("VlcHwAccel", "true") == "true";
 
                 var vlcArgs = new List<string> {
@@ -112,10 +112,15 @@ namespace StreamMesh.UI.Views
                 _libVLC = new LibVLC(vlcArgs.ToArray());
                 _mediaPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVLC);
                 _mediaPlayer.EndReached += OnEndReached;
+                _mediaPlayer.EncounteredError += (s, e) => LogService.LogError("Player: LibVLC Error encountered");
                 _mediaPlayer.SetVideoFormat("RV32", 1920, 1080, 1920 * 4);
                 _mediaPlayer.SetVideoCallbacks(LockVideo, null, DisplayVideo);
+                LogService.LogInfo("Player: Initialization Success");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogError("Player: Initialization Failed", ex);
+            }
         }
 
         private IntPtr LockVideo(IntPtr opaque, IntPtr planes)
@@ -154,32 +159,40 @@ namespace StreamMesh.UI.Views
             try
             {
                 _mediaPlayer.Stop();
-                OsdTitle.Text = channel.PrimaryName;
-                OsdCategory.Text = channel.Category;
+                Dispatcher.Invoke(() => {
+                    OsdTitle.Text = channel.PrimaryName;
+                    OsdCategory.Text = channel.Category;
 
-                var convertedLogo = LogoConverter.Convert(channel.LogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
-                if (convertedLogo != null) OsdLogo.Source = (ImageSource)convertedLogo;
+                    try {
+                        var convertedLogo = LogoConverter.Convert(channel.LogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
+                        if (convertedLogo != null) OsdLogo.Source = (ImageSource)convertedLogo;
+                    } catch { }
+                });
 
                 // Fetch EPG for OSD
                 var epgDict = await _epgService.GetCurrentEpgsAsync(new List<Channel> { channel });
-                if (epgDict.TryGetValue(channel.Id, out var currentProg))
-                {
-                    OsdCurrentEpg.Text = $"{currentProg.StartTime:HH:mm} - {currentProg.EndTime:HH:mm} {currentProg.Title}";
-                }
-                else
-                {
-                    OsdCurrentEpg.Text = "Yayın akışı bilgisi yok";
-                }
+                Dispatcher.Invoke(() => {
+                    if (epgDict.TryGetValue(channel.Id, out var currentProg))
+                    {
+                        OsdCurrentEpg.Text = $"{currentProg.StartTime:HH:mm} - {currentProg.EndTime:HH:mm} {currentProg.Title}";
+                    }
+                    else
+                    {
+                        OsdCurrentEpg.Text = "Yayın akışı bilgisi yok";
+                    }
+                });
 
                 var nextProg = await _epgService.GetNextEpgAsync(channel);
-                if (nextProg != null)
-                {
-                    OsdNextEpg.Text = $"Sıradaki: {nextProg.StartTime:HH:mm} {nextProg.Title}";
-                }
-                else
-                {
-                    OsdNextEpg.Text = "Sıradaki: --:-- Bilgi yok";
-                }
+                Dispatcher.Invoke(() => {
+                    if (nextProg != null)
+                    {
+                        OsdNextEpg.Text = $"Sıradaki: {nextProg.StartTime:HH:mm} {nextProg.Title}";
+                    }
+                    else
+                    {
+                        OsdNextEpg.Text = "Sıradaki: --:-- Bilgi yok";
+                    }
+                });
 
                 var rawUrls = (channel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
                 var finalUrlsToTry = new List<string>();
@@ -211,11 +224,17 @@ namespace StreamMesh.UI.Views
                     using var media = new Media(_libVLC, new Uri(tryUrl));
                     _mediaPlayer.Play(media);
 
-                    // Wait longer for AceStream or slow streams to buffer
-                    int waitMs = tryUrl.Contains("127.0.0.1") ? 6000 : 3000;
-                    await System.Threading.Tasks.Task.Delay(waitMs);
+                    // V1.8.8: Wait longer for streams to buffer
+                    int waitMs = tryUrl.Contains("127.0.0.1") ? 8000 : 6000;
 
-                    if (_mediaPlayer.IsPlaying) { success = true; break; }
+                    int checkInterval = 500;
+                    for (int t = 0; t < waitMs; t += checkInterval)
+                    {
+                        await System.Threading.Tasks.Task.Delay(checkInterval);
+                        if (_mediaPlayer.IsPlaying) { success = true; break; }
+                    }
+
+                    if (success) break;
                     LogService.LogInfo($"Player: Adres yanıt vermedi ({tryUrl}), sonraki deneniyor...");
                 }
 

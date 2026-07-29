@@ -59,9 +59,9 @@ namespace StreamMesh.UI.Views
             if (AiUrlBox != null) AiUrlBox.Text = _db.GetSetting("AiUrl", "http://localhost:11434/api/chat");
             if (AiModelBox != null) AiModelBox.Text = _db.GetSetting("AiModel", "llama3");
             if (TmdbApiKeyBox != null) TmdbApiKeyBox.Text = _db.GetSetting("TmdbApiKey", "3fd2be6f0c70a2a598f084dd23308883");
-            if (CachingBox != null) CachingBox.Text = _db.GetSetting("VlcCache", "1500");
-            if (UserAgentBox != null) UserAgentBox.Text = _db.GetSetting("UserAgent", "StreamMesh/1.8");
-            if (HwAccelCheck != null) HwAccelCheck.IsChecked = _db.GetSetting("HwAccel", "true") == "true";
+            if (CachingBox != null) CachingBox.Text = _db.GetSetting("VlcCaching", "1500");
+            if (UserAgentBox != null) UserAgentBox.Text = _db.GetSetting("VlcUserAgent", "Mozilla/5.0");
+            if (HwAccelCheck != null) HwAccelCheck.IsChecked = _db.GetSetting("VlcHwAccel", "true") == "true";
             if (ServerPortBox != null) ServerPortBox.Text = _db.GetSetting("ServerPort", "8080");
 
             RefreshSourcesList();
@@ -216,9 +216,9 @@ namespace StreamMesh.UI.Views
             _db.SetSetting("AiUrl", AiUrlBox.Text);
             _db.SetSetting("AiModel", AiModelBox.Text);
             _db.SetSetting("TmdbApiKey", TmdbApiKeyBox.Text);
-            _db.SetSetting("VlcCache", CachingBox.Text);
-            _db.SetSetting("UserAgent", UserAgentBox.Text);
-            _db.SetSetting("HwAccel", HwAccelCheck.IsChecked == true ? "true" : "false");
+            _db.SetSetting("VlcCaching", CachingBox.Text);
+            _db.SetSetting("VlcUserAgent", UserAgentBox.Text);
+            _db.SetSetting("VlcHwAccel", HwAccelCheck.IsChecked == true ? "true" : "false");
             System.Windows.MessageBox.Show("Ayarlar kaydedildi.");
         }
 
