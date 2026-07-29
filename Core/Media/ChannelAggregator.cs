@@ -19,6 +19,9 @@ namespace StreamMesh.Core.Media
             var aggregated = new List<Channel>();
             var urlMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
             var epgMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+            var aceMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+
+            var aceEngine = new AceEngine();
 
             foreach (var ch in incomingChannels)
             {
@@ -28,44 +31,55 @@ namespace StreamMesh.Core.Media
                 var urls = ch.GetUrlList();
                 var epgs = ch.GetEpgIdList();
 
-                // 1. Try matching by URL
+                // 1. Try matching by AceStream Hash (Strongest match for P2P)
                 foreach (var u in urls)
                 {
-                    if (urlMap.TryGetValue(u, out var foundByUrl))
+                    string hash = aceEngine.ExtractHash(u);
+                    if (!string.IsNullOrEmpty(hash))
                     {
-                        matched = foundByUrl;
-                        break;
+                        if (aceMap.TryGetValue(hash, out matched)) break;
                     }
                 }
 
-                // 2. Try matching by EPG ID if no URL match
+                // 2. Try matching by URL
+                if (matched == null)
+                {
+                    foreach (var u in urls)
+                    {
+                        if (urlMap.TryGetValue(u, out matched)) break;
+                    }
+                }
+
+                // 3. Try matching by EPG ID
                 if (matched == null)
                 {
                     foreach (var e in epgs)
                     {
                         if (string.IsNullOrEmpty(e)) continue;
-                        if (epgMap.TryGetValue(e, out var foundByEpg))
-                        {
-                            matched = foundByEpg;
-                            break;
-                        }
+                        if (epgMap.TryGetValue(e, out matched)) break;
                     }
                 }
 
                 if (matched != null)
                 {
-                    // Merge Metadata: URL or EPG matched, combine everything
                     matched.MergeWith(ch);
-
-                    // Re-index to ensure all alternate URLs/EPGs point to the same merged card
-                    foreach (var u in matched.GetUrlList()) urlMap[u] = matched;
-                    foreach (var e in matched.GetEpgIdList()) epgMap[e] = matched;
                 }
                 else
                 {
-                    aggregated.Add(ch);
-                    foreach (var u in urls) urlMap[u] = ch;
-                    foreach (var e in epgs) { if (!string.IsNullOrEmpty(e)) epgMap[e] = ch; }
+                    matched = ch;
+                    aggregated.Add(matched);
+                }
+
+                // Re-index
+                foreach (var u in matched.GetUrlList())
+                {
+                    urlMap[u] = matched;
+                    string h = aceEngine.ExtractHash(u);
+                    if (!string.IsNullOrEmpty(h)) aceMap[h] = matched;
+                }
+                foreach (var e in matched.GetEpgIdList())
+                {
+                    if (!string.IsNullOrEmpty(e)) epgMap[e] = matched;
                 }
             }
 

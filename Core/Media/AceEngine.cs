@@ -51,9 +51,8 @@ namespace StreamMesh.Core.Media
             var list = new List<AceResult>();
             string cleanQuery = (query ?? "").Trim();
 
-            string possibleCid = cleanQuery;
-            if (possibleCid.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase)) possibleCid = possibleCid.Substring(12);
-            if (Regex.IsMatch(possibleCid, @"^[a-fA-F0-9]{40}$"))
+            string possibleCid = ExtractHash(cleanQuery);
+            if (!string.IsNullOrEmpty(possibleCid))
             {
                 list.Add(new AceResult { Name = $"AceStream Content ({possibleCid.Substring(0, 8)}...)", Url = $"acestream://{possibleCid}", Peers = "Doğrudan ID", SourceName = "Hash", Category = "P2P Stream" });
                 return list;
@@ -219,11 +218,29 @@ namespace StreamMesh.Core.Media
         {
             var urls = new List<string>();
             if (string.IsNullOrWhiteSpace(cid)) return urls;
-            cid = cid.Replace("acestream://", "").Trim();
-            urls.Add($"http://127.0.0.1:{ACESTREAM_PORT}/ace/getstream?id={cid}");
-            urls.Add($"http://127.0.0.1:{ACESTREAM_PORT}/ace/getstream?infohash={cid}");
-            urls.Add($"http://127.0.0.1:{ACESTREAM_PORT}/ace/manifest.m3u8?id={cid}");
+
+            string hash = ExtractHash(cid);
+            if (string.IsNullOrEmpty(hash)) return urls;
+
+            urls.Add($"http://127.0.0.1:{ACESTREAM_PORT}/ace/getstream?id={hash}");
+            urls.Add($"http://127.0.0.1:{ACESTREAM_PORT}/ace/getstream?infohash={hash}");
+            urls.Add($"http://127.0.0.1:{ACESTREAM_PORT}/ace/manifest.m3u8?id={hash}");
             return urls;
+        }
+
+        public string ExtractHash(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return "";
+
+            // 1. Direct hex hash (40 chars)
+            var match = Regex.Match(input, @"[a-fA-F0-9]{40}");
+            if (match.Success) return match.Value.ToLowerInvariant();
+
+            // 2. URL parameters (id=... or infohash=...)
+            var idMatch = Regex.Match(input, @"[?&](?:id|infohash)=([a-fA-F0-9]{40})", RegexOptions.IgnoreCase);
+            if (idMatch.Success) return idMatch.Groups[1].Value.ToLowerInvariant();
+
+            return "";
         }
 
         public string GetHttpUrl(string cid)

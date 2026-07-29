@@ -83,9 +83,6 @@ namespace StreamMesh.UI.ViewModels
                     _ = Task.Delay(1000).ContinueWith(_ => System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadData()));
                 }
             };
-
-            // Trigger one-time cleanup on startup
-            _ = Task.Run(async () => await _db.CleanupDuplicatesAsync());
         }
 
         public async void LoadData()

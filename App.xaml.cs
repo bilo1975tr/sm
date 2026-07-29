@@ -60,10 +60,12 @@ namespace StreamMesh
             LogService.LogInfo($"App: Baslatiliyor. Process: {Process.GetCurrentProcess().MainModule?.FileName}");
 
             // 1. Maintenance
-            MaintenanceEngine.EnsureSelfInstallation();
+            try { MaintenanceEngine.EnsureSelfInstallation(); }
+            catch (Exception ex) { LogService.LogError("App: Maintenance failed", ex); }
 
             // 2. Init DB
-            var db = new DatabaseEngine();
+            try { var db = new DatabaseEngine(); }
+            catch (Exception ex) { LogService.LogError("App: Database init failed", ex); }
 
             // 4. Media Server Init
             Server = new MediaServer();

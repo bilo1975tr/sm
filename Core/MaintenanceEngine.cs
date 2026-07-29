@@ -12,6 +12,37 @@ namespace StreamMesh.Core
             // V1.8.5: Removed automatic copying to LocalAppData to fix 10s delay.
             // App will run from its current directory.
             GenerateAssetsIfMissing();
+            CheckLibVlcStatus();
+        }
+
+        private static void CheckLibVlcStatus()
+        {
+            try
+            {
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string[] possiblePaths = {
+                    Path.Combine(baseDir, "libvlc", "win-x64"),
+                    Path.Combine(baseDir, "libvlc"),
+                    @"C:\Program Files\VideoLAN\VLC",
+                    baseDir
+                };
+
+                bool found = false;
+                foreach(var p in possiblePaths)
+                {
+                    if (File.Exists(Path.Combine(p, "libvlc.dll")))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    Utils.LogService.LogError("BAKIM: LibVLC (libvlc.dll) bulunamadı! Oynatıcı çalışmayabilir. Lütfen VLC Player 64-bit kurun.");
+                }
+            }
+            catch { }
         }
 
         private static void GenerateAssetsIfMissing()

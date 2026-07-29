@@ -20,6 +20,8 @@ namespace StreamMesh.Core.Database
         private static readonly object _cacheLock = new object();
         public static bool SuppressEvents { get; set; } = false;
 
+        private static bool _cleanupTriggered = false;
+
         public DatabaseEngine()
         {
             // V1.8.5: Database is now kept in the application folder for better reliability and speed.
@@ -161,6 +163,16 @@ namespace StreamMesh.Core.Database
                 if (GetSetting("MigrationV2Done", "false") != "true")
                 {
                     Task.Run(async () => await EnsureDataMigrationAsync());
+                }
+
+                // V1.8.8: Perform a background cleanup of duplicates on startup (only once)
+                if (!_cleanupTriggered)
+                {
+                    _cleanupTriggered = true;
+                    Task.Run(async () => {
+                        await Task.Delay(10000); // Wait longer for app to fully load
+                        await CleanupDuplicatesAsync();
+                    });
                 }
             }
         }

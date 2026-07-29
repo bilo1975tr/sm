@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -95,7 +96,28 @@ namespace StreamMesh.UI.Views
         {
             try
             {
-                LibVLCSharp.Shared.Core.Initialize();
+                // V1.8.8: Dynamic LibVLC discovery logic
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                string[] possiblePaths = {
+                    Path.Combine(baseDir, "libvlc", "win-x64"),
+                    Path.Combine(baseDir, "libvlc"),
+                    @"C:\Program Files\VideoLAN\VLC",
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\StreamMesh\libvlc\win-x64"),
+                    baseDir
+                };
+
+                string? foundPath = possiblePaths.FirstOrDefault(p => File.Exists(Path.Combine(p, "libvlc.dll")));
+
+                if (foundPath != null)
+                {
+                    LogService.LogInfo($"Player: LibVLC found at {foundPath}");
+                    LibVLCSharp.Shared.Core.Initialize(foundPath);
+                }
+                else
+                {
+                    LogService.LogInfo("Player: LibVLC not found in standard paths, trying default initialization...");
+                    LibVLCSharp.Shared.Core.Initialize();
+                }
 
                 string caching = _db.GetSetting("VlcCaching", "3000");
                 string userAgent = _db.GetSetting("VlcUserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
