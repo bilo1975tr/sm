@@ -264,85 +264,123 @@
                 </TabItem>
 
                 <TabItem Header="EPG EŞLEME">
-                    <Grid Margin="0,15">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid Margin="0,15">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                        <!-- Toolbar -->
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-                            <Button Content="+ Yeni EPG ID Ekle" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="AddEpg_Click" Background="#1e293b" Margin="0,0,10,0"/>
-                            <Button Content="🔍 EPG Ara (Sihirbaz)" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="ToggleEpgSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
-                        </StackPanel>
+                            <!-- Toolbar -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button Content="+ Yeni EPG ID Ekle" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="AddEpg_Click" Background="#1e293b" Margin="0,0,10,0"/>
+                                <Button Content="🔍 EPG Ara (Sihirbaz)" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="ToggleEpgSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
+                            </StackPanel>
 
-                        <StackPanel Grid.Row="1">
-                            <!-- EPG Search Panel (Collapsible) -->
-                            <Border x:Name="EpgSearchPanel" Visibility="Collapsed" Background="#1e293b" CornerRadius="10" Padding="12" Margin="0,0,0,10" BorderBrush="#38bdf8" BorderThickness="1">
-                                <StackPanel>
-                                    <TextBlock Text="🔍 EPG Arama Sihirbazı" Foreground="#38bdf8" FontWeight="Bold" Margin="0,0,0,8"/>
-                                    <Grid Margin="0,0,0,8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="180"/>
-                                            <ColumnDefinition Width="90"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBox x:Name="EpgSearchQueryBox" Height="35" VerticalContentAlignment="Center" Margin="0,0,5,0"/>
-                                        <ComboBox Grid.Column="1" x:Name="EpgScopeCombo" Height="35" SelectedIndex="0" Margin="0,0,5,0" VerticalContentAlignment="Center">
-                                            <ComboBoxItem Content="Tüm EPG Kaynaklarında"/>
-                                            <ComboBoxItem Content="Mevcut EPG Kaynağında"/>
-                                        </ComboBox>
-                                        <Button Grid.Column="2" Content="Ara" Height="35" Style="{StaticResource PrimaryButtonStyle}" Click="DoEpgSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
-                                    </Grid>
+                            <StackPanel Grid.Row="1">
+                                <!-- EPG Search Panel (Collapsible) -->
+                                <Border x:Name="EpgSearchPanel" Visibility="Collapsed" Background="#1e293b" CornerRadius="10" Padding="12" Margin="0,0,0,10" BorderBrush="#38bdf8" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="🔍 EPG Arama Sihirbazı" Foreground="#38bdf8" FontWeight="Bold" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="90"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox x:Name="EpgSearchQueryBox" Height="35" VerticalContentAlignment="Center" Margin="0,0,5,0"/>
+                                            <ComboBox Grid.Column="1" x:Name="EpgScopeCombo" Height="35" SelectedIndex="0" Margin="0,0,5,0" VerticalContentAlignment="Center">
+                                                <ComboBoxItem Content="Tüm EPG Kaynaklarında"/>
+                                                <ComboBoxItem Content="Mevcut EPG Kaynağında"/>
+                                            </ComboBox>
+                                            <Button Grid.Column="2" Content="Ara" Height="35" Style="{StaticResource PrimaryButtonStyle}" Click="DoEpgSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
+                                        </Grid>
 
-                                    <!-- EPG Search Results -->
-                                    <ListBox x:Name="EpgSearchResultsList" Height="150" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding EpgSearchResults}">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#0f172a" CornerRadius="6" Margin="0,0,0,4" Padding="6">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel VerticalAlignment="Center">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <TextBlock Text="{Binding ChannelName}" FontWeight="Bold" Foreground="White" FontSize="13"/>
-                                                                <TextBlock Text="{Binding SourceName, StringFormat=' ({0})'}" Foreground="#64748b" FontSize="11" Margin="5,0,0,0"/>
+                                        <!-- EPG Search Results -->
+                                        <ListBox x:Name="EpgSearchResultsList" Height="150" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding EpgSearchResults}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#0f172a" CornerRadius="6" Margin="0,0,0,4" Padding="6">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel VerticalAlignment="Center">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding ChannelName}" FontWeight="Bold" Foreground="White" FontSize="13"/>
+                                                                    <TextBlock Text="{Binding SourceName, StringFormat=' ({0})'}" Foreground="#64748b" FontSize="11" Margin="5,0,0,0"/>
+                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding CurrentProgram}" FontSize="11" Foreground="#94a3b8" Margin="0,2,0,0"/>
                                                             </StackPanel>
-                                                            <TextBlock Text="{Binding CurrentProgram}" FontSize="11" Foreground="#94a3b8" Margin="0,2,0,0"/>
-                                                        </StackPanel>
-                                                        <Border Grid.Column="1" CornerRadius="4" Background="#334155">
-                                                            <Button Content="➕ EPG ID Ekle" Padding="10,4" Click="SelectSearchResultEpg_Click" Background="Transparent" Foreground="#38bdf8" BorderThickness="0"/>
-                                                        </Border>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </StackPanel>
-                            </Border>
+                                                            <Border Grid.Column="1" CornerRadius="4" Background="#334155">
+                                                                <Button Content="➕ EPG ID Ekle" Padding="10,4" Click="SelectSearchResultEpg_Click" Background="Transparent" Foreground="#38bdf8" BorderThickness="0"/>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <TextBlock Text="⚠️ Sonuç bulunamadı. Lütfen farklı bir anahtar kelime deneyin veya 'Tüm EPG Kaynakları' seçeneğini kullanın."
+                                               Foreground="#ef4444" FontSize="10" Margin="0,5,0,0" TextWrapping="Wrap" HorizontalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding EpgSearchResults.Count}" Value="0"/>
+                                                                <Condition Binding="{Binding Visibility, ElementName=EpgSearchPanel}" Value="Visible"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
 
-                            <ListBox x:Name="EpgList" Height="220" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempEpgList}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
-                                                <Button Grid.Column="1" Content="⭐ Ana EPG Yap" ToolTip="Bu EPG ID'yi birincil yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryEpg_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
-                                                <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveEpg_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </StackPanel>
-                    </Grid>
+                                <TextBlock Text="Alternatif EPG ID Listesi" Foreground="#94a3b8" Margin="0,0,0,5" FontSize="11" FontWeight="SemiBold"/>
+                                <ListBox x:Name="EpgList" Height="150" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempEpgList}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                                    <Button Grid.Column="1" Content="⭐ Ana EPG Yap" ToolTip="Bu EPG ID'yi birincil yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryEpg_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                                    <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveEpg_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <TextBlock Text="Öncelikli EPG Kaynak URL'leri (Otomatik Atanır)" Foreground="#94a3b8" Margin="0,10,0,5" FontSize="11" FontWeight="SemiBold"/>
+                                <ListBox x:Name="EpgUrlList" Height="100" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempEpgUrlList}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="30" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" FontSize="10"/>
+                                                    <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveEpgUrl_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
                 </TabItem>
             </TabControl>
 

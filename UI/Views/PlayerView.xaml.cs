@@ -122,6 +122,8 @@ namespace StreamMesh.UI.Views
                 string caching = _db.GetSetting("VlcCaching", "3000");
                 string userAgent = _db.GetSetting("VlcUserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 bool hwAccel = _db.GetSetting("VlcHwAccel", "true") == "true";
+                bool audioNorm = _db.GetSetting("VlcAudioNorm", "false") == "true";
+                bool videoSharpen = _db.GetSetting("VlcVideoSharpen", "false") == "true";
 
                 var vlcArgs = new List<string> {
                     "--no-osd",
@@ -130,6 +132,18 @@ namespace StreamMesh.UI.Views
                 };
                 if (hwAccel) vlcArgs.Add("--avcodec-hw=any");
                 else vlcArgs.Add("--avcodec-hw=none");
+
+                if (audioNorm)
+                {
+                    vlcArgs.Add("--audio-filter=normvol");
+                    vlcArgs.Add("--norm-max-level=2.0");
+                }
+
+                if (videoSharpen)
+                {
+                    vlcArgs.Add("--video-filter=sharpen");
+                    vlcArgs.Add("--sharpen-sigma=0.08");
+                }
 
                 _libVLC = new LibVLC(vlcArgs.ToArray());
                 _mediaPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVLC);

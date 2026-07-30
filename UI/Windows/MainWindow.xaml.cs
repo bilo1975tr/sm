@@ -61,6 +61,24 @@ namespace StreamMesh.UI.Windows
             _peerTimer.Start();
 
             this.KeyDown += MainWindow_KeyDown;
+            this.StateChanged += MainWindow_StateChanged;
+            this.IsVisibleChanged += MainWindow_IsVisibleChanged;
+        }
+
+        private void MainWindow_StateChanged(object? sender, EventArgs e)
+        {
+            if (this.WindowState == WindowState.Minimized)
+            {
+                _playerView.Stop();
+            }
+        }
+
+        private void MainWindow_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (this.Visibility != Visibility.Visible)
+            {
+                _playerView.Stop();
+            }
         }
 
         private async void CheckForUpdatesAsync()

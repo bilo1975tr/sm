@@ -8,5 +8,6 @@ namespace StreamMesh.Models
         public string ChannelName { get; set; } = "";
         public string CurrentProgram { get; set; } = "";
         public string SourceName { get; set; } = "";
+        public string SourceUrl { get; set; } = "";
     }
 }

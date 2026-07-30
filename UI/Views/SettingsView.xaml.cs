@@ -32,13 +32,16 @@ namespace StreamMesh.UI.Views
 
         public ObservableCollection<M3uSourceDisplay> Sources { get; set; } = new ObservableCollection<M3uSourceDisplay>();
         public ObservableCollection<IptvAccount> IptvAccounts { get; set; } = new ObservableCollection<IptvAccount>();
+        public ObservableCollection<string> ValidationLogs { get; set; } = new ObservableCollection<string>();
 
         private bool _isServerRunning = false;
+        private System.Threading.CancellationTokenSource? _validationCts;
 
         public SettingsView()
         {
             InitializeComponent();
             LoadSettings();
+            if (ValidationLogsList != null) ValidationLogsList.ItemsSource = ValidationLogs;
 
             _sync.OnProgress += (p, msg) => {
                 Dispatcher.Invoke(() => {
@@ -62,6 +65,8 @@ namespace StreamMesh.UI.Views
             if (CachingBox != null) CachingBox.Text = _db.GetSetting("VlcCaching", "1500");
             if (UserAgentBox != null) UserAgentBox.Text = _db.GetSetting("VlcUserAgent", "Mozilla/5.0");
             if (HwAccelCheck != null) HwAccelCheck.IsChecked = _db.GetSetting("VlcHwAccel", "true") == "true";
+            if (AudioNormCheck != null) AudioNormCheck.IsChecked = _db.GetSetting("VlcAudioNorm", "false") == "true";
+            if (VideoSharpenCheck != null) VideoSharpenCheck.IsChecked = _db.GetSetting("VlcVideoSharpen", "false") == "true";
             if (ServerPortBox != null) ServerPortBox.Text = _db.GetSetting("ServerPort", "8080");
 
             RefreshSourcesList();
@@ -219,7 +224,9 @@ namespace StreamMesh.UI.Views
             _db.SetSetting("VlcCaching", CachingBox.Text);
             _db.SetSetting("VlcUserAgent", UserAgentBox.Text);
             _db.SetSetting("VlcHwAccel", HwAccelCheck.IsChecked == true ? "true" : "false");
-            System.Windows.MessageBox.Show("Ayarlar kaydedildi.");
+            _db.SetSetting("VlcAudioNorm", AudioNormCheck.IsChecked == true ? "true" : "false");
+            _db.SetSetting("VlcVideoSharpen", VideoSharpenCheck.IsChecked == true ? "true" : "false");
+            System.Windows.MessageBox.Show("Ayarlar kaydedildi. (VLC değişiklikleri için uygulamayı yeniden başlatmanız gerekebilir)");
         }
 
         private async void AddSource_Click(object sender, RoutedEventArgs e)
@@ -279,6 +286,128 @@ namespace StreamMesh.UI.Views
                 RefreshEpgList();
                 System.Windows.MessageBox.Show("Tüm kütüphane içerikleri silindi.", "Bilgi");
             }
+        }
+
+        private async void StartValidation_Click(object sender, RoutedEventArgs e)
+        {
+            if (_validationCts != null) return;
+
+            var channels = await _db.GetAllChannelsAsync();
+            if (channels.Count == 0)
+            {
+                System.Windows.MessageBox.Show("Test edilecek kanal bulunamadı.");
+                return;
+            }
+
+            ValidationLogs.Clear();
+            ValidationProgressBar.Value = 0;
+            ValidationProgressBar.Maximum = channels.Count;
+            StartValidationBtn.IsEnabled = false;
+            StopValidationBtn.Visibility = Visibility.Visible;
+            ValidationFailedText.Visibility = Visibility.Visible;
+            ValidationFailedText.Text = "Sinyal Yok: 0";
+            _validationCts = new System.Threading.CancellationTokenSource();
+
+            ValidationLevel level = ValidationLevel.Fast;
+            if (RadioDetailed.IsChecked == true) level = ValidationLevel.Detailed;
+            if (RadioFull.IsChecked == true) level = ValidationLevel.Full;
+
+            var startTime = DateTime.Now;
+            int processed = 0;
+            int online = 0;
+            var deadChannelIds = new List<string>();
+
+            IProgress<string> logger = new Progress<string>(msg => {
+                Dispatcher.Invoke(() => {
+                    ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - {msg}");
+                    if (ValidationLogs.Count > 500) ValidationLogs.RemoveAt(ValidationLogs.Count - 1);
+                });
+            });
+
+            try
+            {
+                using var validator = new StreamValidator();
+                foreach (var ch in channels)
+                {
+                    if (_validationCts.IsCancellationRequested) break;
+
+                    processed++;
+                    var result = await validator.ValidateAsync(ch, level, logger);
+
+                    if (result.IsOnline)
+                    {
+                        online++;
+                        ch.IsVerified = true;
+
+                        string techInfo = "";
+                        if (!string.IsNullOrEmpty(result.Resolution)) techInfo += $"Res: {result.Resolution} ";
+                        if (!string.IsNullOrEmpty(result.VideoCodec)) techInfo += $"Vid: {result.VideoCodec} ";
+                        if (!string.IsNullOrEmpty(result.AudioCodec)) techInfo += $"Aud: {result.AudioCodec}";
+
+                        if (!string.IsNullOrEmpty(techInfo))
+                        {
+                            ch.Notes = techInfo;
+                            logger.Report($"✅ {ch.PrimaryName} -> {techInfo}");
+                        }
+                        else
+                        {
+                            logger.Report($"✅ {ch.PrimaryName} Aktif");
+                        }
+
+                        await _db.SaveChannelAsync(ch);
+                    }
+                    else
+                    {
+                        ch.IsVerified = false;
+                        deadChannelIds.Add(ch.Id);
+                        logger.Report($"❌ {ch.PrimaryName} Yanıt Vermedi: {result.Status}");
+                        await _db.SaveChannelAsync(ch);
+                    }
+
+                    Dispatcher.Invoke(() => {
+                        ValidationProgressBar.Value = processed;
+                        var elapsed = DateTime.Now - startTime;
+                        var avgMs = elapsed.TotalMilliseconds / processed;
+                        var remaining = TimeSpan.FromMilliseconds(avgMs * (channels.Count - processed));
+                        ValidationProgressText.Text = $"İşlem: {processed}/{channels.Count} (Başarılı: {online})";
+                        ValidationFailedText.Text = $"Sinyal Yok: {deadChannelIds.Count}";
+                        ValidationTimeText.Text = $"Geçen: {elapsed:mm\\:ss} / Kalan: {remaining:mm\\:ss}";
+                    });
+                }
+
+                logger.Report($"🎉 İşlem tamamlandı. Toplam: {processed}, Aktif: {online}, Sorunlu: {deadChannelIds.Count}");
+
+                if (deadChannelIds.Count > 0)
+                {
+                    var result = System.Windows.MessageBox.Show(
+                        $"{deadChannelIds.Count} adet yanıt vermeyen kanal tespit edildi. Bu kanalları veritabanından silmek istiyor musunuz?",
+                        "Kanal Temizliği",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        await _db.DeleteChannelsAsync(deadChannelIds);
+                        System.Windows.MessageBox.Show($"{deadChannelIds.Count} kanal silindi.", "Başarılı");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Report($"❌ Kritik Hata: {ex.Message}");
+            }
+            finally
+            {
+                StartValidationBtn.IsEnabled = true;
+                StopValidationBtn.Visibility = Visibility.Collapsed;
+                _validationCts = null;
+            }
+        }
+
+        private void StopValidation_Click(object sender, RoutedEventArgs e)
+        {
+            _validationCts?.Cancel();
+            ValidationLogs.Insert(0, "🛑 Durdurma istendi...");
         }
     }
 }

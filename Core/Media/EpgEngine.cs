@@ -155,14 +155,36 @@ namespace StreamMesh.Core.Media
         private bool TryParseXmlTime(string time, out DateTime result)
         {
             result = DateTime.MinValue;
-            if (string.IsNullOrEmpty(time) || time.Length < 14) return false;
+            if (string.IsNullOrEmpty(time)) return false;
             try
             {
-                string s = time.Substring(0, 14);
-                result = DateTime.ParseExact(s, "yyyyMMddHHmmss", null);
-                return true;
+                // XMLTV format: yyyyMMddHHmmss [+-]HHmm
+                string cleanTime = time.Trim();
+                if (cleanTime.Length >= 14)
+                {
+                    string datePart = cleanTime.Substring(0, 14);
+                    DateTime dt = DateTime.ParseExact(datePart, "yyyyMMddHHmmss", null);
+
+                    if (cleanTime.Length > 15)
+                    {
+                        string offsetPart = cleanTime.Substring(14).Trim();
+                        if (offsetPart.Length >= 5 && (offsetPart.StartsWith("+") || offsetPart.StartsWith("-")))
+                        {
+                            int hours = int.Parse(offsetPart.Substring(1, 2));
+                            int mins = int.Parse(offsetPart.Substring(3, 2));
+                            TimeSpan offset = new TimeSpan(hours, mins, 0);
+                            if (offsetPart.StartsWith("-")) offset = offset.Negate();
+
+                            result = new DateTimeOffset(dt, offset).LocalDateTime;
+                            return true;
+                        }
+                    }
+                    result = dt;
+                    return true;
+                }
             }
-            catch { return false; }
+            catch { }
+            return DateTime.TryParse(time, out result);
         }
     }
 }

@@ -1,0 +1,6 @@
+- [x] Stop playback on minimize in `MainWindow.xaml.cs`
+- [x] Implement `StreamValidator.cs` with 3 test levels
+- [x] Add Broadcast Control UI to `SettingsView.xaml`
+- [x] Implement logic in `SettingsView.xaml.cs`
+- [x] Fix `DatabaseEngine.cs` to persist `IsVerified` status
+- [x] Verify auto-stop and broadcast testing features

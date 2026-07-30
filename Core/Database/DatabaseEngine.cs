@@ -146,7 +146,8 @@ namespace StreamMesh.Core.Database
                     "ALTER TABLE Channels ADD COLUMN UrlSpeeds TEXT DEFAULT ''",
                     "ALTER TABLE Channels ADD COLUMN PreferredNameIndex INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN PreferredLogoIndex INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN PreferredEpgIndex INTEGER DEFAULT 0"
+                    "ALTER TABLE Channels ADD COLUMN PreferredEpgIndex INTEGER DEFAULT 0",
+                    "ALTER TABLE EpgPrograms ADD COLUMN SourceUrl TEXT DEFAULT ''"
                 };
 
                 foreach (var sql in newCols)
@@ -244,7 +245,7 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels WHERE Category='Dizi' AND (Name LIKE @q OR Name LIKE @q2)";
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified FROM Channels WHERE Category='Dizi' AND (Name LIKE @q OR Name LIKE @q2)";
                     cmd.Parameters.AddWithValue("@q", seriesBaseName + "%");
                     cmd.Parameters.AddWithValue("@q2", "%" + seriesBaseName + "%");
 
@@ -289,7 +290,8 @@ namespace StreamMesh.Core.Database
                 PreferredNameIndex = reader.IsDBNull(20) ? 0 : reader.GetInt32(20),
                 PreferredLogoIndex = reader.IsDBNull(21) ? 0 : reader.GetInt32(21),
                 PreferredEpgIndex = reader.IsDBNull(22) ? 0 : reader.GetInt32(22),
-                IsWatched = !reader.IsDBNull(23) && reader.GetInt32(23) == 1
+                IsWatched = !reader.IsDBNull(23) && reader.GetInt32(23) == 1,
+                IsVerified = !reader.IsDBNull(24) && reader.GetInt32(24) == 1
             };
             if (!reader.IsDBNull(8)) { try { ch.CreatedAt = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(8)).DateTime; } catch { } }
             return ch;
@@ -304,7 +306,7 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels";
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified FROM Channels";
 
                     using var reader = await cmd.ExecuteReaderAsync();
                     while (await reader.ReadAsync())
@@ -338,7 +340,7 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei, @Watched) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei, @Watched, @Verified) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified";
                     cmd.Parameters.AddWithValue("@Id", ch.Id); cmd.Parameters.AddWithValue("@Name", ch.Name); cmd.Parameters.AddWithValue("@Url", ch.Url);
                     cmd.Parameters.AddWithValue("@Logo", ch.LogoUrl); cmd.Parameters.AddWithValue("@Group", ch.GroupTitle); cmd.Parameters.AddWithValue("@Cat", ch.Category);
                     cmd.Parameters.AddWithValue("@Lang", ch.Language); cmd.Parameters.AddWithValue("@Fav", ch.IsFavorite ? 1 : 0);
@@ -350,6 +352,7 @@ namespace StreamMesh.Core.Database
                     cmd.Parameters.AddWithValue("@Us", ch.UrlSpeeds ?? "");
                     cmd.Parameters.AddWithValue("@Pni", ch.PreferredNameIndex); cmd.Parameters.AddWithValue("@Pli", ch.PreferredLogoIndex); cmd.Parameters.AddWithValue("@Pei", ch.PreferredEpgIndex);
                     cmd.Parameters.AddWithValue("@Watched", ch.IsWatched ? 1 : 0);
+                    cmd.Parameters.AddWithValue("@Verified", ch.IsVerified ? 1 : 0);
                     await cmd.ExecuteNonQueryAsync();
                 }
                 ClearChannelCache();
@@ -371,7 +374,7 @@ namespace StreamMesh.Core.Database
 
                     var cmd = connection.CreateCommand();
                     cmd.Transaction = tx;
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei, @Watched) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pli, @Pei, @Watched, @Verified) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified";
 
                     var pId = cmd.Parameters.Add("@Id", SqliteType.Text);
                     var pName = cmd.Parameters.Add("@Name", SqliteType.Text);
@@ -397,6 +400,7 @@ namespace StreamMesh.Core.Database
                     var pPli = cmd.Parameters.Add("@Pli", SqliteType.Integer);
                     var pPei = cmd.Parameters.Add("@Pei", SqliteType.Integer);
                     var pWatched = cmd.Parameters.Add("@Watched", SqliteType.Integer);
+                    var pVerified = cmd.Parameters.Add("@Verified", SqliteType.Integer);
 
                     foreach (var ch in channels)
                     {
@@ -424,6 +428,7 @@ namespace StreamMesh.Core.Database
                         pPli.Value = ch.PreferredLogoIndex;
                         pPei.Value = ch.PreferredEpgIndex;
                         pWatched.Value = ch.IsWatched ? 1 : 0;
+                        pVerified.Value = ch.IsVerified ? 1 : 0;
 
                         cmd.ExecuteNonQuery();
                     }
@@ -461,7 +466,7 @@ namespace StreamMesh.Core.Database
                                 var chunk = urls.Skip(i).Take(400).ToList();
                                 string urlIn = string.Join("','", chunk.Select(u => u.Replace("'", "''")));
                                 var cmd = connection.CreateCommand();
-                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels WHERE Url IN ('{urlIn}')";
+                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified FROM Channels WHERE Url IN ('{urlIn}')";
                                 using var reader = await cmd.ExecuteReaderAsync();
                                 while (await reader.ReadAsync()) existing.Add(MapReaderToChannel(reader));
                             }
@@ -474,7 +479,7 @@ namespace StreamMesh.Core.Database
                                 var chunk = epgs.Skip(i).Take(400).ToList();
                                 string epgIn = string.Join("','", chunk.Select(e => e.Replace("'", "''")));
                                 var cmd = connection.CreateCommand();
-                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched FROM Channels WHERE EpgId IN ('{epgIn}')";
+                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified FROM Channels WHERE EpgId IN ('{epgIn}')";
                                 using var reader = await cmd.ExecuteReaderAsync();
                                 while (await reader.ReadAsync())
                                 {
@@ -576,40 +581,50 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    if (string.IsNullOrWhiteSpace(query))
-                    {
-                        cmd.CommandText = "SELECT DISTINCT ChannelName FROM EpgPrograms LIMIT 100";
-                    }
-                    else
-                    {
-                        cmd.CommandText = "SELECT DISTINCT ChannelName FROM EpgPrograms WHERE ChannelName LIKE @q LIMIT 100";
-                        cmd.Parameters.AddWithValue("@q", "%" + query.Trim() + "%");
-                    }
+                var epgSources = GetEpgSources();
+                string sourceIn = string.Join("','", epgSources.Select(s => s.Replace("'", "''")));
 
-                    using var reader = await cmd.ExecuteReaderAsync();
-                    var channelNames = new List<string>();
-                    while (await reader.ReadAsync())
-                    {
-                        string cn = reader.GetString(0);
-                        if (!string.IsNullOrWhiteSpace(cn)) channelNames.Add(cn);
-                    }
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    cmd.CommandText = allSources
+                        ? "SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms LIMIT 100"
+                        : $"SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE SourceUrl IN ('{sourceIn}') LIMIT 100";
+                }
+                else
+                {
+                    cmd.CommandText = allSources
+                        ? "SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE ChannelName LIKE @q LIMIT 100"
+                        : $"SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE ChannelName LIKE @q AND SourceUrl IN ('{sourceIn}') LIMIT 100";
+                    cmd.Parameters.AddWithValue("@q", "%" + query.Trim() + "%");
+                }
 
-                    foreach (var chName in channelNames)
-                    {
-                        var progCmd = connection.CreateCommand();
-                        progCmd.CommandText = "SELECT Title FROM EpgPrograms WHERE ChannelName = @cn ORDER BY StartTime DESC LIMIT 1";
-                        progCmd.Parameters.AddWithValue("@cn", chName);
-                        var titleObj = await progCmd.ExecuteScalarAsync();
-                        string progTitle = titleObj != null ? titleObj.ToString()! : "Yayın akışı bilgisi yok";
+                using var reader = await cmd.ExecuteReaderAsync();
+                var channelSources = new List<(string name, string url)>();
+                while (await reader.ReadAsync())
+                {
+                    string cn = reader.GetString(0);
+                    string su = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                    if (!string.IsNullOrWhiteSpace(cn)) channelSources.Add((cn, su));
+                }
 
-                        list.Add(new EpgChannelSearchResult
-                        {
-                            EpgId = chName,
-                            ChannelName = chName,
-                            CurrentProgram = progTitle,
-                            SourceName = allSources ? "Tüm EPG Kaynakları" : "Mevcut EPG Kaynağı"
-                        });
-                    }
+                foreach (var (chName, sourceUrl) in channelSources)
+                {
+                    var progCmd = connection.CreateCommand();
+                    progCmd.CommandText = "SELECT Title FROM EpgPrograms WHERE ChannelName = @cn AND SourceUrl = @su ORDER BY StartTime DESC LIMIT 1";
+                    progCmd.Parameters.AddWithValue("@cn", chName);
+                    progCmd.Parameters.AddWithValue("@su", sourceUrl);
+                    var titleObj = await progCmd.ExecuteScalarAsync();
+                    string progTitle = titleObj != null ? titleObj.ToString()! : "Yayın akışı bilgisi yok";
+
+                    list.Add(new EpgChannelSearchResult
+                    {
+                        EpgId = chName,
+                        ChannelName = chName,
+                        CurrentProgram = progTitle,
+                        SourceName = allSources ? "Tüm EPG Kaynakları" : "Mevcut EPG Kaynağı",
+                        SourceUrl = sourceUrl
+                    });
+                }
                 }
             }
             catch (Exception ex)
@@ -630,18 +645,18 @@ namespace StreamMesh.Core.Database
                 var startWin = now.AddHours(-2).ToString("o");
                 var endWin = now.AddHours(3).ToString("o");
 
-                cmd.CommandText = "SELECT ChannelName, Title, Description, StartTime, EndTime FROM EpgPrograms WHERE StartTime <= @EndWin AND EndTime >= @StartWin";
-                cmd.Parameters.AddWithValue("@StartWin", startWin);
-                cmd.Parameters.AddWithValue("@EndWin", endWin);
+            cmd.CommandText = "SELECT ChannelName, Title, Description, StartTime, EndTime, SourceUrl FROM EpgPrograms WHERE StartTime <= @EndWin AND EndTime >= @StartWin";
+            cmd.Parameters.AddWithValue("@StartWin", startWin);
+            cmd.Parameters.AddWithValue("@EndWin", endWin);
 
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    var ep = new EpgProgram { ChannelName = reader.GetString(0), Title = reader.GetString(1), Description = reader.GetString(2) };
-                    if (DateTime.TryParse(reader.GetString(3), out DateTime st)) ep.StartTime = st;
-                    if (DateTime.TryParse(reader.GetString(4), out DateTime et)) ep.EndTime = et;
-                    list.Add(ep);
-                }
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var ep = new EpgProgram { ChannelName = reader.GetString(0), Title = reader.GetString(1), Description = reader.GetString(2), SourceUrl = reader.IsDBNull(5) ? "" : reader.GetString(5) };
+                if (DateTime.TryParse(reader.GetString(3), out DateTime st)) ep.StartTime = st;
+                if (DateTime.TryParse(reader.GetString(4), out DateTime et)) ep.EndTime = et;
+                list.Add(ep);
+            }
             }
             return list;
         }
@@ -653,16 +668,16 @@ namespace StreamMesh.Core.Database
             {
                 await connection.OpenAsync();
                 var cmd = connection.CreateCommand();
-                string names = string.Join("','", channelNames.Select(n => n.Replace("'", "''")));
-                cmd.CommandText = $"SELECT ChannelName, Title, Description, StartTime, EndTime FROM EpgPrograms WHERE ChannelName IN ('{names}')";
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    var ep = new EpgProgram { ChannelName = reader.GetString(0), Title = reader.GetString(1), Description = reader.GetString(2) };
-                    if (DateTime.TryParse(reader.GetString(3), out DateTime st)) ep.StartTime = st;
-                    if (DateTime.TryParse(reader.GetString(4), out DateTime et)) ep.EndTime = et;
-                    list.Add(ep);
-                }
+            string names = string.Join("','", channelNames.Select(n => n.Replace("'", "''")));
+            cmd.CommandText = $"SELECT ChannelName, Title, Description, StartTime, EndTime, SourceUrl FROM EpgPrograms WHERE ChannelName IN ('{names}')";
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var ep = new EpgProgram { ChannelName = reader.GetString(0), Title = reader.GetString(1), Description = reader.GetString(2), SourceUrl = reader.IsDBNull(5) ? "" : reader.GetString(5) };
+                if (DateTime.TryParse(reader.GetString(3), out DateTime st)) ep.StartTime = st;
+                if (DateTime.TryParse(reader.GetString(4), out DateTime et)) ep.EndTime = et;
+                list.Add(ep);
+            }
             }
             return list;
         }
@@ -989,6 +1004,35 @@ namespace StreamMesh.Core.Database
             ExecuteRawNonQuery("DELETE FROM EpgPrograms");
             ClearChannelCache();
             NotifyDatabaseUpdated();
+        }
+
+        public async Task DeleteChannelsAsync(List<string> ids)
+        {
+            if (ids == null || ids.Count == 0) return;
+            await AsyncDbLock.WaitAsync();
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using var tx = connection.BeginTransaction();
+                    var cmd = connection.CreateCommand();
+                    cmd.Transaction = tx;
+
+                    // Delete in chunks to avoid SQL parameter limit
+                    for (int i = 0; i < ids.Count; i += 500)
+                    {
+                        var chunk = ids.Skip(i).Take(500).ToList();
+                        string idList = string.Join("','", chunk.Select(id => id.Replace("'", "''")));
+                        cmd.CommandText = $"DELETE FROM Channels WHERE Id IN ('{idList}')";
+                        await cmd.ExecuteNonQueryAsync();
+                    }
+                    tx.Commit();
+                }
+                ClearChannelCache();
+                NotifyDatabaseUpdated();
+            }
+            finally { AsyncDbLock.Release(); }
         }
 
         public void ClearChannelCache() { /* Cache removed */ }

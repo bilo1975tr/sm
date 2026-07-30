@@ -31,6 +31,7 @@ namespace StreamMesh.UI.Windows
         public ObservableCollection<StringWrapper> TempUrlList { get; set; } = new ObservableCollection<StringWrapper>();
         public ObservableCollection<StringWrapper> TempLogoList { get; set; } = new ObservableCollection<StringWrapper>();
         public ObservableCollection<StringWrapper> TempEpgList { get; set; } = new ObservableCollection<StringWrapper>();
+        public ObservableCollection<StringWrapper> TempEpgUrlList { get; set; } = new ObservableCollection<StringWrapper>();
 
         public ObservableCollection<LogoSearchResult> LogoSearchResults { get; set; } = new ObservableCollection<LogoSearchResult>();
         public ObservableCollection<EpgChannelSearchResult> EpgSearchResults { get; set; } = new ObservableCollection<EpgChannelSearchResult>();
@@ -73,6 +74,8 @@ namespace StreamMesh.UI.Windows
             foreach (var u in channel.GetUrlList()) TempUrlList.Add(new StringWrapper { Value = u });
             foreach (var l in channel.GetLogoList()) TempLogoList.Add(new StringWrapper { Value = l });
             foreach (var e in channel.GetEpgIdList()) TempEpgList.Add(new StringWrapper { Value = e });
+            var urls = (channel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var u in urls) TempEpgUrlList.Add(new StringWrapper { Value = u.Trim() });
 
             if (TempNameList.Count == 0 && !string.IsNullOrWhiteSpace(channel.Name))
                 TempNameList.Add(new StringWrapper { Value = channel.Name });
@@ -156,9 +159,22 @@ namespace StreamMesh.UI.Windows
         {
             if (sender is System.Windows.Controls.Button btn && btn.DataContext is EpgChannelSearchResult res)
             {
+                // Add EpgId to the top
+                var existingId = TempEpgList.FirstOrDefault(x => x.Value.Equals(res.EpgId, StringComparison.OrdinalIgnoreCase));
+                if (existingId != null) TempEpgList.Remove(existingId);
                 TempEpgList.Insert(0, new StringWrapper { Value = res.EpgId });
-                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Added EPG ID '{res.EpgId}' for channel '{_channel.Name}'");
-                System.Windows.MessageBox.Show($"EPG ID eklendi ve birincil olarak seçildi:\n{res.EpgId}", "EPG ID Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Also store the Source URL to prioritize this source later
+                if (!string.IsNullOrEmpty(res.SourceUrl))
+                {
+                    if (!TempEpgUrlList.Any(x => x.Value.Equals(res.SourceUrl, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        TempEpgUrlList.Insert(0, new StringWrapper { Value = res.SourceUrl });
+                    }
+                }
+
+                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Added EPG ID '{res.EpgId}' and Source '{res.SourceUrl}' for channel '{_channel.Name}'");
+                System.Windows.MessageBox.Show($"EPG ID ve Kaynak URL eklendi. Bu ID artık öncelikle bu kaynaktan okunacak:\n{res.EpgId}", "EPG ID Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -203,6 +219,7 @@ namespace StreamMesh.UI.Windows
 
         private void AddEpg_Click(object sender, RoutedEventArgs e) => TempEpgList.Add(new StringWrapper { Value = "" });
         private void RemoveEpg_Click(object sender, RoutedEventArgs e) { if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw) TempEpgList.Remove(sw); }
+        private void RemoveEpgUrl_Click(object sender, RoutedEventArgs e) { if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw) TempEpgUrlList.Remove(sw); }
         private void SetPrimaryEpg_Click(object sender, RoutedEventArgs e)
         {
             if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw)
@@ -269,6 +286,7 @@ namespace StreamMesh.UI.Windows
             _channel.Url = string.Join(",", TempUrlList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
             _channel.LogoUrl = string.Join(",", TempLogoList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
             _channel.EpgId = string.Join(",", TempEpgList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+            _channel.EpgUrl = string.Join(",", TempEpgUrlList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
 
             await _db.SaveChannelAsync(_channel);
             DialogResult = true;

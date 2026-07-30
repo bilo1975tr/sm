@@ -192,7 +192,7 @@ namespace StreamMesh.Core.Media
 
             var urlsToFetch = new[]
             {
-                (Url: $"https://iptvcat.com/s/{encoded}", State: "Aktif"),
+                (Url: $"https://iptvcat.com/s/{encoded}?state=working", State: "Çalışan"),
                 (Url: $"https://iptvcat.com/s/{encoded}?state=submitted", State: "Eklenen")
             };
 

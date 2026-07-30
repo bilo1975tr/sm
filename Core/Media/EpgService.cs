@@ -22,78 +22,102 @@ namespace StreamMesh.Core.Media
                 var programs = await _db.GetCurrentEpgProgramsAsync();
                 var now = DateTime.Now;
 
-                var activePrograms = programs.Where(p => now >= p.StartTime && now <= p.EndTime).ToList();
-                if (activePrograms.Count == 0) activePrograms = programs;
+                // V1.8.9: Multi-index structure for faster lookups
+                var lookupByChannel = new Dictionary<string, List<EpgProgram>>(StringComparer.OrdinalIgnoreCase);
+                var lookupByNormKey = new Dictionary<string, List<EpgProgram>>(StringComparer.OrdinalIgnoreCase);
 
-                var exactLookup = new Dictionary<string, EpgProgram>(StringComparer.OrdinalIgnoreCase);
-                var normLookup = new Dictionary<string, EpgProgram>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var p in activePrograms)
+                foreach (var p in programs)
                 {
                     if (string.IsNullOrWhiteSpace(p.ChannelName)) continue;
 
-                    if (!exactLookup.ContainsKey(p.ChannelName)) exactLookup[p.ChannelName] = p;
+                    if (!lookupByChannel.TryGetValue(p.ChannelName, out var listByCh))
+                    {
+                        listByCh = new List<EpgProgram>();
+                        lookupByChannel[p.ChannelName] = listByCh;
+                    }
+                    listByCh.Add(p);
 
                     string normKey = ChannelUtils.ToNormalizedKey(p.ChannelName);
-                    if (!string.IsNullOrEmpty(normKey) && !normLookup.ContainsKey(normKey))
+                    if (!string.IsNullOrEmpty(normKey))
                     {
-                        normLookup[normKey] = p;
+                        if (!lookupByNormKey.TryGetValue(normKey, out var listByNorm))
+                        {
+                            listByNorm = new List<EpgProgram>();
+                            lookupByNormKey[normKey] = listByNorm;
+                        }
+                        listByNorm.Add(p);
                     }
                 }
 
                 foreach (var ch in channels)
                 {
-                    EpgProgram? current = null;
+                    EpgProgram? bestMatch = null;
+                    var chEpgIds = ch.GetEpgIdList();
+                    var chEpgUrls = (ch.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
 
-                    // 1. Match by EpgId
-                    if (!string.IsNullOrWhiteSpace(ch.EpgId) && exactLookup.TryGetValue(ch.EpgId, out current))
+                    // 1. Try Matching by EpgId (Multiple IDs supported)
+                    foreach (var epgId in chEpgIds)
                     {
-                        dict[ch.Id] = current;
-                        continue;
+                        if (lookupByChannel.TryGetValue(epgId, out var candidates))
+                        {
+                            bestMatch = FindBestProgram(candidates, chEpgUrls, now);
+                            if (bestMatch != null) break;
+                        }
                     }
 
-                    // 2. Match by exact Name
-                    if (!string.IsNullOrWhiteSpace(ch.Name) && exactLookup.TryGetValue(ch.Name, out current))
+                    // 2. Try Exact Name Match
+                    if (bestMatch == null)
                     {
-                        dict[ch.Id] = current;
-                        continue;
+                        if (lookupByChannel.TryGetValue(ch.Name, out var candidates))
+                        {
+                            bestMatch = FindBestProgram(candidates, chEpgUrls, now);
+                        }
                     }
 
-                    // 3. Match by Normalized Key
-                    string chNormKey = ChannelUtils.ToNormalizedKey(ch.Name);
-                    if (!string.IsNullOrEmpty(chNormKey) && normLookup.TryGetValue(chNormKey, out current))
+                    // 3. Try Normalized Key Match
+                    if (bestMatch == null)
                     {
-                        dict[ch.Id] = current;
-                        continue;
+                        string chNormKey = ChannelUtils.ToNormalizedKey(ch.Name);
+                        if (!string.IsNullOrEmpty(chNormKey) && lookupByNormKey.TryGetValue(chNormKey, out var candidates))
+                        {
+                            bestMatch = FindBestProgram(candidates, chEpgUrls, now);
+                        }
                     }
 
-                    // 4. Match by Clean Name
-                    string cleanName = ChannelUtils.GetCleanName(ch.Name);
-                    if (!string.IsNullOrEmpty(cleanName) && exactLookup.TryGetValue(cleanName, out current))
+                    // 4. Try Clean Name Match
+                    if (bestMatch == null)
                     {
-                        dict[ch.Id] = current;
-                        continue;
+                        string cleanName = ChannelUtils.GetCleanName(ch.Name);
+                        if (!string.IsNullOrEmpty(cleanName) && lookupByChannel.TryGetValue(cleanName, out var candidates))
+                        {
+                            bestMatch = FindBestProgram(candidates, chEpgUrls, now);
+                        }
                     }
 
-                // 5. Fast Fuzzy / Contains Match (V1.8.8 Optimized)
-                // Remove heavy O(N*M) loop that causes hang on large databases.
-                // Priority is given to exact and normalized matches above.
-                if (current == null && !string.IsNullOrEmpty(chNormKey) && chNormKey.Length >= 4)
-                {
-                    // Only try lookup if not found in dictionary, but skip full scan for speed.
-                    if (normLookup.TryGetValue(chNormKey, out current))
-                    {
-                        dict[ch.Id] = current;
-                    }
+                    if (bestMatch != null) dict[ch.Id] = bestMatch;
                 }
             }
+            catch (Exception ex)
+            {
+                LogService.LogError("EpgService.GetCurrentEpgsAsync failed", ex);
+            }
+            return dict;
         }
-        catch (Exception ex)
+
+        private EpgProgram? FindBestProgram(List<EpgProgram> candidates, List<string> preferredUrls, DateTime now)
         {
-            LogService.LogError("EpgService.GetCurrentEpgsAsync failed", ex);
+            var active = candidates.Where(p => now >= p.StartTime && now <= p.EndTime).ToList();
+            if (active.Count == 0) return null;
+
+            // Prioritize by source URL if specified
+            if (preferredUrls.Count > 0)
+            {
+                var preferred = active.FirstOrDefault(p => preferredUrls.Any(u => (p.SourceUrl ?? "").Contains(u)));
+                if (preferred != null) return preferred;
+            }
+
+            return active.FirstOrDefault();
         }
-        return dict;
-    }
 
         public async Task<EpgProgram?> GetNextEpgAsync(Channel channel)
         {
@@ -101,16 +125,25 @@ namespace StreamMesh.Core.Media
             try
             {
                 var namesToTry = new List<string>();
-                if (!string.IsNullOrWhiteSpace(channel.EpgId)) namesToTry.Add(channel.EpgId);
+                namesToTry.AddRange(channel.GetEpgIdList());
                 namesToTry.Add(channel.Name);
                 string clean = ChannelUtils.GetCleanName(channel.Name);
                 if (!string.IsNullOrWhiteSpace(clean)) namesToTry.Add(clean);
 
                 var programs = await _db.GetEpgForChannelsAsync(namesToTry.Distinct().ToList());
                 var now = DateTime.Now;
-                return programs.Where(p => p.StartTime > now)
-                               .OrderBy(p => p.StartTime)
-                               .FirstOrDefault();
+                var chEpgUrls = (channel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
+
+                var future = programs.Where(p => p.StartTime > now).OrderBy(p => p.StartTime).ToList();
+                if (future.Count == 0) return null;
+
+                if (chEpgUrls.Count > 0)
+                {
+                    var pref = future.FirstOrDefault(p => chEpgUrls.Any(u => (p.SourceUrl ?? "").Contains(u)));
+                    if (pref != null) return pref;
+                }
+
+                return future.FirstOrDefault();
             }
             catch { return null; }
         }
