@@ -292,16 +292,60 @@ namespace StreamMesh.UI.Views
         {
             if (_validationCts != null) return;
 
-            var channels = await _db.GetAllChannelsAsync();
-            if (channels.Count == 0)
+            var allChannels = await _db.GetAllChannelsAsync();
+            if (allChannels.Count == 0)
             {
                 System.Windows.MessageBox.Show("Test edilecek kanal bulunamadı.");
                 return;
             }
 
+            bool onlyUnverified = CheckOnlyUnverified.IsChecked == true;
+            var channelsToTest = onlyUnverified ? allChannels.Where(c => !c.IsVerified).ToList() : allChannels;
+
+            if (channelsToTest.Count == 0)
+            {
+                System.Windows.MessageBox.Show("Test edilecek taranmamış kanal bulunamadı. (Tüm kanallar önceden taranmış ve doğrulanmış)");
+                return;
+            }
+
+            // Interleave channels by host key so adjacent queue items belong to different servers/hosts
+            var groupedByHost = channelsToTest
+                .GroupBy(GetChannelHostKey)
+                .Select(g => new Queue<Channel>(g))
+                .ToList();
+
+            var interleavedChannels = new List<Channel>();
+            while (groupedByHost.Count > 0)
+            {
+                for (int i = groupedByHost.Count - 1; i >= 0; i--)
+                {
+                    var queue = groupedByHost[i];
+                    if (queue.Count > 0)
+                    {
+                        interleavedChannels.Add(queue.Dequeue());
+                    }
+                    if (queue.Count == 0)
+                    {
+                        groupedByHost.RemoveAt(i);
+                    }
+                }
+            }
+            channelsToTest = interleavedChannels;
+
+            int concurrency = 5;
+            if (ComboConcurrency.SelectedItem is ComboBoxItem comboItem && comboItem.Content != null)
+            {
+                string text = comboItem.Content.ToString() ?? "";
+                var match = System.Text.RegularExpressions.Regex.Match(text, @"\d+");
+                if (match.Success && int.TryParse(match.Value, out int parsed))
+                {
+                    concurrency = Math.Max(1, parsed);
+                }
+            }
+
             ValidationLogs.Clear();
             ValidationProgressBar.Value = 0;
-            ValidationProgressBar.Maximum = channels.Count;
+            ValidationProgressBar.Maximum = channelsToTest.Count;
             StartValidationBtn.IsEnabled = false;
             StopValidationBtn.Visibility = Visibility.Visible;
             ValidationFailedText.Visibility = Visibility.Visible;
@@ -315,69 +359,165 @@ namespace StreamMesh.UI.Views
             var startTime = DateTime.Now;
             int processed = 0;
             int online = 0;
-            var deadChannelIds = new List<string>();
+            var deadChannelIds = new System.Collections.Concurrent.ConcurrentBag<string>();
+            var updatedChannels = new System.Collections.Concurrent.ConcurrentBag<Channel>();
+            var logQueue = new System.Collections.Concurrent.ConcurrentQueue<string>();
 
-            IProgress<string> logger = new Progress<string>(msg => {
-                Dispatcher.Invoke(() => {
-                    ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - {msg}");
-                    if (ValidationLogs.Count > 500) ValidationLogs.RemoveAt(ValidationLogs.Count - 1);
-                });
+            ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🚀 Test başlatıldı: {channelsToTest.Count} kanal ({concurrency} eşzamanlı iş parçacığı)");
+
+            var token = _validationCts.Token;
+
+            // Background UI throttler task
+            using var uiCts = new System.Threading.CancellationTokenSource();
+            var uiUpdaterTask = Task.Run(async () =>
+            {
+                while (!uiCts.Token.IsCancellationRequested)
+                {
+                    await Task.Delay(250).ConfigureAwait(false);
+
+                    var logItems = new List<string>();
+                    while (logQueue.TryDequeue(out var item)) logItems.Add(item);
+
+                    int curProcessed = processed;
+                    int curOnline = online;
+                    int curDead = deadChannelIds.Count;
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (logItems.Count > 0)
+                        {
+                            foreach (var item in logItems)
+                            {
+                                ValidationLogs.Insert(0, item);
+                            }
+                            while (ValidationLogs.Count > 500) ValidationLogs.RemoveAt(ValidationLogs.Count - 1);
+                        }
+
+                        ValidationProgressBar.Value = curProcessed;
+                        var elapsed = DateTime.Now - startTime;
+                        double avgMs = curProcessed > 0 ? elapsed.TotalMilliseconds / curProcessed : 0;
+                        var remaining = curProcessed > 0 ? TimeSpan.FromMilliseconds((avgMs * (channelsToTest.Count - curProcessed)) / concurrency) : TimeSpan.Zero;
+
+                        ValidationProgressText.Text = $"İşlem: {curProcessed}/{channelsToTest.Count} (Aktif: {curOnline})";
+                        ValidationFailedText.Text = $"Sinyal Yok: {curDead}";
+                        ValidationTimeText.Text = $"Geçen: {elapsed:mm\\:ss} / Kalan: {remaining:mm\\:ss}";
+                    });
+                }
             });
 
             try
             {
-                using var validator = new StreamValidator();
-                foreach (var ch in channels)
+                // Run parallel validation in background thread with per-host lock protection
+                await Task.Run(async () =>
                 {
-                    if (_validationCts.IsCancellationRequested) break;
+                    using var globalSemaphore = new System.Threading.SemaphoreSlim(concurrency, concurrency);
+                    var hostLocks = new System.Collections.Concurrent.ConcurrentDictionary<string, System.Threading.SemaphoreSlim>();
 
-                    processed++;
-                    var result = await validator.ValidateAsync(ch, level, logger);
-
-                    if (result.IsOnline)
+                    var tasks = channelsToTest.Select(async ch =>
                     {
-                        online++;
-                        ch.IsVerified = true;
+                        if (token.IsCancellationRequested) return;
 
-                        string techInfo = "";
-                        if (!string.IsNullOrEmpty(result.Resolution)) techInfo += $"Res: {result.Resolution} ";
-                        if (!string.IsNullOrEmpty(result.VideoCodec)) techInfo += $"Vid: {result.VideoCodec} ";
-                        if (!string.IsNullOrEmpty(result.AudioCodec)) techInfo += $"Aud: {result.AudioCodec}";
+                        string hostKey = GetChannelHostKey(ch);
+                        var hostSemaphore = hostLocks.GetOrAdd(hostKey, _ => new System.Threading.SemaphoreSlim(1, 1));
 
-                        if (!string.IsNullOrEmpty(techInfo))
+                        await globalSemaphore.WaitAsync().ConfigureAwait(false);
+                        try
                         {
-                            ch.Notes = techInfo;
-                            logger.Report($"✅ {ch.PrimaryName} -> {techInfo}");
+                            if (token.IsCancellationRequested) return;
+
+                            await hostSemaphore.WaitAsync().ConfigureAwait(false);
+                            try
+                            {
+                                if (token.IsCancellationRequested) return;
+
+                                using var validator = new StreamValidator();
+                                var result = await validator.ValidateAsync(ch, level, null).ConfigureAwait(false);
+
+                                if (result.IsOnline)
+                                {
+                                    System.Threading.Interlocked.Increment(ref online);
+                                    ch.IsVerified = true;
+
+                                    string techInfo = "";
+                                    if (!string.IsNullOrEmpty(result.Resolution)) techInfo += $"Res: {result.Resolution} ";
+                                    if (!string.IsNullOrEmpty(result.VideoCodec)) techInfo += $"Vid: {result.VideoCodec} ";
+                                    if (!string.IsNullOrEmpty(result.AudioCodec)) techInfo += $"Aud: {result.AudioCodec}";
+
+                                    if (!string.IsNullOrEmpty(techInfo))
+                                    {
+                                        ch.Notes = techInfo;
+                                        logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} -> {techInfo}");
+                                    }
+                                    else
+                                    {
+                                        logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} Aktif");
+                                    }
+                                }
+                                else
+                                {
+                                    ch.IsVerified = false;
+                                    deadChannelIds.Add(ch.Id);
+                                    logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ❌ {ch.PrimaryName} Yanıt Vermedi: {result.Status}");
+                                }
+
+                                updatedChannels.Add(ch);
+                                System.Threading.Interlocked.Increment(ref processed);
+                            }
+                            finally
+                            {
+                                hostSemaphore.Release();
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            logger.Report($"✅ {ch.PrimaryName} Aktif");
+                            logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ⚠️ {ch.PrimaryName} Hata: {ex.Message}");
                         }
-
-                        await _db.SaveChannelAsync(ch);
-                    }
-                    else
-                    {
-                        ch.IsVerified = false;
-                        deadChannelIds.Add(ch.Id);
-                        logger.Report($"❌ {ch.PrimaryName} Yanıt Vermedi: {result.Status}");
-                        await _db.SaveChannelAsync(ch);
-                    }
-
-                    Dispatcher.Invoke(() => {
-                        ValidationProgressBar.Value = processed;
-                        var elapsed = DateTime.Now - startTime;
-                        var avgMs = elapsed.TotalMilliseconds / processed;
-                        var remaining = TimeSpan.FromMilliseconds(avgMs * (channels.Count - processed));
-                        ValidationProgressText.Text = $"İşlem: {processed}/{channels.Count} (Başarılı: {online})";
-                        ValidationFailedText.Text = $"Sinyal Yok: {deadChannelIds.Count}";
-                        ValidationTimeText.Text = $"Geçen: {elapsed:mm\\:ss} / Kalan: {remaining:mm\\:ss}";
+                        finally
+                        {
+                            globalSemaphore.Release();
+                        }
                     });
+
+                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                });
+            }
+            catch (Exception ex)
+            {
+                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ❌ Kritik Hata: {ex.Message}");
+            }
+            finally
+            {
+                // Stop UI updater loop
+                uiCts.Cancel();
+                try { await uiUpdaterTask; } catch { }
+
+                // Final UI log flush
+                var remainingLogs = new List<string>();
+                while (logQueue.TryDequeue(out var item)) remainingLogs.Add(item);
+                if (remainingLogs.Count > 0)
+                {
+                    foreach (var item in remainingLogs) ValidationLogs.Insert(0, item);
+                    while (ValidationLogs.Count > 500) ValidationLogs.RemoveAt(ValidationLogs.Count - 1);
                 }
 
-                logger.Report($"🎉 İşlem tamamlandı. Toplam: {processed}, Aktif: {online}, Sorunlu: {deadChannelIds.Count}");
+                // Save batch to database quietly
+                if (updatedChannels.Count > 0)
+                {
+                    DatabaseEngine.SuppressEvents = true;
+                    try
+                    {
+                        await _db.SaveChannelsBatchAsync(updatedChannels.ToList());
+                    }
+                    finally
+                    {
+                        DatabaseEngine.SuppressEvents = false;
+                    }
+                }
 
-                if (deadChannelIds.Count > 0)
+                ValidationProgressText.Text = $"Tamamlandı: {processed}/{channelsToTest.Count} (Aktif: {online})";
+                ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🎉 İşlem tamamlandı. Toplam: {processed}, Aktif: {online}, Sorunlu: {deadChannelIds.Count}");
+
+                if (deadChannelIds.Count > 0 && !token.IsCancellationRequested)
                 {
                     var result = System.Windows.MessageBox.Show(
                         $"{deadChannelIds.Count} adet yanıt vermeyen kanal tespit edildi. Bu kanalları veritabanından silmek istiyor musunuz?",
@@ -387,17 +527,11 @@ namespace StreamMesh.UI.Views
 
                     if (result == MessageBoxResult.Yes)
                     {
-                        await _db.DeleteChannelsAsync(deadChannelIds);
+                        await _db.DeleteChannelsAsync(deadChannelIds.ToList());
                         System.Windows.MessageBox.Show($"{deadChannelIds.Count} kanal silindi.", "Başarılı");
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                logger.Report($"❌ Kritik Hata: {ex.Message}");
-            }
-            finally
-            {
+
                 StartValidationBtn.IsEnabled = true;
                 StopValidationBtn.Visibility = Visibility.Collapsed;
                 _validationCts = null;
@@ -408,6 +542,34 @@ namespace StreamMesh.UI.Views
         {
             _validationCts?.Cancel();
             ValidationLogs.Insert(0, "🛑 Durdurma istendi...");
+        }
+
+        private static string GetChannelHostKey(Channel ch)
+        {
+            string url = ch.GetUrlList().FirstOrDefault() ?? "";
+            if (string.IsNullOrWhiteSpace(url)) return "unknown";
+
+            if (url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("PID:", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("PID=", StringComparison.OrdinalIgnoreCase))
+            {
+                return "acestream_engine";
+            }
+
+            try
+            {
+                var uri = new Uri(url);
+                if (uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+                    uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "acestream_engine";
+                }
+                return $"{uri.Host}:{uri.Port}".ToLowerInvariant();
+            }
+            catch
+            {
+                return "unknown";
+            }
         }
     }
 }

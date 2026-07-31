@@ -43,12 +43,43 @@ namespace StreamMesh.Core.Media
         {
             RaiseSyncStarted();
             LogService.LogInfo("GitHubSyncEngine: Otomatik güncelleme başlatıldı.");
-            OnProgress?.Invoke(2, "Yapılandırma dosyası çekiliyor (auto_update.json)...");
+            OnProgress?.Invoke(2, "Temizlenmiş yayın listesi kontrol ediliyor (cleaned_playlist.m3u)...");
             try
             {
-                // 1. Fetch Config
+                // 1. Önce GitHub Actions tarafından oluşturulan temizlenmiş master M3U listesini dene
+                string cleanM3uUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/cleaned_playlist.m3u";
+                bool cleanM3uLoaded = false;
+
+                try
+                {
+                    using var cleanCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    var response = await _httpClient.GetAsync(cleanM3uUrl, cleanCts.Token);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        OnProgress?.Invoke(15, "Temizlenmiş master liste indiriliyor...");
+                        _db.AddM3uSource(cleanM3uUrl);
+                        var channels = await _m3u.ParseM3uAsync(cleanM3uUrl, "GENEL", true, (subMsg, subPct) =>
+                        {
+                            OnProgress?.Invoke(20 + (int)(subPct * 0.6), $"Temizlenmiş liste işleniyor: {subMsg}");
+                        });
+
+                        if (channels != null && channels.Count > 0)
+                        {
+                            await _db.SyncIncomingChannelsAsync(channels);
+                            cleanM3uLoaded = true;
+                            OnProgress?.Invoke(80, $"🎉 {channels.Count} adet doğrulanmış ve temizlenmiş kanal eklendi!");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogWarning($"Clean M3U yüklenemedi, yedek moda geçiliyor: {ex.Message}");
+                }
+
+                // 2. Eğer clean M3U bulunamadıysa varsayılan auto_update.json kaynaklarını indir
                 string configJson = "";
                 string configUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/auto_update.json";
+                
                 try
                 {
                     using var configCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -70,70 +101,40 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
-                if (string.IsNullOrEmpty(configJson))
+                if (!string.IsNullOrEmpty(configJson))
                 {
-                    OnProgress?.Invoke(0, "Hata: Yapılandırma dosyası (auto_update.json) okunamadı.");
-                    return;
-                }
-
-                var cfg = JsonConvert.DeserializeObject<AutoUpdateConfig>(configJson);
-                if (cfg == null)
-                {
-                    OnProgress?.Invoke(0, "Hata: Yapılandırma dosyası boş veya geçersiz.");
-                    return;
-                }
-
-                int totalSources = (cfg.Tv?.Count ?? 0) + (cfg.Film?.Count ?? 0) + (cfg.Dizi?.Count ?? 0) + (cfg.Radyo?.Count ?? 0) + (cfg.Epg?.Count ?? 0);
-                if (totalSources == 0)
-                {
-                    OnProgress?.Invoke(100, "Güncellenecek yayın kaynağı bulunamadı.");
-                    return;
-                }
-
-                int processedSources = 0;
-
-                // 2. Process TV Lists
-                if (cfg.Tv != null && cfg.Tv.Count > 0)
-                {
-                    await ProcessListWithProgress(cfg.Tv, "TV", totalSources, () => ++processedSources);
-                }
-
-                // 3. Process Film Lists
-                if (cfg.Film != null && cfg.Film.Count > 0)
-                {
-                    await ProcessListWithProgress(cfg.Film, "Film", totalSources, () => ++processedSources);
-                }
-
-                // 4. Process Dizi Lists
-                if (cfg.Dizi != null && cfg.Dizi.Count > 0)
-                {
-                    await ProcessListWithProgress(cfg.Dizi, "Dizi", totalSources, () => ++processedSources);
-                }
-
-                // 4.5. Process Radio Lists
-                if (cfg.Radyo != null && cfg.Radyo.Count > 0)
-                {
-                    await ProcessListWithProgress(cfg.Radyo, "Radyo", totalSources, () => ++processedSources);
-                }
-
-                // 5. Process EPG Sources
-                if (cfg.Epg != null && cfg.Epg.Count > 0)
-                {
-                    var epgEng = new EpgEngine();
-                    for (int i = 0; i < cfg.Epg.Count; i++)
+                    var cfg = JsonConvert.DeserializeObject<AutoUpdateConfig>(configJson);
+                    if (cfg != null)
                     {
-                        string url = cfg.Epg[i];
-                        if (string.IsNullOrWhiteSpace(url)) continue;
-                        int currentIdx = ++processedSources;
-                        double baseProgress = (double)(currentIdx - 1) / totalSources * 100.0;
-                        double itemWeight = 100.0 / totalSources;
-
-                        _db.AddEpgSource(url);
-                        await epgEng.LoadEpgAsync(url, (subMsg, subPct) =>
+                        // Eğer clean M3U yüklenemediyse ham listeleri tara
+                        if (!cleanM3uLoaded)
                         {
-                            double overallPct = Math.Min(99.0, baseProgress + (subPct / 100.0) * itemWeight);
-                            OnProgress?.Invoke((int)overallPct, $"[{currentIdx}/{totalSources}] EPG Rehberi ({i + 1}/{cfg.Epg.Count}): {subMsg}");
-                        });
+                            int totalSources = (cfg.Tv?.Count ?? 0) + (cfg.Film?.Count ?? 0) + (cfg.Dizi?.Count ?? 0) + (cfg.Radyo?.Count ?? 0) + (cfg.Epg?.Count ?? 0);
+                            int processedSources = 0;
+
+                            if (cfg.Tv != null && cfg.Tv.Count > 0) await ProcessListWithProgress(cfg.Tv, "TV", totalSources, () => ++processedSources);
+                            if (cfg.Film != null && cfg.Film.Count > 0) await ProcessListWithProgress(cfg.Film, "Film", totalSources, () => ++processedSources);
+                            if (cfg.Dizi != null && cfg.Dizi.Count > 0) await ProcessListWithProgress(cfg.Dizi, "Dizi", totalSources, () => ++processedSources);
+                            if (cfg.Radyo != null && cfg.Radyo.Count > 0) await ProcessListWithProgress(cfg.Radyo, "Radyo", totalSources, () => ++processedSources);
+                        }
+
+                        // EPG Verilerini Her Durumda Güncelle
+                        if (cfg.Epg != null && cfg.Epg.Count > 0)
+                        {
+                            OnProgress?.Invoke(85, "Yayın akışları (EPG) güncelleniyor...");
+                            var epgEng = new EpgEngine();
+                            for (int i = 0; i < cfg.Epg.Count; i++)
+                            {
+                                string url = cfg.Epg[i];
+                                if (string.IsNullOrWhiteSpace(url)) continue;
+
+                                _db.AddEpgSource(url);
+                                await epgEng.LoadEpgAsync(url, (subMsg, subPct) =>
+                                {
+                                    OnProgress?.Invoke(85 + (int)(subPct * 0.14), $"EPG Rehberi ({i + 1}/{cfg.Epg.Count}): {subMsg}");
+                                });
+                            }
+                        }
                     }
                 }
 

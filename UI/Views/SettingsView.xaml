@@ -209,6 +209,17 @@
                                 <RadioButton x:Name="RadioFull" Content="En Detaylı (Kodek/Çözünürlük)" Foreground="White"/>
                             </StackPanel>
 
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                <CheckBox x:Name="CheckOnlyUnverified" Content="Sadece Kontrol Edilmeyenleri (Taranmayanları) Tara" Foreground="#38bdf8" IsChecked="True" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                <TextBlock Text="Eşzamanlı İş Parçacığı:" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <ComboBox x:Name="ComboConcurrency" Width="70" Height="30" VerticalAlignment="Center" Background="#0f172a" Foreground="White">
+                                    <ComboBoxItem Content="3 x" />
+                                    <ComboBoxItem Content="5 x" IsSelected="True" />
+                                    <ComboBoxItem Content="10 x" />
+                                    <ComboBoxItem Content="20 x" />
+                                </ComboBox>
+                            </StackPanel>
+
                             <Grid Margin="0,0,0,15">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>

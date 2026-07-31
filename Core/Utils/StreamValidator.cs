@@ -55,6 +55,23 @@ namespace StreamMesh.Core.Utils
                 return result;
             }
 
+            // AceStream URL handling
+            if (url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
+            {
+                string hash = url.Substring(12).Trim('/');
+                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
+            }
+            else if (url.StartsWith("PID:", StringComparison.OrdinalIgnoreCase))
+            {
+                string hash = url.Substring(4).Trim();
+                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
+            }
+            else if (url.StartsWith("PID=", StringComparison.OrdinalIgnoreCase))
+            {
+                string hash = url.Substring(4).Trim();
+                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
+            }
+
             // --- Fast Test ---
             try
             {

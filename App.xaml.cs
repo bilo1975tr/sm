@@ -72,10 +72,7 @@ namespace StreamMesh
             Ssdp = new SsdpService();
             Server.Start();
 
-            // 5. Logo Index Sync
-            Task.Run(async () => await new LogoSyncService().SyncIfNecessaryAsync());
-
-            // 6. AceStream Engine Auto-Start
+            // 5. AceStream Engine Auto-Start
             Task.Run(async () => await new AceEngine().StartEngineAsync());
 
             // 3. Background Cloud Sync (Delayed by 15s to allow fast startup)
