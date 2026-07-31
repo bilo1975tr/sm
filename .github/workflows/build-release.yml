@@ -104,6 +104,7 @@ jobs:
           git add VERSION
           if ! git diff --staged --quiet; then
             git commit -m "bump: Auto-increment version to v${{ env.APP_VERSION }}"
+            git pull --rebase origin ${{ github.ref_name }}
             git push origin HEAD:${{ github.ref_name }} || true
           fi
 
