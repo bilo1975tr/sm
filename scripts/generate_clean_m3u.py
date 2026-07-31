@@ -21,15 +21,9 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 from urllib.request import Request, urlopen
+from urllib.parse import quote, urlparse
 from urllib.error import URLError, HTTPError
 from concurrent.futures import ThreadPoolExecutor
-
-try:
-    import aiohttp
-    import asyncio
-    HAS_AIOHTTP = True
-except ImportError:
-    HAS_AIOHTTP = False
 
 EXTINF_RE = re.compile(r'#EXTINF:(?P<duration>[-0-9]+)?(?P<attrs>.*),(?P<name>.*)')
 ATTR_RE = re.compile(r'([a-zA-Z0-9\-]+?)="([^"]*)"')
@@ -47,9 +41,25 @@ def normalize_name(s: str) -> str:
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
-def fetch_text_sync(url: str, timeout: int = 25) -> str:
+def sanitize_url(url: str) -> str:
+    """URL içindeki Türkçe ve özel karakterleri safe quote eder."""
+    if not url:
+        return ""
+    url = url.strip()
+    if not (url.startswith('http://') or url.startswith('https://')):
+        return ""
+    try:
+        # Sadece non-ASCII karakterleri quote et
+        return quote(url, safe=":/%#?=@[]!$&'()*+,;")
+    except Exception:
+        return url
+
+def fetch_text_sync(url: str, timeout: int = 20) -> str:
     """Standart kütüphane ile URL içeriği indirir."""
-    req = Request(url, headers={'User-Agent': DEFAULT_USER_AGENT})
+    clean_url = sanitize_url(url)
+    if not clean_url:
+        return ""
+    req = Request(clean_url, headers={'User-Agent': DEFAULT_USER_AGENT})
     try:
         with urlopen(req, timeout=timeout) as resp:
             charset = resp.headers.get_content_charset() or 'utf-8'
@@ -58,13 +68,16 @@ def fetch_text_sync(url: str, timeout: int = 25) -> str:
         print(f"[x] İndirme hatası ({url}): {e}")
         return ""
 
-def check_stream_sync(url: str, timeout: int = 8) -> tuple:
+def check_stream_sync(url: str, timeout: int = 5) -> tuple:
     """Standart kütüphane ile yayın bağlantısını test eder."""
-    req = Request(url, headers={'User-Agent': DEFAULT_USER_AGENT})
+    clean_url = sanitize_url(url)
+    if not clean_url:
+        return False, "Geçersiz URL formatı"
+    req = Request(clean_url, headers={'User-Agent': DEFAULT_USER_AGENT})
     try:
         with urlopen(req, timeout=timeout) as resp:
             if resp.status < 400:
-                chunk = resp.read(512)
+                chunk = resp.read(256)
                 if len(chunk) > 0:
                     return True, f"HTTP {resp.status}"
                 return False, "Boş yanıt"
@@ -93,7 +106,9 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
             while j < len(lines):
                 nxt = lines[j].strip()
                 if nxt and not nxt.startswith('#'):
-                    url = nxt
+                    # Sadece geçerli http veya https URL'leri kabul et
+                    if nxt.startswith('http://') or nxt.startswith('https://'):
+                        url = nxt
                     break
                 j += 1
             
@@ -147,24 +162,31 @@ def parse_epg_xml(xml_content: str):
 def fetch_tv_logos_sync(github_token=None):
     """tv-logo reposundan logo verilerini indirir."""
     logos = {}
-    gh_api = "https://api.github.com/repos/tv-logo/tv-logos/contents/countries/tr"
+    endpoints = [
+        "https://api.github.com/repos/tv-logo/tv-logos/contents/countries/turkey",
+        "https://api.github.com/repos/tv-logo/tv-logos/contents/countries/tr",
+        "https://api.github.com/repos/tv-logo/tv-logos/contents/files/countries/turkey"
+    ]
     headers = {'User-Agent': DEFAULT_USER_AGENT}
     if github_token:
         headers['Authorization'] = f"token {github_token}"
     
-    try:
-        req = Request(gh_api, headers=headers)
-        with urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode('utf-8'))
-            if isinstance(data, list):
-                for f in data:
-                    name = f.get('name', '')
-                    dl = f.get('download_url') or f.get('html_url', '').replace('/blob/', '/raw/')
-                    if name and dl:
-                        base_name = os.path.splitext(name)[0]
-                        logos[normalize_name(base_name)] = dl
-    except Exception as e:
-        print(f"[!] tv-logos alınamadı: {e}")
+    for gh_api in endpoints:
+        try:
+            req = Request(gh_api, headers=headers)
+            with urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                if isinstance(data, list):
+                    for f in data:
+                        name = f.get('name', '')
+                        dl = f.get('download_url') or f.get('html_url', '').replace('/blob/', '/raw/')
+                        if name and dl:
+                            base_name = os.path.splitext(name)[0]
+                            logos[normalize_name(base_name)] = dl
+                    if logos:
+                        break
+        except Exception:
+            continue
     return logos
 
 def main():

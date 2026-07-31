@@ -12,6 +12,11 @@ namespace StreamMesh.Core.Utils
             Log("INFO", message);
         }
 
+        public static void LogWarning(string message)
+        {
+            Log("WARN", message);
+        }
+
         public static void LogError(string message, Exception? ex = null)
         {
             Log("ERROR", $"{message} {ex?.Message}");
