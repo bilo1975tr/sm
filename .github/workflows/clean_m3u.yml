@@ -1,0 +1,39 @@
+name: Generate cleaned M3U
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Her gün 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Run generate_clean_m3u.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 scripts/generate_clean_m3u.py --source auto_update.json --outdir out --fetch-logos --github-token "$GITHUB_TOKEN" --remove-dead --check-streams --stream-timeout 8
+
+      - name: Commit outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add out/cleaned_playlist.m3u out/report.json || true
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(ci): update cleaned_playlist and report (automated)" || true
+            git push
+          else
+            echo "No changes to commit"
+          fi

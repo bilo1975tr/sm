@@ -17,32 +17,42 @@ import re
 import os
 import sys
 import unicodedata
-import shutil
-import subprocess
 import xml.etree.ElementTree as ET
 from urllib.request import Request, urlopen
-from urllib.parse import quote, urlparse
-from urllib.error import URLError, HTTPError
+from urllib.parse import quote
 from concurrent.futures import ThreadPoolExecutor
 
-EXTINF_RE = re.compile(r'#EXTINF:(?P<duration>[-0-9]+)?(?P<attrs>.*),(?P<name>.*)')
+EXTINF_RE = re.compile(r'#EXTINF:(?P<duration>[-0-9]+)?(?P<attrs>.*?),(?P<name>.*)')
 ATTR_RE = re.compile(r'([a-zA-Z0-9\-]+?)="([^"]*)"')
 
 DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+_TURKISH_CHAR_MAP = str.maketrans({
+    'ş': 's', 'Ş': 's',
+    'ı': 'i', 'İ': 'i',
+    'ç': 'c', 'Ç': 'c',
+    'ü': 'u', 'Ü': 'u',
+    'ö': 'o', 'Ö': 'o',
+    'ğ': 'g', 'Ğ': 'g'
+})
 
 def normalize_name(s: str) -> str:
     """Metni küçük harfe çevirir, aksanları ve özel karakterleri temizler."""
     if not s:
         return ''
-    s = s.lower().strip()
+    s = s.strip().lower()
+    # Türkçe karakterleri basitçe ascii karşılıklarına çevir
+    s = s.translate(_TURKISH_CHAR_MAP)
+    # Unicode ayrıştırma (ör. é -> e)
     s = unicodedata.normalize('NFKD', s)
     s = ''.join(c for c in s if not unicodedata.combining(c))
+    # Sadece ascii harf/numara bırak
     s = re.sub(r'[^a-z0-9]+', ' ', s)
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
 def sanitize_url(url: str) -> str:
-    """URL içindeki Türkçe ve özel karakterleri safe quote eder."""
+    """URL içindeki özel karakterleri safe quote eder. Sadece http/https kabul eder."""
     if not url:
         return ""
     url = url.strip()
@@ -69,7 +79,7 @@ def fetch_text_sync(url: str, timeout: int = 20) -> str:
         return ""
 
 def check_stream_sync(url: str, timeout: int = 5) -> tuple:
-    """Standart kütüphane ile yayın bağlantısını test eder."""
+    """Standart kütüphane ile yayın bağlantısını test eder (küçük chunk okuma)."""
     clean_url = sanitize_url(url)
     if not clean_url:
         return False, "Geçersiz URL formatı"
@@ -94,13 +104,16 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
         line = lines[i].strip()
         if line.startswith('#EXTINF'):
             m = EXTINF_RE.match(line)
-            attrs_raw = m.group('attrs') if m else ''
+            if not m:
+                i += 1
+                continue
+            attrs_raw = m.group('attrs') or ''
             attrs = {}
             for attr_match in ATTR_RE.finditer(attrs_raw):
                 attrs[attr_match.group(1).lower()] = attr_match.group(2)
-            
+
             name = m.group('name').strip() if m else ''
-            
+
             j = i + 1
             url = ''
             while j < len(lines):
@@ -111,9 +124,9 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
                         url = nxt
                     break
                 j += 1
-            
+
             if url:
-                group = attrs.get('group-title') or default_category.upper()
+                group = attrs.get('group-title') or default_category
                 channel = {
                     'name': name,
                     'tvg-id': attrs.get('tvg-id') or attrs.get('tvg-name') or None,
@@ -129,26 +142,47 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
         i += 1
     return channels
 
+# XML parsing helper: namespace-tolerant
+def _local_name(tag: str) -> str:
+    return tag.split('}')[-1] if '}' in tag else tag
+
+def _find_children_by_localname(elem, name):
+    out = []
+    for child in elem:
+        if _local_name(child.tag) == name:
+            out.append(child)
+    return out
+
 def parse_epg_xml(xml_content: str):
-    """EPG XML verisini xml.etree.ElementTree kullanarak parse eder."""
+    """EPG XML verisini xml.etree.ElementTree kullanarak parse eder (namespace-tolerant)."""
     channels = {}
-    if not xml_content.strip():
+    if not xml_content or not xml_content.strip():
         return channels
     try:
         root = ET.fromstring(xml_content)
-        for ch in root.findall('channel'):
-            ch_id = ch.get('id')
-            if not ch_id:
+        # channel elemanları genelde root içinde veya tv root'u altındadır; kök altında herhangi bir yerde ara
+        for ch in root.findall('.//'):
+            if _local_name(ch.tag) != 'channel':
                 continue
-            
-            display_names = [dn.text.strip() for dn in ch.findall('display-name') if dn.text]
+            ch_id = ch.get('id') or ch.get('channel')
+            if not ch_id:
+                # bazen <channel> içinde @id yoktur; atla
+                continue
+
+            # display-name'leri bulun
+            display_names = []
+            for dn in ch.findall('.//'):
+                if _local_name(dn.tag) == 'display-name' and dn.text:
+                    display_names.append(dn.text.strip())
             primary_name = display_names[0] if display_names else ch_id
-            
+
             icon = None
-            icon_elem = ch.find('icon')
-            if icon_elem is not None:
-                icon = icon_elem.get('src')
-            
+            for ic in ch.findall('.//'):
+                if _local_name(ic.tag) == 'icon':
+                    icon = ic.get('src') or ic.get('url') or None
+                    if icon:
+                        break
+
             channels[ch_id] = {
                 'id': ch_id,
                 'display_name': primary_name,
@@ -156,7 +190,7 @@ def parse_epg_xml(xml_content: str):
                 'normalized_name': normalize_name(primary_name)
             }
     except Exception as e:
-        print(f"[!] EPG XML parse uyarısı: {e}")
+        print(f\"[!] EPG XML parse uyarısı: {e}\")
     return channels
 
 def fetch_tv_logos_sync(github_token=None):
@@ -170,7 +204,7 @@ def fetch_tv_logos_sync(github_token=None):
     headers = {'User-Agent': DEFAULT_USER_AGENT}
     if github_token:
         headers['Authorization'] = f"token {github_token}"
-    
+
     for gh_api in endpoints:
         try:
             req = Request(gh_api, headers=headers)
@@ -193,12 +227,12 @@ def main():
     parser = argparse.ArgumentParser(description="M3U Otomatik Temizleme ve EPG / Logo Eşleme")
     parser.add_argument('--source', default='auto_update.json', help='auto_update.json dosya yolu veya URL')
     parser.add_argument('--outdir', default='.', help='Çıktı klasörü')
-    parser.add_argument('--fetch-logos', action='store_true', default=True, help='tv-logos reposundan logoları çek')
+    parser.add_argument('--fetch-logos', action='store_true', default=False, help='tv-logos reposundan logoları çek')
     parser.add_argument('--github-token', default=None, help='GitHub Personal Access Token (opsiyonel)')
-    parser.add_argument('--remove-dead', action='store_true', default=True, help='Çalışmayan ölü linkleri kaldır')
-    parser.add_argument('--check-streams', action='store_true', default=True, help='Canlılık kontrolü yap')
+    parser.add_argument('--remove-dead', action='store_true', default=False, help='Çalışmayan ölü linkleri kaldır')
+    parser.add_argument('--check-streams', action='store_true', default=False, help='Canlılık kontrolü yap')
     parser.add_argument('--stream-timeout', type=int, default=8, help='Akış kontrolü zaman aşımı (sn)')
-    
+
     args = parser.parse_args()
 
     # 1. auto_update.json Dosyası Oku
@@ -206,7 +240,11 @@ def main():
     if args.source.startswith('http://') or args.source.startswith('https://'):
         txt = fetch_text_sync(args.source)
         if txt:
-            data = json.loads(txt)
+            try:
+                data = json.loads(txt)
+            except Exception as e:
+                print(f"[x] JSON parse hatası: {e}")
+                sys.exit(1)
     else:
         if os.path.exists(args.source):
             with open(args.source, 'r', encoding='utf-8') as f:
@@ -235,7 +273,7 @@ def main():
     # 2. M3U İndirme ve Parsing
     print("[*] M3U listeleri indiriliyor...")
     m3u_channels = []
-    
+
     with ThreadPoolExecutor(max_workers=10) as executor:
         m3u_results = list(executor.map(lambda item: (item[0], item[1], fetch_text_sync(item[1])), m3u_urls))
 
@@ -296,7 +334,7 @@ def main():
         assigned_logo = ch.get('tvg-logo')
         if not assigned_logo and epg_match and epg_match.get('icon'):
             assigned_logo = epg_match['icon']
-        
+
         if not assigned_logo and ch.get('normalized_name') and logos_db:
             norm = ch['normalized_name']
             if norm in logos_db:
@@ -317,7 +355,7 @@ def main():
 
     if args.check_streams and processed_channels:
         print(f"[*] {len(processed_channels)} kanal için canlılık testi başlatılıyor...")
-        
+
         def check_task(ch):
             ok, info = check_stream_sync(ch['url'], timeout=args.stream_timeout)
             ch['alive'] = ok
@@ -338,7 +376,7 @@ def main():
 
     # 7. Çıktı Dosyaları
     os.makedirs(args.outdir, exist_ok=True)
-    
+
     output_m3u_path = os.path.join(args.outdir, 'cleaned_playlist.m3u')
     m3u_lines = ["#EXTM3U"]
 
@@ -354,7 +392,7 @@ def main():
             attrs.append(f'tvg-logo="{ch["tvg-logo"]}"')
         if ch.get('group-title'):
             attrs.append(f'group-title="{ch["group-title"]}"')
-        
+
         attr_str = " " + " ".join(attrs) if attrs else ""
         m3u_lines.append(f"#EXTINF:-1{attr_str},{ch.get('name', 'Kanal')}")
         m3u_lines.append(ch['url'])
@@ -373,7 +411,7 @@ def main():
         'logo_matches_count': sum(1 for c in processed_channels if c.get('tvg-logo')),
         'categories': {}
     }
-    
+
     for c in channels_to_write:
         grp = c.get('group-title', 'DİĞER')
         report['categories'][grp] = report['categories'].get(grp, 0) + 1
