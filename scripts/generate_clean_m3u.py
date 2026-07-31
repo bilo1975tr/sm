@@ -190,7 +190,7 @@ def parse_epg_xml(xml_content: str):
                 'normalized_name': normalize_name(primary_name)
             }
     except Exception as e:
-        print(f\"[!] EPG XML parse uyarısı: {e}\")
+        print(f"[!] EPG XML parse uyarısı: {e}")
     return channels
 
 def fetch_tv_logos_sync(github_token=None):
