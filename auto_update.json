@@ -38,10 +38,12 @@
     "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-kanald-com-tr/arsiv-diziler.m3u",
     "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-dmax-com-tr/all.m3u",
     "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-cnnturk-com/belgeseller.m3u",
-    "https://raw.githubusercontent.com/batuhansabri55/AkcagozTV_Film/refs/heads/main/FilmDizi.m3u"
   ],
   "radyo": [
     "https://raw.githubusercontent.com/koprulu555/global_radyo/refs/heads/main/global_radio.m3u"
+  ],
+  "karma": [
+    "https://raw.githubusercontent.com/batuhansabri55/AkcagozTV_Film/refs/heads/main/FilmDizi.m3u"
   ],
   "epg": [
     "https://iptv-epg.org/files/epg-de.xml",

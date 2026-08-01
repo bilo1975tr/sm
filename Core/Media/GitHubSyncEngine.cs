@@ -23,6 +23,9 @@ namespace StreamMesh.Core.Media
         [JsonProperty("radyo")]
         public List<string> Radyo { get; set; } = new List<string>();
 
+        [JsonProperty("karma")]
+        public List<string> Karma { get; set; } = new List<string>();
+
         [JsonProperty("epg")]
         public List<string> Epg { get; set; } = new List<string>();
     }
@@ -109,13 +112,14 @@ namespace StreamMesh.Core.Media
                         // Eğer clean M3U yüklenemediyse ham listeleri tara
                         if (!cleanM3uLoaded)
                         {
-                            int totalSources = (cfg.Tv?.Count ?? 0) + (cfg.Film?.Count ?? 0) + (cfg.Dizi?.Count ?? 0) + (cfg.Radyo?.Count ?? 0) + (cfg.Epg?.Count ?? 0);
+                            int totalSources = (cfg.Tv?.Count ?? 0) + (cfg.Film?.Count ?? 0) + (cfg.Dizi?.Count ?? 0) + (cfg.Radyo?.Count ?? 0) + (cfg.Karma?.Count ?? 0) + (cfg.Epg?.Count ?? 0);
                             int processedSources = 0;
 
-                            if (cfg.Tv != null && cfg.Tv.Count > 0) await ProcessListWithProgress(cfg.Tv, "TV", totalSources, () => ++processedSources);
-                            if (cfg.Film != null && cfg.Film.Count > 0) await ProcessListWithProgress(cfg.Film, "Film", totalSources, () => ++processedSources);
-                            if (cfg.Dizi != null && cfg.Dizi.Count > 0) await ProcessListWithProgress(cfg.Dizi, "Dizi", totalSources, () => ++processedSources);
-                            if (cfg.Radyo != null && cfg.Radyo.Count > 0) await ProcessListWithProgress(cfg.Radyo, "Radyo", totalSources, () => ++processedSources);
+                            if (cfg.Tv != null && cfg.Tv.Count > 0) await ProcessListWithProgress(cfg.Tv, "TV", totalSources, () => ++processedSources, true);
+                            if (cfg.Film != null && cfg.Film.Count > 0) await ProcessListWithProgress(cfg.Film, "Film", totalSources, () => ++processedSources, true);
+                            if (cfg.Dizi != null && cfg.Dizi.Count > 0) await ProcessListWithProgress(cfg.Dizi, "Dizi", totalSources, () => ++processedSources, true);
+                            if (cfg.Radyo != null && cfg.Radyo.Count > 0) await ProcessListWithProgress(cfg.Radyo, "Radyo", totalSources, () => ++processedSources, true);
+                            if (cfg.Karma != null && cfg.Karma.Count > 0) await ProcessListWithProgress(cfg.Karma, "Karma", totalSources, () => ++processedSources, false);
                         }
 
                         // EPG Verilerini Her Durumda Güncelle
@@ -150,7 +154,7 @@ namespace StreamMesh.Core.Media
             }
         }
 
-        private async Task ProcessListWithProgress(List<string> urls, string categoryLabel, int totalSources, Func<int> incrementCounter)
+        private async Task ProcessListWithProgress(List<string> urls, string categoryLabel, int totalSources, Func<int> incrementCounter, bool forceCategory = true)
         {
             if (urls == null) return;
             for (int i = 0; i < urls.Count; i++)
@@ -165,7 +169,7 @@ namespace StreamMesh.Core.Media
                 try
                 {
                     _db.AddM3uSource(url);
-                    var channels = await _m3u.ParseM3uAsync(url, categoryLabel, true, (subMsg, subPct) =>
+                    var channels = await _m3u.ParseM3uAsync(url, categoryLabel, forceCategory, (subMsg, subPct) =>
                     {
                         double overallPct = Math.Min(99.0, baseProgress + (subPct / 100.0) * itemWeight);
                         OnProgress?.Invoke((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {subMsg}");

@@ -101,6 +101,19 @@ def map_category(cat_key: str, original_group: str, name: str) -> str:
     og = (original_group or "").lower()
     nm = (name or "").lower()
 
+    if ck == 'karma':
+        if 'dizi' in og or 'series' in og or 'sezon' in og or 'episode' in og or 'bölüm' in og or 'bolum' in og or re.search(r'(?i)s\d+\s?e\d+|\d+x\d+', nm):
+            return "Dizi"
+        elif 'film' in og or 'movie' in og or 'sinema' in og or 'vod' in og or 'movie' in nm or 'film' in nm:
+            return "Film"
+        elif 'radyo' in og or 'radio' in og or 'radyo' in nm:
+            return "Radyo"
+        elif 'tv' in og or 'canli' in og or 'live' in og or 'kanal' in og or 'kanal' in nm:
+            return "TV"
+        if re.search(r'(?i)s\d+\s?e\d+|\d+x\d+', nm) or 'bölüm' in nm or 'bolum' in nm or 'sezon' in nm:
+            return "Dizi"
+        return "TV"
+
     if ck in ('series', 'dizi', 'diziler'):
         return "Dizi"
     elif ck in ('movies', 'film', 'filmler', 'sinema'):
