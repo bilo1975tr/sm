@@ -131,6 +131,8 @@ namespace StreamMesh.UI.ViewModels
             });
         }
 
+        private int _sortIndex = 0;
+
         public void SetCategory(string tag)
         {
             _activeCategory = tag;
@@ -138,7 +140,12 @@ namespace StreamMesh.UI.ViewModels
             RefreshDisplay();
         }
 
-        public void SetSort(int index) { RefreshDisplay(); }
+        public void SetSort(int index)
+        {
+            _sortIndex = index;
+            _currentPage = 1;
+            RefreshDisplay();
+        }
         public void NextPage() { if (_currentPage < _totalPages) { _currentPage++; RefreshDisplay(); } }
         public void PrevPage() { if (_currentPage > 1) { _currentPage--; RefreshDisplay(); } }
 
@@ -175,6 +182,24 @@ namespace StreamMesh.UI.ViewModels
                 {
                     finalItems.Add(new SeriesGroup(g.Key, g.ToList()));
                 }
+            }
+
+            // Apply Sorting
+            switch (_sortIndex)
+            {
+                case 1: // Alfabetik (Z-A)
+                    finalItems = finalItems.OrderByDescending(c => c.CleanName ?? c.Name ?? "").ToList();
+                    break;
+                case 2: // Yeni Eklenenler
+                    finalItems = finalItems.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id).ToList();
+                    break;
+                case 3: // Favoriler Önce
+                    finalItems = finalItems.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.CleanName ?? c.Name ?? "").ToList();
+                    break;
+                case 0: // Alfabetik (A-Z)
+                default:
+                    finalItems = finalItems.OrderBy(c => c.CleanName ?? c.Name ?? "").ToList();
+                    break;
             }
 
             _filteredChannels = finalItems.ToList();

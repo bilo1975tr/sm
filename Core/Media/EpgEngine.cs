@@ -12,7 +12,7 @@ namespace StreamMesh.Core.Media
 {
     public class EpgEngine
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         private readonly DatabaseEngine _db = new DatabaseEngine();
 
         static EpgEngine()
@@ -29,7 +29,7 @@ namespace StreamMesh.Core.Media
                 {
                     progressCallback?.Invoke($"EPG İndiriliyor: {GetShortUrl(url)}", 0);
 
-                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(60));
                     using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                     if (!response.IsSuccessStatusCode)
                     {
@@ -80,6 +80,9 @@ namespace StreamMesh.Core.Media
 
                 if (data == null || data.Length == 0) return;
 
+                // V1.9.0: Clear old data for THIS source before loading new ones to prevent bloat
+                await _db.ClearEpgSourceDataAsync(url);
+
                 progressCallback?.Invoke("EPG Rehberi İşleniyor...", 80);
 
                 Stream epgStream = new MemoryStream(data);
@@ -90,6 +93,8 @@ namespace StreamMesh.Core.Media
 
                 int totalSaved = 0;
                 var batch = new List<EpgProgram>();
+                var channelBatch = new List<(string epgId, string name, string logo, string url)>();
+                var channelMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
                 using (var reader = new StreamReader(epgStream))
                 {
@@ -97,34 +102,68 @@ namespace StreamMesh.Core.Media
                     {
                         while (xmlReader.Read())
                         {
-                            if (xmlReader.NodeType == System.Xml.XmlNodeType.Element && xmlReader.Name.Equals("programme", StringComparison.OrdinalIgnoreCase))
+                            if (xmlReader.NodeType == System.Xml.XmlNodeType.Element)
                             {
-                                string channelAttr = xmlReader.GetAttribute("channel") ?? "";
-                                string startAttr = xmlReader.GetAttribute("start") ?? "";
-                                string stopAttr = xmlReader.GetAttribute("stop") ?? "";
-
-                                using var subTree = xmlReader.ReadSubtree();
-                                XElement el = XElement.Load(subTree);
-
-                                var prog = new EpgProgram
+                                string ln = xmlReader.LocalName;
+                                if (ln.Equals("channel", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    ChannelName = channelAttr,
-                                    Title = el.Element("title")?.Value ?? "",
-                                    Description = el.Element("desc")?.Value ?? "",
-                                    SourceUrl = url
-                                };
+                                    string chId = xmlReader.GetAttribute("id") ?? "";
+                                    using var subTree = xmlReader.ReadSubtree();
+                                    XElement el = XElement.Load(subTree);
 
-                                if (TryParseXmlTime(startAttr, out DateTime st)) prog.StartTime = st;
-                                if (TryParseXmlTime(stopAttr, out DateTime et)) prog.EndTime = et;
+                                    // Namespace agnostic element access - capture ALL display-names
+                                    var dispNames = el.Elements().Where(e => e.Name.LocalName == "display-name").Select(e => e.Value.Trim()).Distinct().ToList();
+                                    string combinedName = string.Join(", ", dispNames);
+                                    string logo = el.Elements().FirstOrDefault(e => e.Name.LocalName == "icon")?.Attribute("src")?.Value ?? "";
 
-                                batch.Add(prog);
+                                    if (!string.IsNullOrWhiteSpace(chId))
+                                    {
+                                        if (string.IsNullOrWhiteSpace(combinedName)) combinedName = chId;
+                                        channelMap[chId] = combinedName;
+                                        channelBatch.Add((chId, combinedName, logo, url));
+                                    }
 
-                                if (batch.Count >= 2000)
+                                    if (channelBatch.Count >= 500)
+                                    {
+                                        await _db.SaveEpgChannelsBatchAsync(channelBatch);
+                                        channelBatch.Clear();
+                                    }
+                                }
+                                else if (ln.Equals("programme", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    await _db.SaveEpgProgramsAsync(batch);
-                                    totalSaved += batch.Count;
-                                    progressCallback?.Invoke($"EPG İşleniyor: {totalSaved} yayın akışı eklendi...", 85);
-                                    batch.Clear();
+                                    string channelAttr = xmlReader.GetAttribute("channel") ?? "";
+                                    string startAttr = xmlReader.GetAttribute("start") ?? "";
+                                    string stopAttr = xmlReader.GetAttribute("stop") ?? "";
+
+                                    using var subTree = xmlReader.ReadSubtree();
+                                    XElement el = XElement.Load(subTree);
+
+                                    string combinedChannelName = channelAttr;
+                                    if (channelMap.TryGetValue(channelAttr, out string? dName) && !string.IsNullOrWhiteSpace(dName) && !dName.Equals(channelAttr, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        combinedChannelName = $"{channelAttr}, {dName}";
+                                    }
+
+                                    var prog = new EpgProgram
+                                    {
+                                        ChannelName = combinedChannelName,
+                                        Title = el.Elements().FirstOrDefault(e => e.Name.LocalName == "title")?.Value ?? "",
+                                        Description = el.Elements().FirstOrDefault(e => e.Name.LocalName == "desc")?.Value ?? "",
+                                        SourceUrl = url
+                                    };
+
+                                    if (TryParseXmlTime(startAttr, url, out DateTime st)) prog.StartTime = st;
+                                    if (TryParseXmlTime(stopAttr, url, out DateTime et)) prog.EndTime = et;
+
+                                    batch.Add(prog);
+
+                                    if (batch.Count >= 2000)
+                                    {
+                                        await _db.SaveEpgProgramsAsync(batch);
+                                        totalSaved += batch.Count;
+                                        progressCallback?.Invoke($"EPG İşleniyor: {totalSaved} yayın akışı eklendi...", 85);
+                                        batch.Clear();
+                                    }
                                 }
                             }
                         }
@@ -136,6 +175,12 @@ namespace StreamMesh.Core.Media
                     await _db.SaveEpgProgramsAsync(batch);
                     totalSaved += batch.Count;
                     batch.Clear();
+                }
+
+                if (channelBatch.Count > 0)
+                {
+                    await _db.SaveEpgChannelsBatchAsync(channelBatch);
+                    channelBatch.Clear();
                 }
 
                 progressCallback?.Invoke($"EPG Tamamlandı: Toplam {totalSaved} yayın akışı eklendi.", 100);
@@ -152,12 +197,17 @@ namespace StreamMesh.Core.Media
             catch { return url; }
         }
 
-        private bool TryParseXmlTime(string time, out DateTime result)
+        private bool TryParseXmlTime(string time, string sourceUrl, out DateTime result)
         {
             result = DateTime.MinValue;
             if (string.IsNullOrEmpty(time)) return false;
             try
             {
+                // V1.9.8: Source-specific offset handling
+                // Special case for iptv-epg.org: They provide local time but mark it as +0000 UTC.
+                // We ignore the offset for this specific source.
+                bool ignoreOffset = sourceUrl.Contains("iptv-epg.org", StringComparison.OrdinalIgnoreCase);
+
                 // XMLTV format: yyyyMMddHHmmss [+-]HHmm
                 string cleanTime = time.Trim();
                 if (cleanTime.Length >= 14)
@@ -165,21 +215,34 @@ namespace StreamMesh.Core.Media
                     string datePart = cleanTime.Substring(0, 14);
                     DateTime dt = DateTime.ParseExact(datePart, "yyyyMMddHHmmss", null);
 
-                    if (cleanTime.Length > 15)
+                    if (!ignoreOffset && cleanTime.Length > 15)
                     {
                         string offsetPart = cleanTime.Substring(14).Trim();
                         if (offsetPart.Length >= 5 && (offsetPart.StartsWith("+") || offsetPart.StartsWith("-")))
                         {
-                            int hours = int.Parse(offsetPart.Substring(1, 2));
-                            int mins = int.Parse(offsetPart.Substring(3, 2));
-                            TimeSpan offset = new TimeSpan(hours, mins, 0);
-                            if (offsetPart.StartsWith("-")) offset = offset.Negate();
+                            try
+                            {
+                                int hours = int.Parse(offsetPart.Substring(1, 2));
+                                int mins = int.Parse(offsetPart.Substring(3, 2));
+                                TimeSpan offset = new TimeSpan(hours, mins, 0);
+                                if (offsetPart.StartsWith("-")) offset = offset.Negate();
 
-                            result = new DateTimeOffset(dt, offset).LocalDateTime;
-                            return true;
+                                result = new DateTimeOffset(dt, offset).LocalDateTime;
+                                return true;
+                            }
+                            catch { }
                         }
                     }
-                    result = dt;
+
+                    if (ignoreOffset)
+                    {
+                        // Treat as direct local time
+                        result = DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+                        return true;
+                    }
+
+                    // If no explicit offset and not ignored, assume UTC and convert to Local
+                    result = DateTime.SpecifyKind(dt, DateTimeKind.Utc).ToLocalTime();
                     return true;
                 }
             }

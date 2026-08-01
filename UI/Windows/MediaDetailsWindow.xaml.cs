@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Threading;
 using StreamMesh.Models;
 using StreamMesh.Core.Media;
 
@@ -12,6 +11,9 @@ namespace StreamMesh.UI.Windows
         public Channel Media { get; set; }
         public List<string> CastList { get; set; } = new List<string>();
         public List<Episode> Episodes { get; set; } = new List<Episode>();
+
+        public string HeroImageUrl => !string.IsNullOrEmpty(Media?.BackdropUrl) ? Media.BackdropUrl : Media?.LogoUrl ?? "";
+        public string OverviewText => !string.IsNullOrWhiteSpace(Media?.Overview) ? Media.Overview : "Bu içerik için açıklama bulunamadı veya henüz yüklenmedi.";
 
         private readonly MetadataEngine _meta = new MetadataEngine();
 
@@ -26,15 +28,26 @@ namespace StreamMesh.UI.Windows
 
         private async void LoadRealMetadata()
         {
-            await _meta.EnrichChannelAsync(Media);
-
-            if (!string.IsNullOrEmpty(Media.Cast))
+            if (Media != null)
             {
-                CastList.Clear();
-                CastList.AddRange(Media.Cast.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
-            }
+                await _meta.EnrichChannelAsync(Media);
 
-            // Logic for Episodes if Series...
+                if (!string.IsNullOrEmpty(Media.Cast))
+                {
+                    CastList.Clear();
+                    foreach (var c in Media.Cast.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        string trimmed = c.Trim();
+                        if (!string.IsNullOrEmpty(trimmed) && !CastList.Contains(trimmed)) CastList.Add(trimmed);
+                    }
+                }
+
+                Dispatcher.Invoke(() =>
+                {
+                    DataContext = null;
+                    DataContext = this;
+                });
+            }
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
@@ -47,10 +60,18 @@ namespace StreamMesh.UI.Windows
 
         private void PlayTrailer_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(Media.ImdbId))
+            string query = Media?.PrimaryName ?? Media?.Name ?? "";
+            if (!string.IsNullOrEmpty(query))
             {
-                // Logic to play trailer (e.g. open browser)
-                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = $"https://www.youtube.com/results?search_query={Uri.EscapeDataString(Media.Name)}+trailer", UseShellExecute = true }); } catch { }
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = $"https://www.youtube.com/results?search_query={Uri.EscapeDataString(query)}+fragman",
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
             }
         }
 

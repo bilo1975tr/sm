@@ -30,12 +30,17 @@ namespace StreamMesh.Core.Media
                 {
                     if (string.IsNullOrWhiteSpace(p.ChannelName)) continue;
 
-                    if (!lookupByChannel.TryGetValue(p.ChannelName, out var listByCh))
+                    // Handle comma separated channel names (e.g. "RTL.de, RTL")
+                    var ids = p.ChannelName.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+                    foreach (var epgId in ids)
                     {
-                        listByCh = new List<EpgProgram>();
-                        lookupByChannel[p.ChannelName] = listByCh;
+                        if (!lookupByChannel.TryGetValue(epgId, out var listByCh))
+                        {
+                            listByCh = new List<EpgProgram>();
+                            lookupByChannel[epgId] = listByCh;
+                        }
+                        listByCh.Add(p);
                     }
-                    listByCh.Add(p);
 
                     string normKey = ChannelUtils.ToNormalizedKey(p.ChannelName);
                     if (!string.IsNullOrEmpty(normKey))

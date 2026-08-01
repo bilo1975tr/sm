@@ -23,6 +23,8 @@ namespace StreamMesh.UI.Windows
         private readonly StunEngine _stun = new StunEngine();
         private readonly UpdateService _updateService = new UpdateService();
         private DispatcherTimer _peerTimer;
+        private DispatcherTimer _epgTimer;
+        private DispatcherTimer _metaTimer;
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
         private bool _isExplicitExit = false;
 
@@ -59,6 +61,18 @@ namespace StreamMesh.UI.Windows
                 OnlinePeersText.Text = count.ToString();
             };
             _peerTimer.Start();
+
+            // 12-Hour Automatic EPG Sync Timer
+            _epgTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(12) };
+            _epgTimer.Tick += async (s, e) => { await RunAutoEpgUpdateAsync(); };
+            _epgTimer.Start();
+            System.Threading.Tasks.Task.Delay(10000).ContinueWith(_ => RunAutoEpgUpdateAsync());
+
+            // 30-Minute Film & Series Metadata Auto-Enricher Worker
+            _metaTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(30) };
+            _metaTimer.Tick += async (s, e) => { await RunAutoMetadataEnrichmentAsync(); };
+            _metaTimer.Start();
+            System.Threading.Tasks.Task.Delay(20000).ContinueWith(_ => RunAutoMetadataEnrichmentAsync());
 
             this.KeyDown += MainWindow_KeyDown;
             this.StateChanged += MainWindow_StateChanged;
@@ -359,6 +373,86 @@ namespace StreamMesh.UI.Windows
             var report = new P2PReportWindow("StreamMesh P2P Durum Raporu", "Ağ Durumu: Aktif\nBağlantı Modu: P2P Mesh\nSTUN: Tamam (stun.l.google.com:19302)\nTURN: Hazır (Gerekli olduğunda devreye girer)\n\nAktif Peer Listesi: 127.0.0.1 (Siz)");
             report.Owner = this;
             report.ShowDialog();
+        }
+
+        private async System.Threading.Tasks.Task RunAutoEpgUpdateAsync()
+        {
+            try
+            {
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
+
+                // V1.9.0: Cleanup old EPG data before update to save space
+                await db.CleanupOldEpgProgramsAsync(2);
+
+                string lastEpgStr = db.GetSetting("LastAutoEpgUpdate", "0");
+                long.TryParse(lastEpgStr, out long lastEpgUnix);
+                long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                // 12 saat = 43200 saniye
+                if (nowUnix - lastEpgUnix >= 43200)
+                {
+                    LogService.LogInfo("[AutoEPG] 12 saatlik otomatik EPG güncellemesi başlatılıyor...");
+                    var epgSources = db.GetEpgSources();
+                    if (epgSources != null && epgSources.Count > 0)
+                    {
+                        var epgEng = new StreamMesh.Core.Media.EpgEngine();
+                        foreach (var url in epgSources)
+                        {
+                            if (!string.IsNullOrWhiteSpace(url))
+                            {
+                                await epgEng.LoadEpgAsync(url);
+                            }
+                        }
+                    }
+                    db.SetSetting("LastAutoEpgUpdate", nowUnix.ToString());
+                    LogService.LogInfo("[AutoEPG] Otomatik EPG güncellemesi başarıyla tamamlandı.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[AutoEPG] Otomatik EPG güncelleme hatası", ex);
+            }
+        }
+
+        private async System.Threading.Tasks.Task RunAutoMetadataEnrichmentAsync()
+        {
+            try
+            {
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
+                var metaEng = new StreamMesh.Core.Media.MetadataEngine();
+
+                // TMDB Günlük Limit kontrolü (1000 istek/gün)
+                var stats = db.GetDailyQueryStats();
+                if (stats.count >= 950)
+                {
+                    LogService.LogInfo("[AutoMetadata] Günlük TMDB sorgu limitine (1000) yaklaşıldı. Otomatik zenginleştirme duraklatıldı.");
+                    return;
+                }
+
+                var allChannels = await db.GetAllChannelsAsync();
+                var pendingMedia = allChannels.Where(c =>
+                    (c.Category == "Film" || c.Category == "Movie" || c.Category == "Dizi" || c.Category == "Series" || !string.IsNullOrWhiteSpace(c.SeriesBaseName)) &&
+                    string.IsNullOrWhiteSpace(c.Overview)
+                ).Take(50).ToList();
+
+                if (pendingMedia.Count > 0)
+                {
+                    LogService.LogInfo($"[AutoMetadata] {pendingMedia.Count} adet eksik açıklamalı film/dizi zenginleştiriliyor...");
+                    foreach (var item in pendingMedia)
+                    {
+                        var curStats = db.GetDailyQueryStats();
+                        if (curStats.count >= 950) break;
+
+                        await metaEng.EnrichChannelAsync(item);
+                        await System.Threading.Tasks.Task.Delay(500); // API isteği aralarına 500ms nezaket gecikmesi
+                    }
+                    LogService.LogInfo("[AutoMetadata] Otomatik metadata taraması tamamlandı.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[AutoMetadata] Otomatik metadata tarama hatası", ex);
+            }
         }
     }
 }

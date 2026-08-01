@@ -38,69 +38,95 @@
                         Style="{StaticResource NavButtonStyle}" Width="30" Height="30" Click="Close_Click"/>
             </Grid>
 
-            <!-- Episodes List -->
-            <Grid Grid.Row="1" Margin="30,10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+            <!-- Content Section -->
+            <ScrollViewer Grid.Row="1" Margin="30,10">
+                <StackPanel>
+                    <!-- Overview & Details -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                    <TextBlock Text="Bölümler" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <Border Width="1" Height="20" Background="#333" Margin="15,0"/>
-                    <TextBlock Text="{Binding Series.EpisodeCount, StringFormat='{}{0} Bölüm'}" Foreground="#94a3b8" VerticalAlignment="Center"/>
-                </StackPanel>
+                        <Border Grid.Column="0" Width="130" Height="195" CornerRadius="8" ClipToBounds="True" Margin="0,0,20,0" Background="#1e293b">
+                            <Image Source="{Binding Series.LogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="UniformToFill"/>
+                        </Border>
 
-                <ListBox x:Name="EpisodeList" Grid.Row="1" Background="Transparent" BorderThickness="0"
-                         ItemsSource="{Binding Series.Episodes}" HorizontalContentAlignment="Stretch">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="#1e293b" CornerRadius="10" Margin="0,0,0,8" Padding="15" BorderThickness="1" BorderBrush="#334155" x:Name="ItemBorder">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Top">
+                            <TextBlock Text="{Binding Series.Overview}" Foreground="#cbd5e1" FontSize="15" TextWrapping="Wrap" LineHeight="22" Margin="0,0,0,15"/>
 
-                                    <StackPanel Orientation="Horizontal" Width="100">
-                                        <TextBlock Text="{Binding SeasonNumber, StringFormat='S{0}'}" FontSize="16" FontWeight="Bold" Foreground="#38bdf8"/>
-                                        <TextBlock Text="{Binding EpisodeNumber, StringFormat='E{0}'}" FontSize="16" FontWeight="Bold" Margin="5,0,0,0"/>
-                                    </StackPanel>
+                            <TextBlock Text="Oyuncular" Foreground="#94a3b8" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"
+                                       Visibility="{Binding CastList.Count, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <ItemsControl ItemsSource="{Binding CastList}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#1e293b" CornerRadius="4" Margin="0,0,6,6" Padding="8,4" BorderBrush="#334155" BorderThickness="1">
+                                            <TextBlock Text="{Binding}" Foreground="#38bdf8" FontSize="12"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Grid>
 
-                                    <StackPanel Grid.Column="1" Margin="10,0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <CheckBox IsChecked="{Binding IsWatched}" VerticalAlignment="Center" Margin="0,0,10,0"
-                                                      Checked="Watched_Changed" Unchecked="Watched_Changed"/>
-                                            <TextBlock Text="{Binding Name}" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,15">
+                        <TextBlock Text="Bölümler" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Border Width="1" Height="20" Background="#333" Margin="15,0"/>
+                        <TextBlock Text="{Binding Series.EpisodeCount, StringFormat='{}{0} Bölüm'}" Foreground="#94a3b8" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <ListBox x:Name="EpisodeList" Background="Transparent" BorderThickness="0"
+                             ItemsSource="{Binding Series.Episodes}" HorizontalContentAlignment="Stretch">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#1e293b" CornerRadius="10" Margin="0,0,0,8" Padding="15" BorderThickness="1" BorderBrush="#334155" x:Name="ItemBorder">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Orientation="Horizontal" Width="100">
+                                            <TextBlock Text="{Binding SeasonNumber, StringFormat='S{0}'}" FontSize="16" FontWeight="Bold" Foreground="#38bdf8"/>
+                                            <TextBlock Text="{Binding EpisodeNumber, StringFormat='E{0}'}" FontSize="16" FontWeight="Bold" Margin="5,0,0,0"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding CleanName}" FontSize="11" Foreground="#94a3b8" Margin="30,2,0,0"/>
-                                    </StackPanel>
 
-                                    <Button Grid.Column="2" Content="▶ Oynat" Width="80" Height="35" Style="{StaticResource PrimaryButtonStyle}"
-                                            Click="PlayEpisode_Click" CommandParameter="{Binding}"/>
-                                </Grid>
-                            </Border>
-                            <DataTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="ItemBorder" Property="Background" Value="#334155"/>
-                                </Trigger>
-                            </DataTemplate.Triggers>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <ContentPresenter/>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                </ListBox>
-            </Grid>
+                                        <StackPanel Grid.Column="1" Margin="10,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <CheckBox IsChecked="{Binding IsWatched}" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                          Checked="Watched_Changed" Unchecked="Watched_Changed"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="14" Foreground="White" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding CleanName}" FontSize="11" Foreground="#94a3b8" Margin="30,2,0,0"/>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2" Content="▶ Oynat" Width="80" Height="35" Style="{StaticResource PrimaryButtonStyle}"
+                                                Click="PlayEpisode_Click" CommandParameter="{Binding}"/>
+                                    </Grid>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#334155"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <ContentPresenter/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
 
             <Border Grid.Row="2" Background="#0f172a" Padding="20" CornerRadius="0,0,15,15">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
