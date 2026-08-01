@@ -95,6 +95,37 @@ def check_stream_sync(url: str, timeout: int = 5) -> tuple:
     except Exception as e:
         return False, str(e)
 
+def map_category(cat_key: str, original_group: str, name: str) -> str:
+    """Kategoriyi TV, Film, Dizi, Radyo olarak standardize eder."""
+    ck = (cat_key or "").lower()
+    og = (original_group or "").lower()
+    nm = (name or "").lower()
+
+    if ck in ('series', 'dizi', 'diziler'):
+        return "Dizi"
+    elif ck in ('movies', 'film', 'filmler', 'sinema'):
+        return "Film"
+    elif ck in ('radio', 'radyo', 'radios'):
+        return "Radyo"
+    elif ck in ('channels', 'tv', 'canli', 'live'):
+        return "TV"
+
+    if 'dizi' in og or 'series' in og or 'sezon' in og or 'episode' in og:
+        return "Dizi"
+    elif 'film' in og or 'movie' in og or 'sinema' in og or 'vod' in og:
+        return "Film"
+    elif 'radyo' in og or 'radio' in og:
+        return "Radyo"
+    elif 'tv' in og or 'canli' in og or 'live' in og:
+        return "TV"
+
+    if re.search(r'(?i)s\d+\s?e\d+|\d+x\d+', nm):
+        return "Dizi"
+    if 'radyo' in nm or 'radio' in nm:
+        return "Radyo"
+
+    return "TV"
+
 def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
     """M3U içeriğini parse eder ve kanal listesi döner."""
     channels = []
@@ -119,14 +150,13 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
             while j < len(lines):
                 nxt = lines[j].strip()
                 if nxt and not nxt.startswith('#'):
-                    # Sadece geçerli http veya https URL'leri kabul et
-                    if nxt.startswith('http://') or nxt.startswith('https://'):
+                    if nxt.startswith('http://') or nxt.startswith('https://') or nxt.startswith('rtmp://') or nxt.startswith('udp://') or nxt.startswith('acestream://'):
                         url = nxt
                     break
                 j += 1
 
             if url:
-                group = attrs.get('group-title') or default_category
+                group = map_category(default_category, attrs.get('group-title', ''), name)
                 channel = {
                     'name': name,
                     'tvg-id': attrs.get('tvg-id') or attrs.get('tvg-name') or None,
@@ -378,7 +408,8 @@ def main():
     os.makedirs(args.outdir, exist_ok=True)
 
     output_m3u_path = os.path.join(args.outdir, 'cleaned_playlist.m3u')
-    m3u_lines = ["#EXTM3U"]
+    epg_header_str = f' url-tvg="{",".join(epg_urls)}"' if epg_urls else ''
+    m3u_lines = [f"#EXTM3U{epg_header_str}"]
 
     channels_to_write = alive_channels if args.remove_dead else processed_channels
 

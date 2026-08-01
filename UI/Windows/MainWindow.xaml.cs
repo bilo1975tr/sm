@@ -257,7 +257,7 @@ namespace StreamMesh.UI.Windows
                 _notifyIcon = new System.Windows.Forms.NotifyIcon();
                 _notifyIcon.Icon = GetTrayIcon();
                 _notifyIcon.Visible = true;
-                _notifyIcon.Text = "StreamMesh Hybrid v1.0.1";
+                _notifyIcon.Text = $"StreamMesh Hybrid v{UpdateService.GetCurrentVersion()}";
 
                 _notifyIcon.MouseClick += (s, e) => {
                     if (e.Button == System.Windows.Forms.MouseButtons.Left)

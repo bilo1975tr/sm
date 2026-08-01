@@ -47,7 +47,7 @@ namespace StreamMesh.Core.Utils
                 LogService.LogError("UpdateService: GetCurrentVersion error", ex);
             }
 
-            return "1.0.1";
+            return "0.0.1";
         }
 
         public async Task<(bool HasUpdate, string RemoteVersion)> CheckForUpdateAsync()
@@ -124,6 +124,13 @@ namespace StreamMesh.Core.Utils
                             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                             string localPath = Path.Combine(baseDir, "version.txt");
                             await File.WriteAllTextAsync(localPath, remoteVerContent.Trim());
+
+                            try
+                            {
+                                string verAltPath = Path.Combine(baseDir, "VERSION");
+                                await File.WriteAllTextAsync(verAltPath, remoteVerContent.Trim());
+                            }
+                            catch { }
                         }
                     }
                 }

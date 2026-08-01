@@ -157,27 +157,23 @@ namespace StreamMesh.UI.ViewModels
                 filtered = filtered.Where(c => ChannelUtils.MatchesQueryFilter(c, _searchText));
             }
 
-            // V1.8.8: Group Series
+            // Group Series (Diziler tek bir kart altında toplanır)
             var finalItems = new List<Channel>();
-            var nonSeries = filtered.Where(c => c.Category != "Dizi").ToList();
-            var seriesItems = filtered.Where(c => c.Category == "Dizi").ToList();
+            var nonSeries = filtered.Where(c => !string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) && !string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
+            var seriesItems = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
 
             finalItems.AddRange(nonSeries);
 
-            var groups = seriesItems.GroupBy(s => s.SeriesBaseName).ToList();
+            var groups = seriesItems.GroupBy(s => !string.IsNullOrWhiteSpace(s.SeriesBaseName) ? s.SeriesBaseName : s.CleanName).ToList();
             foreach (var g in groups)
             {
-                if (string.IsNullOrEmpty(g.Key))
+                if (string.IsNullOrWhiteSpace(g.Key))
                 {
-                    finalItems.AddRange(g); // If no base name, don't group
-                }
-                else if (g.Count() > 1)
-                {
-                    finalItems.Add(new SeriesGroup(g.Key, g.ToList()));
+                    finalItems.AddRange(g);
                 }
                 else
                 {
-                    finalItems.Add(g.First());
+                    finalItems.Add(new SeriesGroup(g.Key, g.ToList()));
                 }
             }
 

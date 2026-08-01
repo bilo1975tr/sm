@@ -47,7 +47,7 @@ namespace StreamMesh.Core.Media
             try
             {
                 // 1. Önce GitHub Actions tarafından oluşturulan temizlenmiş master M3U listesini dene
-                string cleanM3uUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/cleaned_playlist.m3u";
+                string cleanM3uUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/out/cleaned_playlist.m3u";
                 bool cleanM3uLoaded = false;
 
                 try
@@ -58,7 +58,7 @@ namespace StreamMesh.Core.Media
                     {
                         OnProgress?.Invoke(15, "Temizlenmiş master liste indiriliyor...");
                         _db.AddM3uSource(cleanM3uUrl);
-                        var channels = await _m3u.ParseM3uAsync(cleanM3uUrl, "GENEL", true, (subMsg, subPct) =>
+                        var channels = await _m3u.ParseM3uAsync(cleanM3uUrl, "TV", false, (subMsg, subPct) =>
                         {
                             OnProgress?.Invoke(20 + (int)(subPct * 0.6), $"Temizlenmiş liste işleniyor: {subMsg}");
                         });

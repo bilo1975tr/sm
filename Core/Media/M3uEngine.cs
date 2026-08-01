@@ -85,36 +85,52 @@ namespace StreamMesh.Core.Media
 
                 var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
                 Channel? current = null;
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
 
-                foreach (var line in lines)
+                foreach (var rawLine in lines)
                 {
-                    if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase))
+                    string line = rawLine.Trim();
+                    if (string.IsNullOrEmpty(line)) continue;
+
+                    if (line.StartsWith("#EXTM3U", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Check for url-tvg, x-tvg-url or tvg-url header attributes
+                        var match = System.Text.RegularExpressions.Regex.Match(line, @"(?:url-tvg|x-tvg-url|tvg-url)=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (match.Success)
+                        {
+                            string epgUrlsRaw = match.Groups[1].Value;
+                            var epgUrls = epgUrlsRaw.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                            foreach (var epgUrl in epgUrls)
+                            {
+                                string trimmedEpg = epgUrl.Trim();
+                                if (!string.IsNullOrEmpty(trimmedEpg))
+                                {
+                                    db.AddEpgSource(trimmedEpg);
+                                }
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase) || line.StartsWith("#EXTINF", StringComparison.OrdinalIgnoreCase))
                     {
                         current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath };
                         if (forceCategory) current.Notes = "FORCE_CAT";
 
-                        int logoIdx = line.IndexOf("tvg-logo=\"", StringComparison.OrdinalIgnoreCase);
-                        if (logoIdx != -1)
-                        {
-                            int start = logoIdx + 10;
-                            int end = line.IndexOf("\"", start);
-                            if (end != -1) current.LogoUrl = line.Substring(start, end - start);
-                        }
+                        // Logo
+                        var logoMatch = System.Text.RegularExpressions.Regex.Match(line, @"tvg-logo=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (logoMatch.Success) current.LogoUrl = logoMatch.Groups[1].Value;
 
-                        int epgIdx = line.IndexOf("tvg-id=\"", StringComparison.OrdinalIgnoreCase);
-                        if (epgIdx != -1)
-                        {
-                            int start = epgIdx + 8;
-                            int end = line.IndexOf("\"", start);
-                            if (end != -1) current.EpgId = line.Substring(start, end - start);
-                        }
+                        // EPG ID
+                        var epgMatch = System.Text.RegularExpressions.Regex.Match(line, @"tvg-id=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (epgMatch.Success) current.EpgId = epgMatch.Groups[1].Value;
 
-                        int groupIdx = line.IndexOf("group-title=\"", StringComparison.OrdinalIgnoreCase);
-                        if (groupIdx != -1)
+                        // Group Title
+                        var groupMatch = System.Text.RegularExpressions.Regex.Match(line, @"group-title=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (groupMatch.Success)
                         {
-                            int start = groupIdx + 13;
-                            int end = line.IndexOf("\"", start);
-                            if (end != -1) current.GroupTitle = line.Substring(start, end - start);
+                            current.GroupTitle = groupMatch.Groups[1].Value;
+                            if (!forceCategory) current.Category = groupMatch.Groups[1].Value;
                         }
 
                         int nameIdx = line.LastIndexOf(',');
@@ -124,14 +140,19 @@ namespace StreamMesh.Core.Media
                             if (string.IsNullOrEmpty(current.Name)) current.Name = "İsimsiz Kanal";
                         }
                     }
-                    else if (!line.StartsWith("#") && current != null)
+                    else if (!line.StartsWith("#"))
                     {
-                        string url = line.Trim();
+                        if (current == null)
+                        {
+                            // Single line format without #EXTINF
+                            current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, Name = line };
+                        }
+
+                        string url = line;
                         if (!string.IsNullOrEmpty(url))
                         {
                             current.Url = url;
 
-                            // V1.8.8: Generate deterministic ID from URL to prevent duplicates
                             using (var sha1 = System.Security.Cryptography.SHA1.Create())
                             {
                                 byte[] hash = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(url));

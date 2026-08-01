@@ -580,51 +580,123 @@ namespace StreamMesh.Core.Database
                 using (var connection = new SqliteConnection(ConnectionString))
                 {
                     await connection.OpenAsync();
+
+                    string rawQuery = (query ?? "").Trim();
+                    string cleanQuery = StreamMesh.Core.Media.ChannelUtils.GetCleanName(rawQuery);
+                    string normQuery = StreamMesh.Core.Media.ChannelUtils.ToNormalizedKey(cleanQuery);
+
+                    var epgSources = GetEpgSources();
+                    string sourceIn = epgSources.Count > 0 ? string.Join("','", epgSources.Select(s => s.Replace("'", "''"))) : "";
+
+                    var channelSources = new List<(string epgId, string channelName, string url)>();
+
+                    // 1. Search EpgPrograms Table
                     var cmd = connection.CreateCommand();
-                var epgSources = GetEpgSources();
-                string sourceIn = string.Join("','", epgSources.Select(s => s.Replace("'", "''")));
-
-                if (string.IsNullOrWhiteSpace(query))
-                {
-                    cmd.CommandText = allSources
-                        ? "SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms LIMIT 100"
-                        : $"SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE SourceUrl IN ('{sourceIn}') LIMIT 100";
-                }
-                else
-                {
-                    cmd.CommandText = allSources
-                        ? "SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE ChannelName LIKE @q LIMIT 100"
-                        : $"SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE ChannelName LIKE @q AND SourceUrl IN ('{sourceIn}') LIMIT 100";
-                    cmd.Parameters.AddWithValue("@q", "%" + query.Trim() + "%");
-                }
-
-                using var reader = await cmd.ExecuteReaderAsync();
-                var channelSources = new List<(string name, string url)>();
-                while (await reader.ReadAsync())
-                {
-                    string cn = reader.GetString(0);
-                    string su = reader.IsDBNull(1) ? "" : reader.GetString(1);
-                    if (!string.IsNullOrWhiteSpace(cn)) channelSources.Add((cn, su));
-                }
-
-                foreach (var (chName, sourceUrl) in channelSources)
-                {
-                    var progCmd = connection.CreateCommand();
-                    progCmd.CommandText = "SELECT Title FROM EpgPrograms WHERE ChannelName = @cn AND SourceUrl = @su ORDER BY StartTime DESC LIMIT 1";
-                    progCmd.Parameters.AddWithValue("@cn", chName);
-                    progCmd.Parameters.AddWithValue("@su", sourceUrl);
-                    var titleObj = await progCmd.ExecuteScalarAsync();
-                    string progTitle = titleObj != null ? titleObj.ToString()! : "Yayın akışı bilgisi yok";
-
-                    list.Add(new EpgChannelSearchResult
+                    if (string.IsNullOrWhiteSpace(rawQuery))
                     {
-                        EpgId = chName,
-                        ChannelName = chName,
-                        CurrentProgram = progTitle,
-                        SourceName = allSources ? "Tüm EPG Kaynakları" : "Mevcut EPG Kaynağı",
-                        SourceUrl = sourceUrl
-                    });
-                }
+                        cmd.CommandText = allSources || string.IsNullOrEmpty(sourceIn)
+                            ? "SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms LIMIT 50"
+                            : $"SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE SourceUrl IN ('{sourceIn}') LIMIT 50";
+                    }
+                    else
+                    {
+                        cmd.CommandText = allSources || string.IsNullOrEmpty(sourceIn)
+                            ? "SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE ChannelName LIKE @q OR ChannelName LIKE @cq LIMIT 50"
+                            : $"SELECT DISTINCT ChannelName, SourceUrl FROM EpgPrograms WHERE (ChannelName LIKE @q OR ChannelName LIKE @cq) AND SourceUrl IN ('{sourceIn}') LIMIT 50";
+                        cmd.Parameters.AddWithValue("@q", "%" + rawQuery + "%");
+                        cmd.Parameters.AddWithValue("@cq", "%" + cleanQuery + "%");
+                    }
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            string rawCn = reader.GetString(0);
+                            string su = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                            if (string.IsNullOrWhiteSpace(rawCn)) continue;
+
+                            // Split comma separated channel names if present
+                            var parts = rawCn.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                            foreach (var p in parts)
+                            {
+                                string cn = p.Trim();
+                                if (string.IsNullOrWhiteSpace(cn)) continue;
+
+                                if (string.IsNullOrWhiteSpace(rawQuery) ||
+                                    cn.Contains(rawQuery, StringComparison.OrdinalIgnoreCase) ||
+                                    cn.Contains(cleanQuery, StringComparison.OrdinalIgnoreCase) ||
+                                    StreamMesh.Core.Media.ChannelUtils.ToNormalizedKey(cn).Contains(normQuery, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    if (!channelSources.Any(cs => cs.epgId.Equals(cn, StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        channelSources.Add((cn, cn, su));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Search Channels Table for existing EpgIds
+                    if (!string.IsNullOrWhiteSpace(rawQuery))
+                    {
+                        var chCmd = connection.CreateCommand();
+                        chCmd.CommandText = "SELECT DISTINCT EpgId, Name, EpgUrl FROM Channels WHERE (EpgId IS NOT NULL AND EpgId != '') AND (EpgId LIKE @q OR Name LIKE @q OR Name LIKE @cq) LIMIT 20";
+                        chCmd.Parameters.AddWithValue("@q", "%" + rawQuery + "%");
+                        chCmd.Parameters.AddWithValue("@cq", "%" + cleanQuery + "%");
+
+                        using (var reader = await chCmd.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                string rawEid = reader.GetString(0);
+                                string rawCname = reader.GetString(1);
+                                string eurl = reader.IsDBNull(2) ? "" : reader.GetString(2);
+
+                                var eParts = rawEid.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                                var nParts = rawCname.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                                string firstCname = nParts.Length > 0 ? nParts[0].Trim() : rawCname.Trim();
+
+                                foreach (var ep in eParts)
+                                {
+                                    string eid = ep.Trim();
+                                    if (string.IsNullOrWhiteSpace(eid)) continue;
+
+                                    if (!channelSources.Any(cs => cs.epgId.Equals(eid, StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        channelSources.Add((eid, firstCname, eurl));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Format results
+                    foreach (var (epgId, chName, sourceUrl) in channelSources)
+                    {
+                        string progTitle = "Yayın akışı bilgisi yok";
+                        try
+                        {
+                            var progCmd = connection.CreateCommand();
+                            progCmd.CommandText = "SELECT Title FROM EpgPrograms WHERE ChannelName = @cn ORDER BY StartTime DESC LIMIT 1";
+                            progCmd.Parameters.AddWithValue("@cn", epgId);
+                            var titleObj = await progCmd.ExecuteScalarAsync();
+                            if (titleObj != null && !string.IsNullOrEmpty(titleObj.ToString()))
+                            {
+                                progTitle = titleObj.ToString()!;
+                            }
+                        }
+                        catch { }
+
+                        list.Add(new EpgChannelSearchResult
+                        {
+                            EpgId = epgId,
+                            ChannelName = chName,
+                            CurrentProgram = progTitle,
+                            SourceName = allSources ? "Tüm EPG Kaynakları" : "Mevcut EPG Kaynağı",
+                            SourceUrl = sourceUrl
+                        });
+                    }
+
                 }
             }
             catch (Exception ex)

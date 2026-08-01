@@ -13,7 +13,7 @@
 
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="🌐 Global Medya ve Kanal Arama" FontSize="30" FontWeight="Bold" Foreground="White"/>
-            <TextBlock Text="Arama kaynağını seçin (AceStream P2P, Otomatik IPTV, IPTV-Org veya Tümü) ve kanalları tek tıkla kütüphanenize aktarın." FontSize="13" Foreground="#94a3b8" Margin="0,5,0,0"/>
+            <TextBlock Text="Arama kaynağını seçin (AceStream Engine, Search Web, Net Web, IPTVCat, FreeTuxTV veya Tümü) ve kanalları tek tıkla kütüphanenize aktarın." FontSize="13" Foreground="#94a3b8" Margin="0,5,0,0"/>
         </StackPanel>
 
         <StackPanel Grid.Row="1" Margin="0,0,0,20">
@@ -30,11 +30,11 @@
                     <TextBlock Text="Kaynak" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,6" FontWeight="SemiBold"/>
                     <ComboBox x:Name="SourceComboBox" Height="44" FontSize="13" SelectedIndex="0">
                         <ComboBoxItem Content="🌐 Tüm Kaynaklar" IsSelected="True"/>
-                        <ComboBoxItem Content="⚡ AceStream P2P Ağ"/>
+                        <ComboBoxItem Content="⚡ AceStream Engine (Yerel/Ağ API)"/>
+                        <ComboBoxItem Content="🔍 AceStream Search Web (search-ace.stream)"/>
+                        <ComboBoxItem Content="🌐 AceStream Net Web (ace-stream.net)"/>
                         <ComboBoxItem Content="🐱 IPTVCat Arama Motoru"/>
                         <ComboBoxItem Content="🐧 FreeTuxTV Veritabanı"/>
-                        <ComboBoxItem Content="📡 Otomatik IPTV Listeleri"/>
-                        <ComboBoxItem Content="🌍 IPTV-Org Küresel Liste"/>
                     </ComboBox>
                 </StackPanel>
 

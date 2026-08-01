@@ -10,7 +10,7 @@ const PORT = 3000;
 
 const server = http.createServer((req, res) => {
   if (req.url === '/api/version') {
-    let version = '1.0.1';
+    let version = '0.0.1';
     try {
       if (fs.existsSync(path.join(__dirname, 'version.txt'))) {
         version = fs.readFileSync(path.join(__dirname, 'version.txt'), 'utf8').trim();
@@ -21,7 +21,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  let version = '1.0.1';
+  let version = '0.0.1';
   try {
     if (fs.existsSync(path.join(__dirname, 'version.txt'))) {
       version = fs.readFileSync(path.join(__dirname, 'version.txt'), 'utf8').trim();

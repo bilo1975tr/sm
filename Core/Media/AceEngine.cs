@@ -27,6 +27,13 @@ namespace StreamMesh.Core.Media
         private const int ACESTREAM_PORT = 6878;
         private string? _cachedApiToken;
 
+        static AceEngine()
+        {
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
+        }
+
         public async Task<string?> GetApiAccessTokenAsync()
         {
             if (!string.IsNullOrEmpty(_cachedApiToken)) return _cachedApiToken;
@@ -46,22 +53,20 @@ namespace StreamMesh.Core.Media
             return null;
         }
 
-        public async Task<List<AceResult>> SearchAsync(string query, string category = "", string language = "")
+        public async Task<List<AceResult>> SearchEngineApiOnlyAsync(string query, string category = "", string language = "")
         {
             var list = new List<AceResult>();
             string cleanQuery = (query ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(cleanQuery)) return list;
 
             string possibleCid = ExtractHash(cleanQuery);
             if (!string.IsNullOrEmpty(possibleCid))
             {
-                list.Add(new AceResult { Name = $"AceStream Content ({possibleCid.Substring(0, 8)}...)", Url = $"acestream://{possibleCid}", Peers = "Doğrudan ID", SourceName = "Hash", Category = "P2P Stream" });
+                list.Add(new AceResult { Name = $"AceStream İçeriği ({possibleCid.Substring(0, 8)}...)", Url = $"acestream://{possibleCid}", Peers = "Doğrudan ID", SourceName = "AceStream Engine API", Category = "P2P Stream" });
                 return list;
             }
 
             string apiCategory = MapCategoryToAceApi(category);
-
-            // V1.8.7: Eğer sorgu parantez içeriyorsa (örn: [de]), parantezleri silerek yapılan
-            // bulanık aramayı (cleanStripped) iptal et. Sadece tam sorguyu gönder.
             bool hasBrackets = cleanQuery.Contains("[") || cleanQuery.Contains("]");
             string cleanStripped = hasBrackets ? cleanQuery : cleanQuery.Replace("[", " ").Replace("]", " ").Replace("(", " ").Replace(")", " ").Trim();
 
@@ -71,21 +76,156 @@ namespace StreamMesh.Core.Media
                 try { await SearchServerSideApiAsync(list, cleanStripped, apiCategory, 0); } catch { }
             }
             try { await SearchLocalEngineApiAsync(list, cleanQuery, apiCategory, 0); } catch { }
-            
-            // If results are low, search extra pages and full database snapshot
+
             if (list.Count < 30)
             {
                 try { await SearchServerSideApiAsync(list, cleanQuery, apiCategory, 250); } catch { }
                 try { await SearchServerSideAllSnapshotAsync(list, cleanQuery, apiCategory); } catch { }
             }
-            try { await SearchWebIndexesAsync(list, cleanQuery); } catch { }
-            if (cleanStripped != cleanQuery && !string.IsNullOrWhiteSpace(cleanStripped) && !hasBrackets)
+
+            return list.Where(x =>
+                !string.IsNullOrWhiteSpace(x.Name) &&
+                !x.Name.StartsWith("AceStream Content", StringComparison.OrdinalIgnoreCase) &&
+                !x.Name.StartsWith("AceStream İçeriği", StringComparison.OrdinalIgnoreCase) &&
+                ChannelUtils.MatchesQueryFilter(x.Name, x.Category, "", x.Url, cleanQuery) &&
+                ChannelUtils.MatchesLanguageFilter(x.Name, language)
+            ).ToList();
+        }
+
+        public async Task<List<AceResult>> SearchSearchAceStreamWebAsync(string query, string category = "", string language = "")
+        {
+            var list = new List<AceResult>();
+            string cleanQuery = (query ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(cleanQuery)) return list;
+
+            try
             {
-                try { await SearchWebIndexesAsync(list, cleanStripped); } catch { }
+                string url = $"https://search-ace.stream/?q={Uri.EscapeDataString(cleanQuery)}";
+                var html = await _httpClient.GetStringAsync(url);
+                var matches = Regex.Matches(html, @"(acestream://[a-f0-9]{40}|[a-f0-9]{40})[^>]*>(.*?)<");
+                foreach (Match m in matches)
+                {
+                    string title = Regex.Replace(m.Groups[2].Value, "<.*?>", "").Trim();
+                    if (string.IsNullOrWhiteSpace(title) || title.Length < 3) continue;
+
+                    if (title.Equals("AceStream", StringComparison.OrdinalIgnoreCase) ||
+                        title.Equals("Download", StringComparison.OrdinalIgnoreCase) ||
+                        title.Equals("Play", StringComparison.OrdinalIgnoreCase) ||
+                        title.Equals("Link", StringComparison.OrdinalIgnoreCase) ||
+                        title.Contains("Ace Stream Search") ||
+                        title.Contains("Index"))
+                        continue;
+
+                    if (!ChannelUtils.MatchesQueryFilter(title, "P2P Stream", "", "", cleanQuery)) continue;
+
+                    string finalUrl = m.Groups[1].Value.StartsWith("acestream://") ? m.Groups[1].Value : $"acestream://{m.Groups[1].Value}";
+                    if (!list.Any(x => x.Url.Equals(finalUrl, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        list.Add(new AceResult { Name = title, Url = finalUrl, SourceName = "search-ace.stream Web", Category = "P2P Stream" });
+                    }
+                }
+            }
+            catch { }
+
+            return list.Where(x => ChannelUtils.MatchesLanguageFilter(x.Name, language)).ToList();
+        }
+
+        public async Task<List<AceResult>> SearchAceStreamNetWebAsync(string query, string category = "", string language = "")
+        {
+            var list = new List<AceResult>();
+            string cleanQuery = (query ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(cleanQuery)) return list;
+
+            try
+            {
+                string url = $"https://ace-stream.net/search?q={Uri.EscapeDataString(cleanQuery)}";
+                var html = await _httpClient.GetStringAsync(url);
+                var matches = Regex.Matches(html, @"(acestream://[a-f0-9]{40}|[a-f0-9]{40})[^>]*>(.*?)<");
+                foreach (Match m in matches)
+                {
+                    string title = Regex.Replace(m.Groups[2].Value, "<.*?>", "").Trim();
+                    if (string.IsNullOrWhiteSpace(title) || title.Length < 3) continue;
+
+                    if (title.Equals("AceStream", StringComparison.OrdinalIgnoreCase) ||
+                        title.Equals("Download", StringComparison.OrdinalIgnoreCase) ||
+                        title.Equals("Play", StringComparison.OrdinalIgnoreCase) ||
+                        title.Equals("Link", StringComparison.OrdinalIgnoreCase) ||
+                        title.Contains("Ace Stream Search") ||
+                        title.Contains("Index"))
+                        continue;
+
+                    if (!ChannelUtils.MatchesQueryFilter(title, "P2P Stream", "", "", cleanQuery)) continue;
+
+                    string finalUrl = m.Groups[1].Value.StartsWith("acestream://") ? m.Groups[1].Value : $"acestream://{m.Groups[1].Value}";
+                    if (!list.Any(x => x.Url.Equals(finalUrl, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        list.Add(new AceResult { Name = title, Url = finalUrl, SourceName = "ace-stream.net Web", Category = "P2P Stream" });
+                    }
+                }
+            }
+            catch { }
+
+            return list.Where(x => ChannelUtils.MatchesLanguageFilter(x.Name, language)).ToList();
+        }
+
+        public async Task<List<AceResult>> SearchAsync(string query, string category = "", string language = "")
+        {
+            var list = new List<AceResult>();
+            string cleanQuery = (query ?? "").Trim();
+
+            string possibleCid = ExtractHash(cleanQuery);
+            if (!string.IsNullOrEmpty(possibleCid))
+            {
+                list.Add(new AceResult { Name = $"AceStream İçeriği ({possibleCid.Substring(0, 8)}...)", Url = $"acestream://{possibleCid}", Peers = "Doğrudan ID", SourceName = "AceStream Engine API", Category = "P2P Stream" });
+                return list;
             }
 
-            // Strict query and language filtering
+            // 1. Prioritize Engine API search
+            try
+            {
+                var apiResults = await SearchEngineApiOnlyAsync(cleanQuery, category, language);
+                list.AddRange(apiResults);
+            }
+            catch { }
+
+            // Collect known URLs / Stream IDs from Engine API
+            var knownUrls = new HashSet<string>(list.Select(x => x.Url.ToLowerInvariant()));
+
+            // 2. Search search-ace.stream Web
+            try
+            {
+                var webResults1 = await SearchSearchAceStreamWebAsync(cleanQuery, category, language);
+                foreach (var res in webResults1)
+                {
+                    if (!knownUrls.Contains(res.Url.ToLowerInvariant()))
+                    {
+                        list.Add(res);
+                        knownUrls.Add(res.Url.ToLowerInvariant());
+                    }
+                }
+            }
+            catch { }
+
+            // 3. Search ace-stream.net Web
+            try
+            {
+                var webResults2 = await SearchAceStreamNetWebAsync(cleanQuery, category, language);
+                foreach (var res in webResults2)
+                {
+                    if (!knownUrls.Contains(res.Url.ToLowerInvariant()))
+                    {
+                        list.Add(res);
+                        knownUrls.Add(res.Url.ToLowerInvariant());
+                    }
+                }
+            }
+            catch { }
+
+            // Strict query and language filtering - filter out generic/fake placeholder items
             list = list.Where(x => 
+                !string.IsNullOrWhiteSpace(x.Name) &&
+                !x.Name.StartsWith("AceStream Content", StringComparison.OrdinalIgnoreCase) &&
+                !x.Name.StartsWith("AceStream İçeriği", StringComparison.OrdinalIgnoreCase) &&
                 ChannelUtils.MatchesQueryFilter(x.Name, x.Category, "", x.Url, cleanQuery) &&
                 ChannelUtils.MatchesLanguageFilter(x.Name, language)
             ).ToList();
@@ -148,6 +288,7 @@ namespace StreamMesh.Core.Media
         private void AddParsedAceItem(List<AceResult> list, dynamic item, string fallbackName, string fallbackIcon, string sourceName)
         {
             string name = item.name ?? item.title ?? fallbackName;
+            if (string.IsNullOrWhiteSpace(name) || name.Equals("AceStream", StringComparison.OrdinalIgnoreCase) || name.Equals("Download", StringComparison.OrdinalIgnoreCase)) return;
             string infohash = item.infohash ?? item.content_id ?? item.id ?? "";
             if (string.IsNullOrWhiteSpace(infohash)) return;
             string finalUrl = infohash.StartsWith("acestream://") ? infohash : $"acestream://{infohash}";
@@ -157,6 +298,7 @@ namespace StreamMesh.Core.Media
 
         private async Task SearchWebIndexesAsync(List<AceResult> list, string query)
         {
+            if (string.IsNullOrWhiteSpace(query)) return;
             string[] searchUrls = { $"https://search-ace.stream/?q={Uri.EscapeDataString(query)}", $"https://ace-stream.net/search?q={Uri.EscapeDataString(query)}" };
             foreach (var url in searchUrls)
             {
@@ -166,8 +308,24 @@ namespace StreamMesh.Core.Media
                     var matches = Regex.Matches(html, @"(acestream://[a-f0-9]{40}|[a-f0-9]{40})[^>]*>(.*?)<");
                     foreach (Match m in matches)
                     {
+                        string title = Regex.Replace(m.Groups[2].Value, "<.*?>", "").Trim();
+                        if (string.IsNullOrWhiteSpace(title) || title.Length < 3) continue;
+
+                        if (title.Equals("AceStream", StringComparison.OrdinalIgnoreCase) ||
+                            title.Equals("Download", StringComparison.OrdinalIgnoreCase) ||
+                            title.Equals("Play", StringComparison.OrdinalIgnoreCase) ||
+                            title.Equals("Link", StringComparison.OrdinalIgnoreCase) ||
+                            title.Contains("Ace Stream Search") ||
+                            title.Contains("Index"))
+                            continue;
+
+                        if (!ChannelUtils.MatchesQueryFilter(title, "P2P Stream", "", "", query)) continue;
+
                         string finalUrl = m.Groups[1].Value.StartsWith("acestream://") ? m.Groups[1].Value : $"acestream://{m.Groups[1].Value}";
-                        if (!list.Any(x => x.Url == finalUrl)) list.Add(new AceResult { Name = Regex.Replace(m.Groups[2].Value, "<.*?>", "").Trim(), Url = finalUrl, SourceName = "P2P Web Index" });
+                        if (!list.Any(x => x.Url.Equals(finalUrl, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            list.Add(new AceResult { Name = title, Url = finalUrl, SourceName = "P2P Web Index", Category = "P2P Stream" });
+                        }
                     }
                 } catch { }
             }
