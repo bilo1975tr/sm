@@ -276,17 +276,16 @@ namespace StreamMesh.Core.Media
                                         link.Contains("playlist") || link.Contains("stream") || link.Contains("chunk");
 
                         if (isStream && !list.Any(x => x.Url == link) && ChannelUtils.MatchesQueryFilter(title, "Canlı TV", "Çalışan", link, query))
+                        {
+                            list.Add(new SearchResultItem
                             {
-                                list.Add(new SearchResultItem
-                                {
-                                    Name = title,
-                                    Url = link,
-                                    Source = "IPTVCat Arama Motoru",
-                                    Category = "Canlı TV",
-                                    GroupTitle = "IPTVCat",
-                                    PeersOrDetails = "Durum: Çalışan"
-                                });
-                            }
+                                Name = title,
+                                Url = link,
+                                Source = "IPTVCat Arama Motoru",
+                                Category = "Canlı TV",
+                                GroupTitle = "IPTVCat",
+                                PeersOrDetails = "Durum: Çalışan"
+                            });
                         }
                     }
                     if (list.Count >= 300) break;
