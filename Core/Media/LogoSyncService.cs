@@ -24,8 +24,7 @@ namespace StreamMesh.Core.Media
         {
             try
             {
-                LogService.LogInfo("[LogoSync] Eski veriler temizleniyor...");
-                _db.ExecuteRawNonQuery("DELETE FROM LogoIndex");
+                LogService.LogInfo("[LogoSync] GitHub üzerinden logo verileri kontrol ediliyor...");
 
                 _client.DefaultRequestHeaders.UserAgent.Clear();
                 _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
@@ -50,14 +49,21 @@ namespace StreamMesh.Core.Media
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception countryEx)
+                    {
+                        LogService.LogWarning($"[LogoSync] {country} logoları indirilemedi: {countryEx.Message}");
+                    }
                 }
 
                 if (allLogos.Count > 0)
                 {
                     _db.UpdateLogoIndex(allLogos);
                     _db.SetSetting("LogoSyncDate", DateTime.Now.ToString("o"));
-                    LogService.LogInfo($"[LogoSync] {allLogos.Count} adet yeni standartta logo yüklendi.");
+                    LogService.LogInfo($"[LogoSync] {allLogos.Count} adet yeni standartta logo güncellendi.");
+                }
+                else
+                {
+                    LogService.LogWarning("[LogoSync] Yeni logo bulunamadı veya API erişim sınırı aşıldı. Mevcut logo veritabanı korundu.");
                 }
             }
             catch (Exception ex) { LogService.LogError("LogoSync Error", ex); }

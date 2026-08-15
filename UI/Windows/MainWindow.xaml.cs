@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using StreamMesh.UI.Views;
 using StreamMesh.Core.Network;
+using StreamMesh.Core.Media;
 using StreamMesh.Models;
 using StreamMesh.Core.Utils;
 
@@ -73,6 +74,17 @@ namespace StreamMesh.UI.Windows
             _metaTimer.Tick += async (s, e) => { await RunAutoMetadataEnrichmentAsync(); };
             _metaTimer.Start();
             System.Threading.Tasks.Task.Delay(20000).ContinueWith(_ => RunAutoMetadataEnrichmentAsync());
+
+            // Auto-detect local AI Engine (Ollama / LM Studio) in background
+            System.Threading.Tasks.Task.Delay(3000).ContinueWith(async _ =>
+            {
+                try
+                {
+                    var ai = new AiEngine();
+                    await ai.AutoDetectAndConfigureAsync();
+                }
+                catch { }
+            });
 
             this.KeyDown += MainWindow_KeyDown;
             this.StateChanged += MainWindow_StateChanged;
@@ -194,6 +206,31 @@ namespace StreamMesh.UI.Windows
                 if (e.Key == System.Windows.Input.Key.Space)
                 {
                     _playerView.TogglePause();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Left)
+                {
+                    _playerView.Rewind(10000);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Right)
+                {
+                    _playerView.Forward(10000);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Up)
+                {
+                    _playerView.ChangeVolume(5);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Down)
+                {
+                    _playerView.ChangeVolume(-5);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.L)
+                {
+                    _playerView.GoLive();
                     e.Handled = true;
                 }
                 else if (e.Key == System.Windows.Input.Key.F || e.Key == System.Windows.Input.Key.F11)

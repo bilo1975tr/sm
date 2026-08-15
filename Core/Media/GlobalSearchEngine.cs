@@ -291,7 +291,10 @@ namespace StreamMesh.Core.Media
                     if (list.Count >= 300) break;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[GlobalSearch] IPTVcat arama hatası ('{query}'): {ex.Message}");
+            }
 
             return list;
         }
@@ -360,7 +363,10 @@ namespace StreamMesh.Core.Media
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[GlobalSearch] FreeTuxTV web arama uyarısı ('{queryLower}'): {ex.Message}");
+            }
 
             // Fallback & supplement with FreeTuxTV M3U repository
             try
@@ -388,7 +394,10 @@ namespace StreamMesh.Core.Media
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[GlobalSearch] FreeTuxTV M3U yedek liste uyarısı: {ex.Message}");
+            }
 
             return list;
         }

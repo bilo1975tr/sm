@@ -40,7 +40,14 @@ namespace StreamMesh.Core.Database
 
                 using (var pragmaCmd = connection.CreateCommand())
                 {
-                    pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;";
+                    pragmaCmd.CommandText = @"
+                        PRAGMA journal_mode = WAL;
+                        PRAGMA synchronous = NORMAL;
+                        PRAGMA busy_timeout = 5000;
+                        PRAGMA cache_size = -32000;
+                        PRAGMA mmap_size = 268435456;
+                        PRAGMA temp_store = MEMORY;
+                    ";
                     pragmaCmd.ExecuteNonQuery();
                 }
 
@@ -136,8 +143,12 @@ namespace StreamMesh.Core.Database
                         MediaType TEXT DEFAULT ''
                     );
                     CREATE INDEX IF NOT EXISTS idx_channels_playlisturl ON Channels (PlaylistUrl);
+                    CREATE INDEX IF NOT EXISTS idx_channels_category ON Channels (Category);
+                    CREATE INDEX IF NOT EXISTS idx_channels_name ON Channels (Name);
+                    CREATE INDEX IF NOT EXISTS idx_channels_favorite ON Channels (IsFavorite);
                     CREATE INDEX IF NOT EXISTS idx_epg_channel_time ON EpgPrograms (ChannelName, StartTime, EndTime);
                     CREATE INDEX IF NOT EXISTS idx_epg_channel_name ON EpgPrograms (ChannelName);
+                    CREATE INDEX IF NOT EXISTS idx_epg_time ON EpgPrograms (StartTime, EndTime);
                     CREATE INDEX IF NOT EXISTS idx_epgchannels_name ON EpgChannels (Name);
                 ";
                 command.ExecuteNonQuery();

@@ -74,7 +74,11 @@ namespace StreamMesh.Core.Network
 
             try
             {
-                if (path == "/playlist.m3u")
+                if (path == "/desc.xml")
+                {
+                    await ServeDeviceDescription(res);
+                }
+                else if (path == "/playlist.m3u")
                 {
                     await ServeM3u(res);
                 }
@@ -97,6 +101,37 @@ namespace StreamMesh.Core.Network
             }
             catch { res.StatusCode = 500; }
             finally { try { res.Close(); } catch { } }
+        }
+
+        private async Task ServeDeviceDescription(HttpListenerResponse res)
+        {
+            string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<root xmlns=""urn:schemas-upnp-org:device-1-0"">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+    <friendlyName>StreamMesh Media Server</friendlyName>
+    <manufacturer>StreamMesh</manufacturer>
+    <modelName>StreamMesh DLNA Server</modelName>
+    <modelNumber>1.8</modelNumber>
+    <UDN>uuid:STREAMMESH-MEDIA-SERVER-01</UDN>
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
+        <controlURL>/upnp/control/content_directory</controlURL>
+        <eventSubURL>/upnp/event/content_directory</eventSubURL>
+        <SCPDURL>/upnp/scpd/content_directory.xml</SCPDURL>
+      </service>
+    </serviceList>
+  </device>
+</root>";
+            byte[] buffer = Encoding.UTF8.GetBytes(xml);
+            res.ContentType = "text/xml; charset=utf-8";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
         private async Task ServeM3u(HttpListenerResponse res)

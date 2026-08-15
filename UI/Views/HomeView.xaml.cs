@@ -23,7 +23,6 @@ namespace StreamMesh.UI.Views
             InitializeComponent();
             _vm = new HomeViewModel();
             DataContext = _vm;
-            Loaded += (s, e) => _vm.LoadData();
         }
 
         private void Card_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)

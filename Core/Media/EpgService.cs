@@ -152,5 +152,29 @@ namespace StreamMesh.Core.Media
             }
             catch { return null; }
         }
+
+        public async Task<List<EpgProgram>> GetChannelEpgHistoryAsync(Channel channel)
+        {
+            var list = new List<EpgProgram>();
+            if (channel == null) return list;
+
+            try
+            {
+                var namesToTry = new List<string>();
+                namesToTry.AddRange(channel.GetEpgIdList());
+                if (!string.IsNullOrWhiteSpace(channel.Name)) namesToTry.Add(channel.Name);
+                if (!string.IsNullOrWhiteSpace(channel.PrimaryName)) namesToTry.Add(channel.PrimaryName);
+                string clean = ChannelUtils.GetCleanName(channel.Name);
+                if (!string.IsNullOrWhiteSpace(clean)) namesToTry.Add(clean);
+
+                var programs = await _db.GetEpgForChannelsAsync(namesToTry.Distinct().ToList());
+                return programs.OrderBy(p => p.StartTime).ToList();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("EpgService.GetChannelEpgHistoryAsync failed", ex);
+                return list;
+            }
+        }
     }
 }

@@ -62,10 +62,10 @@ namespace StreamMesh.UI.Windows
             _channel = channel;
             InitializeComponent();
 
-            // Clean 'und' (undefined) language code
+            // Handle 'und' (undefined) language gracefully without hardcoding
             if (string.Equals(channel.Language, "und", StringComparison.OrdinalIgnoreCase))
             {
-                _channel.Language = "tr";
+                _channel.Language = "";
             }
             LanguageText = _channel.Language ?? "";
 

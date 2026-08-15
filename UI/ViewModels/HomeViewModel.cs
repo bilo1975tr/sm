@@ -184,22 +184,33 @@ namespace StreamMesh.UI.ViewModels
                 }
             }
 
-            // Apply Sorting
-            switch (_sortIndex)
+            // Apply Sorting (When user is searching, prioritize Search Relevance Score first)
+            bool isSearching = !string.IsNullOrWhiteSpace(_searchText);
+            if (isSearching)
             {
-                case 1: // Alfabetik (Z-A)
-                    finalItems = finalItems.OrderByDescending(c => c.CleanName ?? c.Name ?? "").ToList();
-                    break;
-                case 2: // Yeni Eklenenler
-                    finalItems = finalItems.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id).ToList();
-                    break;
-                case 3: // Favoriler Önce
-                    finalItems = finalItems.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.CleanName ?? c.Name ?? "").ToList();
-                    break;
-                case 0: // Alfabetik (A-Z)
-                default:
-                    finalItems = finalItems.OrderBy(c => c.CleanName ?? c.Name ?? "").ToList();
-                    break;
+                finalItems = finalItems
+                    .OrderByDescending(c => StreamMesh.Core.Media.ChannelUtils.CalculateSearchScore(c, _searchText))
+                    .ThenBy(c => c.CleanName ?? c.Name ?? "")
+                    .ToList();
+            }
+            else
+            {
+                switch (_sortIndex)
+                {
+                    case 1: // Alfabetik (Z-A)
+                        finalItems = finalItems.OrderByDescending(c => c.CleanName ?? c.Name ?? "").ToList();
+                        break;
+                    case 2: // Yeni Eklenenler
+                        finalItems = finalItems.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id).ToList();
+                        break;
+                    case 3: // Favoriler Önce
+                        finalItems = finalItems.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.CleanName ?? c.Name ?? "").ToList();
+                        break;
+                    case 0: // Alfabetik (A-Z)
+                    default:
+                        finalItems = finalItems.OrderBy(c => c.CleanName ?? c.Name ?? "").ToList();
+                        break;
+                }
             }
 
             _filteredChannels = finalItems.ToList();

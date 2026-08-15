@@ -75,7 +75,7 @@
                         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
                             <TextBlock x:Name="OsdTitle" Text="Kanal Yükleniyor..." FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
                             <Border x:Name="LiveBadge" Background="#dc2626" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="🔴 CANLI" Foreground="White" FontWeight="Bold" FontSize="10"/>
+                                <TextBlock x:Name="LiveBadgeText" Text="🔴 CANLI" Foreground="White" FontWeight="Bold" FontSize="10"/>
                             </Border>
                         </StackPanel>
 
@@ -111,9 +111,16 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="TimeCurrentText" Text="00:00:00" Foreground="#94a3b8" FontSize="11" VerticalAlignment="Center" Margin="0,0,15,0" FontFamily="Consolas"/>
-                    <Slider x:Name="TimeSlider" Grid.Column="1" VerticalAlignment="Center" Minimum="0" Maximum="100" ValueChanged="TimeSlider_ValueChanged" Height="18" Cursor="Hand"/>
-                    <TextBlock x:Name="TimeTotalText" Text="CANLI YAYIN" Foreground="#38bdf8" FontSize="11" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0" FontFamily="Consolas"/>
+                    
+                    <Border Grid.Column="0" Background="#1e293b" CornerRadius="4" Padding="6,2" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="TimeCurrentText" Text="00:00:00" Foreground="#38bdf8" FontSize="11" FontWeight="SemiBold" TextAlignment="Center" FontFamily="Consolas" MinWidth="64"/>
+                    </Border>
+
+                    <Slider x:Name="TimeSlider" Grid.Column="1" VerticalAlignment="Center" Minimum="0" Maximum="100" ValueChanged="TimeSlider_ValueChanged" PreviewMouseDown="TimeSlider_PreviewMouseDown" PreviewMouseUp="TimeSlider_PreviewMouseUp" Height="18" Cursor="Hand"/>
+
+                    <Border Grid.Column="2" Background="#1e293b" CornerRadius="4" Padding="6,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <TextBlock x:Name="TimeTotalText" Text="CANLI YAYIN" Foreground="#f8fafc" FontSize="11" FontWeight="Bold" TextAlignment="Center" FontFamily="Consolas" MinWidth="85"/>
+                    </Border>
                 </Grid>
             </Grid>
         </Border>

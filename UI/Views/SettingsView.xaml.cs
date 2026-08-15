@@ -251,13 +251,21 @@ namespace StreamMesh.UI.Views
 
         private async void FetchModels_Click(object sender, RoutedEventArgs e)
         {
-            var models = await _ai.GetLocalModelsAsync();
-            if (models.Count > 0)
+            var result = await _ai.AutoDetectAndConfigureAsync();
+            if (result.success && result.models.Count > 0)
             {
-                AiModelBox.Text = models[0];
-                System.Windows.MessageBox.Show($"Bulunan Modeller: {string.Join(", ", models)}", "AI Modelleri");
+                AiModelBox.Text = result.model;
+                AiUrlBox.Text = result.url;
+                if (AiProviderCombo != null)
+                {
+                    AiProviderCombo.SelectedIndex = result.provider == "LM Studio" ? 1 : 0;
+                }
+                System.Windows.MessageBox.Show($"✅ {result.provider} Servisi Algılandı!\nSeçilen Model: {result.model}\nMevcut Modeller: {string.Join(", ", result.models)}", "Yapay Zeka Hazır");
             }
-            else System.Windows.MessageBox.Show("Yerel AI sunucusuna bağlanılamadı.");
+            else
+            {
+                System.Windows.MessageBox.Show("Yerel AI sunucusuna bağlanılamadı.\nLütfen Ollama (11434) veya LM Studio (1234) uygulamasının çalıştığından ve bir model yüklü olduğundan emin olun.", "AI Servisi Bulunamadı");
+            }
         }
 
         private async void StartCloudSync_Click(object sender, RoutedEventArgs e)

@@ -12,9 +12,12 @@ namespace StreamMesh.Core.Network
         private bool _isRunning = false;
         private readonly string _uuid = Guid.NewGuid().ToString();
 
+        private int _port = 8080;
+
         public void Start(int port = 8080)
         {
             if (_isRunning) return;
+            _port = port;
             _isRunning = true;
             _udp = new UdpClient();
             _udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
@@ -31,21 +34,39 @@ namespace StreamMesh.Core.Network
 
         private async Task ListenLoop()
         {
-            var remoteEP = new IPEndPoint(IPAddress.Any, 1900);
-            using (var listener = new UdpClient(1900))
+            using (var listener = new UdpClient())
             {
-                listener.JoinMulticastGroup(IPAddress.Parse("239.255.255.250"));
+                listener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                listener.Client.Bind(new IPEndPoint(IPAddress.Any, 1900));
+                try
+                {
+                    listener.JoinMulticastGroup(IPAddress.Parse("239.255.255.250"));
+                }
+                catch { }
+
                 while (_isRunning)
                 {
                     try
                     {
                         var result = await listener.ReceiveAsync();
                         string msg = Encoding.UTF8.GetString(result.Buffer);
-                        if (msg.Contains("ssdp:discover"))
+                        if (msg.Contains("ssdp:discover", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Respond to discovery
+                            string response = $@"HTTP/1.1 200 OK
+CACHE-CONTROL: max-age=1800
+DATE: {DateTime.UtcNow:R}
+EXT:
+LOCATION: http://{GetLocalIp()}:{_port}/desc.xml
+SERVER: Windows/10 UPnP/1.0 StreamMesh/1.8
+ST: upnp:rootdevice
+USN: uuid:{_uuid}::upnp:rootdevice
+
+";
+                            byte[] respBytes = Encoding.UTF8.GetBytes(response.Replace("\r\n", "\n").Replace("\n", "\r\n"));
+                            await listener.SendAsync(respBytes, respBytes.Length, result.RemoteEndPoint);
                         }
-                    } catch { }
+                    }
+                    catch { }
                 }
             }
         }

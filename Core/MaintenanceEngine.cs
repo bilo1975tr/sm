@@ -91,7 +91,57 @@ namespace StreamMesh.Core
 
         private static void GenerateAppIcon(string path)
         {
-            GenerateLogoPng(path);
+            try
+            {
+                var info = new SKImageInfo(256, 256);
+                using var surface = SKSurface.Create(info);
+                var canvas = surface.Canvas;
+                canvas.Clear(SKColors.Transparent);
+                using (var paint = new SKPaint())
+                {
+                    paint.Shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(256, 256),
+                        new[] { SKColor.Parse("#0284c7"), SKColor.Parse("#38bdf8") }, null, SKShaderTileMode.Clamp);
+                    canvas.DrawRoundRect(20, 20, 216, 216, 40, 40, paint);
+
+                    paint.Shader = null;
+                    paint.Color = SKColors.White;
+                    paint.TextSize = 100;
+                    paint.IsAntialias = true;
+                    paint.FakeBoldText = true;
+                    paint.TextAlign = SKTextAlign.Center;
+                    canvas.DrawText("SM", 128, 165, paint);
+                }
+
+                using var image = surface.Snapshot();
+                using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                byte[] pngBytes = data.ToArray();
+
+                // Build valid Windows ICO file structure
+                using var stream = File.OpenWrite(path);
+                using var writer = new BinaryWriter(stream);
+
+                // ICONDIR header
+                writer.Write((ushort)0); // reserved
+                writer.Write((ushort)1); // type 1 = icon
+                writer.Write((ushort)1); // 1 image count
+
+                // ICONDIRENTRY (16 bytes)
+                writer.Write((byte)0); // width: 256 (0 means 256)
+                writer.Write((byte)0); // height: 256 (0 means 256)
+                writer.Write((byte)0); // colors
+                writer.Write((byte)0); // reserved
+                writer.Write((ushort)1); // color planes
+                writer.Write((ushort)32); // bits per pixel
+                writer.Write((uint)pngBytes.Length); // size of image data
+                writer.Write((uint)22); // offset where image data starts (6 + 16)
+
+                // Image Data (PNG)
+                writer.Write(pngBytes);
+            }
+            catch (Exception ex)
+            {
+                Utils.LogService.LogError("GenerateAppIcon Error", ex);
+            }
         }
     }
 }
