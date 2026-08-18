@@ -317,6 +317,23 @@ namespace StreamMesh.UI.Views
 
                     if (tryUrl.StartsWith("acestream://") || channel.SourceType == "ACESTREAM")
                     {
+                        if (!_ace.IsInstalled())
+                        {
+                            var result = System.Windows.MessageBox.Show("AceStream motoru yüklü değil. İçeriği oynatmak için gerekli bileşenler şimdi indirilsin mi?", "Eksik Bileşen", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                            if (result == MessageBoxResult.Yes)
+                            {
+                                Dispatcher.Invoke(() => { OsdTitle.Text = "AceStream Bileşenleri Yükleniyor..."; ShowOsdTemporary(); });
+                                bool success = await _ace.DownloadAndExtractEngineAsync();
+                                if (!success)
+                                {
+                                    System.Windows.MessageBox.Show("Bileşenler yüklenemedi. Lütfen internet bağlantınızı kontrol edin.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                                    return;
+                                }
+                                Dispatcher.Invoke(() => { OsdTitle.Text = "Kurulum Tamamlandı, Motor Başlatılıyor..."; ShowOsdTemporary(); });
+                            }
+                            else return;
+                        }
+
                         await _ace.StartEngineAsync();
                         var aceUrls = _ace.GetHttpUrls(tryUrl);
                         if (aceUrls.Count > 0) tryUrl = aceUrls[0];
