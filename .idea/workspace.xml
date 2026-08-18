@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="172b2990-0c40-4e8f-90bc-ffcd3a551743" name="Changes" comment="" />
+    <list default="true" id="43d44b56-fc51-4961-b364-7de26a7ba3f5" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,11 +13,11 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ProjectColorInfo">{
-  &quot;customColor&quot;: &quot;&quot;,
-  &quot;associatedIndex&quot;: 8
-}</component>
-  <component name="ProjectId" id="3H5vqzXQ2TJjfH8oqI2hUJy1oFP" />
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3I2aaFXXZo6N2UkWNgDfyxZJnXw" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -28,23 +28,18 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "aem-ide.servers.initialized": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "implementationPlan.dismissed.19bf6270-0e0c-42cc-9cfd-84eb645c1a1a": "true",
-    "implementationPlan.dismissed.a5ca5278-15ff-4149-b939-acacf6c42539": "true",
-    "implementationPlan.dismissed.fc1d19ec-f7bd-4eba-bd3a-ee70b8d62b11": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Administrator/Downloads/streammesh"
+    "kotlin-language-version-configured": "true"
   }
 }]]></component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="172b2990-0c40-4e8f-90bc-ffcd3a551743" name="Changes" comment="" />
-      <created>1785170938853</created>
+      <changelist id="43d44b56-fc51-4961-b364-7de26a7ba3f5" name="Changes" comment="" />
+      <created>1786965179931</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1785170938853</updated>
+      <updated>1786965179931</updated>
     </task>
     <servers />
   </component>

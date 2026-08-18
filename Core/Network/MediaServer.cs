@@ -94,6 +94,20 @@ namespace StreamMesh.Core.Network
                 {
                     await ServeProxyStream(req, res);
                 }
+                else if (path == "/ping")
+                {
+                    byte[] buffer = Encoding.UTF8.GetBytes("pong");
+                    res.ContentType = "text/plain";
+                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                }
+                else if (path == "/logs")
+                {
+                    await ServeLogs(res);
+                }
+                else if (path == "/debug")
+                {
+                    await ServeDebugInfo(res);
+                }
                 else
                 {
                     res.StatusCode = 404;
@@ -101,6 +115,53 @@ namespace StreamMesh.Core.Network
             }
             catch { res.StatusCode = 500; }
             finally { try { res.Close(); } catch { } }
+        }
+
+        private async Task ServeLogs(HttpListenerResponse res)
+        {
+            try
+            {
+                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StreamMesh", "app.log");
+                if (File.Exists(logPath))
+                {
+                    byte[] buffer;
+                    using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var reader = new StreamReader(fs))
+                    {
+                        string content = await reader.ReadToEndAsync();
+                        buffer = Encoding.UTF8.GetBytes(content);
+                    }
+                    res.ContentType = "text/plain; charset=utf-8";
+                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                }
+                else
+                {
+                    byte[] buffer = Encoding.UTF8.GetBytes("Log dosyası henüz oluşturulmadı.");
+                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                byte[] buffer = Encoding.UTF8.GetBytes("Log okuma hatası: " + ex.Message);
+                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+        }
+
+        private async Task ServeDebugInfo(HttpListenerResponse res)
+        {
+            var info = new
+            {
+                OS = Environment.OSVersion.ToString(),
+                DotNetVersion = Environment.Version.ToString(),
+                CurrentDirectory = Environment.CurrentDirectory,
+                Is64Bit = Environment.Is64BitProcess,
+                ProcessName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+                Port = _port
+            };
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(info, Newtonsoft.Json.Formatting.Indented);
+            byte[] buffer = Encoding.UTF8.GetBytes(json);
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
         private async Task ServeDeviceDescription(HttpListenerResponse res)

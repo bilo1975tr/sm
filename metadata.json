@@ -1,8 +1,0 @@
-{
-  "name": "StreamMesh Hybrid",
-  "description": "StreamMesh Hybrid Live TV, P2P AceStream, and Media Streaming Desktop Player",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}

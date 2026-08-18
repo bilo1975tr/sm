@@ -1,7 +1,11 @@
 using System;
 using System.IO;
 using System.Diagnostics;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.IO.Compression;
 using SkiaSharp;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core
 {
@@ -9,40 +13,79 @@ namespace StreamMesh.Core
     {
         public static void EnsureSelfInstallation()
         {
-            // V1.8.5: Removed automatic copying to LocalAppData to fix 10s delay.
-            // App will run from its current directory.
             GenerateAssetsIfMissing();
-            CheckLibVlcStatus();
+            Task.Run(async () => await CheckAndInstallFFmpegAsync());
         }
 
-        private static void CheckLibVlcStatus()
+        private static async Task CheckAndInstallFFmpegAsync()
         {
             try
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string[] possiblePaths = {
-                    Path.Combine(baseDir, "libvlc", "win-x64"),
-                    Path.Combine(baseDir, "libvlc"),
-                    @"C:\Program Files\VideoLAN\VLC",
-                    baseDir
-                };
+                string ffmpegDir = Path.Combine(baseDir, "ffmpeg");
 
-                bool found = false;
-                foreach(var p in possiblePaths)
+                // Robust DLL check: check for any core ffmpeg dlls (avcodec, avformat, avutil)
+                string[] coreDlls = { "avcodec-61.dll", "avcodec-60.dll", "avformat-61.dll", "avutil-58.dll" };
+                bool dllsFound = false;
+                if (Directory.Exists(ffmpegDir))
                 {
-                    if (File.Exists(Path.Combine(p, "libvlc.dll")))
-                    {
-                        found = true;
-                        break;
-                    }
+                    foreach (var d in coreDlls) { if (File.Exists(Path.Combine(ffmpegDir, d))) { dllsFound = true; break; } }
                 }
 
-                if (!found)
+                if (dllsFound)
                 {
-                    Utils.LogService.LogError("BAKIM: LibVLC (libvlc.dll) bulunamadı! Oynatıcı çalışmayabilir. Lütfen VLC Player 64-bit kurun.");
+                    LogService.LogInfo("BAKIM: FFmpeg kütüphanesi hazır.");
+                    return;
+                }
+
+                LogService.LogInfo("BAKIM: FFmpeg kütüphanesi eksik, indiriliyor...");
+                if (!Directory.Exists(ffmpegDir)) Directory.CreateDirectory(ffmpegDir);
+
+                // Source: GyanD FFmpeg 7.0.2 Shared
+                string downloadUrl = "https://github.com/GyanD/codexffmpeg/releases/download/7.0.2/ffmpeg-7.0.2-full_build-shared.zip";
+
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromMinutes(20);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.1");
+
+                var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                if (response.IsSuccessStatusCode)
+                {
+                    string zipPath = Path.Combine(ffmpegDir, "ffmpeg_temp.zip");
+                    using (var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await response.Content.CopyToAsync(fs);
+                    }
+
+                    LogService.LogInfo("BAKIM: FFmpeg paketi indirildi (yaklaşık 100MB), ayıklanıyor...");
+                    ZipFile.ExtractToDirectory(zipPath, ffmpegDir, true);
+                    File.Delete(zipPath);
+
+                    // Robust Scan: Move ALL .dll files found in any subfolder to the ffmpegDir root
+                    var allFiles = Directory.GetFiles(ffmpegDir, "*", SearchOption.AllDirectories);
+                    int movedCount = 0;
+                    foreach (var file in allFiles)
+                    {
+                        if (file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string fileName = Path.GetFileName(file);
+                            string targetPath = Path.Combine(ffmpegDir, fileName);
+                            if (file != targetPath)
+                            {
+                                File.Copy(file, targetPath, true);
+                                movedCount++;
+                            }
+                        }
+                    }
+
+                    LogService.LogInfo($"BAKIM: FFmpeg motoru başarıyla kuruldu. ({movedCount} DLL yapılandırıldı)");
+                }
+                else
+                {
+                    LogService.LogError($"BAKIM: FFmpeg indirme sunucu hatası (HTTP {response.StatusCode})");
                 }
             }
-            catch { }
+            catch (Exception ex) { LogService.LogError("BAKIM: FFmpeg kurulumu sırasında kritik hata", ex); }
         }
 
         private static void GenerateAssetsIfMissing()
@@ -116,31 +159,24 @@ namespace StreamMesh.Core
                 using var data = image.Encode(SKEncodedImageFormat.Png, 100);
                 byte[] pngBytes = data.ToArray();
 
-                // Build valid Windows ICO file structure
                 using var stream = File.OpenWrite(path);
                 using var writer = new BinaryWriter(stream);
-
-                // ICONDIR header
-                writer.Write((ushort)0); // reserved
-                writer.Write((ushort)1); // type 1 = icon
-                writer.Write((ushort)1); // 1 image count
-
-                // ICONDIRENTRY (16 bytes)
-                writer.Write((byte)0); // width: 256 (0 means 256)
-                writer.Write((byte)0); // height: 256 (0 means 256)
-                writer.Write((byte)0); // colors
-                writer.Write((byte)0); // reserved
-                writer.Write((ushort)1); // color planes
-                writer.Write((ushort)32); // bits per pixel
-                writer.Write((uint)pngBytes.Length); // size of image data
-                writer.Write((uint)22); // offset where image data starts (6 + 16)
-
-                // Image Data (PNG)
+                writer.Write((ushort)0);
+                writer.Write((ushort)1);
+                writer.Write((ushort)1);
+                writer.Write((byte)0);
+                writer.Write((byte)0);
+                writer.Write((byte)0);
+                writer.Write((byte)0);
+                writer.Write((ushort)1);
+                writer.Write((ushort)32);
+                writer.Write((uint)pngBytes.Length);
+                writer.Write((uint)22);
                 writer.Write(pngBytes);
             }
             catch (Exception ex)
             {
-                Utils.LogService.LogError("GenerateAppIcon Error", ex);
+                LogService.LogError("GenerateAppIcon Error", ex);
             }
         }
     }

@@ -82,23 +82,21 @@ namespace StreamMesh.Core.Media
 
             // 1. Exact match with clean name gets highest priority
             if (cleanName == q || rawName == q) score += 1000;
-            else if (cleanName.StartsWith(q + " ") || cleanName.StartsWith(q + "-") || cleanName.StartsWith(q)) score += 500;
-            else if (rawName.StartsWith(q + " ") || rawName.StartsWith(q)) score += 400;
+            else if (cleanName.StartsWith(q)) score += 500;
+            else if (rawName.StartsWith(q)) score += 400;
 
-            // 2. Word boundary check
-            var terms = q.Replace("[", " ").Replace("]", " ").Replace("(", " ").Replace(")", " ").Replace("-", " ").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            // 2. Tokenized search (Faster than Regex for simple word matching)
+            var terms = q.Split(new[] { ' ', '[', ']', '(', ')', '-', '_', '.', ':' }, StringSplitOptions.RemoveEmptyEntries);
             if (terms.Length > 0)
             {
-                bool allTermsWordMatch = true;
+                bool allTermsMatch = true;
                 foreach (var t in terms)
                 {
-                    if (Regex.IsMatch(cleanName, $@"\b{Regex.Escape(t)}\b", RegexOptions.IgnoreCase))
+                    if (cleanName.Contains(t))
                     {
-                        score += 100;
-                    }
-                    else if (cleanName.Contains(t))
-                    {
-                        score += 30;
+                        // Word boundary bonus without Regex overhead
+                        if (cleanName.StartsWith(t) || cleanName.Contains(" " + t)) score += 100;
+                        else score += 30;
                     }
                     else if (rawName.Contains(t))
                     {
@@ -106,10 +104,10 @@ namespace StreamMesh.Core.Media
                     }
                     else
                     {
-                        allTermsWordMatch = false;
+                        allTermsMatch = false;
                     }
                 }
-                if (allTermsWordMatch) score += 200;
+                if (allTermsMatch) score += 200;
             }
 
             return score;
@@ -124,29 +122,27 @@ namespace StreamMesh.Core.Media
         public static bool MatchesQueryFilter(string channelName, string category, string groupTitle, string url, string query, string language = "", string sourceType = "")
         {
             if (string.IsNullOrWhiteSpace(query)) return true;
-            string rawLower = query.Trim().ToLowerInvariant();
-            string nameLower = (channelName ?? "").ToLowerInvariant();
+            string q = query.Trim().ToLowerInvariant();
+            string name = (channelName ?? "").ToLowerInvariant();
 
-            // Direct substring
-            if (nameLower.Contains(rawLower)) return true;
+            // Simple fast path
+            if (name.Contains(q)) return true;
 
-            // Strip technical tags (resolutions, codecs) before tokenizing
-            string strippedName = Regex.Replace(nameLower, @"\b(1080p|720p|1440p|4k|fhd|hd|sd|hevc|h265|h264|uhd|50fps|60fps)\b", " ", RegexOptions.IgnoreCase);
-            strippedName = Regex.Replace(strippedName, @"[\(\)\[\]\-_:|.]", " ");
-
-            string cleanQuery = rawLower.Replace("[", " ").Replace("]", " ").Replace("(", " ").Replace(")", " ").Replace("-", " ").Replace("_", " ").Trim();
-            var terms = cleanQuery.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
+            var terms = q.Split(new[] { ' ', '[', ']', '(', ')', '-', '_', '.', ':' }, StringSplitOptions.RemoveEmptyEntries);
             if (terms.Length == 0) return true;
 
-            // All search terms must be matched as whole words or starting sequences in stripped name
-            return terms.All(t => 
+            // Check if all terms are present in the name or metadata
+            foreach (var t in terms)
             {
-                if (Regex.IsMatch(strippedName, $@"\b{Regex.Escape(t)}", RegexOptions.IgnoreCase)) return true;
-                if (strippedName.Contains(t)) return true;
-                if ((url ?? "").ToLowerInvariant().Contains(t)) return true;
-                return false;
-            });
+                bool match = name.Contains(t) ||
+                             (category ?? "").ToLowerInvariant().Contains(t) ||
+                             (groupTitle ?? "").ToLowerInvariant().Contains(t) ||
+                             (url ?? "").ToLowerInvariant().Contains(t);
+
+                if (!match) return false;
+            }
+
+            return true;
         }
     }
 
@@ -208,6 +204,8 @@ namespace StreamMesh.Core.Media
         public async Task EnrichChannelsAsync(List<Channel> channels)
         {
             if (channels == null || channels.Count == 0) return;
+            var updatedChannels = new List<Channel>();
+
             foreach (var ch in channels)
             {
                 if (string.IsNullOrWhiteSpace(ch.LogoUrl))
@@ -216,9 +214,14 @@ namespace StreamMesh.Core.Media
                     if (!string.IsNullOrEmpty(indexedLogo))
                     {
                         ch.LogoUrl = indexedLogo;
-                        await _db.SaveChannelAsync(ch);
+                        updatedChannels.Add(ch);
                     }
                 }
+            }
+
+            if (updatedChannels.Count > 0)
+            {
+                await _db.SaveChannelsBatchAsync(updatedChannels);
             }
         }
     }

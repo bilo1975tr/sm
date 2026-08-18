@@ -24,13 +24,17 @@ namespace StreamMesh.Models
         private bool _isFavorite = false;
         private bool _isVerified = false;
         private bool _isLocked = false;
+        private bool _isEpgLocked = false;
         private bool _isPremium = false;
         private bool _isWatched = false;
         private string _notes = string.Empty;
         private DateTime _createdAt = DateTime.Now;
         private int _personalWatchCount = 0;
         private int _viewersCount = 0;
+        private long _lastPositionMs = 0;
         private string _urlSpeeds = ""; // JSON string for URL-speed mapping
+
+        public long LastPositionMs { get => _lastPositionMs; set { _lastPositionMs = value; OnPropertyChanged(); } }
 
         private int _preferredNameIndex = 0;
         private int _preferredLogoIndex = 0;
@@ -92,6 +96,12 @@ namespace StreamMesh.Models
         {
             get => _isLocked;
             set { if (_isLocked != value) { _isLocked = value; OnPropertyChanged(); } }
+        }
+
+        public bool IsEpgLocked
+        {
+            get => _isEpgLocked;
+            set { if (_isEpgLocked != value) { _isEpgLocked = value; OnPropertyChanged(); } }
         }
 
         public bool IsWatched
@@ -488,6 +498,11 @@ namespace StreamMesh.Models
             if (string.IsNullOrWhiteSpace(Cast) && !string.IsNullOrWhiteSpace(other.Cast)) Cast = other.Cast;
             if ((string.IsNullOrWhiteSpace(Category) || Category == "TV") && !string.IsNullOrWhiteSpace(other.Category) && other.Category != "TV") Category = other.Category;
             if ((string.IsNullOrWhiteSpace(Language) || Language == "und") && !string.IsNullOrWhiteSpace(other.Language) && other.Language != "und") Language = other.Language;
+
+            // 6. Merge Lock States
+            if (other.IsEpgLocked) IsEpgLocked = true;
+            if (other.IsLocked) IsLocked = true;
+            if (other.IsFavorite) IsFavorite = true;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

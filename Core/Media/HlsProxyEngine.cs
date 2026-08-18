@@ -22,6 +22,7 @@ namespace StreamMesh.Core.Media
         public double StartTimeSeconds { get; set; }
         public double EndTimeSeconds => StartTimeSeconds + DurationSeconds;
         public long SequenceNumber { get; set; }
+        public DateTime? ProgramDateTime { get; set; } // Absolute wall clock time from server
     }
 
     public class HlsSessionInfo
@@ -56,6 +57,13 @@ namespace StreamMesh.Core.Media
 
         public int LocalPort => _port;
         public bool IsRunning => _isRunning;
+
+        public HlsSessionInfo? GetSession(string originalUrl)
+        {
+            string sessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(originalUrl)).Replace("=", "").Replace("/", "_").Replace("+", "-");
+            _sessions.TryGetValue(sessionId, out var session);
+            return session;
+        }
 
         private HlsProxyEngine()
         {
@@ -168,11 +176,13 @@ namespace StreamMesh.Core.Media
                     SessionId = sessionId,
                     OriginalUrl = m3u8Url,
                     MediaPlaylistUrl = mediaPlaylistUrl,
-                    LastRefreshedUtc = DateTime.UtcNow,
-                    StartWallClockTime = DateTime.Now
+                    LastRefreshedUtc = DateTime.UtcNow
                 };
 
                 ParseMediaPlaylist(session, manifestContent, mediaPlaylistUrl);
+
+                // Zaman Senkronizasyonu: StartWallClockTime, listenin en başındaki segmentin yayın saatidir.
+                session.StartWallClockTime = DateTime.Now.AddSeconds(-session.TotalDurationSeconds);
 
                 _sessions[sessionId] = session;
 
@@ -198,6 +208,9 @@ namespace StreamMesh.Core.Media
             return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={(int)startOffsetSeconds}";
         }
 
+        private const int MaxMemoryCachedSegments = 320; // ~30-35 mins of TS buffer
+        private const int MaxTrackedHistorySegments = 15000; // ~24 hours of timeline tracking
+
         private void StartLivePoller(HlsSessionInfo session)
         {
             session.PollerCts?.Cancel();
@@ -206,7 +219,7 @@ namespace StreamMesh.Core.Media
 
             Task.Run(async () =>
             {
-                LogService.LogInfo($"HlsProxy: Canlı TS arka plan indirici/tamponlayıcı başlatıldı (Orijinal: {session.MediaPlaylistUrl})");
+                LogService.LogInfo($"HlsProxy: 30 dakikalık TS yerel arabellek indiricisi başlatıldı (Orijinal: {session.MediaPlaylistUrl})");
                 while (!ct.IsCancellationRequested)
                 {
                     try
@@ -217,11 +230,11 @@ namespace StreamMesh.Core.Media
                         string updatedManifest = await _httpClient.GetStringAsync(session.MediaPlaylistUrl);
                         ParseMediaPlaylist(session, updatedManifest, session.MediaPlaylistUrl);
 
-                        // Proactively pre-download and buffer the latest 3 incoming TS segments in background!
+                        // Proactively buffer incoming live segments into local 30-minute cache
                         List<string> latestSegmentUrls;
                         lock (session.SyncLock)
                         {
-                            latestSegmentUrls = session.Segments.TakeLast(4).Select(s => s.Url).ToList();
+                            latestSegmentUrls = session.Segments.TakeLast(6).Select(s => s.Url).ToList();
                         }
 
                         foreach (var segUrl in latestSegmentUrls)
@@ -238,7 +251,7 @@ namespace StreamMesh.Core.Media
                     }
                     catch
                     {
-                        // Silent retry on network glitch
+                        // Silent retry on transient upstream glitches
                     }
                 }
             }, ct);
@@ -270,6 +283,7 @@ namespace StreamMesh.Core.Media
             long mediaSequence = 0;
             bool isEndList = false;
             double targetDuration = 6.0;
+            DateTime? currentProgramTime = null;
 
             var newSegments = new List<HlsSegment>();
 
@@ -290,6 +304,13 @@ namespace StreamMesh.Core.Media
                     if (long.TryParse(line.Substring(22).Trim(), out long seq))
                     {
                         mediaSequence = seq;
+                    }
+                }
+                else if (line.StartsWith("#EXT-X-PROGRAM-DATE-TIME:"))
+                {
+                    if (DateTime.TryParse(line.Substring(25).Trim(), null, DateTimeStyles.RoundtripKind, out DateTime dt))
+                    {
+                        currentProgramTime = dt.ToLocalTime();
                     }
                 }
                 else if (line.StartsWith("#EXT-X-ENDLIST"))
@@ -315,8 +336,14 @@ namespace StreamMesh.Core.Media
                     {
                         Url = absUrl,
                         DurationSeconds = pendingDuration > 0 ? pendingDuration : targetDuration,
-                        SequenceNumber = mediaSequence++
+                        SequenceNumber = mediaSequence++,
+                        ProgramDateTime = currentProgramTime
                     });
+
+                    if (currentProgramTime.HasValue)
+                    {
+                        currentProgramTime = currentProgramTime.Value.AddSeconds(pendingDuration > 0 ? pendingDuration : targetDuration);
+                    }
                     pendingDuration = 0;
                 }
             }
@@ -339,12 +366,21 @@ namespace StreamMesh.Core.Media
                         session.Segments.Add(s);
                     }
                     session.TotalDurationSeconds = curTime;
+
+                    // Fallback WallClock mapping if server doesn't provide #EXT-X-PROGRAM-DATE-TIME
+                    if (session.Segments.Count > 0 && !session.Segments[0].ProgramDateTime.HasValue)
+                    {
+                        session.StartWallClockTime = DateTime.Now.AddSeconds(-session.TotalDurationSeconds);
+                    }
+                    else if (session.Segments.Count > 0 && session.Segments[0].ProgramDateTime.HasValue)
+                    {
+                        session.StartWallClockTime = session.Segments[0].ProgramDateTime.Value;
+                    }
                 }
                 else
                 {
-                    // Merge newly appeared segments into existing rolling session
                     var existingUrls = new HashSet<string>(session.Segments.Select(s => s.Url));
-                    double curTime = session.Segments.Count > 0 ? session.Segments.Last().EndTimeSeconds : 0;
+                    double curTime = session.Segments.Last().EndTimeSeconds;
                     int idx = session.Segments.Count;
 
                     foreach (var s in newSegments)
@@ -359,14 +395,18 @@ namespace StreamMesh.Core.Media
                     }
                     session.TotalDurationSeconds = curTime;
 
-                    // Cap maximum retained segments to ~2500 (~4-5 hours of Timeshift buffer)
-                    if (session.Segments.Count > 2500)
+                    if (session.Segments.Count > MaxTrackedHistorySegments)
                     {
                         session.Segments.RemoveRange(0, 500);
+                        // Re-anchor start wall clock time when trimming
+                        if (session.Segments.Count > 0 && session.Segments[0].ProgramDateTime.HasValue)
+                        {
+                            session.StartWallClockTime = session.Segments[0].ProgramDateTime.Value;
+                        }
                     }
                 }
 
-                session.HasDvrWindow = session.TotalDurationSeconds >= 45 || session.Segments.Count >= 8;
+                session.HasDvrWindow = session.TotalDurationSeconds >= 30;
             }
         }
 
@@ -448,40 +488,51 @@ namespace StreamMesh.Core.Media
             sb.AppendLine("#EXT-X-VERSION:3");
             sb.AppendLine($"#EXT-X-TARGETDURATION:{(int)Math.Ceiling(session.TargetDuration > 0 ? session.TargetDuration : 6.0)}");
 
+            // We use EVENT mode to tell the player we have history, but we only serve a sliding window
+            // to avoid manifest bloating.
+            sb.AppendLine("#EXT-X-PLAYLIST-TYPE:EVENT");
+
             List<HlsSegment> segmentsToServe;
 
             lock (session.SyncLock)
             {
                 if (startSec < 0)
                 {
-                    // Live Mode: Serve last 10 segments with matching media sequence
+                    // Live Mode: Serve last 10 segments and start at the very end
                     segmentsToServe = session.Segments.TakeLast(10).ToList();
-                    long firstSeq = segmentsToServe.Count > 0 ? segmentsToServe[0].SequenceNumber : 0;
-                    sb.AppendLine($"#EXT-X-MEDIA-SEQUENCE:{firstSeq}");
+                    sb.AppendLine("#EXT-X-START:TIME-OFFSET=-2,PRECISE=YES");
                 }
                 else
                 {
-                    // Timeshift / Rewound Mode: Serve from target second as an continuous EVENT / VOD playlist
-                    sb.AppendLine("#EXT-X-PLAYLIST-TYPE:EVENT");
-                    sb.AppendLine("#EXT-X-MEDIA-SEQUENCE:0");
+                    // Teleport Mode: Serve a 60s window starting from requested second
                     segmentsToServe = session.Segments
                         .Where(s => s.EndTimeSeconds >= startSec)
+                        .Take(12) // Serve about 60-70 seconds
                         .ToList();
 
                     if (segmentsToServe.Count == 0)
-                    {
                         segmentsToServe = session.Segments.TakeLast(10).ToList();
-                    }
+
+                    sb.AppendLine("#EXT-X-START:TIME-OFFSET=0,PRECISE=YES");
+                    sb.AppendLine("#EXT-X-DISCONTINUITY");
                 }
+
+                long firstSeq = segmentsToServe.Count > 0 ? segmentsToServe[0].SequenceNumber : 0;
+                sb.AppendLine($"#EXT-X-MEDIA-SEQUENCE:{firstSeq}");
 
                 foreach (var seg in segmentsToServe)
                 {
+                    if (seg.ProgramDateTime.HasValue)
+                        sb.AppendLine($"#EXT-X-PROGRAM-DATE-TIME:{seg.ProgramDateTime.Value:yyyy-MM-ddTHH:mm:ss.fffzzz}");
+
                     string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(seg.Url));
                     sb.AppendLine($"#EXTINF:{seg.DurationSeconds.ToString("0.000", CultureInfo.InvariantCulture)},");
                     sb.AppendLine($"http://127.0.0.1:{_port}/seg/{seg.Index}?url={encoded}");
                 }
 
-                if (!session.IsLive)
+                // If not live or if we reached the actual live edge in teleport mode, we don't append ENDLIST
+                // because we want the player to keep requesting updates.
+                if (!session.IsLive && segmentsToServe.LastOrDefault()?.Url == session.Segments.LastOrDefault()?.Url)
                 {
                     sb.AppendLine("#EXT-X-ENDLIST");
                 }
@@ -501,10 +552,10 @@ namespace StreamMesh.Core.Media
             {
                 byte[] bytes = await _httpClient.GetByteArrayAsync(url);
                 
-                // Ring buffer cache up to 500 segments (~45-60 min TS data)
-                if (_segmentCache.Count > 500)
+                // Ring buffer: keep ~30-35 mins of TS in memory (MaxMemoryCachedSegments = 320)
+                if (_segmentCache.Count > MaxMemoryCachedSegments)
                 {
-                    var oldest = _segmentCache.Keys.Take(100).ToList();
+                    var oldest = _segmentCache.Keys.Take(50).ToList();
                     foreach (var k in oldest) _segmentCache.TryRemove(k, out _);
                 }
                 _segmentCache[url] = bytes;

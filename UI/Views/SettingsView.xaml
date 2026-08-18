@@ -145,9 +145,10 @@
             <TabItem Header="Oynatıcı Ayarları">
                 <Border Background="#1e293b" Padding="25" CornerRadius="15">
                     <StackPanel>
-                        <TextBlock Text="VLC Ayarları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
-                        <TextBlock Text="Tampon Bellek" Foreground="Gray" Margin="0,0,0,5"/>
-                        <TextBox x:Name="CachingBox" Width="150" Height="35" HorizontalAlignment="Left" Margin="0,0,0,15"/>
+                <TextBlock Text="Oynatıcı Ayarları (Flyleaf)" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+
+                <TextBlock Text="Arabellek (ms)" Foreground="#94a3b8" Margin="0,0,0,5"/>
+                <TextBox x:Name="CachingBox" Background="#1e293b" Foreground="White" BorderBrush="#334155" Padding="8" Margin="0,0,0,15"/>
                         <TextBlock Text="User-Agent" Foreground="Gray" Margin="0,0,0,5"/>
                         <TextBox x:Name="UserAgentBox" Height="35" Margin="0,0,0,15"/>
                         <CheckBox x:Name="HwAccelCheck" Content="GPU Hızlandırma" Foreground="White" Margin="0,10,0,10"/>

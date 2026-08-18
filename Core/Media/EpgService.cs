@@ -109,6 +109,98 @@ namespace StreamMesh.Core.Media
             return dict;
         }
 
+        public async Task EnrichBatchEpgAsync(List<Channel> channels)
+        {
+            if (channels == null || channels.Count == 0) return;
+
+            try
+            {
+                var namesToTry = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var channelsToAutoMatch = new List<Channel>();
+
+                foreach (var ch in channels)
+                {
+                    // If no EPG ID and not locked, mark for auto-matching
+                    if (string.IsNullOrEmpty(ch.EpgId) && !ch.IsEpgLocked)
+                    {
+                        channelsToAutoMatch.Add(ch);
+                    }
+
+                    namesToTry.Add(ch.Name);
+                    string clean = ChannelUtils.GetCleanName(ch.Name);
+                    if (!string.IsNullOrWhiteSpace(clean)) namesToTry.Add(clean);
+                    foreach (var id in ch.GetEpgIdList()) namesToTry.Add(id);
+                }
+
+                // Perform Smart Auto-Matching for eligible channels
+                if (channelsToAutoMatch.Count > 0)
+                {
+                    await PerformSmartEpgMatchAsync(channelsToAutoMatch);
+                    // Re-add potentially new EPG IDs to namesToTry
+                    foreach (var ch in channelsToAutoMatch)
+                    {
+                        if (!string.IsNullOrEmpty(ch.EpgId))
+                        {
+                            foreach (var id in ch.GetEpgIdList()) namesToTry.Add(id);
+                        }
+                    }
+                }
+
+                var programs = await _db.GetEpgForChannelsAsync(namesToTry.ToList());
+                var now = DateTime.Now;
+
+                // Group programs by channel name/id for quick matching
+                var lookup = new Dictionary<string, List<EpgProgram>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var p in programs)
+                {
+                    if (string.IsNullOrWhiteSpace(p.ChannelName)) continue;
+                    var ids = p.ChannelName.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+                    foreach (var id in ids)
+                    {
+                        if (!lookup.TryGetValue(id, out var list))
+                        {
+                            list = new List<EpgProgram>();
+                            lookup[id] = list;
+                        }
+                        list.Add(p);
+                    }
+                }
+
+                foreach (var ch in channels)
+                {
+                    EpgProgram? bestMatch = null;
+                    var chKeys = new List<string> { ch.Name };
+                    string clean = ChannelUtils.GetCleanName(ch.Name);
+                    if (!string.IsNullOrWhiteSpace(clean)) chKeys.Add(clean);
+                    chKeys.AddRange(ch.GetEpgIdList());
+
+                    foreach (var key in chKeys.Distinct())
+                    {
+                        if (lookup.TryGetValue(key, out var candidates))
+                        {
+                            bestMatch = FindBestProgram(candidates, new List<string>(), now);
+                            if (bestMatch != null) break;
+                        }
+                    }
+
+                    if (bestMatch != null)
+                    {
+                        ch.CurrentEpgTitle = bestMatch.Title;
+                        ch.CurrentEpgTime = $"{bestMatch.StartTime:HH:mm} - {bestMatch.EndTime:HH:mm}";
+                    }
+                    else
+                    {
+                        ch.CurrentEpgTitle = "Yayın akışı bilgisi yok";
+                        ch.CurrentEpgTime = "--:--";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("EpgService.EnrichBatchEpgAsync failed", ex);
+            }
+        }
+
         private EpgProgram? FindBestProgram(List<EpgProgram> candidates, List<string> preferredUrls, DateTime now)
         {
             var active = candidates.Where(p => now >= p.StartTime && now <= p.EndTime).ToList();
@@ -174,6 +266,40 @@ namespace StreamMesh.Core.Media
             {
                 LogService.LogError("EpgService.GetChannelEpgHistoryAsync failed", ex);
                 return list;
+            }
+        }
+
+        private async Task PerformSmartEpgMatchAsync(List<Channel> channels)
+        {
+            if (channels == null || channels.Count == 0) return;
+
+            var updatedChannels = new List<Channel>();
+            foreach (var ch in channels)
+            {
+                if (!string.IsNullOrEmpty(ch.EpgId) || ch.IsEpgLocked) continue;
+
+                string cleanName = ChannelUtils.GetCleanName(ch.Name);
+                if (string.IsNullOrEmpty(cleanName)) continue;
+
+                // Search for 100% clean name match in EpgChannels table
+                var results = await _db.SearchEpgChannelsAsync(cleanName, true);
+                var bestMatch = results.FirstOrDefault(r =>
+                    string.Equals(ChannelUtils.GetCleanName(r.ChannelName), cleanName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(r.EpgId, cleanName, StringComparison.OrdinalIgnoreCase)
+                );
+
+                if (bestMatch != null)
+                {
+                    ch.EpgId = bestMatch.EpgId;
+                    updatedChannels.Add(ch);
+                    LogService.LogInfo($"[SmartEPG] Auto-linked '{ch.Name}' to EPG ID '{bestMatch.EpgId}'");
+                }
+            }
+
+            if (updatedChannels.Count > 0)
+            {
+                // Silently save back to DB to "cement" the auto-link
+                await _db.SaveChannelsBatchAsync(updatedChannels);
             }
         }
     }

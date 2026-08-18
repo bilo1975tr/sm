@@ -44,7 +44,25 @@ namespace StreamMesh.UI.ViewModels
         public string SearchText
         {
             get => _searchText;
-            set { _searchText = value; OnPropertyChanged(); RefreshDisplay(); }
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged();
+                _ = DebouncedRefreshDisplayAsync();
+            }
+        }
+
+        private System.Threading.CancellationTokenSource? _searchCts;
+        private async Task DebouncedRefreshDisplayAsync()
+        {
+            _searchCts?.Cancel();
+            _searchCts = new System.Threading.CancellationTokenSource();
+            try
+            {
+                await Task.Delay(300, _searchCts.Token);
+                RefreshDisplay();
+            }
+            catch (TaskCanceledException) { }
         }
 
         private int _currentPage = 1;
@@ -102,24 +120,6 @@ namespace StreamMesh.UI.ViewModels
                         _allChannels = channels;
                         RefreshDisplay();
                     });
-
-                    // Fetch current EPGs fast in background
-                    var epgs = await _epg.GetCurrentEpgsAsync(channels);
-                    LogService.LogInfo($"HomeViewModel: {epgs.Count} EPG verisi eşleştirildi.");
-
-                    foreach (var ch in channels)
-                    {
-                        if (epgs.TryGetValue(ch.Id, out var p))
-                        {
-                            ch.CurrentEpgTitle = p.Title;
-                            ch.CurrentEpgTime = $"{p.StartTime:HH:mm} - {p.EndTime:HH:mm}";
-                        }
-                        else
-                        {
-                            ch.CurrentEpgTitle = "Yayın akışı bilgisi yok";
-                            ch.CurrentEpgTime = "--:--";
-                        }
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -149,104 +149,123 @@ namespace StreamMesh.UI.ViewModels
         public void NextPage() { if (_currentPage < _totalPages) { _currentPage++; RefreshDisplay(); } }
         public void PrevPage() { if (_currentPage > 1) { _currentPage--; RefreshDisplay(); } }
 
-        private void RefreshDisplay()
+        private async void RefreshDisplay()
         {
-            var filtered = _allChannels.AsEnumerable();
+            var searchText = _searchText;
+            var category = _activeCategory;
+            var sort = _sortIndex;
+            var page = _currentPage;
+            var pageSize = _pageSize;
+            var sourceChannels = _allChannels.ToList(); // Take a snapshot to avoid concurrent modification issues
 
-            if (_activeCategory == "Favorites") filtered = filtered.Where(c => c.IsFavorite);
-            else if (_activeCategory == "TV") filtered = filtered.Where(c => string.Equals(c.Category, "TV", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(c.Category));
-            else if (_activeCategory == "Movies") filtered = filtered.Where(c => string.Equals(c.Category, "Film", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Movie", StringComparison.OrdinalIgnoreCase));
-            else if (_activeCategory == "Series") filtered = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase));
-            else if (_activeCategory == "Radio") filtered = filtered.Where(c => string.Equals(c.Category, "Radyo", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Radio", StringComparison.OrdinalIgnoreCase));
-
-            if (!string.IsNullOrWhiteSpace(_searchText))
+            await Task.Run(() =>
             {
-                filtered = filtered.Where(c => ChannelUtils.MatchesQueryFilter(c, _searchText));
-            }
+                var filtered = sourceChannels.AsEnumerable();
 
-            // Group Series (Diziler tek bir kart altında toplanır)
-            var finalItems = new List<Channel>();
-            var nonSeries = filtered.Where(c => !string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) && !string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
-            var seriesItems = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
+                if (category == "Favorites") filtered = filtered.Where(c => c.IsFavorite);
+                else if (category == "TV") filtered = filtered.Where(c => string.Equals(c.Category, "TV", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(c.Category));
+                else if (category == "Movies") filtered = filtered.Where(c => string.Equals(c.Category, "Film", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Movie", StringComparison.OrdinalIgnoreCase));
+                else if (category == "Series") filtered = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase));
+                else if (category == "Radio") filtered = filtered.Where(c => string.Equals(c.Category, "Radyo", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Radio", StringComparison.OrdinalIgnoreCase));
 
-            finalItems.AddRange(nonSeries);
-
-            var groups = seriesItems.GroupBy(s => !string.IsNullOrWhiteSpace(s.SeriesBaseName) ? s.SeriesBaseName : s.CleanName).ToList();
-            foreach (var g in groups)
-            {
-                if (string.IsNullOrWhiteSpace(g.Key))
+                if (!string.IsNullOrWhiteSpace(searchText))
                 {
-                    finalItems.AddRange(g);
+                    filtered = filtered.Where(c => ChannelUtils.MatchesQueryFilter(c, searchText));
+                }
+
+                // Group Series
+                var finalItems = new List<Channel>();
+                var nonSeries = filtered.Where(c => !string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) && !string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
+                var seriesItems = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
+
+                finalItems.AddRange(nonSeries);
+
+                var groups = seriesItems.GroupBy(s => !string.IsNullOrWhiteSpace(s.SeriesBaseName) ? s.SeriesBaseName : s.CleanName).ToList();
+                foreach (var g in groups)
+                {
+                    if (string.IsNullOrWhiteSpace(g.Key))
+                    {
+                        finalItems.AddRange(g);
+                    }
+                    else
+                    {
+                        finalItems.Add(new SeriesGroup(g.Key, g.ToList()));
+                    }
+                }
+
+                // Apply Sorting
+                bool isSearching = !string.IsNullOrWhiteSpace(searchText);
+                if (isSearching)
+                {
+                    finalItems = finalItems
+                        .OrderByDescending(c => ChannelUtils.CalculateSearchScore(c, searchText))
+                        .ThenBy(c => c.CleanName ?? c.Name ?? "")
+                        .ToList();
                 }
                 else
                 {
-                    finalItems.Add(new SeriesGroup(g.Key, g.ToList()));
-                }
-            }
-
-            // Apply Sorting (When user is searching, prioritize Search Relevance Score first)
-            bool isSearching = !string.IsNullOrWhiteSpace(_searchText);
-            if (isSearching)
-            {
-                finalItems = finalItems
-                    .OrderByDescending(c => StreamMesh.Core.Media.ChannelUtils.CalculateSearchScore(c, _searchText))
-                    .ThenBy(c => c.CleanName ?? c.Name ?? "")
-                    .ToList();
-            }
-            else
-            {
-                switch (_sortIndex)
-                {
-                    case 1: // Alfabetik (Z-A)
-                        finalItems = finalItems.OrderByDescending(c => c.CleanName ?? c.Name ?? "").ToList();
-                        break;
-                    case 2: // Yeni Eklenenler
-                        finalItems = finalItems.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id).ToList();
-                        break;
-                    case 3: // Favoriler Önce
-                        finalItems = finalItems.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.CleanName ?? c.Name ?? "").ToList();
-                        break;
-                    case 0: // Alfabetik (A-Z)
-                    default:
-                        finalItems = finalItems.OrderBy(c => c.CleanName ?? c.Name ?? "").ToList();
-                        break;
-                }
-            }
-
-            _filteredChannels = finalItems.ToList();
-            _totalPages = (int)Math.Ceiling(_filteredChannels.Count / (double)_pageSize);
-            if (_totalPages < 1) _totalPages = 1;
-
-            if (_currentPage > _totalPages) _currentPage = _totalPages;
-            if (_currentPage < 1) _currentPage = 1;
-
-            TotalCountText = $"Toplam: {_filteredChannels.Count} İçerik";
-            OnPropertyChanged(nameof(CurrentPageText));
-
-            var pageItems = _filteredChannels.Skip((_currentPage - 1) * _pageSize).Take(_pageSize).ToList();
-
-            System.Windows.Application.Current?.Dispatcher.Invoke(() => {
-                DisplayedChannels.Clear();
-                foreach (var ch in pageItems) DisplayedChannels.Add(ch);
-            });
-
-            // Asynchronously enrich missing logos for visible page items only
-            _ = Task.Run(async () =>
-            {
-                var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
-                if (missingLogos.Count > 0)
-                {
-                    DatabaseEngine.SuppressEvents = true; // Prevent loop
-                    try
+                    switch (sort)
                     {
-                        var enricher = new ChannelEnricher();
-                        await enricher.EnrichChannelsAsync(missingLogos);
-                    }
-                    finally
-                    {
-                        DatabaseEngine.SuppressEvents = false;
+                        case 1: // Alfabetik (Z-A)
+                            finalItems = finalItems.OrderByDescending(c => c.CleanName ?? c.Name ?? "").ToList();
+                            break;
+                        case 2: // Yeni Eklenenler
+                            finalItems = finalItems.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id).ToList();
+                            break;
+                        case 3: // Favoriler Önce
+                            finalItems = finalItems.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.CleanName ?? c.Name ?? "").ToList();
+                            break;
+                        case 0: // Alfabetik (A-Z)
+                        default:
+                            finalItems = finalItems.OrderBy(c => c.CleanName ?? c.Name ?? "").ToList();
+                            break;
                     }
                 }
+
+                var totalCount = finalItems.Count;
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                if (totalPages < 1) totalPages = 1;
+
+                if (page > totalPages) page = totalPages;
+                if (page < 1) page = 1;
+
+                var pageItems = finalItems.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    _filteredChannels = finalItems;
+                    _totalPages = totalPages;
+                    _currentPage = page;
+                    TotalCountText = $"Toplam: {totalCount} İçerik";
+                    OnPropertyChanged(nameof(CurrentPageText));
+
+                    DisplayedChannels.Clear();
+                    foreach (var ch in pageItems) DisplayedChannels.Add(ch);
+                });
+
+                // Asynchronously enrich missing logos and EPG for visible page items only
+                _ = Task.Run(async () =>
+                {
+                    // 1. Enrich EPG (New On-Demand Logic)
+                    var epgChannels = pageItems.SelectMany(c => (c is SeriesGroup sg) ? sg.Episodes : new List<Channel> { c }).ToList();
+                    await _epg.EnrichBatchEpgAsync(epgChannels);
+
+                    // 2. Enrich Logos
+                    var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
+                    if (missingLogos.Count > 0)
+                    {
+                        DatabaseEngine.SuppressEvents = true;
+                        try
+                        {
+                            var enricher = new ChannelEnricher();
+                            await enricher.EnrichChannelsAsync(missingLogos);
+                        }
+                        finally
+                        {
+                            DatabaseEngine.SuppressEvents = false;
+                        }
+                    }
+                });
             });
         }
 

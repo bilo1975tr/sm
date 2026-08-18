@@ -2,17 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using LibVLCSharp.Shared;
+using FlyleafLib;
+using FlyleafLib.MediaPlayer;
 using StreamMesh.Models;
 using System.Linq;
+using System.IO;
 
 namespace StreamMesh.Core.Utils
 {
     public enum ValidationLevel
     {
-        Fast,       // HTTP HEAD/GET Check
-        Detailed,   // LibVLC Start Check
-        Full        // LibVLC Media Track Analysis (Codec/Resolution)
+        Fast,
+        Detailed,
+        Full
     }
 
     public class ValidationResult
@@ -27,20 +29,11 @@ namespace StreamMesh.Core.Utils
 
     public class StreamValidator : IDisposable
     {
-        private readonly LibVLC? _libVLC;
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
 
         public StreamValidator()
         {
-            try
-            {
-                // Simple init, assuming core is already initialized by PlayerView or Maintenance
-                _libVLC = new LibVLC("--no-audio", "--no-video", "--no-osd");
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("StreamValidator: LibVLC init failed", ex);
-            }
+            FlyleafHelper.SafeStart();
         }
 
         public async Task<ValidationResult> ValidateAsync(Channel channel, ValidationLevel level, IProgress<string>? logger = null)
@@ -55,42 +48,12 @@ namespace StreamMesh.Core.Utils
                 return result;
             }
 
-            // AceStream URL handling
-            if (url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
-            {
-                string hash = url.Substring(12).Trim('/');
-                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
-            }
-            else if (url.StartsWith("PID:", StringComparison.OrdinalIgnoreCase))
-            {
-                string hash = url.Substring(4).Trim();
-                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
-            }
-            else if (url.StartsWith("PID=", StringComparison.OrdinalIgnoreCase))
-            {
-                string hash = url.Substring(4).Trim();
-                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
-            }
-
-            // --- Fast Test ---
             try
             {
                 logger?.Report($"[{channel.PrimaryName}] Hızlı kontrol yapılıyor: {url}");
-                using var request = new HttpRequestMessage(HttpMethod.Head, url);
-                using var response = await _httpClient.SendAsync(request);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    result.IsOnline = true;
-                    result.Status = "Erişilebilir";
-                }
-                else
-                {
-                    // Fallback to GET just in case HEAD is not allowed
-                    using var getResponse = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-                    result.IsOnline = getResponse.IsSuccessStatusCode;
-                    result.Status = result.IsOnline ? "Erişilebilir (GET)" : $"Hata: {getResponse.StatusCode}";
-                }
+                using var getResponse = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                result.IsOnline = getResponse.IsSuccessStatusCode;
+                result.Status = result.IsOnline ? "Erişilebilir" : $"Hata: {getResponse.StatusCode}";
             }
             catch (Exception ex)
             {
@@ -99,96 +62,47 @@ namespace StreamMesh.Core.Utils
                 result.Error = ex.Message;
             }
 
-            if (level == ValidationLevel.Fast || !result.IsOnline || _libVLC == null)
+            if (level == ValidationLevel.Fast || !result.IsOnline)
             {
                 return result;
             }
 
-            // --- Detailed & Full Test ---
             try
             {
-                logger?.Report($"[{channel.PrimaryName}] {(level == ValidationLevel.Full ? "Tam" : "Detaylı")} analiz yapılıyor...");
-                using var media = new LibVLCSharp.Shared.Media(_libVLC, new Uri(url));
-                using var mediaPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVLC);
+                logger?.Report($"[{channel.PrimaryName}] Flyleaf ile analiz yapılıyor...");
 
-                mediaPlayer.Play(media);
+                using var player = new Player();
+                player.Open(url);
 
-                // Wait for playback to start or fail
                 bool started = false;
-                int timeoutMs = level == ValidationLevel.Full ? 8000 : 5000;
-                int checkInterval = 500;
-
-                for (int t = 0; t < timeoutMs; t += checkInterval)
+                for (int t = 0; t < 10; t++)
                 {
-                    await Task.Delay(checkInterval);
-                    if (mediaPlayer.IsPlaying)
-                    {
-                        started = true;
-                        break;
-                    }
-                    if (mediaPlayer.State == VLCState.Error) break;
+                    await Task.Delay(1000);
+                    if (player.Status == Status.Playing) { started = true; break; }
                 }
 
                 if (started)
                 {
                     result.Status = "Oynatılabilir";
-
                     if (level == ValidationLevel.Full)
                     {
-                        // Wait a bit more for metadata to populate
-                        await Task.Delay(2000);
-
-                        var tracks = media.Tracks;
-                        var vTracks = tracks.Where(t => t.TrackType == TrackType.Video).ToList();
-                        var aTracks = tracks.Where(t => t.TrackType == TrackType.Audio).ToList();
-
-                        if (vTracks.Count > 0)
-                        {
-                            var videoTrack = vTracks[0];
-                            result.VideoCodec = GetCodecName(videoTrack.Codec);
-                            result.Resolution = $"{videoTrack.Data.Video.Width}x{videoTrack.Data.Video.Height}";
-                        }
-
-                        if (aTracks.Count > 0)
-                        {
-                            var audioTrack = aTracks[0];
-                            result.AudioCodec = GetCodecName(audioTrack.Codec);
-                        }
-
-                        result.Status = $"Analiz Tamam: {result.Resolution} {result.VideoCodec}";
+                        result.Resolution = $"{player.Video.Width}x{player.Video.Height}";
+                        result.VideoCodec = player.Video.Codec;
+                        result.Status = $"Analiz Tamam: {result.Resolution}";
                     }
                 }
                 else
                 {
                     result.IsOnline = false;
-                    result.Status = "Yayın Başlatılamadı (Timeout/Error)";
+                    result.Status = "Yayın Başlatılamadı (Timeout)";
                 }
-
-                mediaPlayer.Stop();
+                player.Stop();
             }
-            catch (Exception ex)
-            {
-                result.Error = $"VLC Hatası: {ex.Message}";
-            }
+            catch (Exception ex) { result.Error = $"Flyleaf Hatası: {ex.Message}"; }
 
             return result;
         }
 
-        private string GetCodecName(uint fourcc)
-        {
-            byte[] bytes = BitConverter.GetBytes(fourcc);
-            // VLC uses Little Endian for FourCC usually, or we can just convert to string
-            char[] chars = new char[4];
-            for (int i = 0; i < 4; i++)
-            {
-                chars[i] = (char)bytes[i];
-            }
-            return new string(chars).Trim();
-        }
-
-        public void Dispose()
-        {
-            _libVLC?.Dispose();
-        }
+        public void Dispose() { }
     }
 }

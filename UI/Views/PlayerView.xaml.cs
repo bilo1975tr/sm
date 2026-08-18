@@ -4,28 +4,28 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Runtime.InteropServices;
 using System.Linq;
-using LibVLCSharp.Shared;
+using FlyleafLib;
+using FlyleafLib.MediaPlayer;
+using FlyleafLib.Controls.WPF;
 using StreamMesh.Models;
 using StreamMesh.Core.Media;
 using StreamMesh.Converters;
 using StreamMesh.Core.Utils;
 using StreamMesh.Core.Database;
+using System.Threading.Tasks;
+using System.Text;
 
 namespace StreamMesh.UI.Views
 {
     public partial class PlayerView : System.Windows.Controls.UserControl, IDisposable
     {
-        private LibVLC? _libVLC;
-        private LibVLCSharp.Shared.MediaPlayer? _mediaPlayer;
-        private WriteableBitmap? _bitmap;
-        private IntPtr _bufferPtr = IntPtr.Zero;
-        private int _bufferSize = 0;
+        private Player? _player;
+        private Config? _config;
 
         private readonly YoutubeEngine _yt = new YoutubeEngine();
         private readonly AceEngine _ace = new AceEngine();
-        private readonly StreamMesh.Core.Database.DatabaseEngine _db = new StreamMesh.Core.Database.DatabaseEngine();
+        private readonly DatabaseEngine _db = new DatabaseEngine();
         private static readonly LogoCacheConverter LogoConverter = new LogoCacheConverter();
         private readonly System.Threading.SemaphoreSlim _playSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
@@ -34,37 +34,71 @@ namespace StreamMesh.UI.Views
         private System.Windows.Threading.DispatcherTimer? _positionTimer;
         private Channel? _currentChannel;
         private List<EpgProgram> _currentChannelEpgList = new();
-        private string _lastDisplayedEpgCurrent = "";
-        private string _lastDisplayedEpgNext = "";
 
         private bool _isUserDraggingSlider = false;
-        private bool _isSeekingDvr = false;
-        private double _dvrCurrentOffsetSec = -1; // -1 means live mode
-        private long _liveElapsedMs = 0;
+        private bool _isMouseOverOsd = false;
         private DateTime _streamStartTime = DateTime.UtcNow;
-        private HlsSessionInfo? _currentHlsSession = null;
-        private bool _isLivePaused = false;
-        private DateTime? _livePauseStartUtc = null;
-        private double _accumulatedDelaySec = 0;
-        private double _pausedDvrSec = -1;
         private static readonly SolidColorBrush LiveRedBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 38, 38));
         private static readonly SolidColorBrush DelayedAmberBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 158, 11));
         private static readonly SolidColorBrush VodBlueBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(37, 99, 235));
 
+        private long _currentManifestOffsetMs = 0;
+        private long _lastTeleportPositionMs = 0;
+        private DateTime _lastSeekTime = DateTime.MinValue;
+
         public PlayerView()
         {
             InitializeComponent();
-            InitializePlayer();
+            this.Loaded += (s, e) =>
+            {
+                InitializePlayer();
+                // Global fare dinleyicisi ekle
+                System.Windows.Input.InputManager.Current.PostProcessInput += GlobalMouseTracker;
+            };
+            this.Unloaded += (s, e) =>
+            {
+                // Bellek sızıntısını önlemek için dinleyiciyi kaldır
+                System.Windows.Input.InputManager.Current.PostProcessInput -= GlobalMouseTracker;
+            };
+
             InitializeOsdTimer();
             InitializePositionTimer();
             this.Focusable = true;
         }
 
+        private System.Windows.Point _lastMousePos;
+        private void GlobalMouseTracker(object sender, System.Windows.Input.ProcessInputEventArgs e)
+        {
+            if (e.StagingItem.Input is System.Windows.Input.MouseEventArgs mouseArgs)
+            {
+                // Sadece fare hareket ettiğinde veya tıklandığında işlem yap
+                if (mouseArgs.RoutedEvent == System.Windows.Input.Mouse.MouseMoveEvent ||
+                    mouseArgs.RoutedEvent == System.Windows.Input.Mouse.MouseDownEvent)
+                {
+                    System.Windows.Point currentPos = mouseArgs.GetPosition(this);
+
+                    // Fare bu kontrolün sınırları içindeyse
+                    if (currentPos.X >= 0 && currentPos.Y >= 0 &&
+                        currentPos.X <= this.ActualWidth && currentPos.Y <= this.ActualHeight)
+                    {
+                        // Fare gerçekten hareket ettiyse OSD'yi göster
+                        if (currentPos != _lastMousePos)
+                        {
+                            _lastMousePos = currentPos;
+                            ShowOsdTemporary();
+                        }
+                    }
+                }
+            }
+        }
+
         private void InitializeOsdTimer()
         {
-            _osdTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(3.5) };
+            _osdTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4.5) };
             _osdTimer.Tick += (s, e) =>
             {
+                if (_isUserDraggingSlider || _isMouseOverOsd) return;
+
                 if (OsdPanel != null) OsdPanel.Visibility = Visibility.Collapsed;
                 _osdTimer.Stop();
             };
@@ -79,6 +113,10 @@ namespace StreamMesh.UI.Views
                 _osdTimer?.Start();
             });
         }
+
+        private void OsdPanel_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e) { _isMouseOverOsd = true; _osdTimer?.Stop(); }
+        private void OsdPanel_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e) { _isMouseOverOsd = false; _osdTimer?.Start(); }
+        private void Player_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) { ShowOsdTemporary(); }
 
         private bool IsCurrentStreamVod()
         {
@@ -101,91 +139,56 @@ namespace StreamMesh.UI.Views
             _positionTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
             _positionTimer.Tick += (s, e) =>
             {
-                if (_mediaPlayer == null) return;
+                if (_player == null || _isUserDraggingSlider) return;
+
+                // Seek işleminden hemen sonra UI'ın eski değere zıplamasını engelle (2.5sn koruma)
+                if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.5) return;
+
                 try
                 {
-                    long timeMs = _mediaPlayer.Time;
-                    long lengthMs = _mediaPlayer.Length;
+                    long timeMs = _player.CurTime / 10000;
+                    long lengthMs = _player.Duration / 10000;
                     bool isVod = IsCurrentStreamVod();
 
-                    // Case 1: Stream is VOD
                     if (isVod && lengthMs > 0)
                     {
                         if (LiveBadge != null) LiveBadge.Background = VodBlueBrush;
                         if (LiveBadgeText != null) LiveBadgeText.Text = "🎬 VOD";
 
-                        if (timeMs >= 0)
-                        {
-                            TimeSpan curTs = TimeSpan.FromMilliseconds(timeMs);
-                            TimeCurrentText.Text = curTs.ToString(@"hh\:mm\:ss");
-                        }
-
-                        TimeSpan totalTs = TimeSpan.FromMilliseconds(lengthMs);
-                        TimeTotalText.Text = totalTs.ToString(@"hh\:mm\:ss");
+                        TimeCurrentText.Text = TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss");
+                        TimeTotalText.Text = TimeSpan.FromMilliseconds(lengthMs).ToString(@"hh\:mm\:ss");
 
                         TimeSlider.Minimum = 0;
                         TimeSlider.Maximum = lengthMs;
-                        if (!_isUserDraggingSlider && timeMs >= 0)
-                        {
-                            TimeSlider.Value = Math.Clamp(timeMs, 0, lengthMs);
-                        }
+                        TimeSlider.Value = Math.Clamp(timeMs, 0, lengthMs);
                     }
-                    // Case 2: Live TV Stream (HLS Proxy Timeshift or Direct)
                     else
                     {
-                        double currentPauseSeconds = (_isLivePaused && _livePauseStartUtc.HasValue)
-                            ? (DateTime.UtcNow - _livePauseStartUtc.Value).TotalSeconds
-                            : 0;
-
-                        double totalDelaySec = _accumulatedDelaySec + currentPauseSeconds;
-
-                        // Check if explicit DVR session has total duration
-                        double totalDvrSec = _currentHlsSession != null ? _currentHlsSession.TotalDurationSeconds : 0;
-                        if (totalDvrSec <= 0)
+                        // Sync Slider with HLS Proxy Session for DVR
+                        var proxySession = HlsProxyEngine.Instance.GetSession(_currentChannel?.Url ?? "");
+                        if (proxySession != null && proxySession.Segments.Count > 0)
                         {
-                            totalDvrSec = (DateTime.UtcNow - _streamStartTime).TotalSeconds;
-                        }
+                            double totalSec = proxySession.TotalDurationSeconds;
+                            long totalMsDvr = (long)(totalSec * 1000);
 
-                        if (_isLivePaused)
-                        {
-                            if (LiveBadge != null) LiveBadge.Background = DelayedAmberBrush;
-                            TimeSpan delayTs = TimeSpan.FromSeconds(Math.Max(1, totalDelaySec));
-                            string delayStr = delayTs.TotalHours >= 1 ? delayTs.ToString(@"hh\:mm\:ss") : delayTs.ToString(@"mm\:ss");
-                            if (LiveBadgeText != null) LiveBadgeText.Text = $"⏸ -{delayStr}";
+                            // Absolute Position = Initial Seek Point + Current Player Time
+                            long absolutePosMs = _lastTeleportPositionMs + timeMs;
+                            if (_lastTeleportPositionMs < 0) absolutePosMs = totalMsDvr; // Live mode
 
-                            DateTime broadcastTime = DateTime.Now.AddSeconds(-totalDelaySec);
-                            TimeCurrentText.Text = broadcastTime.ToString("HH:mm:ss");
-                            TimeTotalText.Text = $"🔴 CANLI: {DateTime.Now:HH:mm:ss}";
-                            UpdateOsdEpgForTime(broadcastTime);
-                        }
-                        else if (totalDelaySec > 3.0)
-                        {
-                            if (LiveBadge != null) LiveBadge.Background = DelayedAmberBrush;
-                            TimeSpan delayTs = TimeSpan.FromSeconds(totalDelaySec);
-                            string delayStr = delayTs.TotalHours >= 1 ? delayTs.ToString(@"hh\:mm\:ss") : delayTs.ToString(@"mm\:ss");
-                            if (LiveBadgeText != null) LiveBadgeText.Text = $"⏳ -{delayStr}";
+                            TimeSlider.Minimum = 0;
+                            TimeSlider.Maximum = totalMsDvr;
+                            TimeSlider.Value = absolutePosMs;
 
-                            DateTime broadcastTime = DateTime.Now.AddSeconds(-totalDelaySec);
-                            TimeCurrentText.Text = broadcastTime.ToString("HH:mm:ss");
-                            TimeTotalText.Text = $"🔴 CANLI: {DateTime.Now:HH:mm:ss}";
-                            UpdateOsdEpgForTime(broadcastTime);
+                            UpdateOsdTimeAndBadge(absolutePosMs, totalMsDvr, proxySession.StartWallClockTime);
+                            TimeTotalText.Text = "CANLI ARŞİV";
                         }
                         else
                         {
-                            if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
-                            if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
-
+                            TimeSlider.Minimum = 0;
+                            TimeSlider.Maximum = 100;
+                            if (!_isUserDraggingSlider) TimeSlider.Value = 100;
                             TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
                             TimeTotalText.Text = "CANLI YAYIN";
-                            UpdateOsdEpgForTime(DateTime.Now);
-                        }
-
-                        TimeSlider.Minimum = 0;
-                        TimeSlider.Maximum = Math.Max(10, totalDvrSec);
-                        if (!_isUserDraggingSlider)
-                        {
-                            double currentPointSec = Math.Max(0, totalDvrSec - totalDelaySec);
-                            TimeSlider.Value = Math.Clamp(currentPointSec, 0, Math.Max(10, totalDvrSec));
                         }
                     }
                 }
@@ -194,528 +197,183 @@ namespace StreamMesh.UI.Views
             _positionTimer.Start();
         }
 
-        private void Player_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        private void UpdateOsdTimeAndBadge(long currentMs, long totalMs, DateTime startWallTime)
         {
-            ShowOsdTemporary();
+            if (TimeCurrentText == null) return;
+
+            // Calculate Aired Time
+            DateTime airedTime = startWallTime.AddMilliseconds(currentMs);
+            TimeCurrentText.Text = airedTime.ToString("HH:mm:ss");
+
+            // Calculate Delay from Live Edge
+            long offsetMs = totalMs - currentMs;
+            if (offsetMs > 15000)
+            {
+                if (LiveBadge != null) LiveBadge.Background = DelayedAmberBrush;
+                if (LiveBadgeText != null) LiveBadgeText.Text = "-" + TimeSpan.FromMilliseconds(offsetMs).ToString(@"hh\:mm\:ss");
+            }
+            else
+            {
+                if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
+                if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
+            }
         }
 
-        private void InitializePlayer()
+        private async void InitializePlayer()
         {
+            if (_player != null) return;
+
             try
             {
-                // V1.8.8: Dynamic LibVLC discovery logic
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string[] possiblePaths = {
-                    Path.Combine(baseDir, "libvlc", "win-x64"),
-                    Path.Combine(baseDir, "libvlc"),
-                    @"C:\Program Files\VideoLAN\VLC",
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\StreamMesh\libvlc\win-x64"),
-                    baseDir
-                };
+                string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg");
 
-                string? foundPath = possiblePaths.FirstOrDefault(p => File.Exists(Path.Combine(p, "libvlc.dll")));
+                // Check for FFmpeg DLLs
+                for (int i = 0; i < 60; i++)
+                {
+                    if (Directory.Exists(ffmpegPath) && Directory.GetFiles(ffmpegPath, "avcodec*.dll").Length > 0) break;
 
-                if (foundPath != null)
-                {
-                    LogService.LogInfo($"Player: LibVLC found at {foundPath}");
-                    LibVLCSharp.Shared.Core.Initialize(foundPath);
-                }
-                else
-                {
-                    LogService.LogInfo("Player: LibVLC not found in standard paths, trying default initialization...");
-                    LibVLCSharp.Shared.Core.Initialize();
+                    Dispatcher.Invoke(() => {
+                        OsdTitle.Text = $"Görüntü Motoru Hazırlanıyor... ({i}s)";
+                        OsdPanel.Visibility = Visibility.Visible;
+                    });
+                    await Task.Delay(1000);
                 }
 
-                string caching = _db.GetSetting("VlcCaching", "3000");
-                string userAgent = _db.GetSetting("VlcUserAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                bool hwAccel = _db.GetSetting("VlcHwAccel", "true") == "true";
-                bool audioNorm = _db.GetSetting("VlcAudioNorm", "false") == "true";
-                bool videoSharpen = _db.GetSetting("VlcVideoSharpen", "false") == "true";
+                FlyleafHelper.SafeStart();
 
-                var vlcArgs = new List<string> {
-                    "--no-osd",
-                    $"--network-caching={caching}",
-                    $"--live-caching={caching}",
-                    $"--http-user-agent={userAgent}",
-                    "--clock-jitter=0",
-                    "--clock-synchro=0"
-                };
-                if (hwAccel) vlcArgs.Add("--avcodec-hw=any");
-                else vlcArgs.Add("--avcodec-hw=none");
+                _config = new Config();
+                _player = new Player(_config);
+                VideoPlayer.Player = _player;
 
-                if (audioNorm)
-                {
-                    vlcArgs.Add("--audio-filter=normvol");
-                    vlcArgs.Add("--norm-max-level=2.0");
-                }
-
-                if (videoSharpen)
-                {
-                    vlcArgs.Add("--video-filter=sharpen");
-                    vlcArgs.Add("--sharpen-sigma=0.08");
-                }
-
-                _libVLC = new LibVLC(vlcArgs.ToArray());
-                _mediaPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVLC);
-                _mediaPlayer.EndReached += OnEndReached;
-                _mediaPlayer.EncounteredError += (s, e) => LogService.LogError("Player: LibVLC Error encountered");
-                _mediaPlayer.SetVideoFormat("RV32", 1920, 1080, 1920 * 4);
-                _mediaPlayer.SetVideoCallbacks(LockVideo, null, DisplayVideo);
-                LogService.LogInfo("Player: Initialization Success");
+                LogService.LogInfo("Player: Flyleaf initialized successfully");
+                Dispatcher.Invoke(() => {
+                    OsdTitle.Text = "Sistem Hazır.";
+                    OsdPanel.Visibility = Visibility.Visible;
+                    ShowOsdTemporary();
+                });
             }
             catch (Exception ex)
             {
-                LogService.LogError("Player: Initialization Failed", ex);
+                LogService.LogError("Player: Flyleaf Init Failed", ex);
             }
         }
 
-        private IntPtr LockVideo(IntPtr opaque, IntPtr planes)
+        private async Task<string> PrepareHlsStream(string url)
         {
-            if (_bufferPtr == IntPtr.Zero)
+            if (url.Contains(".m3u8"))
             {
-                _bufferSize = 1920 * 1080 * 4;
-                _bufferPtr = Marshal.AllocHGlobal(_bufferSize);
-            }
-            Marshal.WriteIntPtr(planes, _bufferPtr);
-            return IntPtr.Zero;
-        }
-
-        private void DisplayVideo(IntPtr opaque, IntPtr picture)
-        {
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                if (_bitmap == null)
+                var session = await HlsProxyEngine.Instance.InspectAndPrepareHlsAsync(url);
+                if (session != null)
                 {
-                    _bitmap = new WriteableBitmap(1920, 1080, 96, 96, PixelFormats.Bgr32, null);
-                    VideoImage.Source = _bitmap;
+                    return HlsProxyEngine.Instance.GetProxyPlaybackUrl(url);
                 }
-                _bitmap.Lock();
-                unsafe { Buffer.MemoryCopy(_bufferPtr.ToPointer(), _bitmap.BackBuffer.ToPointer(), _bufferSize, _bufferSize); }
-                _bitmap.AddDirtyRect(new Int32Rect(0, 0, 1920, 1080));
-                _bitmap.Unlock();
-            }), System.Windows.Threading.DispatcherPriority.Render);
+            }
+            return url;
         }
 
         public async void LoadChannel(Channel channel)
         {
-            if (_mediaPlayer == null || _libVLC == null) return;
-            _currentChannel = channel;
-            _liveElapsedMs = 0;
-            _dvrCurrentOffsetSec = -1;
-            _isLivePaused = false;
-            _livePauseStartUtc = null;
-            _accumulatedDelaySec = 0;
-            _pausedDvrSec = -1;
-            _streamStartTime = DateTime.UtcNow;
-            _currentHlsSession = null;
+            for (int i = 0; i < 20 && _player == null; i++) await Task.Delay(200);
 
-            // Clear previous channel cache from proxy
-            HlsProxyEngine.Instance.ClearChannelCache();
+            if (_player == null)
+            {
+                LogService.LogError("Player: Flyleaf player not ready.");
+                return;
+            }
+
+            if (_currentChannel != null && IsCurrentStreamVod())
+            {
+                _currentChannel.LastPositionMs = _player.CurTime / 10000;
+                await _db.SaveChannelAsync(_currentChannel);
+            }
+
+            _currentChannel = channel;
+            _streamStartTime = DateTime.UtcNow;
+            _lastTeleportPositionMs = -1; // Reset to Live mode
 
             await _playSemaphore.WaitAsync();
 
             try
             {
-                _mediaPlayer.Stop();
+                _player.Stop();
                 Dispatcher.Invoke(() => {
                     OsdTitle.Text = channel.PrimaryName;
                     OsdCategory.Text = channel.Category;
+                    ShowOsdTemporary();
                     if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-
                     try {
                         var convertedLogo = LogoConverter.Convert(channel.LogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
                         if (convertedLogo != null) OsdLogo.Source = (ImageSource)convertedLogo;
                     } catch { }
                 });
 
-                // Fetch full EPG for OSD and rewind timeline
                 _currentChannelEpgList = await _epgService.GetChannelEpgHistoryAsync(channel);
-                _lastDisplayedEpgCurrent = "";
-                _lastDisplayedEpgNext = "";
                 Dispatcher.Invoke(() => UpdateOsdEpgForTime(DateTime.Now));
 
                 var rawUrls = (channel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-                var finalUrlsToTry = new List<string>();
-
-                // Prepare URLs
-                foreach(var raw in rawUrls)
+                foreach (var raw in rawUrls)
                 {
-                    string u = raw.Trim();
-                    if (u.StartsWith("acestream://") || channel.SourceType == "ACESTREAM")
+                    string tryUrl = raw.Trim();
+
+                    if (tryUrl.StartsWith("acestream://") || channel.SourceType == "ACESTREAM")
                     {
                         await _ace.StartEngineAsync();
-                        finalUrlsToTry.AddRange(_ace.GetHttpUrls(u));
+                        var aceUrls = _ace.GetHttpUrls(tryUrl);
+                        if (aceUrls.Count > 0) tryUrl = aceUrls[0];
                     }
-                    else if (u.Contains("youtube.com") || channel.SourceType == "YOUTUBE")
+                    else if (tryUrl.Contains("youtube.com"))
                     {
-                        var direct = await _yt.GetStreamUrlAsync(u);
-                        if (direct != null) finalUrlsToTry.Add(direct);
+                        tryUrl = await _yt.GetStreamUrlAsync(tryUrl) ?? tryUrl;
                     }
-                    else
-                    {
-                        // Check if HLS stream to parse manifest and prepare proxy with DVR timeline
-                        if (u.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || !u.EndsWith(".ts", StringComparison.OrdinalIgnoreCase))
-                        {
-                            try
-                            {
-                                var hlsSession = await HlsProxyEngine.Instance.InspectAndPrepareHlsAsync(u);
-                                if (hlsSession != null && hlsSession.Segments.Count > 0)
-                                {
-                                    _currentHlsSession = hlsSession;
-                                    string proxyUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(u);
-                                    finalUrlsToTry.Add(proxyUrl);
-                                    LogService.LogInfo($"HlsProxy: Manifest çözüldü ({hlsSession.Segments.Count} segment, {hlsSession.TotalDurationSeconds:F0}s DVR). Proxy aktif: {proxyUrl}");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                LogService.LogError("HlsProxy: HLS parse hatası, doğrudan URL denenecek", ex);
-                            }
-                        }
 
-                        finalUrlsToTry.Add(u);
+                    // HLS Proxy Integration
+                    if (tryUrl.Contains(".m3u8"))
+                    {
+                        tryUrl = await PrepareHlsStream(tryUrl);
                     }
+
+                    LogService.LogInfo($"Player: Flyleaf opening -> {tryUrl}");
+                    _player.Open(tryUrl);
+
+                    if (IsCurrentStreamVod() && channel.LastPositionMs > 0)
+                    {
+                        LogService.LogInfo($"Player: Resuming VOD at {channel.LastPositionMs}ms");
+                        _player.Seek((int)channel.LastPositionMs);
+                    }
+                    break;
                 }
-
-                bool success = false;
-                string caching = _db.GetSetting("VlcCaching", "1500");
-
-                foreach (var tryUrl in finalUrlsToTry)
-                {
-                    LogService.LogInfo($"Player: Deneniyor -> {tryUrl}");
-                    using var media = new Media(_libVLC, new Uri(tryUrl));
-                    media.AddOption($":network-caching={caching}");
-                    media.AddOption($":live-caching={caching}");
-                    media.AddOption(":clock-jitter=0");
-
-                    _mediaPlayer.Play(media);
-
-                    // Wait for stream buffering
-                    int waitMs = tryUrl.Contains("127.0.0.1") ? 5000 : 6000;
-                    int checkInterval = 400;
-                    for (int t = 0; t < waitMs; t += checkInterval)
-                    {
-                        await System.Threading.Tasks.Task.Delay(checkInterval);
-                        if (_mediaPlayer.IsPlaying) { success = true; break; }
-                    }
-
-                    if (success)
-                    {
-                        _streamStartTime = DateTime.UtcNow;
-                        _liveElapsedMs = 0;
-                        break;
-                    }
-                    LogService.LogInfo($"Player: Adres yanıt vermedi ({tryUrl}), sonraki deneniyor...");
-                }
-
-                if (!success) System.Windows.MessageBox.Show("Yayın başlatılamadı. Tüm yedek linkler denendi.", "Oynatma Hatası");
             }
-            catch (Exception ex) { LogService.LogError("Player: Playback error", ex); }
+            catch (Exception ex) { LogService.LogError("Player: Load error", ex); }
             finally { _playSemaphore.Release(); }
         }
 
-        private void OnEndReached(object? sender, EventArgs e)
-        {
-            Dispatcher.Invoke(async () =>
-            {
-                // Auto-play next episode for series
-                if (_currentChannel != null && _currentChannel.Category == "Dizi")
-                {
-                    // Mark as watched
-                    _currentChannel.IsWatched = true;
-                    await _db.SaveChannelAsync(_currentChannel);
+        public void Stop() { _player?.Stop(); }
 
-                    var seriesItems = await _db.GetSeriesEpisodesAsync(_currentChannel.SeriesBaseName);
-                    int currentIdx = seriesItems.FindIndex(c => c.Id == _currentChannel.Id);
-                    if (currentIdx >= 0 && currentIdx < seriesItems.Count - 1)
-                    {
-                        var nextEp = seriesItems[currentIdx + 1];
-                        LogService.LogInfo($"Oynatma bitti. Sonraki bölüme geçiliyor: {nextEp.Name}");
-                        LoadChannel(nextEp);
-                        return;
-                    }
-                }
-
-                _mediaPlayer?.Stop();
-            });
-        }
-
-        public void Stop()
-        {
-            _mediaPlayer?.Stop();
-        }
-
-        public void PlayPause_Click(object sender, RoutedEventArgs e)
-        {
-            TogglePause();
-        }
+        public void PlayPause_Click(object sender, RoutedEventArgs e) { TogglePause(); }
 
         public void TogglePause()
         {
-            if (_mediaPlayer == null) return;
+            if (_player == null) return;
             ShowOsdTemporary();
 
-            bool isVod = IsCurrentStreamVod() && _mediaPlayer.Length > 0;
-
-            if (isVod)
+            if (_player.Status == Status.Playing)
             {
-                if (_mediaPlayer.IsPlaying)
-                {
-                    _mediaPlayer.Pause();
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "▶";
-                }
-                else
-                {
-                    _mediaPlayer.Play();
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-                }
+                _player.Pause();
+                if (PlayPauseBtn != null) PlayPauseBtn.Content = "▶";
             }
             else
             {
-                // Live Stream Pause / Resume Timeshift logic
-                if (!_isLivePaused)
-                {
-                    // PAUSE LIVE:
-                    _isLivePaused = true;
-                    _livePauseStartUtc = DateTime.UtcNow;
-
-                    if (_currentHlsSession != null && _currentHlsSession.TotalDurationSeconds > 0)
-                    {
-                        _pausedDvrSec = _dvrCurrentOffsetSec >= 0 ? _dvrCurrentOffsetSec : _currentHlsSession.TotalDurationSeconds;
-                    }
-                    else
-                    {
-                        _pausedDvrSec = (DateTime.UtcNow - _streamStartTime).TotalSeconds;
-                    }
-
-                    _mediaPlayer.SetPause(true);
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "▶";
-                }
-                else
-                {
-                    // RESUME LIVE from paused point:
-                    _isLivePaused = false;
-                    if (_livePauseStartUtc.HasValue)
-                    {
-                        double pauseDuration = (DateTime.UtcNow - _livePauseStartUtc.Value).TotalSeconds;
-                        _accumulatedDelaySec += pauseDuration;
-                        _livePauseStartUtc = null;
-                    }
-
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-
-                    // If paused for more than 2 seconds and we have an HLS session, resume from buffered TS playlist
-                    if (_accumulatedDelaySec > 2.0 && _currentChannel != null && _currentHlsSession != null)
-                    {
-                        double targetSec = Math.Max(0, _pausedDvrSec);
-                        _ = SeekDvrToSecondAsync(targetSec);
-                    }
-                    else
-                    {
-                        _mediaPlayer.SetPause(false);
-                    }
-                }
+                _player.Play();
+                if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
             }
         }
 
-        public void Rewind(int ms = 10000)
-        {
-            if (_mediaPlayer == null) return;
-            ShowOsdTemporary();
+        public void Rewind(int ms) { if (_player != null) _player.Seek((int)((_player.CurTime / 10000) - ms)); ShowOsdTemporary(); }
+        public void Forward(int ms) { if (_player != null) _player.Seek((int)((_player.CurTime / 10000) + ms)); ShowOsdTemporary(); }
+        public void ChangeVolume(int delta) { if (_player != null) _player.Audio.Volume = Math.Clamp(_player.Audio.Volume + delta, 0, 100); ShowOsdTemporary(); }
+        public void ToggleMute() { if (_player != null) { _player.Audio.Mute = !_player.Audio.Mute; if (MuteBtn != null) MuteBtn.Content = _player.Audio.Mute ? "🔇" : "🔊"; } ShowOsdTemporary(); }
 
-            if (IsCurrentStreamVod() && _mediaPlayer.Length > 0)
-            {
-                _mediaPlayer.Time = Math.Max(0, _mediaPlayer.Time - ms);
-            }
-            else if (_currentHlsSession != null && _currentHlsSession.HasDvrWindow && _currentHlsSession.TotalDurationSeconds > 0)
-            {
-                long totalMs = (long)(_currentHlsSession.TotalDurationSeconds * 1000);
-                long timeMs = _mediaPlayer.Time;
-                long cur = _dvrCurrentOffsetSec >= 0 ? (long)(_dvrCurrentOffsetSec * 1000) + (timeMs >= 0 ? timeMs : 0) : totalMs;
-                long target = Math.Max(0, cur - ms);
-                ApplySliderSeek(target);
-            }
-            else
-            {
-                long cur = _mediaPlayer.Time >= 0 ? _mediaPlayer.Time : _liveElapsedMs;
-                long target = Math.Max(0, cur - ms);
-                if (_mediaPlayer.IsSeekable)
-                {
-                    _mediaPlayer.Time = target;
-                }
-                else if (_liveElapsedMs > 0)
-                {
-                    float pos = (float)target / _liveElapsedMs;
-                    _mediaPlayer.Position = Math.Clamp(pos, 0.0f, 1.0f);
-                }
-            }
-        }
-
-        public void Forward(int ms = 10000)
-        {
-            if (_mediaPlayer == null) return;
-            ShowOsdTemporary();
-
-            if (IsCurrentStreamVod() && _mediaPlayer.Length > 0)
-            {
-                _mediaPlayer.Time = Math.Min(_mediaPlayer.Length, _mediaPlayer.Time + ms);
-            }
-            else if (_currentHlsSession != null && _currentHlsSession.HasDvrWindow && _currentHlsSession.TotalDurationSeconds > 0)
-            {
-                long totalMs = (long)(_currentHlsSession.TotalDurationSeconds * 1000);
-                long timeMs = _mediaPlayer.Time;
-                long cur = _dvrCurrentOffsetSec >= 0 ? (long)(_dvrCurrentOffsetSec * 1000) + (timeMs >= 0 ? timeMs : 0) : totalMs;
-                long target = cur + ms;
-                if (target >= totalMs - 3500)
-                {
-                    GoLive();
-                }
-                else
-                {
-                    ApplySliderSeek(target);
-                }
-            }
-            else
-            {
-                long cur = _mediaPlayer.Time >= 0 ? _mediaPlayer.Time : _liveElapsedMs;
-                long target = cur + ms;
-                if (target >= _liveElapsedMs - 2000)
-                {
-                    GoLive();
-                }
-                else
-                {
-                    if (_mediaPlayer.IsSeekable)
-                    {
-                        _mediaPlayer.Time = target;
-                    }
-                    else if (_liveElapsedMs > 0)
-                    {
-                        float pos = (float)target / _liveElapsedMs;
-                        _mediaPlayer.Position = Math.Clamp(pos, 0.0f, 1.0f);
-                    }
-                }
-            }
-        }
-
-        public void Rewind10_Click(object sender, RoutedEventArgs e)
-        {
-            Rewind(10000);
-        }
-
-        public void Forward10_Click(object sender, RoutedEventArgs e)
-        {
-            Forward(10000);
-        }
-
-        public void GoLive_Click(object sender, RoutedEventArgs e)
-        {
-            GoLive();
-        }
-
-        public void GoLive()
-        {
-            if (_mediaPlayer == null) return;
-            ShowOsdTemporary();
-
-            _isLivePaused = false;
-            _livePauseStartUtc = null;
-            _accumulatedDelaySec = 0;
-            _dvrCurrentOffsetSec = -1;
-
-            if (IsCurrentStreamVod() && _mediaPlayer.Length > 0)
-            {
-                if (!_mediaPlayer.IsPlaying)
-                {
-                    _mediaPlayer.Play();
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-                }
-                _mediaPlayer.Time = Math.Max(0, _mediaPlayer.Length - 1000);
-            }
-            else if (_currentHlsSession != null)
-            {
-                string rawUrl = (_currentChannel?.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim() ?? "";
-                if (!string.IsNullOrEmpty(rawUrl))
-                {
-                    string liveProxyUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(rawUrl, -1);
-                    string caching = _db.GetSetting("VlcCaching", "1500");
-                    using var media = new Media(_libVLC!, new Uri(liveProxyUrl));
-                    media.AddOption($":network-caching={caching}");
-                    media.AddOption($":live-caching={caching}");
-                    media.AddOption(":clock-jitter=0");
-                    _mediaPlayer.Play(media);
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-                }
-                else
-                {
-                    if (!_mediaPlayer.IsPlaying)
-                    {
-                        _mediaPlayer.Play();
-                        if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-                    }
-                }
-            }
-            else
-            {
-                if (!_mediaPlayer.IsPlaying)
-                {
-                    _mediaPlayer.Play();
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-                }
-
-                if (_liveElapsedMs > 0 && _mediaPlayer.IsSeekable)
-                {
-                    _mediaPlayer.Time = _liveElapsedMs;
-                }
-                else if (_mediaPlayer.Position < 0.99f)
-                {
-                    _mediaPlayer.Position = 1.0f;
-                }
-            }
-
-            if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
-            if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
-        }
-
-        public void ChangeVolume(int deltaPercent)
-        {
-            if (_mediaPlayer == null) return;
-            ShowOsdTemporary();
-
-            if (_mediaPlayer.Mute) _mediaPlayer.Mute = false;
-            int newVol = Math.Clamp(_mediaPlayer.Volume + deltaPercent, 0, 150);
-            _mediaPlayer.Volume = newVol;
-            if (MuteBtn != null) MuteBtn.Content = newVol == 0 ? "🔇" : "🔊";
-        }
-
-        public void Mute_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleMute();
-        }
-
-        public void ToggleMute()
-        {
-            if (_mediaPlayer == null) return;
-            ShowOsdTemporary();
-            _mediaPlayer.Mute = !_mediaPlayer.Mute;
-            if (MuteBtn != null) MuteBtn.Content = _mediaPlayer.Mute ? "🔇" : "🔊";
-        }
-
-        public void Fullscreen_Click(object sender, RoutedEventArgs e)
-        {
-            ToggleFullscreen();
-        }
-
-        public void ToggleFullscreen()
-        {
-            StreamMesh.UI.Windows.MainWindow.Instance?.ToggleFullscreen();
-        }
-
-        private void TimeSlider_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            _isUserDraggingSlider = true;
-            ShowOsdTemporary();
-        }
+        private void TimeSlider_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) { _isUserDraggingSlider = true; }
 
         private void TimeSlider_PreviewMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
@@ -727,172 +385,91 @@ namespace StreamMesh.UI.Views
         {
             if (_isUserDraggingSlider)
             {
-                ApplySliderSeek(e.NewValue);
+                // UI'ı sürükleme anında güncelle (Anlık sarı yazı ve saat geri bildirimi)
+                var proxySession = HlsProxyEngine.Instance.GetSession(_currentChannel?.Url ?? "");
+                if (proxySession != null)
+                {
+                    UpdateOsdTimeAndBadge((long)e.NewValue, (long)(proxySession.TotalDurationSeconds * 1000), proxySession.StartWallClockTime);
+                }
             }
         }
 
         private void ApplySliderSeek(double value)
         {
-            if (_mediaPlayer == null) return;
+            if (_player == null || _currentChannel == null) return;
 
-            if (IsCurrentStreamVod() && _mediaPlayer.Length > 0)
+            _lastSeekTime = DateTime.Now; // Cooldown başlat
+
+            if (IsCurrentStreamVod())
             {
-                _mediaPlayer.Time = (long)Math.Clamp(value, 0, _mediaPlayer.Length);
+                _player.Seek((int)value);
             }
-            else if (_currentHlsSession != null && _currentHlsSession.HasDvrWindow && _currentHlsSession.TotalDurationSeconds > 0)
+            else if (_currentChannel.Url.Contains(".m3u8"))
             {
-                long totalMs = (long)(_currentHlsSession.TotalDurationSeconds * 1000);
-                long targetTimeMs = (long)Math.Clamp(value, 0, totalMs);
+                // Time-Machine Teleport: Reload stream starting at requested second
+                _player.Stop();
+                _lastTeleportPositionMs = (long)value;
+                string teleportUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(_currentChannel.Url, value / 1000.0);
+                _player.Open(teleportUrl);
+                LogService.LogInfo($"Player: Teleported to {value / 1000}s");
+            }
+        }
 
-                if (targetTimeMs >= totalMs - 3500)
-                {
-                    GoLive();
-                }
-                else
-                {
-                    double targetSec = targetTimeMs / 1000.0;
-                    _ = SeekDvrToSecondAsync(targetSec);
-                }
+        public void Rewind10_Click(object sender, RoutedEventArgs e) { Rewind(10000); }
+        public void Forward10_Click(object sender, RoutedEventArgs e) { Forward(10000); }
+
+        public void GoLive()
+        {
+            if (_player == null || _currentChannel == null) return;
+
+            _lastSeekTime = DateTime.Now; // Cooldown
+
+            if (_currentChannel.Url.Contains(".m3u8"))
+            {
+                // Force proxy to return to live edge
+                _player.Stop();
+                _lastTeleportPositionMs = -1; // Live edge
+                string liveUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(_currentChannel.Url, -1);
+                _player.Open(liveUrl);
             }
             else
             {
-                long targetTime = (long)Math.Clamp(value, 0, Math.Max(1000, _liveElapsedMs));
-                if (targetTime >= _liveElapsedMs - 2000)
-                {
-                    GoLive();
-                }
-                else
-                {
-                    if (_mediaPlayer.IsSeekable)
-                    {
-                        _mediaPlayer.Time = targetTime;
-                    }
-                    else if (_liveElapsedMs > 0)
-                    {
-                        float pos = (float)targetTime / _liveElapsedMs;
-                        _mediaPlayer.Position = Math.Clamp(pos, 0.0f, 1.0f);
-                    }
-                }
+                _player.Seek((int)(_player.Duration / 10000));
             }
+            ShowOsdTemporary();
         }
 
-        private async Task SeekDvrToSecondAsync(double targetSec)
+        public void GoLive_Click(object sender, RoutedEventArgs e) { GoLive(); }
+        public void Mute_Click(object sender, RoutedEventArgs e) { ToggleMute(); }
+
+        public void Fullscreen_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentChannel == null || _currentHlsSession == null || _libVLC == null || _mediaPlayer == null) return;
-            if (_isSeekingDvr) return;
-
-            _isSeekingDvr = true;
-            try
+            var win = Window.GetWindow(this);
+            if (win == null) return;
+            if (win.WindowStyle == WindowStyle.None)
             {
-                _dvrCurrentOffsetSec = targetSec;
-                string rawUrl = (_currentChannel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim() ?? "";
-                if (string.IsNullOrEmpty(rawUrl)) return;
-
-                string proxyVodUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(rawUrl, targetSec);
-                string caching = _db.GetSetting("VlcCaching", "1500");
-
-                LogService.LogInfo($"HlsProxy DVR Seek: {targetSec:F1}s konumuna atlanıyor -> {proxyVodUrl}");
-
-                using var media = new Media(_libVLC, new Uri(proxyVodUrl));
-                media.AddOption($":network-caching={caching}");
-                media.AddOption($":live-caching={caching}");
-                media.AddOption(":clock-jitter=0");
-
-                _mediaPlayer.Play(media);
-
-                if (LiveBadge != null) LiveBadge.Background = DelayedAmberBrush;
-                if (LiveBadgeText != null)
-                {
-                    double delaySec = Math.Max(0, _currentHlsSession.TotalDurationSeconds - targetSec);
-                    TimeSpan delayTs = TimeSpan.FromSeconds(delaySec);
-                    string delayStr = delayTs.TotalHours >= 1 ? delayTs.ToString(@"hh\:mm\:ss") : delayTs.ToString(@"mm\:ss");
-                    LiveBadgeText.Text = $"⏳ -{delayStr}";
-                }
+                win.WindowStyle = WindowStyle.SingleBorderWindow;
+                win.WindowState = WindowState.Normal;
             }
-            catch (Exception ex)
+            else
             {
-                LogService.LogError("DVR Seek Hatası", ex);
-            }
-            finally
-            {
-                await Task.Delay(400);
-                _isSeekingDvr = false;
+                win.WindowStyle = WindowStyle.None;
+                win.WindowState = WindowState.Maximized;
             }
         }
+
+        private void Player_MouseMove(object sender, System.Windows.Input.MouseEventArgs e) { ShowOsdTemporary(); }
 
         private void UpdateOsdEpgForTime(DateTime targetTime)
         {
             if (_currentChannel == null || OsdCurrentEpg == null || OsdNextEpg == null) return;
-
             if (_currentChannelEpgList != null && _currentChannelEpgList.Count > 0)
             {
-                var chEpgUrls = (_currentChannel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
+                var matching = _currentChannelEpgList.Where(p => targetTime >= p.StartTime && targetTime <= p.EndTime).FirstOrDefault();
+                OsdCurrentEpg.Text = matching != null ? $"{matching.StartTime:HH:mm} - {matching.EndTime:HH:mm} {matching.Title}" : "Yayın akışı bilgisi yok";
 
-                // 1. Find program airing at targetTime
-                var matching = _currentChannelEpgList.Where(p => targetTime >= p.StartTime && targetTime <= p.EndTime).ToList();
-                EpgProgram? currentProg = null;
-                if (matching.Count > 0)
-                {
-                    if (chEpgUrls.Count > 0)
-                    {
-                        currentProg = matching.FirstOrDefault(p => chEpgUrls.Any(u => (p.SourceUrl ?? "").Contains(u))) ?? matching[0];
-                    }
-                    else
-                    {
-                        currentProg = matching[0];
-                    }
-                }
-
-                // 2. Find next program right after targetTime
-                DateTime nextSearchTime = currentProg != null ? currentProg.EndTime : targetTime;
-                var future = _currentChannelEpgList.Where(p => p.StartTime >= nextSearchTime).OrderBy(p => p.StartTime).ToList();
-                EpgProgram? nextProg = null;
-                if (future.Count > 0)
-                {
-                    if (chEpgUrls.Count > 0)
-                    {
-                        nextProg = future.FirstOrDefault(p => chEpgUrls.Any(u => (p.SourceUrl ?? "").Contains(u))) ?? future[0];
-                    }
-                    else
-                    {
-                        nextProg = future[0];
-                    }
-                }
-
-                string currentText = currentProg != null
-                    ? $"{currentProg.StartTime:HH:mm} - {currentProg.EndTime:HH:mm} {currentProg.Title}"
-                    : "Yayın akışı bilgisi yok";
-
-                string nextText = nextProg != null
-                    ? $"Sıradaki: {nextProg.StartTime:HH:mm} {nextProg.Title}"
-                    : "Sıradaki: --:-- Bilgi yok";
-
-                if (_lastDisplayedEpgCurrent != currentText)
-                {
-                    _lastDisplayedEpgCurrent = currentText;
-                    OsdCurrentEpg.Text = currentText;
-                }
-
-                if (_lastDisplayedEpgNext != nextText)
-                {
-                    _lastDisplayedEpgNext = nextText;
-                    OsdNextEpg.Text = nextText;
-                }
-            }
-            else
-            {
-                string currentText = "Yayın akışı bilgisi yok";
-                string nextText = "Sıradaki: --:-- Bilgi yok";
-                if (_lastDisplayedEpgCurrent != currentText)
-                {
-                    _lastDisplayedEpgCurrent = currentText;
-                    OsdCurrentEpg.Text = currentText;
-                }
-                if (_lastDisplayedEpgNext != nextText)
-                {
-                    _lastDisplayedEpgNext = nextText;
-                    OsdNextEpg.Text = nextText;
-                }
+                var future = _currentChannelEpgList.Where(p => p.StartTime > targetTime).OrderBy(p => p.StartTime).FirstOrDefault();
+                OsdNextEpg.Text = future != null ? $"Sıradaki: {future.StartTime:HH:mm} {future.Title}" : "Sıradaki: --:-- Bilgi yok";
             }
         }
 
@@ -900,11 +477,21 @@ namespace StreamMesh.UI.Views
         {
             _positionTimer?.Stop();
             _osdTimer?.Stop();
-            _mediaPlayer?.Stop();
-            _mediaPlayer?.Dispose();
-            _libVLC?.Dispose();
-            HlsProxyEngine.Instance.ClearChannelCache();
-            if (_bufferPtr != IntPtr.Zero) Marshal.FreeHGlobal(_bufferPtr);
+            if (_player != null)
+            {
+                try
+                {
+                    if (_currentChannel != null && IsCurrentStreamVod())
+                    {
+                        _currentChannel.LastPositionMs = _player.CurTime / 10000;
+                        _db.SaveChannelSync(_currentChannel);
+                    }
+                    _player.Stop();
+                    _player.Dispose();
+                }
+                catch { }
+                _player = null;
+            }
         }
     }
 }

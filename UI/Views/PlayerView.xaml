@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:conv="clr-namespace:StreamMesh.Converters"
+             xmlns:flyleaf="clr-namespace:FlyleafLib.Controls.WPF;assembly=FlyleafLib"
              mc:Ignorable="d" d:DesignHeight="720" d:DesignWidth="1280">
 
     <UserControl.Resources>
@@ -41,88 +42,93 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Background="Black" MouseMove="Player_MouseMove" x:Name="PlayerGrid">
-        <Image x:Name="VideoImage" Stretch="Uniform"/>
-
-        <!-- OSD Panel -->
-        <Border VerticalAlignment="Bottom" Height="Auto" Background="#E60F172A" Margin="40" CornerRadius="20" BorderBrush="#334155" BorderThickness="1.5" x:Name="OsdPanel">
-            <Grid Margin="20,15">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Channel Logo -->
-                    <Border Width="64" Height="64" Background="#1e293b" CornerRadius="12" VerticalAlignment="Center" BorderBrush="#22FFFFFF" BorderThickness="1">
-                        <Image x:Name="OsdLogo" Stretch="Uniform" Margin="8"/>
-                    </Border>
-
-                    <!-- EPG Info (Responsive Center) -->
-                    <Grid Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
+    <Grid Background="Black" x:Name="PlayerGrid">
+        <!-- FlyleafHost: The raw video surface -->
+        <flyleaf:FlyleafHost x:Name="VideoPlayer" Background="Black">
+            <!-- Overlay Container (Single Child for FlyleafHost compatibility) -->
+            <Grid Background="Transparent" x:Name="PlayerOverlay">
+                <!-- OSD Panel -->
+                <Border VerticalAlignment="Bottom" Height="Auto" Background="#E60F172A" Margin="40" CornerRadius="20" BorderBrush="#334155" BorderThickness="1.5"
+                        x:Name="OsdPanel" Visibility="Collapsed" MouseEnter="OsdPanel_MouseEnter" MouseLeave="OsdPanel_MouseLeave">
+                    <Grid Margin="20,15">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
-                            <TextBlock x:Name="OsdTitle" Text="Kanal Yükleniyor..." FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
-                            <Border x:Name="LiveBadge" Background="#dc2626" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock x:Name="LiveBadgeText" Text="🔴 CANLI" Foreground="White" FontWeight="Bold" FontSize="10"/>
-                            </Border>
-                        </StackPanel>
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,2">
-                            <Border Background="#38bdf8" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
-                                <TextBlock x:Name="OsdCategory" Text="TV" Foreground="Black" FontWeight="Bold" FontSize="10"/>
+                            <!-- Channel Logo -->
+                            <Border Width="64" Height="64" Background="#1e293b" CornerRadius="12" VerticalAlignment="Center" BorderBrush="#22FFFFFF" BorderThickness="1">
+                                <Image x:Name="OsdLogo" Stretch="Uniform" Margin="8"/>
                             </Border>
-                            <TextBlock x:Name="OsdCurrentEpg" Text="Yayın akışı bilgisi yükleniyor..." Foreground="#e2e8f0" FontSize="14" Margin="10,0,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
-                        </StackPanel>
 
-                        <TextBlock x:Name="OsdNextEpg" Grid.Row="2" Text="Sıradaki: --:-- Bilgi yok" FontSize="12" Foreground="#94a3b8" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
+                            <!-- EPG Info -->
+                            <Grid Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
+                                    <TextBlock x:Name="OsdTitle" Text="Kanal Yükleniyor..." FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
+                                    <Border x:Name="LiveBadge" Background="#dc2626" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                        <TextBlock x:Name="LiveBadgeText" Text="🔴 CANLI" Foreground="White" FontWeight="Bold" FontSize="10"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,2">
+                                    <Border Background="#38bdf8" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                                        <TextBlock x:Name="OsdCategory" Text="TV" Foreground="Black" FontWeight="Bold" FontSize="10"/>
+                                    </Border>
+                                    <TextBlock x:Name="OsdCurrentEpg" Text="Yayın akışı bilgisi yükleniyor..." Foreground="#e2e8f0" FontSize="14" Margin="10,0,0,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
+                                </StackPanel>
+
+                                <TextBlock x:Name="OsdNextEpg" Grid.Row="2" Text="Sıradaki: --:-- Bilgi yok" FontSize="12" Foreground="#94a3b8" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" MaxWidth="500"/>
+                            </Grid>
+
+                            <!-- Action Controls -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="⏪" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Rewind10_Click" ToolTip="10sn Geri"/>
+                                <Button x:Name="PlayPauseBtn" Content="⏸" Style="{StaticResource OsdControlButtonStyle}" Width="54" Height="54" FontSize="24" Background="#2563eb" Click="PlayPause_Click"/>
+                                <Button Content="⏩" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Forward10_Click" ToolTip="10sn İleri"/>
+
+                                <Border Width="1" Height="30" Background="#44FFFFFF" Margin="10,0"/>
+
+                                <Button Content="🔴 Canlı" FontSize="11" FontWeight="Bold" Style="{StaticResource PrimaryButtonStyle}" Width="75" Height="42" Background="#dc2626" Margin="10,0" Click="GoLive_Click"/>
+
+                                <Button x:Name="MuteBtn" Content="🔊" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Mute_Click" Background="#334155"/>
+                                <Button Content="⛶" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Fullscreen_Click" Background="#334155"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Time / Progress Bar -->
+                        <Grid Grid.Row="1" Margin="0,15,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Background="#1e293b" CornerRadius="4" Padding="6,2" Margin="0,0,12,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="TimeCurrentText" Text="00:00:00" Foreground="#38bdf8" FontSize="11" FontWeight="SemiBold" TextAlignment="Center" FontFamily="Consolas" MinWidth="64"/>
+                            </Border>
+
+                            <Slider x:Name="TimeSlider" Grid.Column="1" VerticalAlignment="Center" Minimum="0" Maximum="100" ValueChanged="TimeSlider_ValueChanged" PreviewMouseDown="TimeSlider_PreviewMouseDown" PreviewMouseUp="TimeSlider_PreviewMouseUp" Height="18" Cursor="Hand"/>
+
+                            <Border Grid.Column="2" Background="#1e293b" CornerRadius="4" Padding="6,2" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="TimeTotalText" Text="CANLI YAYIN" Foreground="#f8fafc" FontSize="11" FontWeight="Bold" TextAlignment="Center" FontFamily="Consolas" MinWidth="85"/>
+                            </Border>
+                        </Grid>
                     </Grid>
-
-                    <!-- Action Controls (Fixed Right) -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="⏪" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Rewind10_Click" ToolTip="10sn Geri"/>
-                        <Button x:Name="PlayPauseBtn" Content="⏸" Style="{StaticResource OsdControlButtonStyle}" Width="54" Height="54" FontSize="24" Background="#2563eb" Click="PlayPause_Click"/>
-                        <Button Content="⏩" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Forward10_Click" ToolTip="10sn İleri"/>
-
-                        <Border Width="1" Height="30" Background="#44FFFFFF" Margin="10,0"/>
-
-                        <Button Content="🔴 Canlı" FontSize="11" FontWeight="Bold" Style="{StaticResource PrimaryButtonStyle}" Width="75" Height="42" Background="#dc2626" Margin="10,0" Click="GoLive_Click"/>
-                        
-                        <Button x:Name="MuteBtn" Content="🔊" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Mute_Click" Background="#334155"/>
-                        <Button Content="⛶" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Fullscreen_Click" Background="#334155"/>
-                    </StackPanel>
-                </Grid>
-
-                <!-- Time / Progress Bar -->
-                <Grid Grid.Row="1" Margin="0,15,0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <Border Grid.Column="0" Background="#1e293b" CornerRadius="4" Padding="6,2" Margin="0,0,12,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TimeCurrentText" Text="00:00:00" Foreground="#38bdf8" FontSize="11" FontWeight="SemiBold" TextAlignment="Center" FontFamily="Consolas" MinWidth="64"/>
-                    </Border>
-
-                    <Slider x:Name="TimeSlider" Grid.Column="1" VerticalAlignment="Center" Minimum="0" Maximum="100" ValueChanged="TimeSlider_ValueChanged" PreviewMouseDown="TimeSlider_PreviewMouseDown" PreviewMouseUp="TimeSlider_PreviewMouseUp" Height="18" Cursor="Hand"/>
-
-                    <Border Grid.Column="2" Background="#1e293b" CornerRadius="4" Padding="6,2" Margin="12,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="TimeTotalText" Text="CANLI YAYIN" Foreground="#f8fafc" FontSize="11" FontWeight="Bold" TextAlignment="Center" FontFamily="Consolas" MinWidth="85"/>
-                    </Border>
-                </Grid>
+                </Border>
             </Grid>
-        </Border>
+        </flyleaf:FlyleafHost>
     </Grid>
 </UserControl>

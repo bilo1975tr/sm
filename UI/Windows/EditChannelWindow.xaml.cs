@@ -285,7 +285,14 @@ namespace StreamMesh.UI.Windows
 
             _channel.Url = string.Join(",", TempUrlList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
             _channel.LogoUrl = string.Join(",", TempLogoList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
-            _channel.EpgId = string.Join(",", TempEpgList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+
+            string newEpgId = string.Join(",", TempEpgList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+            if (_channel.EpgId != newEpgId)
+            {
+                _channel.EpgId = newEpgId;
+                _channel.IsEpgLocked = true; // Mark as locked because user manually changed EPG list
+            }
+
             _channel.EpgUrl = string.Join(",", TempEpgUrlList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
 
             await _db.SaveChannelAsync(_channel);

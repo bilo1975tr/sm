@@ -341,7 +341,8 @@ const MEDIA_DATABASE = {
 };
 
 const server = http.createServer((req, res) => {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+  const host = req.headers.host || `localhost:${PORT}`;
+  const parsedUrl = new URL(req.url, `http://${host}`);
   const pathname = parsedUrl.pathname;
 
   // CORS headers
@@ -791,9 +792,36 @@ const server = http.createServer((req, res) => {
             padding: 8px 10px; border-radius: 6px; color: #fff; font-size: 12px; outline: none;
         }
         .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+        /* Toast notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid var(--primary-glow);
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.25s ease-in-out;
+            pointer-events: none;
+        }
+        .toast-notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Toast Notification Element -->
+    <div id="toastNotification" class="toast-notification"></div>
 
     <!-- Header Navigation -->
     <header class="top-nav">
@@ -943,13 +971,26 @@ const server = http.createServer((req, res) => {
 
     <script>
         const DB = ${JSON.stringify(MEDIA_DATABASE)};
+        const FALLBACK_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23222'/%3E%3Ctext x='20' y='25' font-size='12' fill='%23888' text-anchor='middle'%3ESM%3C/text%3E%3C/svg%3E";
         let currentModule = 'live_tv';
         let currentCategory = 'Tümü';
         let activeMedia = DB.live_tv[0];
         let hlsInstance = null;
+        let toastTimeout = null;
 
         const video = document.getElementById('videoPlayer');
         const radioVisualizer = document.getElementById('radioVisualizer');
+
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            if (!toast) return;
+            toast.innerText = message;
+            toast.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
 
         // Clock & Realtime updater
         function startLiveClock() {
@@ -1026,25 +1067,24 @@ const server = http.createServer((req, res) => {
                     const realtimeShow = getRealtimeLiveShow(m);
                     subText = realtimeShow ? realtimeShow.title : m.category;
                 } else if (currentModule === 'movies') {
-                    subText = \`\${m.year} • \${m.duration} • ⭐ \${m.rating}\`;
+                    subText = m.year + ' • ' + m.duration + ' • ⭐ ' + m.rating;
                 } else if (currentModule === 'series') {
-                    subText = \`\${m.seasonCount} • \${m.episodes ? m.episodes.length + ' Bölüm' : ''}\`;
+                    subText = m.seasonCount + ' • ' + (m.episodes ? m.episodes.length + ' Bölüm' : '');
                 } else if (currentModule === 'radios') {
-                    subText = \`\${m.freq} • \${m.currentShow || 'Canlı Radyo'}\`;
+                    subText = m.freq + ' • ' + (m.currentShow || 'Canlı Radyo');
                 }
 
-                item.innerHTML = \`
-                    <div class="media-logo-wrap">
-                        <img src="\${logoSrc}" alt="\${m.name}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'40\\' height=\\'40\\'><rect width=\\'40\\' height=\\'40\\' fill=\\'%23222\\'/><text x=\\'20\\' y=\\'25\\' font-size=\\'12\\' fill=\\'%23888\\' text-anchor=\\'middle\\'>SM</text></svg>'"/>
-                    </div>
-                    <div class="media-meta">
-                        <div class="media-title">
-                            <span>\${m.name}</span>
-                            <span class="quality-tag">\${m.quality || 'HD'}</span>
-                        </div>
-                        <div class="media-sub">\${subText}</div>
-                    </div>
-                \`;
+                item.innerHTML = 
+                    '<div class="media-logo-wrap">' +
+                        '<img src="' + logoSrc + '" alt="' + m.name + '" onerror="this.onerror=null;this.src=FALLBACK_LOGO" />' +
+                    '</div>' +
+                    '<div class="media-meta">' +
+                        '<div class="media-title">' +
+                            '<span>' + m.name + '</span>' +
+                            '<span class="quality-tag">' + (m.quality || 'HD') + '</span>' +
+                        '</div>' +
+                        '<div class="media-sub">' + subText + '</div>' +
+                    '</div>';
                 container.appendChild(item);
             });
         }
@@ -1089,9 +1129,11 @@ const server = http.createServer((req, res) => {
             if (currentModule === 'radios') {
                 video.style.display = 'none';
                 radioVisualizer.style.display = 'flex';
-                document.getElementById('radioLogo').src = m.logo;
+                const radioImg = document.getElementById('radioLogo');
+                radioImg.onerror = function() { this.onerror = null; this.src = FALLBACK_LOGO; };
+                radioImg.src = m.logo;
                 document.getElementById('radioStationTitle').innerText = m.name;
-                document.getElementById('radioFreqBadge').innerText = \`\${m.freq} • \${m.quality} Canlı Ses Akışı\`;
+                document.getElementById('radioFreqBadge').innerText = m.freq + ' • ' + m.quality + ' Canlı Ses Akışı';
                 document.getElementById('streamProtocolLabel').innerText = 'Icecast / Direct Audio Stream';
                 document.getElementById('currentMediaSub').innerText = m.currentShow || 'Canlı Radyo Yayını';
             } else {
@@ -1101,11 +1143,11 @@ const server = http.createServer((req, res) => {
 
                 if (currentModule === 'live_tv') {
                     const currentShow = getRealtimeLiveShow(m);
-                    document.getElementById('currentMediaSub').innerText = currentShow ? \`Canlı: \${currentShow.title}\` : 'Canlı Yayın';
+                    document.getElementById('currentMediaSub').innerText = currentShow ? ('Canlı: ' + currentShow.title) : 'Canlı Yayın';
                 } else if (currentModule === 'movies') {
-                    document.getElementById('currentMediaSub').innerText = \`\${m.category} • \${m.year} • Yönetmen: \${m.director || 'N/A'}\`;
+                    document.getElementById('currentMediaSub').innerText = m.category + ' • ' + m.year + ' • Yönetmen: ' + (m.director || 'N/A');
                 } else if (currentModule === 'series') {
-                    document.getElementById('currentMediaSub').innerText = \`\${m.category} • \${m.seasonCount}\`;
+                    document.getElementById('currentMediaSub').innerText = m.category + ' • ' + m.seasonCount;
                 }
             }
 
@@ -1165,31 +1207,29 @@ const server = http.createServer((req, res) => {
                     const card = document.createElement('div');
                     card.className = 'epg-card' + (isCurrent ? ' active-show' : '') + (isPast ? ' past-show' : '');
                     
-                    const timeRange = \`\${formatMinutes(item.startMinutes)} - \${formatMinutes(item.endMinutes)}\`;
+                    const timeRange = formatMinutes(item.startMinutes) + ' - ' + formatMinutes(item.endMinutes);
 
-                    card.innerHTML = \`
-                        <div class="epg-time">
-                            <span>\${timeRange}</span>
-                            \${isCurrent ? '<span style="color:var(--live-red); font-weight:800; animation:pulse 1s infinite;">● CANLI YAYINDA</span>' : ''}
-                        </div>
-                        <div class="epg-title">\${item.title}</div>
-                        <div class="epg-desc">\${item.desc || ''}</div>
-                        \${isCurrent ? \`<div class="epg-progress-bar"><div class="epg-progress-fill" style="width:\${progressPercent}%"></div></div>\` : ''}
-                    \`;
+                    card.innerHTML = 
+                        '<div class="epg-time">' +
+                            '<span>' + timeRange + '</span>' +
+                            (isCurrent ? '<span style="color:var(--live-red); font-weight:800; animation:pulse 1s infinite;">● CANLI YAYINDA</span>' : '') +
+                        '</div>' +
+                        '<div class="epg-title">' + item.title + '</div>' +
+                        '<div class="epg-desc">' + (item.desc || '') + '</div>' +
+                        (isCurrent ? ('<div class="epg-progress-bar"><div class="epg-progress-fill" style="width:' + progressPercent + '%"></div></div>') : '');
                     container.appendChild(card);
                 });
             } else if (currentModule === 'movies') {
                 titleEl.innerHTML = '🎬 Film Detayları & Bilgi';
                 const card = document.createElement('div');
                 card.className = 'epg-card active-show';
-                card.innerHTML = \`
-                    <div class="epg-title" style="font-size:14px; margin-bottom:8px;">\${m.name}</div>
-                    <div class="epg-desc" style="margin-bottom:10px;">\${m.desc || ''}</div>
-                    <div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Yıl:</b> \${m.year}</div>
-                    <div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Süre:</b> \${m.duration}</div>
-                    <div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Yönetmen:</b> \${m.director}</div>
-                    <div style="font-size:12px; color:#fbbf24;"><b>IMDb / Puan:</b> ⭐ \${m.rating}</div>
-                \`;
+                card.innerHTML = 
+                    '<div class="epg-title" style="font-size:14px; margin-bottom:8px;">' + m.name + '</div>' +
+                    '<div class="epg-desc" style="margin-bottom:10px;">' + (m.desc || '') + '</div>' +
+                    '<div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Yıl:</b> ' + m.year + '</div>' +
+                    '<div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Süre:</b> ' + m.duration + '</div>' +
+                    '<div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Yönetmen:</b> ' + m.director + '</div>' +
+                    '<div style="font-size:12px; color:#fbbf24;"><b>IMDb / Puan:</b> ⭐ ' + m.rating + '</div>';
                 container.appendChild(card);
             } else if (currentModule === 'series') {
                 titleEl.innerHTML = '🍿 Bölüm Listesi';
@@ -1198,24 +1238,22 @@ const server = http.createServer((req, res) => {
                     card.className = 'epg-card';
                     card.style.cursor = 'pointer';
                     card.onclick = () => {
-                        alert(ep.title + ' oynatılıyor...');
+                        showToast(ep.episode + ': ' + ep.title + ' seçildi');
                     };
-                    card.innerHTML = \`
-                        <div class="epg-time"><span>\${ep.episode}</span><span>\${ep.duration}</span></div>
-                        <div class="epg-title">\${ep.title}</div>
-                        <div class="epg-desc">\${ep.desc}</div>
-                    \`;
+                    card.innerHTML = 
+                        '<div class="epg-time"><span>' + ep.episode + '</span><span>' + ep.duration + '</span></div>' +
+                        '<div class="epg-title">' + ep.title + '</div>' +
+                        '<div class="epg-desc">' + ep.desc + '</div>';
                     container.appendChild(card);
                 });
             } else if (currentModule === 'radios') {
                 titleEl.innerHTML = '📻 Yayın Akışı & Bilgi';
                 const card = document.createElement('div');
                 card.className = 'epg-card active-show';
-                card.innerHTML = \`
-                    <div class="epg-title" style="font-size:14px;">\${m.name}</div>
-                    <div class="epg-time" style="margin-top:6px;"><span>Şu An: \${m.currentShow || 'Canlı Kuşak'}</span></div>
-                    <div class="epg-desc" style="margin-top:4px;">Sıradaki: \${m.nextShow || 'Gece Müzikleri'}</div>
-                \`;
+                card.innerHTML = 
+                    '<div class="epg-title" style="font-size:14px;">' + m.name + '</div>' +
+                    '<div class="epg-time" style="margin-top:6px;"><span>Şu An: ' + (m.currentShow || 'Canlı Kuşak') + '</span></div>' +
+                    '<div class="epg-desc" style="margin-top:4px;">Sıradaki: ' + (m.nextShow || 'Gece Müzikleri') + '</div>';
                 container.appendChild(card);
             }
         }
@@ -1223,20 +1261,26 @@ const server = http.createServer((req, res) => {
         function reloadCurrentMedia() { if (activeMedia) playMedia(activeMedia); }
         function copyStreamUrl() {
             if (activeMedia) {
-                navigator.clipboard.writeText(activeMedia.url);
-                alert('Yayın bağlantısı kopyalandı:\\n' + activeMedia.url);
+                navigator.clipboard.writeText(activeMedia.url).then(() => {
+                    showToast('Yayın bağlantısı kopyalandı: ' + activeMedia.name);
+                }).catch(() => {
+                    showToast('Yayın bağlantısı: ' + activeMedia.url);
+                });
             }
         }
         function openExternal() {
             if (activeMedia) {
                 window.location.href = 'streammesh://play?url=' + encodeURIComponent(activeMedia.url);
+                showToast('Masaüstü oynatıcı başlatılıyor...');
             }
         }
         function togglePiP() {
             if (document.pictureInPictureElement) {
                 document.exitPictureInPicture();
             } else if (document.pictureInPictureEnabled && video.style.display !== 'none') {
-                video.requestPictureInPicture();
+                video.requestPictureInPicture().catch(() => {
+                    showToast('PiP modu başlatılamadı');
+                });
             }
         }
 
@@ -1250,7 +1294,7 @@ const server = http.createServer((req, res) => {
             const cat = document.getElementById('customCategory').value.trim() || 'Özel';
 
             if (!name || !url) {
-                alert('Lütfen başlık ve yayın URL adresini girin.');
+                showToast('Lütfen başlık ve yayın URL adresini girin.');
                 return;
             }
 
@@ -1269,6 +1313,7 @@ const server = http.createServer((req, res) => {
             closeAddModal();
             switchModule(mod);
             playMedia(item);
+            showToast('Özel yayın eklendi: ' + name);
         }
 
         window.onload = () => {

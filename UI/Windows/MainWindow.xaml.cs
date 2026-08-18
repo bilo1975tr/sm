@@ -477,11 +477,18 @@ namespace StreamMesh.UI.Windows
                     LogService.LogInfo($"[AutoMetadata] {pendingMedia.Count} adet eksik açıklamalı film/dizi zenginleştiriliyor...");
                     foreach (var item in pendingMedia)
                     {
-                        var curStats = db.GetDailyQueryStats();
-                        if (curStats.count >= 950) break;
+                        try
+                        {
+                            var curStats = db.GetDailyQueryStats();
+                            if (curStats.count >= 950) break;
 
-                        await metaEng.EnrichChannelAsync(item);
-                        await System.Threading.Tasks.Task.Delay(500); // API isteği aralarına 500ms nezaket gecikmesi
+                            await metaEng.EnrichChannelAsync(item);
+                            await System.Threading.Tasks.Task.Delay(500);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            LogService.LogError($"[AutoMetadata] Kanal metadata hatası: {item.Name}", innerEx);
+                        }
                     }
                     LogService.LogInfo("[AutoMetadata] Otomatik metadata taraması tamamlandı.");
                 }
