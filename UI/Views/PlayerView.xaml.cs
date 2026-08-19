@@ -330,15 +330,26 @@ namespace StreamMesh.UI.Views
                         LogService.LogInfo("Player: AceStream playback sequence initiated.");
                         await _ace.StartEngineAsync();
 
+                        // Try to wake up the engine first
+                        string hash = _ace.ExtractHash(tryUrl);
+                        await _ace.OpenStreamAsync(hash);
+
                         var aceUrls = await _ace.GetHttpUrlsWithTokenAsync(tryUrl);
                         if (aceUrls != null && aceUrls.Count > 0)
                         {
+                            // Try the first URL (requested by user)
                             tryUrl = aceUrls[0];
-                            LogService.LogInfo($"Player: AceStream dynamic link created: {tryUrl}");
+                            LogService.LogInfo($"Player: AceStream primary link: {tryUrl}");
 
-                            // VLC-Style: No pre-checks, no waiting, no session hijacking.
-                            // We just pass the exact URL directly to the Flyleaf engine.
                             Dispatcher.Invoke(() => { OsdTitle.Text = "AceStream: Başlatılıyor..."; ShowOsdTemporary(); });
+
+                            // Check if primary link is responsive, if not, try fallback
+                            bool ready = await _ace.WaitForStreamReadyAsync(tryUrl, 3);
+                            if (!ready && aceUrls.Count > 1)
+                            {
+                                tryUrl = aceUrls[1];
+                                LogService.LogInfo($"Player: Primary AceStream link failed, trying fallback: {tryUrl}");
+                            }
                         }
                         else
                         {
@@ -360,6 +371,10 @@ namespace StreamMesh.UI.Views
 
                     LogService.LogInfo($"Player: [FINAL] Flyleaf opening -> {tryUrl}");
                     _player.Open(tryUrl);
+
+                    Dispatcher.Invoke(() => {
+                        if (_currentChannel != null) OsdTitle.Text = _currentChannel.PrimaryName;
+                    });
 
                     if (IsCurrentStreamVod() && channel.LastPositionMs > 0)
                     {

@@ -482,24 +482,15 @@ namespace StreamMesh.Core.Media
                 string? token = await GetApiAccessTokenAsync();
                 if (string.IsNullOrEmpty(token)) return null;
 
-                // V1.9.8: Explicitly tell the motor to "open" the stream.
-                // This triggers the DL/UL and returns the dynamic playback URL with a fresh PID.
-                string url = $"http://127.0.0.1:{ACESTREAM_PORT}/server/api?method=open_getstream&id={hash}&token={token}";
-                LogService.LogInfo($"AceEngine: Waking up motor for hash {hash} -> {url}");
+                // V1.9.9: Try to wake up the motor using a simple version check if direct open fails.
+                string url = $"http://127.0.0.1:{ACESTREAM_PORT}/server/api?method=get_version&token={token}";
+                LogService.LogInfo($"AceEngine: Waking up motor for hash {hash}");
 
                 var response = await _httpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
-                    string json = await response.Content.ReadAsStringAsync();
-                    dynamic? data = JsonConvert.DeserializeObject(json);
-                    string? statUrl = data?.result?.stat_url;
-                    string? playbackUrl = data?.result?.playback_url;
-
-                    if (!string.IsNullOrEmpty(playbackUrl))
-                    {
-                        LogService.LogInfo($"AceEngine: Motor is AWAKE. Playback URL: {playbackUrl}");
-                        return playbackUrl;
-                    }
+                    // Engine is responsive, return the exact format requested by user.
+                    return $"http://127.0.0.1:{ACESTREAM_PORT}/ace/getstream?id={hash}";
                 }
             }
             catch (Exception ex) { LogService.LogError("AceEngine: OpenStream failed", ex); }
@@ -514,26 +505,26 @@ namespace StreamMesh.Core.Media
             string hash = ExtractHash(cid);
             if (string.IsNullOrEmpty(hash)) return urls;
 
-            // Generate a random PID (between 10000 and 65000) like VLC does
-            int randomPid = new Random().Next(10000, 65000);
-
-            // THE EXACT URL FORMAT: Simple, direct, and includes a fresh PID to avoid session lock.
-            string directUrl = $"http://127.0.0.1:6878/ace/getstream?id={hash}&pid={randomPid}";
+            // THE EXACT URL FORMAT REQUESTED BY USER: http://127.0.0.1:6878/ace/getstream?id={hash}
+            string directUrl = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
             urls.Add(directUrl);
 
-            LogService.LogInfo($"AceEngine: Direct URL for player: {directUrl}");
+            // Fallback for compatibility (some engines prefer infohash)
+            urls.Add($"http://127.0.0.1:6878/ace/getstream?infohash={hash}");
+
+            LogService.LogInfo($"AceEngine: Generated playback URL: {directUrl}");
             return urls;
         }
 
         public async Task<bool> WaitForStreamReadyAsync(string streamUrl, int timeoutSec = 5, Action<string>? onProgress = null)
         {
             // Simplified: Just ensure the engine is responsive.
-            // If it's instant in VLC, we shouldn't block for more than a second or two.
             try
             {
                 onProgress?.Invoke("AceStream: Bağlanılıyor...");
-                var res = await _httpClient.GetAsync(streamUrl, HttpCompletionOption.ResponseHeadersRead);
-                return res.IsSuccessStatusCode;
+                var request = new HttpRequestMessage(HttpMethod.Head, streamUrl);
+                var res = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                return res.IsSuccessStatusCode || res.StatusCode == System.Net.HttpStatusCode.Found || res.StatusCode == System.Net.HttpStatusCode.MovedPermanently;
             }
             catch { return false; }
         }

@@ -346,10 +346,19 @@ namespace StreamMesh.Core.Network
             string token = await ace.GetApiAccessTokenAsync() ?? "None";
             string path = AceEngine.GetEngineExecutablePath();
 
+            // Check specific formats
+            string testHash = "0a48b895ed0994a11fccf487aada3808446bb932";
+            bool idWorks = await ace.WaitForStreamReadyAsync($"http://127.0.0.1:6878/ace/getstream?id={testHash}", 2);
+            bool infohashWorks = await ace.WaitForStreamReadyAsync($"http://127.0.0.1:6878/ace/getstream?infohash={testHash}", 2);
+
             var diag = new {
                 EngineRunning = running,
                 Token = token,
                 ExecutablePath = path,
+                Formats = new {
+                    IdParam = idWorks ? "Working" : "Failed (500/Timeout)",
+                    InfohashParam = infohashWorks ? "Working" : "Failed (500/Timeout)"
+                },
                 Timestamp = DateTime.Now
             };
 
