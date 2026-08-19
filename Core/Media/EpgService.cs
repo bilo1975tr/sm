@@ -283,10 +283,20 @@ namespace StreamMesh.Core.Media
 
                 // Search for 100% clean name match in EpgChannels table
                 var results = await _db.SearchEpgChannelsAsync(cleanName, true);
-                var bestMatch = results.FirstOrDefault(r =>
-                    string.Equals(ChannelUtils.GetCleanName(r.ChannelName), cleanName, StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(r.EpgId, cleanName, StringComparison.OrdinalIgnoreCase)
-                );
+                var bestMatch = results.FirstOrDefault(r => {
+                    bool nameMatch = string.Equals(ChannelUtils.GetCleanName(r.ChannelName), cleanName, StringComparison.OrdinalIgnoreCase) ||
+                                     string.Equals(r.EpgId, cleanName, StringComparison.OrdinalIgnoreCase);
+
+                    if (!nameMatch) return false;
+
+                    // V1.9.9: Added Language check to avoid cross-language mismatches (e.g. Discovery TR vs DE)
+                    // If target channel has a defined language, ensure the EPG channel matches it.
+                    if (!string.IsNullOrEmpty(ch.Language) && ch.Language != "und")
+                    {
+                        return ChannelUtils.MatchesLanguageFilter(r.ChannelName, ch.Language);
+                    }
+                    return true;
+                });
 
                 if (bestMatch != null)
                 {

@@ -1,0 +1,15 @@
+1. Sözdizimi ve Derleme Hataları (Syntax & Compilation Errors)
+
+2. Çalışma Zamanı Hataları (Runtime Errors)
+
+3. Mantık Hataları (Logical Errors)
+
+4. Mimari ve Tasarım Hataları (Architecture & Design Errors)
+
+5. Veritabanı ve Veri Yönetimi Hataları
+
+6. Güvenlik Zafiyetleri (Security Vulnerabilities)
+
+7. Entegrasyon ve Ağ Hataları (Integration & Network Errors)
+
+8. Kullanıcı Arayüzü ve Deneyimi (UI/UX) Hataları

@@ -19,12 +19,10 @@ namespace StreamMesh.Core.Utils
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string vPath = Path.Combine(baseDir, "version.txt");
+
                 if (!File.Exists(vPath))
                 {
-                    vPath = Path.Combine(baseDir, "VERSION");
-                }
-                if (!File.Exists(vPath))
-                {
+                    // Fallback to searching in parent directories (useful for some environments)
                     vPath = "version.txt";
                 }
 
@@ -37,7 +35,7 @@ namespace StreamMesh.Core.Utils
                         string[] lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                         if (lines.Length > 0 && !string.IsNullOrWhiteSpace(lines[0]))
                         {
-                            return lines[0].Trim();
+                            return lines[0].Trim().TrimStart('v', 'V');
                         }
                     }
                 }
@@ -47,7 +45,7 @@ namespace StreamMesh.Core.Utils
                 LogService.LogError("UpdateService: GetCurrentVersion error", ex);
             }
 
-            return "0.0.1";
+            return "0.1.0";
         }
 
         public async Task<(bool HasUpdate, string RemoteVersion)> CheckForUpdateAsync()
@@ -124,13 +122,6 @@ namespace StreamMesh.Core.Utils
                             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                             string localPath = Path.Combine(baseDir, "version.txt");
                             await File.WriteAllTextAsync(localPath, remoteVerContent.Trim());
-
-                            try
-                            {
-                                string verAltPath = Path.Combine(baseDir, "VERSION");
-                                await File.WriteAllTextAsync(verAltPath, remoteVerContent.Trim());
-                            }
-                            catch { }
                         }
                     }
                 }

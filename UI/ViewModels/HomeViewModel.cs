@@ -131,6 +131,39 @@ namespace StreamMesh.UI.ViewModels
             });
         }
 
+        public async Task MergeChannelsAsync(Channel source, Channel target)
+        {
+            if (source == null || target == null || source.Id == target.Id) return;
+
+            var existingUrls = target.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            var sourceUrls = source.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var u in sourceUrls)
+            {
+                if (!existingUrls.Contains(u.Trim())) existingUrls.Add(u.Trim());
+            }
+
+            target.Url = string.Join(",", existingUrls);
+            await _db.SaveChannelAsync(target);
+            _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{source.Id}'");
+            LoadData();
+        }
+
+        public async Task ToggleFavoriteAsync(Channel ch)
+        {
+            if (ch == null) return;
+            ch.IsFavorite = !ch.IsFavorite;
+            await _db.SaveChannelAsync(ch);
+            RefreshDisplay();
+        }
+
+        public void DeleteChannel(Channel ch)
+        {
+            if (ch == null) return;
+            _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{ch.Id}'");
+            LoadData();
+        }
+
         private int _sortIndex = 0;
 
         public void SetCategory(string tag)

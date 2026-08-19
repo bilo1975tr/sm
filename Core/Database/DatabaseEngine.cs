@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using StreamMesh.Models;
@@ -151,6 +153,8 @@ namespace StreamMesh.Core.Database
                     CREATE INDEX IF NOT EXISTS idx_epg_time ON EpgPrograms (StartTime, EndTime);
                     CREATE INDEX IF NOT EXISTS idx_epgchannels_name ON EpgChannels (Name);
                     CREATE INDEX IF NOT EXISTS idx_channels_pwc_date ON Channels (PersonalWatchCount, AddedDate);
+                    CREATE INDEX IF NOT EXISTS idx_epg_source ON EpgPrograms (SourceUrl);
+                    CREATE INDEX IF NOT EXISTS idx_epgchannels_source ON EpgChannels (SourceUrl);
                 ";
                 command.ExecuteNonQuery();
 
@@ -394,9 +398,13 @@ namespace StreamMesh.Core.Database
             finally { AsyncDbLock.Release(); }
         }
 
-        public async Task SaveChannelsBatchAsync(List<Channel> channels)
+        public async Task SaveChannelsBatchAsync(List<Channel> channels, bool clearFirst = false)
         {
-            if (channels == null || channels.Count == 0) return;
+            if (channels == null || channels.Count == 0)
+            {
+                if (clearFirst) ExecuteRawNonQuery("DELETE FROM Channels");
+                return;
+            }
             await AsyncDbLock.WaitAsync();
             try
             {
@@ -404,6 +412,14 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     using var tx = connection.BeginTransaction();
+
+                    if (clearFirst)
+                    {
+                        var clearCmd = connection.CreateCommand();
+                        clearCmd.Transaction = tx;
+                        clearCmd.CommandText = "DELETE FROM Channels";
+                        await clearCmd.ExecuteNonQueryAsync();
+                    }
 
                     var cmd = connection.CreateCommand();
                     cmd.Transaction = tx;
@@ -563,25 +579,8 @@ namespace StreamMesh.Core.Database
 
             if (mergedCount > 0)
             {
-                await AsyncDbLock.WaitAsync();
-                try
-                {
-                    using (var connection = new SqliteConnection(ConnectionString))
-                    {
-                        await connection.OpenAsync();
-                        using var tx = connection.BeginTransaction();
-
-                        var clearCmd = connection.CreateCommand();
-                        clearCmd.CommandText = "DELETE FROM Channels";
-                        await clearCmd.ExecuteNonQueryAsync();
-
-                        tx.Commit();
-                    }
-                }
-                finally { AsyncDbLock.Release(); }
-
-                // V1.8.8: Use batch save instead of loop for performance
-                await SaveChannelsBatchAsync(aggregated);
+                // V1.9.9: Safe aggregation - use a single transaction for both delete and insert
+                await SaveChannelsBatchAsync(aggregated, true);
             }
 
             return mergedCount;
@@ -717,7 +716,6 @@ namespace StreamMesh.Core.Database
                     string cleanQuery = StreamMesh.Core.Media.ChannelUtils.GetCleanName(rawQuery);
 
                     var epgSources = GetEpgSources();
-                    string sourceIn = epgSources.Count > 0 ? string.Join("','", epgSources.Select(s => s.Replace("'", "''"))) : "";
 
                     // V1.9.5: Search EpgChannels (Definitions) instead of just Programs.
                     // Join with EpgPrograms to get the current/latest title if it exists.
@@ -738,9 +736,16 @@ namespace StreamMesh.Core.Database
                         cmd.Parameters.AddWithValue("@cq", "%" + cleanQuery + "%");
                     }
 
-                    if (!allSources && !string.IsNullOrEmpty(sourceIn))
+                    if (!allSources && epgSources.Count > 0)
                     {
-                        sql += $" AND ec.SourceUrl IN ('{sourceIn}') ";
+                        var placeholders = new List<string>();
+                        for (int i = 0; i < epgSources.Count; i++)
+                        {
+                            string pName = $"@src{i}";
+                            placeholders.Add(pName);
+                            cmd.Parameters.AddWithValue(pName, epgSources[i]);
+                        }
+                        sql += $" AND ec.SourceUrl IN ({string.Join(",", placeholders)}) ";
                     }
 
                     sql += " ORDER BY ec.Name ASC LIMIT 100";
@@ -997,7 +1002,9 @@ namespace StreamMesh.Core.Database
                 {
                     list.Add(new IptvAccount {
                         Id = reader.GetString(0), Name = reader.GetString(1), ServerUrl = reader.GetString(2),
-                        Username = reader.GetString(3), Password = reader.GetString(4), Status = reader.GetString(5),
+                        Username = reader.GetString(3),
+                        Password = Decrypt(reader.GetString(4)),
+                        Status = reader.GetString(5),
                         ExpiryDate = DateTime.TryParse(reader.GetString(6), out DateTime dt) ? dt : DateTime.MinValue
                     });
                 }
@@ -1014,10 +1021,62 @@ namespace StreamMesh.Core.Database
                 cmd.CommandText = "INSERT INTO IptvAccounts (Id, Name, ServerUrl, Username, Password, Status, ExpiryDate) VALUES (@Id, @N, @U, @Un, @P, @S, @E) ON CONFLICT(Id) DO UPDATE SET Name=@N, ServerUrl=@U, Username=@Un, Password=@P, Status=@S, ExpiryDate=@E";
                 cmd.Parameters.AddWithValue("@Id", acc.Id); cmd.Parameters.AddWithValue("@N", acc.Name);
                 cmd.Parameters.AddWithValue("@U", acc.ServerUrl); cmd.Parameters.AddWithValue("@Un", acc.Username);
-                cmd.Parameters.AddWithValue("@P", acc.Password); cmd.Parameters.AddWithValue("@S", acc.Status);
+                cmd.Parameters.AddWithValue("@P", Encrypt(acc.Password)); cmd.Parameters.AddWithValue("@S", acc.Status);
                 cmd.Parameters.AddWithValue("@E", acc.ExpiryDate.ToString("o"));
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        private string Encrypt(string clearText)
+        {
+            if (string.IsNullOrEmpty(clearText)) return "";
+            try
+            {
+                byte[] clearBytes = Encoding.Unicode.GetBytes(clearText);
+                using (var encryptor = System.Security.Cryptography.Aes.Create())
+                {
+                    var pdb = new System.Security.Cryptography.Rfc2898DeriveBytes("StreamMesh_Safe_Pass_2024", new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 }, 1000, System.Security.Cryptography.HashAlgorithmName.SHA256);
+                    encryptor.Key = pdb.GetBytes(32);
+                    encryptor.IV = pdb.GetBytes(16);
+                    using (var ms = new MemoryStream())
+                    {
+                        using (var cs = new System.Security.Cryptography.CryptoStream(ms, encryptor.CreateEncryptor(), System.Security.Cryptography.CryptoStreamMode.Write))
+                        {
+                            cs.Write(clearBytes, 0, clearBytes.Length);
+                            cs.Close();
+                        }
+                        return Convert.ToBase64String(ms.ToArray());
+                    }
+                }
+            }
+            catch { return clearText; }
+        }
+
+        private string Decrypt(string cipherText)
+        {
+            if (string.IsNullOrEmpty(cipherText)) return "";
+            if (cipherText.Length < 8) return cipherText;
+
+            try
+            {
+                byte[] cipherBytes = Convert.FromBase64String(cipherText);
+                using (var encryptor = System.Security.Cryptography.Aes.Create())
+                {
+                    var pdb = new System.Security.Cryptography.Rfc2898DeriveBytes("StreamMesh_Safe_Pass_2024", new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 }, 1000, System.Security.Cryptography.HashAlgorithmName.SHA256);
+                    encryptor.Key = pdb.GetBytes(32);
+                    encryptor.IV = pdb.GetBytes(16);
+                    using (var ms = new MemoryStream())
+                    {
+                        using (var cs = new System.Security.Cryptography.CryptoStream(ms, encryptor.CreateDecryptor(), System.Security.Cryptography.CryptoStreamMode.Write))
+                        {
+                            cs.Write(cipherBytes, 0, cipherBytes.Length);
+                            cs.Close();
+                        }
+                        return Encoding.Unicode.GetString(ms.ToArray());
+                    }
+                }
+            }
+            catch { return cipherText; }
         }
 
         public void RemoveIptvAccount(string id)
@@ -1167,15 +1226,23 @@ namespace StreamMesh.Core.Database
                 {
                     await connection.OpenAsync();
                     using var tx = connection.BeginTransaction();
-                    var cmd = connection.CreateCommand();
-                    cmd.Transaction = tx;
 
                     // Delete in chunks to avoid SQL parameter limit
                     for (int i = 0; i < ids.Count; i += 500)
                     {
                         var chunk = ids.Skip(i).Take(500).ToList();
-                        string idList = string.Join("','", chunk.Select(id => id.Replace("'", "''")));
-                        cmd.CommandText = $"DELETE FROM Channels WHERE Id IN ('{idList}')";
+                        var cmd = connection.CreateCommand();
+                        cmd.Transaction = tx;
+
+                        var placeholders = new List<string>();
+                        for (int j = 0; j < chunk.Count; j++)
+                        {
+                            string pName = $"@id{j}";
+                            placeholders.Add(pName);
+                            cmd.Parameters.AddWithValue(pName, chunk[j]);
+                        }
+
+                        cmd.CommandText = $"DELETE FROM Channels WHERE Id IN ({string.Join(",", placeholders)})";
                         await cmd.ExecuteNonQueryAsync();
                     }
                     tx.Commit();

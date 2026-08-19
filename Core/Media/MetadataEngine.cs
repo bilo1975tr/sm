@@ -50,7 +50,12 @@ namespace StreamMesh.Core.Media
             if (stats.count >= 1000) return;
 
             // 4. Fetch from API (TMDB)
-            string apiKey = _db.GetSetting("TmdbApiKey", "3fd2be6f0c70a2a598f084dd23308883");
+            string apiKey = _db.GetSetting("TmdbApiKey", "");
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                LogService.LogWarning("MetadataEngine: TMDB API Key is not set. Skipping enrich.");
+                return;
+            }
             bool isSeries = cat == "DIZI" || cat == "SERIES" || !string.IsNullOrWhiteSpace(channel.SeriesBaseName) || channel is SeriesGroup;
 
             string endpoint = isSeries ? "search/tv" : "search/multi";

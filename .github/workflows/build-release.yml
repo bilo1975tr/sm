@@ -9,11 +9,11 @@ on:
       - '**.cs'
       - '**.xaml'
       - 'StreamMesh.csproj'
-      - 'VERSION'
+      - 'version.txt'
   workflow_dispatch: # Allows manual trigger from Actions tab
 
 permissions:
-  contents: write    # Required for creating releases and committing updated VERSION
+  contents: write    # Required for creating releases and committing updated version.txt
 
 jobs:
   build_release:
@@ -35,29 +35,38 @@ jobs:
         id: versioning
         shell: powershell
         run: |
-          if (Test-Path "VERSION") {
-            $raw = (Get-Content -Path "VERSION" -Raw).Trim()
+          if (Test-Path "version.txt") {
+            $raw = (Get-Content -Path "version.txt" -Raw).Trim()
           } else {
-            $raw = "0.0"
+            $raw = "0.1.0"
           }
           
           $parts = $raw.Split('.')
           [int]$major = 0
-          [int]$minor = 0
+          [int]$minor = 1
+          [int]$patch = 0
           
-          if ($parts.Length -ge 2) {
+          if ($parts.Length -eq 3) {
+            [int]::TryParse($parts[0], [ref]$major) | Out-Null
+            [int]::TryParse($parts[1], [ref]$minor) | Out-Null
+            [int]::TryParse($parts[2], [ref]$patch) | Out-Null
+          } elseif ($parts.Length -eq 2) {
             [int]::TryParse($parts[0], [ref]$major) | Out-Null
             [int]::TryParse($parts[1], [ref]$minor) | Out-Null
           }
           
-          $minor += 1
-          if ($minor -gt 1000) {
+          $patch += 1
+          if ($patch -gt 100) {
+            $minor += 1
+            $patch = 0
+          }
+          if ($minor -gt 100) {
             $major += 1
             $minor = 0
           }
           
-          $newVersion = "$major.$minor"
-          Set-Content -Path "VERSION" -Value $newVersion
+          $newVersion = "$major.$minor.$patch"
+          Set-Content -Path "version.txt" -Value $newVersion
           
           echo "APP_VERSION=$newVersion" >> $env:GITHUB_ENV
           echo "SAFE_VERSION=$newVersion" >> $env:GITHUB_ENV
@@ -84,7 +93,7 @@ jobs:
         shell: powershell
         run: |
           $publishPath = "bin\Release\net8.0-windows\win-x64\publish\*"
-          Copy-Item -Path "VERSION" -Destination "bin\Release\net8.0-windows\win-x64\publish\"
+          Copy-Item -Path "version.txt" -Destination "bin\Release\net8.0-windows\win-x64\publish\"
           $zipPath = "StreamMesh-v${env:SAFE_VERSION}-Portable.zip"
           Compress-Archive -Path $publishPath -DestinationPath $zipPath -Force
 
@@ -101,7 +110,7 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add VERSION
+          git add version.txt
           if ! git diff --staged --quiet; then
             git commit -m "bump: Auto-increment version to v${{ env.APP_VERSION }}"
             git fetch origin ${{ github.ref_name }}

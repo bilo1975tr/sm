@@ -30,14 +30,26 @@ namespace StreamMesh
 
         protected override void OnStartup(System.Windows.StartupEventArgs e)
         {
-            // 0. Single Instance Check (Prevent overlapping app instances & clean zombie processes)
+            if (!EnsureSingleInstance()) return;
+
+            SetupExceptionHandling();
+
+            LogService.ClearLogs();
+            LogService.LogInfo($"App: Baslatiliyor. Process: {Process.GetCurrentProcess().MainModule?.FileName}");
+
+            InitializeServices();
+
+            base.OnStartup(e);
+        }
+
+        private bool EnsureSingleInstance()
+        {
             _appMutex = new Mutex(true, MUTEX_NAME, out bool createdNew);
             if (!createdNew)
             {
                 bool broughtToFront = BringExistingInstanceToForeground();
                 if (!broughtToFront)
                 {
-                    // Previous process was a zombie (hung in background without window). Terminate it cleanly.
                     KillGhostInstances();
                     _appMutex = new Mutex(true, MUTEX_NAME, out createdNew);
                 }
@@ -45,10 +57,14 @@ namespace StreamMesh
                 {
                     System.Windows.MessageBox.Show("StreamMesh zaten çalışıyor! Uygulama penceresi ön plana getirildi.", "StreamMesh", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     Shutdown();
-                    return;
+                    return false;
                 }
             }
+            return true;
+        }
 
+        private void SetupExceptionHandling()
+        {
             AppDomain.CurrentDomain.UnhandledException += (s, ev) =>
                 LogService.LogError("AppDomain UnhandledException", ev.ExceptionObject as Exception);
 
@@ -56,33 +72,57 @@ namespace StreamMesh
                 LogService.LogError("DispatcherUnhandledException", ev.Exception);
                 ev.Handled = true;
             };
+        }
 
-            LogService.LogInfo($"App: Baslatiliyor. Process: {Process.GetCurrentProcess().MainModule?.FileName}");
-
+        private void InitializeServices()
+        {
             // 1. Maintenance
             try { MaintenanceEngine.EnsureSelfInstallation(); }
             catch (Exception ex) { LogService.LogError("App: Maintenance failed", ex); }
 
             // 2. Init DB
-            try { var db = new DatabaseEngine(); }
+            try { _ = new DatabaseEngine(); }
             catch (Exception ex) { LogService.LogError("App: Database init failed", ex); }
 
-            // 4. Media Server Init
+            // 3. Media Server Init
             Server = new MediaServer();
             Ssdp = new SsdpService();
             Server.Start();
 
-            // 5. AceStream Engine Auto-Start
-            Task.Run(async () => await new AceEngine().StartEngineAsync());
+            // 4. AceStream & Cloud Sync
+            StartBackgroundTasks();
+        }
 
-            // 3. Background Cloud Sync (Delayed by 15s to allow fast startup)
+        private void StartBackgroundTasks()
+        {
+            Task.Run(async () => {
+                var ace = new AceEngine();
+                if (!ace.IsInstalled())
+                {
+                    await Current.Dispatcher.InvokeAsync(async () => {
+                        var result = System.Windows.MessageBox.Show("AceStream motoru yüklü değil. P2P içerikleri oynatabilmeniz için gerekli bileşenler şimdi indirilsin mi?\n\nNot: İndirme işlemi arka planda yapılacaktır.", "Eksik Bileşen", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            bool success = await ace.DownloadAndExtractEngineAsync();
+                            if (success)
+                            {
+                                await ace.StartEngineAsync();
+                                System.Windows.MessageBox.Show("AceStream başarıyla yüklendi ve başlatıldı.", "Kurulum Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+                        }
+                    });
+                }
+                else
+                {
+                    await ace.StartEngineAsync();
+                }
+            });
+
             Task.Run(async () => {
                 await Task.Delay(15000);
                 var sync = new GitHubSyncEngine();
                 await sync.PullFromGitHubAsync();
             });
-
-            base.OnStartup(e);
         }
 
         private static bool BringExistingInstanceToForeground()
@@ -126,6 +166,9 @@ namespace StreamMesh
         {
             try
             {
+                // Stop any active AceStream broadcasts on exit
+                new AceEngine().StopAllStreamsAsync().Wait(2000);
+
                 if (_appMutex != null)
                 {
                     _appMutex.ReleaseMutex();

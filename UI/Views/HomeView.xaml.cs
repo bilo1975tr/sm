@@ -89,18 +89,7 @@ namespace StreamMesh.UI.Views
 
                 if (System.Windows.MessageBox.Show($"{source.Name} kanalını {target.Name} ile birleştirmek istiyor musunuz?\n\nBu işlem tüm yayın linklerini tek kartta toplar.", "Kanal Birleştir", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
-                    var existingUrls = target.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                    var sourceUrls = source.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    foreach (var u in sourceUrls)
-                    {
-                        if (!existingUrls.Contains(u.Trim())) existingUrls.Add(u.Trim());
-                    }
-
-                    target.Url = string.Join(",", existingUrls);
-                    await _db.SaveChannelAsync(target);
-                    _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{source.Id}'");
-                    _vm.LoadData();
+                    await _vm.MergeChannelsAsync(source, target);
                 }
             }
         }
@@ -164,9 +153,7 @@ namespace StreamMesh.UI.Views
 
             if (ch != null)
             {
-                ch.IsFavorite = !ch.IsFavorite;
-                await _db.SaveChannelAsync(ch);
-                _vm.LoadData();
+                await _vm.ToggleFavoriteAsync(ch);
             }
         }
 
@@ -176,8 +163,7 @@ namespace StreamMesh.UI.Views
             {
                 if (System.Windows.MessageBox.Show($"{ch.Name} silinecek. Emin misiniz?", "Kanal Sil", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{ch.Id}'");
-                    _vm.LoadData();
+                    _vm.DeleteChannel(ch);
                 }
             }
         }

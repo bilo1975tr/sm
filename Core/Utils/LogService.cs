@@ -24,6 +24,19 @@ namespace StreamMesh.Core.Utils
 
         private static readonly object _lock = new object();
 
+        public static void ClearLogs()
+        {
+            try
+            {
+                lock (_lock)
+                {
+                    if (File.Exists(LogPath)) File.Delete(LogPath);
+                    Log("INFO", "=== Yeni Oturum Başlatıldı, Loglar Temizlendi ===");
+                }
+            }
+            catch { }
+        }
+
         private static void Log(string level, string message)
         {
             try

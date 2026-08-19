@@ -14,7 +14,7 @@ function getAppVersion() {
       return fs.readFileSync(path.join(__dirname, 'version.txt'), 'utf8').trim();
     }
   } catch (e) {}
-  return '0.0.1';
+  return '0.1.0';
 }
 
 // Comprehensive data store for TV, Movies, Series, Radio

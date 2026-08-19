@@ -10,13 +10,16 @@ namespace StreamMesh.Core.Media
     public static class MetadataService
     {
         private static readonly HttpClient _http = new HttpClient();
-        private const string TmdbApiKey = "3fd2be6f0c70a2a598f084dd23308883";
+        private static readonly DatabaseEngine _db = new DatabaseEngine();
 
         public static async Task<MetadataResult?> FetchMetadataAsync(string title)
         {
             try
             {
-                string url = $"https://api.themoviedb.org/3/search/multi?api_key={TmdbApiKey}&query={Uri.EscapeDataString(title)}&language=tr-TR";
+                string apiKey = _db.GetSetting("TmdbApiKey", "");
+                if (string.IsNullOrEmpty(apiKey)) return null;
+
+                string url = $"https://api.themoviedb.org/3/search/multi?api_key={apiKey}&query={Uri.EscapeDataString(title)}&language=tr-TR";
                 var response = await _http.GetStringAsync(url);
                 var json = JObject.Parse(response);
                 var results = json["results"] as JArray;

@@ -42,7 +42,6 @@ namespace StreamMesh.UI.Views
         private static readonly SolidColorBrush DelayedAmberBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 158, 11));
         private static readonly SolidColorBrush VodBlueBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(37, 99, 235));
 
-        private long _currentManifestOffsetMs = 0;
         private long _lastTeleportPositionMs = 0;
         private DateTime _lastSeekTime = DateTime.MinValue;
 
@@ -295,7 +294,15 @@ namespace StreamMesh.UI.Views
 
             try
             {
+                // Ensure AceStream is stopped before starting a new one
+                if (channel.SourceType == "ACESTREAM" || (channel.Url ?? "").Contains("acestream://"))
+                {
+                    await _ace.StopAllStreamsAsync();
+                }
+
                 _player.Stop();
+                LogService.LogInfo($"Player: Stop signal sent to previous stream. Preparing: {channel.PrimaryName}");
+
                 Dispatcher.Invoke(() => {
                     OsdTitle.Text = channel.PrimaryName;
                     OsdCategory.Text = channel.Category;
@@ -311,45 +318,47 @@ namespace StreamMesh.UI.Views
                 Dispatcher.Invoke(() => UpdateOsdEpgForTime(DateTime.Now));
 
                 var rawUrls = (channel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                LogService.LogInfo($"Player: Found {rawUrls.Count} URL candidates in database.");
+
                 foreach (var raw in rawUrls)
                 {
                     string tryUrl = raw.Trim();
+                    LogService.LogInfo($"Player: Processing candidate URL: {tryUrl}");
 
-                    if (tryUrl.StartsWith("acestream://") || channel.SourceType == "ACESTREAM")
+                    if (_ace.IsAceStreamUrl(tryUrl) || channel.SourceType == "ACESTREAM")
                     {
-                        if (!_ace.IsInstalled())
-                        {
-                            var result = System.Windows.MessageBox.Show("AceStream motoru yüklü değil. İçeriği oynatmak için gerekli bileşenler şimdi indirilsin mi?", "Eksik Bileşen", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                            if (result == MessageBoxResult.Yes)
-                            {
-                                Dispatcher.Invoke(() => { OsdTitle.Text = "AceStream Bileşenleri Yükleniyor..."; ShowOsdTemporary(); });
-                                bool success = await _ace.DownloadAndExtractEngineAsync();
-                                if (!success)
-                                {
-                                    System.Windows.MessageBox.Show("Bileşenler yüklenemedi. Lütfen internet bağlantınızı kontrol edin.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
-                                    return;
-                                }
-                                Dispatcher.Invoke(() => { OsdTitle.Text = "Kurulum Tamamlandı, Motor Başlatılıyor..."; ShowOsdTemporary(); });
-                            }
-                            else return;
-                        }
-
+                        LogService.LogInfo("Player: AceStream playback sequence initiated.");
                         await _ace.StartEngineAsync();
-                        var aceUrls = _ace.GetHttpUrls(tryUrl);
-                        if (aceUrls.Count > 0) tryUrl = aceUrls[0];
+
+                        var aceUrls = await _ace.GetHttpUrlsWithTokenAsync(tryUrl);
+                        if (aceUrls != null && aceUrls.Count > 0)
+                        {
+                            tryUrl = aceUrls[0];
+                            LogService.LogInfo($"Player: AceStream dynamic link created: {tryUrl}");
+
+                            // VLC-Style: No pre-checks, no waiting, no session hijacking.
+                            // We just pass the exact URL directly to the Flyleaf engine.
+                            Dispatcher.Invoke(() => { OsdTitle.Text = "AceStream: Başlatılıyor..."; ShowOsdTemporary(); });
+                        }
+                        else
+                        {
+                            LogService.LogWarning("Player: AceStream engine failed to resolve any playback URLs.");
+                        }
                     }
                     else if (tryUrl.Contains("youtube.com"))
                     {
+                        LogService.LogInfo("Player: YouTube link detected, fetching stream manifest...");
                         tryUrl = await _yt.GetStreamUrlAsync(tryUrl) ?? tryUrl;
                     }
 
-                    // HLS Proxy Integration
-                    if (tryUrl.Contains(".m3u8"))
+                    // HLS Proxy Integration (Only for non-AceStream links)
+                    if (tryUrl.Contains(".m3u8") && !tryUrl.Contains(":6878/ace/"))
                     {
+                        LogService.LogInfo("Player: HLS (m3u8) detected, preparing through Helper 2 (Proxy)...");
                         tryUrl = await PrepareHlsStream(tryUrl);
                     }
 
-                    LogService.LogInfo($"Player: Flyleaf opening -> {tryUrl}");
+                    LogService.LogInfo($"Player: [FINAL] Flyleaf opening -> {tryUrl}");
                     _player.Open(tryUrl);
 
                     if (IsCurrentStreamVod() && channel.LastPositionMs > 0)
@@ -364,7 +373,14 @@ namespace StreamMesh.UI.Views
             finally { _playSemaphore.Release(); }
         }
 
-        public void Stop() { _player?.Stop(); }
+        public async void Stop()
+        {
+            _player?.Stop();
+            if (_currentChannel?.SourceType == "ACESTREAM" || (_currentChannel?.Url?.Contains("acestream://") == true))
+            {
+                await _ace.StopAllStreamsAsync();
+            }
+        }
 
         public void PlayPause_Click(object sender, RoutedEventArgs e) { TogglePause(); }
 
@@ -504,6 +520,12 @@ namespace StreamMesh.UI.Views
                         _db.SaveChannelSync(_currentChannel);
                     }
                     _player.Stop();
+
+                    if (_currentChannel?.SourceType == "ACESTREAM" || (_currentChannel?.Url?.Contains("acestream://") == true))
+                    {
+                        Task.Run(async () => await _ace.StopAllStreamsAsync());
+                    }
+
                     _player.Dispose();
                 }
                 catch { }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
+using StreamMesh.Models;
 using System.Collections.Generic;
 
 namespace StreamMesh.Core.Network
@@ -72,6 +73,8 @@ namespace StreamMesh.Core.Network
             var res = context.Response;
             string path = req.Url?.AbsolutePath.ToLower() ?? "/";
 
+            Utils.LogService.LogInfo($"MediaServer: Incoming request: {req.HttpMethod} {path} from {req.RemoteEndPoint}");
+
             try
             {
                 if (path == "/desc.xml")
@@ -107,6 +110,42 @@ namespace StreamMesh.Core.Network
                 else if (path == "/debug")
                 {
                     await ServeDebugInfo(res);
+                }
+                else if (path == "/api/play")
+                {
+                    await ServeApiPlay(req, res);
+                }
+                else if (path == "/api/epg/query")
+                {
+                    await ServeApiEpgQuery(req, res);
+                }
+                else if (path == "/api/ace/diagnostics")
+                {
+                    await ServeApiAceDiagnostics(res);
+                }
+                else if (path == "/api/yt/resolve")
+                {
+                    await ServeApiYtResolve(req, res);
+                }
+                else if (path == "/api/system/stats")
+                {
+                    await ServeApiSystemStats(res);
+                }
+                else if (path == "/api/logos/find")
+                {
+                    await ServeApiLogosFind(req, res);
+                }
+                else if (path == "/api/channels/search")
+                {
+                    await ServeApiChannelsSearch(req, res);
+                }
+                else if (path == "/api/logs/errors")
+                {
+                    await ServeApiLogsErrors(res);
+                }
+                else if (path == "/api/m3u/sources")
+                {
+                    await ServeApiM3uSources(res);
                 }
                 else
                 {
@@ -267,25 +306,174 @@ namespace StreamMesh.Core.Network
             await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
-        private async Task ServeProxyStream(HttpListenerRequest req, HttpListenerResponse res)
+        private async Task ServeApiPlay(HttpListenerRequest req, HttpListenerResponse res)
         {
             string id = req.QueryString["id"] ?? "";
             var channels = await _db.GetAllChannelsAsync();
             var ch = channels.FirstOrDefault(x => x.Id == id);
-            if (ch == null) { res.StatusCode = 404; return; }
+
+            if (ch != null)
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    UI.Windows.MainWindow.Instance?.LoadChannelToPlayer(ch);
+                });
+                byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(new { success = true, channel = ch.Name }));
+                res.ContentType = "application/json";
+                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+            else
+            {
+                res.StatusCode = 404;
+            }
+        }
+
+        private async Task ServeApiEpgQuery(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            string name = req.QueryString["name"] ?? "";
+            var epgService = new EpgService();
+            var dummyChannel = new Channel { Name = name };
+            var programs = await epgService.GetChannelEpgHistoryAsync(dummyChannel);
+
+            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(programs));
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task ServeApiAceDiagnostics(HttpListenerResponse res)
+        {
+            var ace = new AceEngine();
+            bool running = await ace.IsEngineRunningAsync();
+            string token = await ace.GetApiAccessTokenAsync() ?? "None";
+            string path = AceEngine.GetEngineExecutablePath();
+
+            var diag = new {
+                EngineRunning = running,
+                Token = token,
+                ExecutablePath = path,
+                Timestamp = DateTime.Now
+            };
+
+            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(diag, Newtonsoft.Json.Formatting.Indented));
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task ServeApiYtResolve(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            string url = req.QueryString["url"] ?? "";
+            var yt = new YoutubeEngine();
+            string? resolved = await yt.GetStreamUrlAsync(url);
+
+            var result = new { Original = url, Resolved = resolved, Success = !string.IsNullOrEmpty(resolved) };
+            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(result));
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task ServeApiSystemStats(HttpListenerResponse res)
+        {
+            var channels = await _db.GetAllChannelsAsync();
+            var stats = new {
+                TotalChannels = channels.Count,
+                SourceTypes = channels.GroupBy(c => c.SourceType).ToDictionary(g => g.Key ?? "Unknown", g => g.Count()),
+                DatabaseSize = new FileInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "database_v2.db")).Length / 1024 / 1024 + " MB"
+            };
+
+            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(stats, Newtonsoft.Json.Formatting.Indented));
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task ServeApiLogosFind(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            string q = req.QueryString["q"] ?? "";
+            var results = await LogoSearchEngine.SearchLogosAsync(q);
+
+            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(results));
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task ServeApiChannelsSearch(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            string q = req.QueryString["q"] ?? "";
+            var searchEngine = new GlobalSearchEngine();
+            var results = await searchEngine.SearchGlobalAsync(q);
+
+            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(results));
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task ServeApiLogsErrors(HttpListenerResponse res)
+        {
+            try
+            {
+                string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StreamMesh", "app.log");
+                if (File.Exists(logPath))
+                {
+                    var lines = File.ReadAllLines(logPath);
+                    var errors = lines.Where(l => l.Contains("[ERROR]")).TakeLast(50).ToList();
+                    byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(errors));
+                    res.ContentType = "application/json";
+                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                }
+                else { res.StatusCode = 404; }
+            }
+            catch { res.StatusCode = 500; }
+        }
+
+        private async Task ServeApiM3uSources(HttpListenerResponse res)
+        {
+            var sources = _db.GetM3uSources();
+            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(sources));
+            res.ContentType = "application/json";
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private async Task ServeProxyStream(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            string id = req.QueryString["id"] ?? "";
+            Utils.LogService.LogInfo($"MediaServer: Proxying stream for channel ID: {id}");
+
+            var channels = await _db.GetAllChannelsAsync();
+            var ch = channels.FirstOrDefault(x => x.Id == id);
+            if (ch == null)
+            {
+                Utils.LogService.LogWarning($"MediaServer: Channel ID {id} not found in database.");
+                res.StatusCode = 404;
+                return;
+            }
 
             string url = ch.Url.Split(',')[0];
+            Utils.LogService.LogInfo($"MediaServer: Original URL: {url}");
 
             using (var client = new System.Net.Http.HttpClient())
             {
-                if (url.StartsWith("acestream://"))
+                var ace = new AceEngine();
+                if (ace.IsAceStreamUrl(url))
                 {
-                    url = new AceEngine().GetHttpUrl(url);
+                    Utils.LogService.LogInfo("MediaServer: AceStream detected, fetching specialized URLs...");
+                    var aceUrls = await ace.GetHttpUrlsWithTokenAsync(url);
+                    if (aceUrls.Count > 0)
+                    {
+                        url = aceUrls[0];
+                        Utils.LogService.LogInfo($"MediaServer: Proxying to AceStream internal URL: {url}");
+                    }
                 }
 
-                var stream = await client.GetStreamAsync(url);
-                res.ContentType = "video/mp2t";
-                await stream.CopyToAsync(res.OutputStream);
+                try
+                {
+                    var stream = await client.GetStreamAsync(url);
+                    res.ContentType = "video/mp2t";
+                    Utils.LogService.LogInfo("MediaServer: Stream successfully established. Sending to output...");
+                    await stream.CopyToAsync(res.OutputStream);
+                }
+                catch (Exception ex)
+                {
+                    Utils.LogService.LogError($"MediaServer: Proxy transmission error for {url}", ex);
+                    res.StatusCode = 500;
+                }
             }
         }
     }

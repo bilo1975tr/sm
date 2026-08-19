@@ -11,6 +11,7 @@ AppPublisher=StreamMesh
 DefaultDirName={localappdata}\Programs\StreamMesh
 DefaultGroupName=StreamMesh
 OutputBaseFilename=StreamMesh-Setup-v{#AppVersion}
+; SetupIconFile=logos\app_icon.ico
 OutputDir=.
 Compression=lzma2/max
 SolidCompression=yes

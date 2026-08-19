@@ -70,7 +70,9 @@ namespace StreamMesh.Core.Media
             var handler = new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+#if DEBUG
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+#endif
             };
             _httpClient = new HttpClient(handler)
             {
@@ -374,7 +376,7 @@ namespace StreamMesh.Core.Media
                     }
                     else if (session.Segments.Count > 0 && session.Segments[0].ProgramDateTime.HasValue)
                     {
-                        session.StartWallClockTime = session.Segments[0].ProgramDateTime.Value;
+                        session.StartWallClockTime = session.Segments[0].ProgramDateTime!.Value;
                     }
                 }
                 else
@@ -401,7 +403,7 @@ namespace StreamMesh.Core.Media
                         // Re-anchor start wall clock time when trimming
                         if (session.Segments.Count > 0 && session.Segments[0].ProgramDateTime.HasValue)
                         {
-                            session.StartWallClockTime = session.Segments[0].ProgramDateTime.Value;
+                            session.StartWallClockTime = session.Segments[0].ProgramDateTime!.Value;
                         }
                     }
                 }

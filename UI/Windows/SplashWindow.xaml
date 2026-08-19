@@ -6,6 +6,7 @@
     <Border Background="#0f172a" CornerRadius="16" BorderBrush="#334155" BorderThickness="1">
         <Grid Margin="30">
             <StackPanel VerticalAlignment="Center">
+                <Image Source="pack://application:,,,/logos/StreamMesh_logo.png" Width="100" Height="100" Margin="0,0,0,20"/>
                 <TextBlock Text="StreamMesh" FontSize="48" FontWeight="Bold" Foreground="#38bdf8" HorizontalAlignment="Center"/>
                 <TextBlock Text="Yükleniyor..." Foreground="#94a3b8" HorizontalAlignment="Center" Margin="0,10,0,20"/>
                 <ProgressBar Height="4" IsIndeterminate="True" Foreground="#38bdf8" Background="#1e293b" BorderThickness="0"/>
