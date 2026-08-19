@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
@@ -44,12 +45,16 @@ namespace StreamMesh.Core.Media
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
-                    dynamic? data = JsonConvert.DeserializeObject(json);
-                    string? token = data?.result?.token;
+                    var data = JObject.Parse(json);
+                    string? token = data["result"]?["token"]?.ToString();
                     if (!string.IsNullOrEmpty(token))
                     {
                         LogService.LogInfo($"AceEngine: Received Token: {token.Substring(0, 8)}...");
                         return token;
+                    }
+                    else
+                    {
+                        LogService.LogWarning($"AceEngine: Token field missing in response: {json}");
                     }
                 }
                 else
@@ -281,27 +286,39 @@ namespace StreamMesh.Core.Media
         {
             try
             {
-                dynamic? data = JsonConvert.DeserializeObject(json);
-                var results = data?.result?.results ?? data?.result;
+                var data = JObject.Parse(json);
+                var results = data["result"]?["results"] ?? data["result"];
                 if (results == null) return;
                 foreach (var item in results)
                 {
-                    if (item.items != null) foreach (var sub in item.items) AddParsedAceItem(list, sub, (string)item.name, (string)item.icon, sourceName);
-                    else AddParsedAceItem(list, item, "", "", sourceName);
+                    if (item["items"] != null)
+                    {
+                        foreach (var sub in item["items"]!)
+                        {
+                            AddParsedAceItem(list, sub, item["name"]?.ToString() ?? "", item["icon"]?.ToString() ?? "", sourceName);
+                        }
+                    }
+                    else
+                    {
+                        AddParsedAceItem(list, item, "", "", sourceName);
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"AceEngine: ParseAceJsonResults failed from {sourceName}: {ex.Message}");
+            }
         }
 
-        private void AddParsedAceItem(List<AceResult> list, dynamic item, string fallbackName, string fallbackIcon, string sourceName)
+        private void AddParsedAceItem(List<AceResult> list, JToken item, string fallbackName, string fallbackIcon, string sourceName)
         {
-            string name = item.name ?? item.title ?? fallbackName;
+            string name = item["name"]?.ToString() ?? item["title"]?.ToString() ?? fallbackName;
             if (string.IsNullOrWhiteSpace(name) || name.Equals("AceStream", StringComparison.OrdinalIgnoreCase) || name.Equals("Download", StringComparison.OrdinalIgnoreCase)) return;
-            string infohash = item.infohash ?? item.content_id ?? item.id ?? "";
+            string infohash = item["infohash"]?.ToString() ?? item["content_id"]?.ToString() ?? item["id"]?.ToString() ?? "";
             if (string.IsNullOrWhiteSpace(infohash)) return;
             string finalUrl = infohash.StartsWith("acestream://") ? infohash : $"acestream://{infohash}";
             if (list.Any(x => x.Url.Equals(finalUrl, StringComparison.OrdinalIgnoreCase))) return;
-            list.Add(new AceResult { Name = name, Url = finalUrl, Peers = "Aktif P2P", SourceName = sourceName, Category = "P2P Stream", LogoUrl = item.icon ?? fallbackIcon ?? "" });
+            list.Add(new AceResult { Name = name, Url = finalUrl, Peers = "Aktif P2P", SourceName = sourceName, Category = "P2P Stream", LogoUrl = item["icon"]?.ToString() ?? fallbackIcon ?? "" });
         }
 
         private async Task SearchWebIndexesAsync(List<AceResult> list, string query)

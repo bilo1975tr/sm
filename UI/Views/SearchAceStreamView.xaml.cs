@@ -85,7 +85,15 @@ namespace StreamMesh.UI.Views
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("Aranan kriterlere uygun kanal veya medya içeriği bulunamadı.", "Arama Sonucu", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // Check engine status if no results found
+                    var ace = new AceEngine();
+                    bool engineRunning = await ace.IsEngineRunningAsync();
+                    string msg = "Aranan kriterlere uygun kanal veya medya içeriği bulunamadı.";
+                    if (!engineRunning)
+                    {
+                        msg += "\n\nNot: AceStream motoru şu an çalışmıyor olabilir. Arama kalitesini artırmak için motorun aktif olduğundan emin olun.";
+                    }
+                    System.Windows.MessageBox.Show(msg, "Arama Sonucu", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)

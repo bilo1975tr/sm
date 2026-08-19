@@ -116,8 +116,12 @@ namespace StreamMesh.Core.Media
                                 PeersOrDetails = res.Peers
                             });
                         }
+                        LogService.LogInfo($"GlobalSearch: AceStream combined search returned {aceItems.Count} items.");
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError("GlobalSearch: AceStream combined search failed", ex);
+                    }
                     return aceItems;
                 }));
             }
