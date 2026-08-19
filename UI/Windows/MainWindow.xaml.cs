@@ -38,10 +38,19 @@ namespace StreamMesh.UI.Windows
             Instance = this;
             InitializeComponent();
 
-            // Set Window Icon from Vector Resource
-            if (System.Windows.Application.Current.Resources["AppIconImage"] is System.Windows.Media.DrawingImage icon)
+            // Set Window Icon from Vector Resource (Runtime Render)
+            if (System.Windows.Application.Current.Resources["AppIconImage"] is System.Windows.Media.DrawingImage drawingImage)
             {
-                this.Icon = icon;
+                var visual = new System.Windows.Media.DrawingVisual();
+                using (var context = visual.RenderOpen())
+                {
+                    context.DrawDrawing(drawingImage.Drawing);
+                }
+
+                var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                    256, 256, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                bitmap.Render(visual);
+                this.Icon = bitmap;
             }
 
             SetupTrayIcon();
@@ -258,42 +267,34 @@ namespace StreamMesh.UI.Windows
         {
             try
             {
-                string logoPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos", "StreamMesh_logo.png");
-                System.Drawing.Bitmap? bmp = null;
-
-                if (System.IO.File.Exists(logoPath))
+                // Render Vector to Tray Icon
+                if (System.Windows.Application.Current.Resources["AppIconImage"] is System.Windows.Media.DrawingImage drawingImage)
                 {
-                    bmp = new System.Drawing.Bitmap(logoPath);
-                }
-                else
-                {
-                    var uri = new Uri("pack://application:,,,/logos/StreamMesh_logo.png", UriKind.Absolute);
-                    var streamInfo = System.Windows.Application.GetResourceStream(uri);
-                    if (streamInfo != null)
+                    var visual = new System.Windows.Media.DrawingVisual();
+                    using (var context = visual.RenderOpen())
                     {
-                        bmp = new System.Drawing.Bitmap(streamInfo.Stream);
+                        context.DrawDrawing(drawingImage.Drawing);
                     }
-                }
 
-                if (bmp != null)
-                {
-                    using (bmp)
-                    using (var resizedBmp = new System.Drawing.Bitmap(bmp, new System.Drawing.Size(32, 32)))
+                    var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(64, 64, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    bitmap.Render(visual);
+
+                    using (var stream = new System.IO.MemoryStream())
                     {
-                        IntPtr hIcon = resizedBmp.GetHicon();
-                        using (var tempIcon = System.Drawing.Icon.FromHandle(hIcon))
+                        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                        encoder.Save(stream);
+                        using (var drawingBmp = new System.Drawing.Bitmap(stream))
                         {
-                            var finalIcon = (System.Drawing.Icon)tempIcon.Clone();
+                            IntPtr hIcon = drawingBmp.GetHicon();
+                            var icon = (System.Drawing.Icon)System.Drawing.Icon.FromHandle(hIcon).Clone();
                             DestroyIcon(hIcon);
-                            return finalIcon;
+                            return icon;
                         }
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                LogService.LogError("TrayIcon creation failed", ex);
-            }
+            catch { }
 
             try
             {

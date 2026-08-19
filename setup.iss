@@ -11,7 +11,7 @@ AppPublisher=StreamMesh
 DefaultDirName={localappdata}\Programs\StreamMesh
 DefaultGroupName=StreamMesh
 OutputBaseFilename=StreamMesh-Setup-v{#AppVersion}
-; SetupIconFile=logos\app_icon.ico
+SetupIconFile=logos\app_icon.ico
 OutputDir=.
 Compression=lzma2/max
 SolidCompression=yes
@@ -32,8 +32,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "bin\Release\net8.0-windows\win-x64\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"
-Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; Tasks: desktopicon
+Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\logos\app_icon.ico"
+Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\logos\app_icon.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\StreamMesh.exe"; Description: "{cm:LaunchProgram,StreamMesh}"; Flags: nowait postinstall skipifsilent
