@@ -96,7 +96,7 @@ namespace StreamMesh.Core
                 string logosDir = Path.Combine(baseDir, "logos");
                 if (!Directory.Exists(logosDir)) Directory.CreateDirectory(logosDir);
 
-                string logoPath = Path.Combine(logosDir, "StreamMesh_logo.png");
+                string logoPath = Path.Combine(logosDir, "StreamMesh_Logo.png");
                 if (!File.Exists(logoPath)) GenerateLogoPng(logoPath);
 
                 string iconPath = Path.Combine(baseDir, "app_icon.ico");
