@@ -428,12 +428,11 @@ const server = http.createServer((req, res) => {
         }
         .brand-section { display: flex; align-items: center; gap: 10px; }
         .logo-icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            width: 36px; height: 36px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 900; font-size: 15px; color: #fff;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
         }
+        .logo-icon svg { width: 100%; height: 100%; }
         .brand-title { font-size: 17px; font-weight: 800; }
         .brand-title span { color: var(--primary-glow); }
         .version-badge {
@@ -826,7 +825,23 @@ const server = http.createServer((req, res) => {
     <!-- Header Navigation -->
     <header class="top-nav">
         <div class="brand-section">
-            <div class="logo-icon">SM</div>
+            <div class="logo-icon">
+                <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="iconGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#0284c7;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect width="256" height="256" rx="60" fill="#0a0c10"/>
+                    <circle cx="128" cy="128" r="70" fill="url(#iconGrad)" stroke="#38bdf8" stroke-width="4"/>
+                    <polygon points="110,95 110,161 160,128" fill="white"/>
+                    <circle cx="60" cy="60" r="15" fill="#38bdf8"/>
+                    <line x1="60" y1="60" x2="90" y2="90" stroke="#38bdf8" stroke-width="4"/>
+                    <circle cx="196" cy="60" r="15" fill="#6366f1"/>
+                    <line x1="196" y1="60" x2="166" y2="90" stroke="#6366f1" stroke-width="4"/>
+                </svg>
+            </div>
             <div class="brand-title">Stream<span>Mesh</span></div>
             <span class="version-badge">v${version} Live</span>
         </div>

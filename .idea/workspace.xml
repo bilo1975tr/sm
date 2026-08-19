@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="43d44b56-fc51-4961-b364-7de26a7ba3f5" name="Changes" comment="" />
+    <list default="true" id="cbbd55e3-0237-4389-8b01-e756ce53ed01" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -17,7 +17,7 @@
   "customColor": "",
   "associatedIndex": 8
 }]]></component>
-  <component name="ProjectId" id="3I2aaFXXZo6N2UkWNgDfyxZJnXw" />
+  <component name="ProjectId" id="3I8FjuzRaaUqxdRTyk8DBYzf5ZL" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -30,17 +30,16 @@
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "kotlin-language-version-configured": "true",
-    "settings.editor.selected.configurable": "com.google.gct.login2.settings.GoogleLoginApplicationSettingsConfigurableProvider"
+    "kotlin-language-version-configured": "true"
   }
 }]]></component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="43d44b56-fc51-4961-b364-7de26a7ba3f5" name="Changes" comment="" />
-      <created>1786965179931</created>
+      <changelist id="cbbd55e3-0237-4389-8b01-e756ce53ed01" name="Changes" comment="" />
+      <created>1787138427987</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1786965179931</updated>
+      <updated>1787138427987</updated>
     </task>
     <servers />
   </component>

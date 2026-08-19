@@ -6,7 +6,25 @@
     <Border Background="#0f172a" CornerRadius="16" BorderBrush="#334155" BorderThickness="1">
         <Grid Margin="30">
             <StackPanel VerticalAlignment="Center">
-                <Image Source="pack://application:,,,/logos/StreamMesh_logo.png" Width="100" Height="100" Margin="0,0,0,20"/>
+                <!-- StreamMesh Vector Logo -->
+                <Viewbox Width="120" Height="120" Margin="0,0,0,20">
+                    <Canvas Width="256" Height="256">
+                        <Rectangle Width="256" Height="256" RadiusX="60" RadiusY="60" Fill="#0A0C10"/>
+                        <Ellipse Canvas.Left="58" Canvas.Top="58" Width="140" Height="140" Stroke="#38BDF8" StrokeThickness="4">
+                            <Ellipse.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#0284C7" Offset="0"/>
+                                    <GradientStop Color="#0F172A" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <Polygon Points="110,95 110,161 160,128" Fill="White"/>
+                        <Ellipse Canvas.Left="45" Canvas.Top="45" Width="30" Height="30" Fill="#38BDF8"/>
+                        <Line X1="60" Y1="60" X2="90" Y2="90" Stroke="#38BDF8" StrokeThickness="4"/>
+                        <Ellipse Canvas.Left="181" Canvas.Top="45" Width="30" Height="30" Fill="#6366F1"/>
+                        <Line X1="196" Y1="60" X2="166" Y2="90" Stroke="#6366F1" StrokeThickness="4"/>
+                    </Canvas>
+                </Viewbox>
                 <TextBlock Text="StreamMesh" FontSize="48" FontWeight="Bold" Foreground="#38bdf8" HorizontalAlignment="Center"/>
                 <TextBlock Text="Yükleniyor..." Foreground="#94a3b8" HorizontalAlignment="Center" Margin="0,10,0,20"/>
                 <ProgressBar Height="4" IsIndeterminate="True" Foreground="#38bdf8" Background="#1e293b" BorderThickness="0"/>

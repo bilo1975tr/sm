@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using StreamMesh.UI.Views;
@@ -36,6 +37,13 @@ namespace StreamMesh.UI.Windows
         {
             Instance = this;
             InitializeComponent();
+
+            // Set Window Icon from Vector Resource
+            if (System.Windows.Application.Current.Resources["AppIconImage"] is System.Windows.Media.DrawingImage icon)
+            {
+                this.Icon = icon;
+            }
+
             SetupTrayIcon();
             MainContent.Content = _homeView;
 

@@ -117,9 +117,67 @@
             </Setter>
         </Style>
 
+        <!-- App Icon Vector for Windows -->
+        <DrawingImage x:Key="AppIconImage">
+            <DrawingImage.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#0A0C10">
+                        <GeometryDrawing.Geometry>
+                            <RectangleGeometry Rect="0,0,256,256" RadiusX="60" RadiusY="60"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#38BDF8" Thickness="4" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Brush>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#0284C7" Offset="0"/>
+                                <GradientStop Color="#0F172A" Offset="1"/>
+                            </LinearGradientBrush>
+                        </GeometryDrawing.Brush>
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="128,128" RadiusX="70" RadiusY="70"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="White">
+                        <GeometryDrawing.Geometry>
+                            <PathGeometry Figures="M 110,95 L 110,161 L 160,128 Z"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#38BDF8">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="60,60" RadiusX="15" RadiusY="15"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#38BDF8" Thickness="4" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <LineGeometry StartPoint="60,60" EndPoint="90,90"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="#6366F1">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="196,60" RadiusX="15" RadiusY="15"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing>
+                        <GeometryDrawing.Pen>
+                            <Pen Brush="#6366F1" Thickness="4" />
+                        </GeometryDrawing.Pen>
+                        <GeometryDrawing.Geometry>
+                            <LineGeometry StartPoint="196,60" EndPoint="166,90"/>
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingImage.Drawing>
+        </DrawingImage>
+
         <Style TargetType="Window">
             <Setter Property="FontFamily" Value="Segoe UI"/>
-            <Setter Property="Icon" Value="pack://application:,,,/logos/StreamMesh_logo.png"/>
+            <Setter Property="Icon" Value="{StaticResource AppIconImage}"/>
         </Style>
 
         <!-- Custom Dark Theme ComboBox Style -->
