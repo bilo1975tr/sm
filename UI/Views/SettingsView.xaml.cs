@@ -182,12 +182,13 @@ namespace StreamMesh.UI.Views
 
         private void AddEpgSource_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrWhiteSpace(EpgUrlBox.Text))
+            string url = EpgUrlBox.Text?.Trim() ?? "";
+            if (!string.IsNullOrWhiteSpace(url))
             {
-                _db.AddEpgSource(EpgUrlBox.Text);
+                _db.AddEpgSource(url);
                 EpgUrlBox.Clear();
                 RefreshEpgList();
-                Task.Run(() => new EpgEngine().LoadEpgAsync(EpgUrlBox.Text));
+                Task.Run(() => new EpgEngine().LoadEpgAsync(url));
             }
         }
 
@@ -225,12 +226,18 @@ namespace StreamMesh.UI.Views
 
         private async void AddSource_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrWhiteSpace(M3uUrlBox.Text))
+            string url = M3uUrlBox.Text?.Trim() ?? "";
+            if (!string.IsNullOrWhiteSpace(url))
             {
-                _db.AddM3uSource(M3uUrlBox.Text);
+                _db.AddM3uSource(url);
                 M3uUrlBox.Clear();
                 RefreshSourcesList();
-                await new M3uEngine().ParseM3uAsync(M3uUrlBox.Text);
+                var channels = await new M3uEngine().ParseM3uAsync(url);
+                if (channels != null && channels.Count > 0)
+                {
+                    await _db.SyncIncomingChannelsAsync(channels);
+                    RefreshSourcesList();
+                }
             }
         }
 

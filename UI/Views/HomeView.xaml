@@ -102,19 +102,26 @@
                                 <!-- Poster Area -->
                                 <Border Grid.Row="0" Background="#0f172a" CornerRadius="15,15,0,0">
                                     <Grid>
-                                        <TextBlock Text="📺" FontSize="45" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.15"/>
-                                        <Image Source="{Binding LogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="15"/>
+                                        <Path Data="{StaticResource GeoTv}" Fill="White" Width="40" Height="40" Stretch="Uniform" Opacity="0.15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Image Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="15"/>
 
                                         <!-- Quick Action Overlays -->
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
-                                            <Button Content="⭐" Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Foreground="{Binding IsFavorite, Converter={StaticResource BooleanToBrushConverter}, ConverterParameter='Fav'}" Click="FavContext_Click" CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand"/>
-                                            <Button Content="✏️" Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Foreground="White" Click="EditContext_Click" CommandParameter="{Binding}" Cursor="Hand"/>
+                                            <Button Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Click="FavContext_Click" CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand" ToolTip="Favorilere Ekle / Çıkar">
+                                                <Path Data="{StaticResource GeoStar}" Fill="{Binding IsFavorite, Converter={StaticResource BooleanToBrushConverter}, ConverterParameter='Fav'}" Width="14" Height="14" Stretch="Uniform"/>
+                                            </Button>
+                                            <Button Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Click="EditContext_Click" CommandParameter="{Binding}" Cursor="Hand" ToolTip="Kanalı Düzenle">
+                                                <Path Data="{StaticResource GeoEdit}" Fill="White" Width="13" Height="13" Stretch="Uniform"/>
+                                            </Button>
                                         </StackPanel>
 
                                         <!-- Stats Badges -->
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8">
                                             <Border Background="#CCe11d48" CornerRadius="6" Padding="6,2" Visibility="{Binding HasViewers, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                <TextBlock Text="{Binding ViewersCount, StringFormat='👁 {0}'}" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path Data="{StaticResource GeoEye}" Fill="White" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding ViewersCount}" FontSize="10" Foreground="White" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                </StackPanel>
                                             </Border>
                                         </StackPanel>
                                     </Grid>

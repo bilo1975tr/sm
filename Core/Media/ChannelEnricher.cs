@@ -77,30 +77,25 @@ namespace StreamMesh.Core.Media
             string q = query.Trim().ToLowerInvariant();
             string rawName = (ch.Name ?? "").ToLowerInvariant();
             string cleanName = (ch.CleanName ?? "").ToLowerInvariant();
+            string primaryName = (ch.PrimaryName ?? "").ToLowerInvariant();
 
             int score = 0;
 
-            // 1. Exact match with clean name gets highest priority
-            if (cleanName == q || rawName == q) score += 1000;
-            else if (cleanName.StartsWith(q)) score += 500;
-            else if (rawName.StartsWith(q)) score += 400;
+            // 1. Direct exact or prefix match
+            if (rawName == q || cleanName == q || primaryName == q) score += 1000;
+            else if (rawName.StartsWith(q) || cleanName.StartsWith(q) || primaryName.StartsWith(q)) score += 500;
+            else if (rawName.Contains(q) || cleanName.Contains(q) || primaryName.Contains(q)) score += 300;
 
-            // 2. Tokenized search (Faster than Regex for simple word matching)
-            var terms = q.Split(new[] { ' ', '[', ']', '(', ')', '-', '_', '.', ':' }, StringSplitOptions.RemoveEmptyEntries);
-            if (terms.Length > 0)
+            // 2. Tokenized search
+            var terms = q.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (terms.Length > 1)
             {
                 bool allTermsMatch = true;
                 foreach (var t in terms)
                 {
-                    if (cleanName.Contains(t))
+                    if (rawName.Contains(t) || cleanName.Contains(t) || primaryName.Contains(t))
                     {
-                        // Word boundary bonus without Regex overhead
-                        if (cleanName.StartsWith(t) || cleanName.Contains(" " + t)) score += 100;
-                        else score += 30;
-                    }
-                    else if (rawName.Contains(t))
-                    {
-                        score += 10;
+                        score += 50;
                     }
                     else
                     {
@@ -116,28 +111,36 @@ namespace StreamMesh.Core.Media
         public static bool MatchesQueryFilter(Channel ch, string query)
         {
             if (ch == null) return false;
+            if (string.IsNullOrWhiteSpace(query)) return true;
             return MatchesQueryFilter(ch.Name, ch.Category, ch.GroupTitle, ch.Url, query, ch.Language, ch.SourceType);
         }
 
-        public static bool MatchesQueryFilter(string channelName, string category, string groupTitle, string url, string query, string language = "", string sourceType = "")
+        public static bool MatchesQueryFilter(string? channelName, string? category, string? groupTitle, string? url, string? query, string language = "", string sourceType = "")
         {
             if (string.IsNullOrWhiteSpace(query)) return true;
+
             string q = query.Trim().ToLowerInvariant();
             string name = (channelName ?? "").ToLowerInvariant();
+            string cat = (category ?? "").ToLowerInvariant();
+            string group = (groupTitle ?? "").ToLowerInvariant();
+            string link = (url ?? "").ToLowerInvariant();
 
-            // Simple fast path
-            if (name.Contains(q)) return true;
+            // Direct verbatim substring match (e.g. "[de]", "4k", "[tr]")
+            if (name.Contains(q) || cat.Contains(q) || group.Contains(q) || link.Contains(q))
+            {
+                return true;
+            }
 
-            var terms = q.Split(new[] { ' ', '[', ']', '(', ')', '-', '_', '.', ':' }, StringSplitOptions.RemoveEmptyEntries);
-            if (terms.Length == 0) return true;
+            // Word-by-word tokenized search (separated by spaces only to preserve [DE], [TR], etc.)
+            var terms = q.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (terms.Length <= 1) return false;
 
-            // Check if all terms are present in the name or metadata
             foreach (var t in terms)
             {
                 bool match = name.Contains(t) ||
-                             (category ?? "").ToLowerInvariant().Contains(t) ||
-                             (groupTitle ?? "").ToLowerInvariant().Contains(t) ||
-                             (url ?? "").ToLowerInvariant().Contains(t);
+                             cat.Contains(t) ||
+                             group.Contains(t) ||
+                             link.Contains(t);
 
                 if (!match) return false;
             }

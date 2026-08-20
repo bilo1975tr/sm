@@ -44,10 +44,21 @@ namespace StreamMesh.UI.Views
 
         private long _lastTeleportPositionMs = 0;
         private DateTime _lastSeekTime = DateTime.MinValue;
+        private System.Threading.CancellationTokenSource? _loadCts;
+
+        // Audio & Video DSP / Enhancement States
+        private bool _isAudioNormEnabled = true;
+        private bool _isVideoEnhanceEnabled = false;
+        private System.Windows.Threading.DispatcherTimer? _toastTimer;
+        private readonly List<AudioTrackModel> _detectedAudioTracks = new();
+        private int _selectedAudioTrackIndex = -1;
+        private string _selectedAudioTrackLangCode = "";
 
         public PlayerView()
         {
             InitializeComponent();
+            LoadAudioVideoSettings();
+
             this.Loaded += (s, e) =>
             {
                 InitializePlayer();
@@ -241,13 +252,73 @@ namespace StreamMesh.UI.Views
                 FlyleafHelper.SafeStart();
 
                 _config = new Config();
+                try
+                {
+                    // Demuxer Network & Timeout Configurations (Optimized for lightning fast live playback)
+                    _config.Demuxer.FormatOpt["reconnect"] = "1";
+                    _config.Demuxer.FormatOpt["reconnect_streamed"] = "1";
+                    _config.Demuxer.FormatOpt["reconnect_delay_max"] = "3";
+                    _config.Demuxer.FormatOpt["reconnect_at_eof"] = "1";
+                    _config.Demuxer.FormatOpt["reconnect_on_network_error"] = "1";
+                    _config.Demuxer.FormatOpt["timeout"] = "8000000"; // 8s socket timeout (faster fallback on dead streams)
+                    _config.Demuxer.FormatOpt["stimeout"] = "8000000"; // 8s for RTSP/RTMP
+                    _config.Demuxer.FormatOpt["rw_timeout"] = "8000000"; // 8s socket read/write
+                    _config.Demuxer.FormatOpt["probesize"] = "1048576"; // 1MB probe size (accelerates stream startup)
+                    _config.Demuxer.FormatOpt["analyzeduration"] = "2000000"; // 2s max analyze duration (prevents hanging)
+                    _config.Demuxer.FormatOpt["fflags"] = "+nobuffer+fastseek+flush_packets";
+                    _config.Demuxer.FormatOpt["flags"] = "low_delay";
+                    _config.Demuxer.FormatOpt["user_agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+
+                    _config.Demuxer.BufferDuration = 1000 * 10000; // 1.0s initial buffer for near-instant stream start
+                    _config.Player.AutoPlay = true;
+
+                    // Apply Audio Normalization & Video Enhancement initial filter
+                    ApplyAudioNormalization();
+                    ApplyVideoEnhancement();
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("Player: Config setup exception", ex);
+                }
+
                 _player = new Player(_config);
+                _player.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(Player.Status))
+                    {
+                        Dispatcher.InvokeAsync(() =>
+                        {
+                            if (_player == null) return;
+                            if (_player.Status == Status.Playing)
+                            {
+                                UpdatePlayPauseIcon(true);
+                                RefreshAudioTracks();
+                            }
+                            else if (_player.Status == Status.Paused || _player.Status == Status.Stopped)
+                            {
+                                UpdatePlayPauseIcon(false);
+                            }
+                            else if (_player.Status == Status.Failed)
+                            {
+                                UpdatePlayPauseIcon(false);
+                                if (_currentChannel != null)
+                                {
+                                    OsdTitle.Text = $"{_currentChannel.PrimaryName} (Sinyal Yok / Bağlantı Koptu)";
+                                    ShowOsdTemporary();
+                                }
+                            }
+                        });
+                    }
+                };
+
                 VideoPlayer.Player = _player;
 
                 LogService.LogInfo("Player: Flyleaf initialized successfully");
                 Dispatcher.Invoke(() => {
                     OsdTitle.Text = "Sistem Hazır.";
                     OsdPanel.Visibility = Visibility.Visible;
+                    UpdateAudioNormButtonUI();
+                    UpdateVideoEnhanceButtonUI();
                     ShowOsdTemporary();
                 });
             }
@@ -257,139 +328,244 @@ namespace StreamMesh.UI.Views
             }
         }
 
-        private async Task<string> PrepareHlsStream(string url)
+        private string PrepareHlsStream(string url)
         {
             if (url.Contains(".m3u8"))
             {
-                var session = await HlsProxyEngine.Instance.InspectAndPrepareHlsAsync(url);
-                if (session != null)
+                // Register & inspect HLS stream entirely in background so live playback starts instantly
+                _ = Task.Run(async () =>
                 {
-                    return HlsProxyEngine.Instance.GetProxyPlaybackUrl(url);
-                }
+                    try
+                    {
+                        using var cts = new CancellationTokenSource(3000);
+                        var session = await HlsProxyEngine.Instance.InspectAndPrepareHlsAsync(url).WaitAsync(cts.Token).ConfigureAwait(false);
+                        if (session != null)
+                        {
+                            LogService.LogInfo($"Player: HLS background session ready for Timeshift: {url}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogWarning($"Player: HLS background prep notice: {ex.Message}");
+                    }
+                });
             }
             return url;
         }
 
-        public async void LoadChannel(Channel channel)
+        public void LoadChannel(Channel channel)
         {
-            for (int i = 0; i < 20 && _player == null; i++) await Task.Delay(200);
+            if (channel == null) return;
 
-            if (_player == null)
-            {
-                LogService.LogError("Player: Flyleaf player not ready.");
-                return;
-            }
-
-            if (_currentChannel != null && IsCurrentStreamVod())
-            {
-                _currentChannel.LastPositionMs = _player.CurTime / 10000;
-                await _db.SaveChannelAsync(_currentChannel);
-            }
+            // 1. Cancel previous load operation immediately to release threads
+            _loadCts?.Cancel();
+            _loadCts?.Dispose();
+            _loadCts = new System.Threading.CancellationTokenSource();
+            var token = _loadCts.Token;
 
             _currentChannel = channel;
             _streamStartTime = DateTime.UtcNow;
             _lastTeleportPositionMs = -1; // Reset to Live mode
 
-            await _playSemaphore.WaitAsync();
+            // 2. Instant responsive UI update
+            Dispatcher.Invoke(() => {
+                OsdTitle.Text = $"{channel.PrimaryName} (Bağlanıyor...)";
+                OsdCategory.Text = channel.Category;
+                ShowOsdTemporary();
+                UpdatePlayPauseIcon(true);
+                try {
+                    var convertedLogo = LogoConverter.Convert(channel.PrimaryLogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
+                    if (convertedLogo != null) OsdLogo.Source = (ImageSource)convertedLogo;
+                } catch { }
+            });
 
-            try
+            // 3. Isolated background task execution (prevents UI freezing)
+            Task.Run(async () =>
             {
-                // Ensure AceStream is stopped before starting a new one
-                if (channel.SourceType == "ACESTREAM" || (channel.Url ?? "").Contains("acestream://"))
+                if (token.IsCancellationRequested) return;
+
+                // Wait for player ready
+                for (int i = 0; i < 25 && _player == null; i++)
                 {
-                    await _ace.StopAllStreamsAsync();
+                    if (token.IsCancellationRequested) return;
+                    await Task.Delay(150, token).ConfigureAwait(false);
                 }
 
-                _player.Stop();
-                LogService.LogInfo($"Player: Stop signal sent to previous stream. Preparing: {channel.PrimaryName}");
-
-                Dispatcher.Invoke(() => {
-                    OsdTitle.Text = channel.PrimaryName;
-                    OsdCategory.Text = channel.Category;
-                    ShowOsdTemporary();
-                    if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
-                    try {
-                        var convertedLogo = LogoConverter.Convert(channel.LogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
-                        if (convertedLogo != null) OsdLogo.Source = (ImageSource)convertedLogo;
-                    } catch { }
-                });
-
-                _currentChannelEpgList = await _epgService.GetChannelEpgHistoryAsync(channel);
-                Dispatcher.Invoke(() => UpdateOsdEpgForTime(DateTime.Now));
-
-                var rawUrls = (channel.Url ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-                LogService.LogInfo($"Player: Found {rawUrls.Count} URL candidates in database.");
-
-                foreach (var raw in rawUrls)
+                if (_player == null)
                 {
-                    string tryUrl = raw.Trim();
-                    LogService.LogInfo($"Player: Processing candidate URL: {tryUrl}");
+                    LogService.LogError("Player: Flyleaf player not ready.");
+                    return;
+                }
 
-                    if (_ace.IsAceStreamUrl(tryUrl) || channel.SourceType == "ACESTREAM")
+                // Acquire semaphore with 5s timeout to prevent deadlocks
+                bool acquired = await _playSemaphore.WaitAsync(5000, token).ConfigureAwait(false);
+                if (!acquired || token.IsCancellationRequested) return;
+
+                try
+                {
+                    // Save VOD position if applicable
+                    if (IsCurrentStreamVod() && _currentChannel != null)
                     {
-                        LogService.LogInfo("Player: AceStream playback sequence initiated.");
-                        await _ace.StartEngineAsync();
-
-                        // Try to wake up the engine first
-                        string hash = _ace.ExtractHash(tryUrl);
-                        await _ace.OpenStreamAsync(hash);
-
-                        var aceUrls = await _ace.GetHttpUrlsWithTokenAsync(tryUrl);
-                        if (aceUrls != null && aceUrls.Count > 0)
+                        try
                         {
-                            // Try the first URL (requested by user)
-                            tryUrl = aceUrls[0];
-                            LogService.LogInfo($"Player: AceStream primary link: {tryUrl}");
+                            _currentChannel.LastPositionMs = _player.CurTime / 10000;
+                            _ = _db.SaveChannelAsync(_currentChannel);
+                        }
+                        catch { }
+                    }
 
-                            Dispatcher.Invoke(() => { OsdTitle.Text = "AceStream: Başlatılıyor..."; ShowOsdTemporary(); });
+                    // Stop previous stream safely
+                    try
+                    {
+                        if (channel.SourceType == "ACESTREAM" || (channel.Url ?? "").Contains("acestream://"))
+                        {
+                            await _ace.StopAllStreamsAsync().ConfigureAwait(false);
+                        }
+                        _player.Stop();
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError("Player: Stop exception", ex);
+                    }
 
-                            // Check if primary link is responsive, if not, try fallback
-                            bool ready = await _ace.WaitForStreamReadyAsync(tryUrl, 3);
-                            if (!ready && aceUrls.Count > 1)
+                    if (token.IsCancellationRequested) return;
+
+                    // Fetch EPG in background
+                    _selectedAudioTrackIndex = -1;
+                    _selectedAudioTrackLangCode = "";
+                    try
+                    {
+                        _currentChannelEpgList = await _epgService.GetChannelEpgHistoryAsync(channel).ConfigureAwait(false);
+                        _ = Dispatcher.InvokeAsync(() => UpdateOsdEpgForTime(DateTime.Now));
+                    }
+                    catch { }
+
+                    // Retrieve URL candidates cleanly using GetUrlList()
+                    var rawUrls = channel.GetUrlList();
+                    if (rawUrls.Count == 0 && !string.IsNullOrWhiteSpace(channel.Url))
+                    {
+                        rawUrls = new List<string> { channel.Url.Trim() };
+                    }
+
+                    LogService.LogInfo($"Player: Found {rawUrls.Count} URL candidates in database for {channel.PrimaryName}");
+
+                    // Apply current active audio/video enhancement configuration
+                    ApplyAudioNormalization();
+                    ApplyVideoEnhancement();
+
+                    bool streamStarted = false;
+
+                    foreach (var raw in rawUrls)
+                    {
+                        if (token.IsCancellationRequested) return;
+
+                        string tryUrl = raw.Trim();
+                        LogService.LogInfo($"Player: Processing candidate URL: {tryUrl}");
+
+                        try
+                        {
+                            bool isAce = _ace.IsAceStreamUrl(tryUrl) || channel.SourceType == "ACESTREAM";
+                            if (isAce)
                             {
-                                tryUrl = aceUrls[1];
-                                LogService.LogInfo($"Player: Primary AceStream link failed, trying fallback: {tryUrl}");
+                                LogService.LogInfo("Player: AceStream playback sequence initiated.");
+                                await _ace.StartEngineAsync().ConfigureAwait(false);
+
+                                string hash = _ace.ExtractHash(tryUrl);
+                                await _ace.OpenStreamAsync(hash).ConfigureAwait(false);
+
+                                var aceUrls = await _ace.GetHttpUrlsWithTokenAsync(tryUrl).ConfigureAwait(false);
+                                if (aceUrls != null && aceUrls.Count > 0)
+                                {
+                                    tryUrl = aceUrls[0];
+                                    _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = "AceStream: Başlatılıyor..."; ShowOsdTemporary(); });
+
+                                    bool ready = await _ace.WaitForStreamReadyAsync(tryUrl, 4).ConfigureAwait(false);
+                                    if (!ready && aceUrls.Count > 1)
+                                    {
+                                        tryUrl = aceUrls[1];
+                                        LogService.LogInfo($"Player: Primary AceStream link failed, trying fallback: {tryUrl}");
+                                    }
+                                }
+                                else
+                                {
+                                    LogService.LogWarning("Player: AceStream engine failed to resolve any playback URLs.");
+                                }
                             }
+                            else if (tryUrl.Contains("youtube.com"))
+                            {
+                                LogService.LogInfo("Player: YouTube link detected, fetching stream manifest...");
+                                tryUrl = await _yt.GetStreamUrlAsync(tryUrl).ConfigureAwait(false) ?? tryUrl;
+                            }
+                            else if (tryUrl.Contains(".m3u8") && !tryUrl.Contains(":6878/ace/"))
+                            {
+                                // HLS Proxy Integration (background session registration for timeshift)
+                                LogService.LogInfo("Player: HLS (m3u8) detected, ensuring Timeshift cache engine...");
+                                tryUrl = PrepareHlsStream(tryUrl);
+                            }
+
+                            if (token.IsCancellationRequested) return;
+
+                            LogService.LogInfo($"Player: [FINAL] Flyleaf opening -> {tryUrl}");
+
+                            // Execute Player.Open in an isolated task with adaptive watchdog timeout
+                            var openTask = Task.Run(() =>
+                            {
+                                try { _player.Open(tryUrl); }
+                                catch (Exception ex) { LogService.LogError("Flyleaf Player.Open exception", ex); }
+                            }, token);
+
+                            int watchdogTimeoutMs = isAce ? 18000 : 8000;
+                            var completed = await Task.WhenAny(openTask, Task.Delay(watchdogTimeoutMs, token)).ConfigureAwait(false);
+
+                            if (completed != openTask)
+                            {
+                                LogService.LogWarning($"Player: Open timed out for {tryUrl} after {watchdogTimeoutMs}ms, trying next mirror if available");
+                                continue;
+                            }
+
+                            if (token.IsCancellationRequested) return;
+
+                            _ = Dispatcher.InvokeAsync(() => {
+                                if (_currentChannel != null) OsdTitle.Text = _currentChannel.PrimaryName;
+                            });
+
+                            if (IsCurrentStreamVod() && channel.LastPositionMs > 0)
+                            {
+                                LogService.LogInfo($"Player: Resuming VOD at {channel.LastPositionMs}ms");
+                                try { _player.Seek((int)channel.LastPositionMs); } catch { }
+                            }
+
+                            streamStarted = true;
+                            break;
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            LogService.LogWarning("Player: AceStream engine failed to resolve any playback URLs.");
+                            LogService.LogError($"Player: Candidate failed -> {tryUrl}", ex);
                         }
                     }
-                    else if (tryUrl.Contains("youtube.com"))
+
+                    if (!streamStarted && !token.IsCancellationRequested)
                     {
-                        LogService.LogInfo("Player: YouTube link detected, fetching stream manifest...");
-                        tryUrl = await _yt.GetStreamUrlAsync(tryUrl) ?? tryUrl;
+                        _ = Dispatcher.InvokeAsync(() => {
+                            OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Zayıf / Yanıt Vermiyor)";
+                            OsdCategory.Text = "Sinyal Yok";
+                            UpdatePlayPauseIcon(false);
+                            ShowOsdTemporary();
+                        });
                     }
-
-                    // HLS Proxy Integration (Only for non-AceStream links)
-                    if (tryUrl.Contains(".m3u8") && !tryUrl.Contains(":6878/ace/"))
-                    {
-                        LogService.LogInfo("Player: HLS (m3u8) detected, preparing through Helper 2 (Proxy)...");
-                        tryUrl = await PrepareHlsStream(tryUrl);
-                    }
-
-                    LogService.LogInfo($"Player: [FINAL] Flyleaf opening -> {tryUrl}");
-                    _player.Open(tryUrl);
-
-                    Dispatcher.Invoke(() => {
-                        if (_currentChannel != null) OsdTitle.Text = _currentChannel.PrimaryName;
-                    });
-
-                    if (IsCurrentStreamVod() && channel.LastPositionMs > 0)
-                    {
-                        LogService.LogInfo($"Player: Resuming VOD at {channel.LastPositionMs}ms");
-                        _player.Seek((int)channel.LastPositionMs);
-                    }
-                    break;
                 }
-            }
-            catch (Exception ex) { LogService.LogError("Player: Load error", ex); }
-            finally { _playSemaphore.Release(); }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { LogService.LogError("Player: Load error", ex); }
+                finally
+                {
+                    _playSemaphore.Release();
+                }
+            }, token);
         }
 
         public async void Stop()
         {
+            _loadCts?.Cancel();
             _player?.Stop();
             if (_currentChannel?.SourceType == "ACESTREAM" || (_currentChannel?.Url?.Contains("acestream://") == true))
             {
@@ -399,6 +575,40 @@ namespace StreamMesh.UI.Views
 
         public void PlayPause_Click(object sender, RoutedEventArgs e) { TogglePause(); }
 
+        private void UpdatePlayPauseIcon(bool isPlaying)
+        {
+            if (PlayPauseBtn == null) return;
+            var geo = TryFindResource(isPlaying ? "GeoPause" : "GeoPlay") as Geometry;
+            if (geo != null)
+            {
+                PlayPauseBtn.Content = new System.Windows.Shapes.Path
+                {
+                    Data = geo,
+                    Fill = System.Windows.Media.Brushes.White,
+                    Width = 20,
+                    Height = 20,
+                    Stretch = System.Windows.Media.Stretch.Uniform
+                };
+            }
+        }
+
+        private void UpdateMuteIcon(bool isMuted)
+        {
+            if (MuteBtn == null) return;
+            var geo = TryFindResource(isMuted ? "GeoVolumeMute" : "GeoVolume") as Geometry;
+            if (geo != null)
+            {
+                MuteBtn.Content = new System.Windows.Shapes.Path
+                {
+                    Data = geo,
+                    Fill = System.Windows.Media.Brushes.White,
+                    Width = 18,
+                    Height = 18,
+                    Stretch = System.Windows.Media.Stretch.Uniform
+                };
+            }
+        }
+
         public void TogglePause()
         {
             if (_player == null) return;
@@ -407,19 +617,27 @@ namespace StreamMesh.UI.Views
             if (_player.Status == Status.Playing)
             {
                 _player.Pause();
-                if (PlayPauseBtn != null) PlayPauseBtn.Content = "▶";
+                UpdatePlayPauseIcon(false);
             }
             else
             {
                 _player.Play();
-                if (PlayPauseBtn != null) PlayPauseBtn.Content = "⏸";
+                UpdatePlayPauseIcon(true);
             }
         }
 
         public void Rewind(int ms) { if (_player != null) _player.Seek((int)((_player.CurTime / 10000) - ms)); ShowOsdTemporary(); }
         public void Forward(int ms) { if (_player != null) _player.Seek((int)((_player.CurTime / 10000) + ms)); ShowOsdTemporary(); }
         public void ChangeVolume(int delta) { if (_player != null) _player.Audio.Volume = Math.Clamp(_player.Audio.Volume + delta, 0, 100); ShowOsdTemporary(); }
-        public void ToggleMute() { if (_player != null) { _player.Audio.Mute = !_player.Audio.Mute; if (MuteBtn != null) MuteBtn.Content = _player.Audio.Mute ? "🔇" : "🔊"; } ShowOsdTemporary(); }
+        public void ToggleMute()
+        {
+            if (_player != null)
+            {
+                _player.Audio.Mute = !_player.Audio.Mute;
+                UpdateMuteIcon(_player.Audio.Mute);
+            }
+            ShowOsdTemporary();
+        }
 
         private void TimeSlider_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) { _isUserDraggingSlider = true; }
 
@@ -490,6 +708,511 @@ namespace StreamMesh.UI.Views
         public void GoLive_Click(object sender, RoutedEventArgs e) { GoLive(); }
         public void Mute_Click(object sender, RoutedEventArgs e) { ToggleMute(); }
 
+        #region Audio Tracks / Language Selection (Çoklu Dil & Ses İzi)
+
+        public void AudioTrackBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ShowOsdTemporary();
+            if (AudioTracksFlyout == null) return;
+            AudioTracksFlyout.Visibility = AudioTracksFlyout.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (AudioTracksFlyout.Visibility == Visibility.Visible)
+            {
+                RefreshAudioTracks();
+            }
+        }
+
+        public void CloseAudioTracksFlyout_Click(object sender, RoutedEventArgs e)
+        {
+            if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
+        }
+
+        public void AudioTrackItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is AudioTrackModel item)
+            {
+                try
+                {
+                    _selectedAudioTrackIndex = item.Index;
+                    _selectedAudioTrackLangCode = item.LangCode;
+
+                    if (_player != null && item.RawStream != null)
+                    {
+                        try
+                        {
+                            // In FlyleafLib, audio streams are switched by passing the AudioStream instance to Player.Open
+                            bool switched = false;
+                            var rawType = item.RawStream.GetType();
+
+                            // Search for Player.Open overloads that accept an AudioStream or StreamBase
+                            var openMethods = _player.GetType().GetMethods().Where(m => m.Name == "Open" || m.Name == "OpenAsync").ToList();
+                            foreach (var m in openMethods)
+                            {
+                                var prms = m.GetParameters();
+                                if (prms.Length == 1 && prms[0].ParameterType.IsAssignableFrom(rawType))
+                                {
+                                    m.Invoke(_player, new object[] { item.RawStream });
+                                    switched = true;
+                                    break;
+                                }
+                                else if (prms.Length >= 2 && prms[0].ParameterType.IsAssignableFrom(rawType))
+                                {
+                                    // Player.Open(stream, start, resync, ...)
+                                    var args = new object[prms.Length];
+                                    args[0] = item.RawStream;
+                                    for (int pi = 1; pi < prms.Length; pi++)
+                                    {
+                                        if (prms[pi].ParameterType == typeof(bool)) args[pi] = true;
+                                        else args[pi] = prms[pi].DefaultValue ?? null!;
+                                    }
+                                    m.Invoke(_player, args);
+                                    switched = true;
+                                    break;
+                                }
+                            }
+
+                            if (!switched)
+                            {
+                                dynamic dPlayer = _player;
+                                dynamic dStream = item.RawStream;
+                                dPlayer.Open(dStream);
+                            }
+
+                            LogService.LogInfo($"Player: Audio track switched to {item.DisplayName} ({item.LangCode})");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogService.LogWarning($"Player: Audio stream switch execution error: {ex.Message}");
+                        }
+                    }
+
+                    foreach (var t in _detectedAudioTracks) t.IsSelected = (t.Index == item.Index);
+                    if (AudioTracksItemsList != null)
+                    {
+                        AudioTracksItemsList.ItemsSource = null;
+                        AudioTracksItemsList.ItemsSource = _detectedAudioTracks;
+                    }
+                    if (AudioTrackBtnText != null) AudioTrackBtnText.Text = item.LangCode;
+
+                    ShowOsdToast($"🌐 Ses İzi: {item.DisplayName} seçildi", "GeoLanguage");
+                    if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("Player: Select AudioTrack exception", ex);
+                }
+            }
+        }
+
+        public void RefreshAudioTracks()
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                _detectedAudioTracks.Clear();
+                if (_player == null) return;
+
+                try
+                {
+                    var audioProp = _player.Audio;
+                    if (audioProp != null)
+                    {
+                        var streamsProp = audioProp.GetType().GetProperty("Streams");
+                        var streamsList = streamsProp?.GetValue(audioProp) as System.Collections.IEnumerable;
+                        var curStream = audioProp.GetType().GetProperty("Stream")?.GetValue(audioProp);
+
+                        int i = 0;
+                        if (streamsList != null)
+                        {
+                            foreach (var s in streamsList)
+                            {
+                                if (s == null) continue;
+                                var sType = s.GetType();
+                                var langObj = sType.GetProperty("Language")?.GetValue(s);
+                                string langStr = langObj != null ? langObj.ToString() ?? "" : "";
+                                string titleStr = sType.GetProperty("Title")?.GetValue(s)?.ToString() ?? "";
+                                string codecStr = sType.GetProperty("Codec")?.GetValue(s)?.ToString() ?? "AAC";
+                                int channels = 2;
+                                if (int.TryParse(sType.GetProperty("Channels")?.GetValue(s)?.ToString(), out int chVal)) channels = chVal;
+                                long bitRate = 0;
+                                if (long.TryParse(sType.GetProperty("BitRate")?.GetValue(s)?.ToString(), out long brVal)) bitRate = brVal;
+
+                                var (langName, langCode) = ParseLanguageInfo(langStr, titleStr, i);
+                                
+                                // Check if this track is the currently selected one
+                                bool isCur = false;
+                                if (_selectedAudioTrackIndex >= 0)
+                                {
+                                    isCur = (i == _selectedAudioTrackIndex);
+                                }
+                                else if (curStream != null)
+                                {
+                                    isCur = (s == curStream);
+                                }
+                                else
+                                {
+                                    isCur = (i == 0);
+                                }
+
+                                string details = $"{codecStr} • {(channels == 6 ? "5.1 Surround" : channels == 2 ? "Stereo" : $"{channels} Kanal")}";
+                                if (bitRate > 0) details += $" • {bitRate / 1000} kbps";
+
+                                _detectedAudioTracks.Add(new AudioTrackModel
+                                {
+                                    Index = i,
+                                    DisplayName = $"{i + 1}. {langName}",
+                                    Details = details,
+                                    LangCode = langCode,
+                                    IsSelected = isCur,
+                                    RawStream = s
+                                });
+                                i++;
+                            }
+                        }
+                    }
+
+                    if (_detectedAudioTracks.Count == 0)
+                    {
+                        // Fallback when single audio stream
+                        _detectedAudioTracks.Add(new AudioTrackModel
+                        {
+                            Index = 0,
+                            DisplayName = "1. Ana Yayın Sesi",
+                            Details = "Varsayılan Ses Akışı (Stereo)",
+                            LangCode = "TR",
+                            IsSelected = true,
+                            RawStream = null
+                        });
+                    }
+
+                    if (AudioTracksItemsList != null)
+                    {
+                        AudioTracksItemsList.ItemsSource = null;
+                        AudioTracksItemsList.ItemsSource = _detectedAudioTracks;
+                    }
+
+                    var selected = _detectedAudioTracks.FirstOrDefault(t => t.IsSelected) ?? _detectedAudioTracks.FirstOrDefault();
+                    if (AudioTrackBtnText != null && selected != null)
+                    {
+                        AudioTrackBtnText.Text = selected.LangCode;
+                    }
+
+                    if (AudioTrackCountBadge != null && AudioTrackCountText != null)
+                    {
+                        if (_detectedAudioTracks.Count > 1)
+                        {
+                            AudioTrackCountBadge.Visibility = Visibility.Visible;
+                            AudioTrackCountText.Text = _detectedAudioTracks.Count.ToString();
+                            if (AudioTracksInfoFooter != null) AudioTracksInfoFooter.Text = $"🎉 Çoklu Dil: {_detectedAudioTracks.Count} ses izi mevcut";
+                        }
+                        else
+                        {
+                            AudioTrackCountBadge.Visibility = Visibility.Collapsed;
+                            if (AudioTracksInfoFooter != null) AudioTracksInfoFooter.Text = "Tek ses izi algılandı";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("Player: RefreshAudioTracks error", ex);
+                }
+            });
+        }
+
+        private static (string name, string code) ParseLanguageInfo(string? lang, string? title, int index)
+        {
+            string l = (lang ?? "").Trim().ToLowerInvariant();
+            string t = (title ?? "").Trim().ToLowerInvariant();
+
+            if (l.Contains("tur") || l.Contains("tr") || t.Contains("türkçe") || t.Contains("turkce") || t.Contains("tur"))
+                return ("Türkçe", "TR");
+            if (l.Contains("eng") || l.Contains("en") || t.Contains("english") || t.Contains("ingilizce") || t.Contains("eng"))
+                return ("İngilizce", "EN");
+            if (l.Contains("fra") || l.Contains("fre") || l.Contains("fr") || t.Contains("french") || t.Contains("fransızca"))
+                return ("Fransızca", "FR");
+            if (l.Contains("deu") || l.Contains("ger") || l.Contains("de") || t.Contains("german") || t.Contains("almanca"))
+                return ("Almanca", "DE");
+            if (l.Contains("ita") || l.Contains("it") || t.Contains("italian") || t.Contains("italyanca"))
+                return ("İtalyanca", "IT");
+            if (l.Contains("spa") || l.Contains("es") || t.Contains("spanish") || t.Contains("ispanyolca"))
+                return ("İspanyolca", "ES");
+            if (l.Contains("rus") || l.Contains("ru") || t.Contains("russian") || t.Contains("rusça"))
+                return ("Rusça", "RU");
+            if (l.Contains("ara") || l.Contains("ar") || t.Contains("arabic") || t.Contains("arapça"))
+                return ("Arapça", "AR");
+            if (l.Contains("aze") || l.Contains("az") || t.Contains("azerbaijani") || t.Contains("azerice"))
+                return ("Azerice", "AZ");
+            if (l.Contains("jpn") || l.Contains("ja") || t.Contains("japanese") || t.Contains("japonca"))
+                return ("Japonca", "JA");
+            if (l.Contains("kor") || l.Contains("ko") || t.Contains("korean") || t.Contains("korece"))
+                return ("Korece", "KO");
+            if (l.Contains("chi") || l.Contains("zho") || l.Contains("zh") || t.Contains("chinese") || t.Contains("çince"))
+                return ("Çince", "ZH");
+            if (l.Contains("por") || l.Contains("pt") || t.Contains("portuguese") || t.Contains("portekizce"))
+                return ("Portekizce", "PT");
+            if (l.Contains("hin") || l.Contains("hi") || t.Contains("hindi") || t.Contains("hintçe"))
+                return ("Hintçe", "HI");
+
+            if (!string.IsNullOrWhiteSpace(title))
+                return (title, title.Length <= 3 ? title.ToUpperInvariant() : "SES");
+
+            return ($"Ses İzi {index + 1}", $"SES {index + 1}");
+        }
+
+        #endregion
+
+        #region Audio Normalization & Video Enhancer (Ses Normalizasyonu & Görüntü Netleştirici)
+
+        private void LoadAudioVideoSettings()
+        {
+            _isAudioNormEnabled = _db.GetSetting("AudioNormEnabled", "true") == "true";
+            _isVideoEnhanceEnabled = _db.GetSetting("VideoEnhanceEnabled", "false") == "true";
+        }
+
+        private void UpdateAudioNormButtonUI()
+        {
+            if (AudioNormBtn == null) return;
+            if (_isAudioNormEnabled)
+            {
+                AudioNormBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(5, 150, 105)); // Emerald Green
+                AudioNormBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(52, 211, 153));
+                AudioNormBtn.ToolTip = "Ses Normalizasyonu: AÇIK (Ani patlamaları dengeler, konuşmaları netleştirir)";
+            }
+            else
+            {
+                AudioNormBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 65, 85)); // Slate
+                AudioNormBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(51, 255, 255, 255));
+                AudioNormBtn.ToolTip = "Ses Normalizasyonu: KAPALI (Ham Ses)";
+            }
+        }
+
+        private void UpdateVideoEnhanceButtonUI()
+        {
+            if (VideoEnhanceBtn == null) return;
+            if (_isVideoEnhanceEnabled)
+            {
+                VideoEnhanceBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(217, 119, 6)); // Amber Gold
+                VideoEnhanceBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(251, 191, 36));
+                VideoEnhanceBtn.ToolTip = "Görüntü Netleştirici: AÇIK (HD Keskinlik & Kontrast İyileştirme)";
+            }
+            else
+            {
+                VideoEnhanceBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 65, 85)); // Slate
+                VideoEnhanceBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(51, 255, 255, 255));
+                VideoEnhanceBtn.ToolTip = "Görüntü Netleştirici: KAPALI (Standart Görüntü)";
+            }
+        }
+
+        public void AudioNormBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _isAudioNormEnabled = !_isAudioNormEnabled;
+            _db.SetSetting("AudioNormEnabled", _isAudioNormEnabled ? "true" : "false");
+            UpdateAudioNormButtonUI();
+            FastReloadCurrentStream();
+            ShowOsdToast(_isAudioNormEnabled ? "🔊 Ses Normalizasyonu: AÇIK (Dengeli Düzey)" : "🔇 Ses Normalizasyonu: KAPALI (Ham Ses)", "GeoSoundWave");
+            ShowOsdTemporary();
+        }
+
+        private void ApplyAudioNormalization()
+        {
+            try
+            {
+                if (_config != null)
+                {
+                    var audioObj = _config.Audio;
+                    if (audioObj != null)
+                    {
+                        var filtersProp = audioObj.GetType().GetProperty("Filters");
+                        if (filtersProp?.GetValue(audioObj) is System.Collections.IList filtersList)
+                        {
+                            filtersList.Clear();
+                            if (_isAudioNormEnabled)
+                            {
+                                var filterInst = CreateFlyleafFilter("dynaudnorm=f=150:g=15:m=10.0:r=0.9:b=1");
+                                if (filterInst != null)
+                                {
+                                    filtersList.Add(filterInst);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("Player: ApplyAudioNormalization error", ex);
+            }
+        }
+
+        public void VideoEnhanceBtn_Click(object sender, RoutedEventArgs e)
+        {
+            _isVideoEnhanceEnabled = !_isVideoEnhanceEnabled;
+            _db.SetSetting("VideoEnhanceEnabled", _isVideoEnhanceEnabled ? "true" : "false");
+            UpdateVideoEnhanceButtonUI();
+            FastReloadCurrentStream();
+            ShowOsdToast(_isVideoEnhanceEnabled ? "✨ Görüntü Netleştirici: AÇIK (HD Keskinlik)" : "📺 Görüntü Netleştirici: KAPALI", "GeoSparkle");
+            ShowOsdTemporary();
+        }
+
+        private void ApplyVideoEnhancement()
+        {
+            try
+            {
+                if (_config != null)
+                {
+                    var videoObj = _config.Video;
+                    if (videoObj != null)
+                    {
+                        // Video color & dynamic range tweaks
+                        SetDynamicProperty(videoObj, "Contrast", _isVideoEnhanceEnabled ? 1.15f : 1.0f);
+                        SetDynamicProperty(videoObj, "Saturation", _isVideoEnhanceEnabled ? 1.10f : 1.0f);
+                        SetDynamicProperty(videoObj, "Brightness", _isVideoEnhanceEnabled ? 0.02f : 0.0f);
+
+                        var filtersProp = videoObj.GetType().GetProperty("Filters");
+                        if (filtersProp?.GetValue(videoObj) is System.Collections.IList filtersList)
+                        {
+                            filtersList.Clear();
+                            if (_isVideoEnhanceEnabled)
+                            {
+                                // High quality Unsharp Mask filter for crystal-clear sharpness
+                                var filterInst = CreateFlyleafFilter("unsharp=5:5:0.8:5:5:0.0");
+                                if (filterInst != null)
+                                {
+                                    filtersList.Add(filterInst);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (_player != null)
+                {
+                    var videoObj = _player.GetType().GetProperty("Video")?.GetValue(_player);
+                    if (videoObj != null)
+                    {
+                        SetDynamicProperty(videoObj, "Contrast", _isVideoEnhanceEnabled ? 1.15f : 1.0f);
+                        SetDynamicProperty(videoObj, "Saturation", _isVideoEnhanceEnabled ? 1.10f : 1.0f);
+                        SetDynamicProperty(videoObj, "Brightness", _isVideoEnhanceEnabled ? 0.02f : 0.0f);
+                        SetDynamicProperty(videoObj, "Sharpness", _isVideoEnhanceEnabled ? 1.2f : 0.0f);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("Player: ApplyVideoEnhancement error", ex);
+            }
+        }
+
+        private void FastReloadCurrentStream()
+        {
+            if (_currentChannel == null || _player == null) return;
+
+            try
+            {
+                // 1. Keep position for VOD / Film / Dizi
+                long currentPosMs = 0;
+                if (IsCurrentStreamVod())
+                {
+                    currentPosMs = _player.CurTime / 10000;
+                    _currentChannel.LastPositionMs = currentPosMs;
+                }
+
+                // 2. Re-apply filter settings to configuration and engine
+                ApplyAudioNormalization();
+                ApplyVideoEnhancement();
+
+                // 3. Fast seamless reload if player is currently active
+                if (_player.Status == Status.Playing || _player.Status == Status.Paused || _player.Status == Status.Opening)
+                {
+                    LogService.LogInfo($"Player: Fast reloading current stream for '{_currentChannel.PrimaryName}' to apply filters immediately (VOD pos: {currentPosMs}ms)");
+                    LoadChannel(_currentChannel);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("Player: FastReloadCurrentStream error", ex);
+            }
+        }
+
+        private object? CreateFlyleafFilter(string filterStr)
+        {
+            try
+            {
+                var filterType = typeof(FlyleafLib.Engine).Assembly.GetType("FlyleafLib.MediaFramework.MediaDecoder.Filter")
+                                 ?? typeof(FlyleafLib.Config).Assembly.GetType("FlyleafLib.MediaFramework.MediaDecoder.Filter")
+                                 ?? AppDomain.CurrentDomain.GetAssemblies()
+                                    .SelectMany(a => { try { return a.GetTypes(); } catch { return Array.Empty<Type>(); } })
+                                    .FirstOrDefault(t => t.FullName == "FlyleafLib.MediaFramework.MediaDecoder.Filter" || t.Name == "Filter");
+
+                if (filterType == null) return null;
+
+                // Try single string constructor
+                var strCtor = filterType.GetConstructor(new[] { typeof(string) });
+                if (strCtor != null)
+                {
+                    return strCtor.Invoke(new object[] { filterStr });
+                }
+
+                // Try default constructor and setting properties
+                var defaultCtor = filterType.GetConstructor(Type.EmptyTypes);
+                if (defaultCtor != null)
+                {
+                    var inst = defaultCtor.Invoke(null);
+                    var prop = filterType.GetProperty("FilterStr") 
+                               ?? filterType.GetProperty("Filter") 
+                               ?? filterType.GetProperty("Name") 
+                               ?? filterType.GetProperty("Value")
+                               ?? filterType.GetProperty("Text");
+                    prop?.SetValue(inst, filterStr);
+                    return inst;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"Player: CreateFlyleafFilter failed for '{filterStr}'", ex);
+            }
+            return null;
+        }
+
+        private static void SetDynamicProperty(object target, string propName, object value)
+        {
+            try
+            {
+                var prop = target.GetType().GetProperty(propName);
+                if (prop != null && prop.CanWrite)
+                {
+                    var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                    object convertedValue = Convert.ChangeType(value, targetType);
+                    prop.SetValue(target, convertedValue);
+                }
+            }
+            catch { }
+        }
+
+        public void ShowOsdToast(string message, string iconGeoKey)
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                if (OsdToastBorder == null || OsdToastText == null || OsdToastIcon == null) return;
+
+                OsdToastText.Text = message;
+                if (TryFindResource(iconGeoKey) is Geometry geo)
+                {
+                    OsdToastIcon.Data = geo;
+                }
+
+                OsdToastBorder.Visibility = Visibility.Visible;
+                _toastTimer?.Stop();
+                _toastTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
+                _toastTimer.Tick += (s, e) =>
+                {
+                    if (OsdToastBorder != null) OsdToastBorder.Visibility = Visibility.Collapsed;
+                    _toastTimer?.Stop();
+                };
+                _toastTimer.Start();
+            });
+        }
+
+        #endregion
+
         public void Fullscreen_Click(object sender, RoutedEventArgs e)
         {
             var win = Window.GetWindow(this);
@@ -523,8 +1246,12 @@ namespace StreamMesh.UI.Views
 
         public void Dispose()
         {
+            _loadCts?.Cancel();
+            _loadCts?.Dispose();
+            _loadCts = null;
             _positionTimer?.Stop();
             _osdTimer?.Stop();
+            _toastTimer?.Stop();
             if (_player != null)
             {
                 try
@@ -547,5 +1274,20 @@ namespace StreamMesh.UI.Views
                 _player = null;
             }
         }
+    }
+
+    public class AudioTrackModel
+    {
+        public int Index { get; set; }
+        public string DisplayName { get; set; } = "";
+        public string Details { get; set; } = "";
+        public string LangCode { get; set; } = "TR";
+        public bool IsSelected { get; set; }
+        public System.Windows.Visibility CheckmarkVisibility => IsSelected ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+        public System.Windows.Media.Brush BackgroundBrush => IsSelected ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(60, 56, 189, 248)) : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 255, 255, 255));
+        public System.Windows.Media.Brush BorderBrush => IsSelected ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(56, 189, 248)) : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 255, 255, 255));
+        public System.Windows.Media.Brush BadgeBackground => IsSelected ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(56, 189, 248)) : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 41, 59));
+        public System.Windows.Media.Brush BadgeForeground => IsSelected ? System.Windows.Media.Brushes.Black : System.Windows.Media.Brushes.White;
+        public object? RawStream { get; set; }
     }
 }

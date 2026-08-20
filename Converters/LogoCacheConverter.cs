@@ -1,5 +1,7 @@
 using System;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 
@@ -9,14 +11,87 @@ namespace StreamMesh.Converters
     {
         public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string? url = value as string;
-            if (string.IsNullOrEmpty(url)) return null;
+            string? raw = value as string;
+            if (string.IsNullOrWhiteSpace(raw)) return null;
 
+            // Split multiple logos if comma-separated (e.g. from merged channels)
+            var candidates = raw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(s => s.Trim())
+                                .Where(s => !string.IsNullOrEmpty(s));
+
+            foreach (var candidate in candidates)
+            {
+                var bitmap = TryLoadBitmap(candidate);
+                if (bitmap != null) return bitmap;
+            }
+
+            return null;
+        }
+
+        private BitmapImage? TryLoadBitmap(string pathOrUrl)
+        {
             try
             {
-                return new BitmapImage(new Uri(url));
+                // 1. Check pack URI or web URL
+                if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uriResult))
+                {
+                    if (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps || uriResult.Scheme == "pack")
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.UriSource = uriResult;
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.CreateOptions = BitmapCreateOptions.DelayCreation;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        return bitmap;
+                    }
+                    else if (uriResult.Scheme == Uri.UriSchemeFile)
+                    {
+                        if (File.Exists(uriResult.LocalPath))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.UriSource = uriResult;
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.EndInit();
+                            bitmap.Freeze();
+                            return bitmap;
+                        }
+                    }
+                }
+
+                // 2. Check local disk absolute path
+                if (File.Exists(pathOrUrl))
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(Path.GetFullPath(pathOrUrl), UriKind.Absolute);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
+                }
+
+                // 3. Check relative path in App Domain Base Directory (e.g. "logos/StreamMesh_logo.png")
+                string localBasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pathOrUrl.TrimStart('/', '\\'));
+                if (File.Exists(localBasePath))
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(localBasePath, UriKind.Absolute);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
+                }
             }
-            catch { return null; }
+            catch
+            {
+                // Fallback to next candidate on error
+            }
+
+            return null;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

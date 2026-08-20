@@ -4,6 +4,7 @@
         xmlns:conv="clr-namespace:StreamMesh.Converters"
         Title="Gelişmiş Kanal Düzenleyici" Height="680" Width="850"
         Background="#0f172a" Foreground="White" WindowStartupLocation="CenterOwner"
+        Icon="{StaticResource AppIconImage}"
         WindowStyle="None" AllowsTransparency="True">
 
     <Window.Resources>
@@ -258,7 +259,7 @@
                                 <TextBlock Text="Görsel Önizleme" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#94a3b8" FontWeight="SemiBold"/>
                                 <Border Background="#0f172a" Width="150" Height="150" CornerRadius="12" BorderBrush="#334155" BorderThickness="1">
                                     <Grid>
-                                        <TextBlock Text="🖼️" FontSize="40" Opacity="0.1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Path Data="{StaticResource GeoTv}" Fill="White" Width="40" Height="40" Stretch="Uniform" Opacity="0.1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         <Image Source="{Binding SelectedLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="10"/>
                                     </Grid>
                                 </Border>

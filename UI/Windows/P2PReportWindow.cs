@@ -53,7 +53,7 @@ namespace StreamMesh.UI.Windows
                 Content = "Kapat",
                 Width = 100,
                 Height = 35,
-                Style = System.Windows.Application.Current.Resources["PrimaryButtonStyle"] as Style,
+                Style = System.Windows.Application.Current?.TryFindResource("PrimaryButtonStyle") as Style,
                 Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#334155"))
             };
             btnClose.Click += (s, e) => Close();

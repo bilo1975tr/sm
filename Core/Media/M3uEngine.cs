@@ -69,17 +69,30 @@ namespace StreamMesh.Core.Media
                         }
                     }
 
-                    ms.Position = 0;
-                    using var reader = new StreamReader(ms);
-                    content = await reader.ReadToEndAsync();
+                    byte[] rawBytes = ms.ToArray();
+                    content = DecodeM3uContent(rawBytes);
                 }
                 else if (File.Exists(urlOrPath))
                 {
                     progressCallback?.Invoke("Yerel dosya okunuyor...", 50);
-                    content = await File.ReadAllTextAsync(urlOrPath);
+                    byte[] rawBytes = await File.ReadAllBytesAsync(urlOrPath);
+                    content = DecodeM3uContent(rawBytes);
                 }
 
                 if (string.IsNullOrEmpty(content)) return channels;
+
+                // 1. Check if the content is HTML, JS or script response instead of M3U
+                string trimmedStart = content.TrimStart();
+                if (trimmedStart.StartsWith("<!DOCTYPE html", StringComparison.OrdinalIgnoreCase) ||
+                    trimmedStart.StartsWith("<html", StringComparison.OrdinalIgnoreCase) ||
+                    trimmedStart.StartsWith("<script", StringComparison.OrdinalIgnoreCase) ||
+                    trimmedStart.StartsWith("(function", StringComparison.OrdinalIgnoreCase) ||
+                    trimmedStart.StartsWith("var ", StringComparison.OrdinalIgnoreCase) ||
+                    trimmedStart.StartsWith("function", StringComparison.OrdinalIgnoreCase))
+                {
+                    progressCallback?.Invoke("Hata: Geçersiz M3U içeriği (Web sayfası veya script algılandı)", 0);
+                    return channels;
+                }
 
                 progressCallback?.Invoke("Ayrıştırılıyor...", 80);
 
@@ -142,13 +155,21 @@ namespace StreamMesh.Core.Media
                     }
                     else if (!line.StartsWith("#"))
                     {
+                        string url = line;
+                        if (!IsValidStreamUrl(url))
+                        {
+                            current = null;
+                            continue;
+                        }
+
                         if (current == null)
                         {
                             // Single line format without #EXTINF
-                            current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, Name = line };
+                            string baseName = Path.GetFileNameWithoutExtension(url);
+                            if (string.IsNullOrWhiteSpace(baseName)) baseName = "Yayın";
+                            current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, Name = baseName };
                         }
 
-                        string url = line;
                         if (!string.IsNullOrEmpty(url))
                         {
                             current.Url = url;
@@ -174,6 +195,73 @@ namespace StreamMesh.Core.Media
             }
 
             return ChannelAggregator.Instance.AggregateChannels(channels);
+        }
+
+        private string DecodeM3uContent(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length == 0) return string.Empty;
+
+            try
+            {
+                // Try UTF8 first
+                string utf8Str = System.Text.Encoding.UTF8.GetString(bytes);
+
+                // If no replacement characters, check if valid UTF8
+                if (!utf8Str.Contains('\uFFFD'))
+                {
+                    return utf8Str;
+                }
+
+                // If UTF8 produced replacement characters (broken encoding), fallback to Windows-1254 (Turkish) / ISO-8859-9
+                try
+                {
+                    System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                    var win1254 = System.Text.Encoding.GetEncoding("windows-1254");
+                    return win1254.GetString(bytes);
+                }
+                catch
+                {
+                    return utf8Str;
+                }
+            }
+            catch
+            {
+                return System.Text.Encoding.Default.GetString(bytes);
+            }
+        }
+
+        private bool IsValidStreamUrl(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return false;
+            url = url.Trim();
+
+            // Must be at least 5 characters
+            if (url.Length < 5) return false;
+
+            // Reject common code/html snippets
+            if (url.Contains("<") || url.Contains(">") || url.Contains(";") || url.Contains("{") || url.Contains("}") || url.Contains("var ") || url.Contains("function"))
+                return false;
+
+            // Check if valid URL or supported scheme
+            if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("rtmp://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("rtmps://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("rtsp://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("mms://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("magnet:", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("udp://", StringComparison.OrdinalIgnoreCase) ||
+                url.StartsWith("file://", StringComparison.OrdinalIgnoreCase) ||
+                (url.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(url, "^[a-fA-F0-9]{40}$"))) // Raw AceStream hash
+            {
+                return true;
+            }
+
+            // Local file paths
+            if (File.Exists(url)) return true;
+
+            return false;
         }
 
         private string GetShortUrl(string url)

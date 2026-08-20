@@ -145,7 +145,7 @@ namespace StreamMesh.UI.ViewModels
 
             target.Url = string.Join(",", existingUrls);
             await _db.SaveChannelAsync(target);
-            _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{source.Id}'");
+            _db.DeleteChannelById(source.Id);
             LoadData();
         }
 
@@ -160,7 +160,7 @@ namespace StreamMesh.UI.ViewModels
         public void DeleteChannel(Channel ch)
         {
             if (ch == null) return;
-            _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{ch.Id}'");
+            _db.DeleteChannelById(ch.Id);
             LoadData();
         }
 

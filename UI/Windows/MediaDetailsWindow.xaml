@@ -41,7 +41,7 @@
                     <!-- Poster Image -->
                     <Border Grid.Column="0" Width="120" Height="180" CornerRadius="8" ClipToBounds="True" Margin="0,0,25,0"
                             Background="#1e293b" BorderBrush="#334155" BorderThickness="1">
-                        <Image Source="{Binding Media.LogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="UniformToFill"/>
+                        <Image Source="{Binding Media.PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="UniformToFill"/>
                     </Border>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Bottom">

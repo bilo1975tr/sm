@@ -1178,6 +1178,21 @@ namespace StreamMesh.Core.Database
             }
         }
 
+        public void DeleteChannelById(string channelId)
+        {
+            if (string.IsNullOrEmpty(channelId)) return;
+            using (var connection = new SqliteConnection(ConnectionString))
+            {
+                connection.Open();
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = "DELETE FROM Channels WHERE Id = @id";
+                cmd.Parameters.AddWithValue("@id", channelId);
+                cmd.ExecuteNonQuery();
+            }
+            ClearChannelCache();
+            NotifyDatabaseUpdated();
+        }
+
         public void ExecuteRawNonQuery(string sql)
         {
             using (var connection = new SqliteConnection(ConnectionString)) { connection.Open(); var cmd = connection.CreateCommand(); cmd.CommandText = sql; cmd.ExecuteNonQuery(); }
@@ -1195,7 +1210,37 @@ namespace StreamMesh.Core.Database
 
         public async Task CleanupDuplicatesAsync()
         {
-            LogService.LogInfo("DatabaseEngine: Global aggregation cleanup starting...");
+            LogService.LogInfo("DatabaseEngine: Global aggregation and cleanup starting...");
+            try
+            {
+                using (var connection = new SqliteConnection(ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = @"
+                        DELETE FROM Channels 
+                        WHERE Url IS NULL 
+                           OR length(trim(Url)) < 5 
+                           OR Url LIKE '%<%' 
+                           OR Url LIKE '%>%' 
+                           OR Url LIKE '%{%' 
+                           OR Url LIKE '%}%' 
+                           OR Url LIKE '%;%' 
+                           OR Url LIKE '%var %' 
+                           OR Url LIKE '%function%';
+                    ";
+                    int purged = await cmd.ExecuteNonQueryAsync();
+                    if (purged > 0)
+                    {
+                        LogService.LogInfo($"DatabaseEngine: Purged {purged} corrupt/non-stream channels from database.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("DatabaseEngine: Error cleaning corrupt channel rows", ex);
+            }
+
             int merged = await AutoAggregateDatabaseAsync();
             LogService.LogInfo($"DatabaseEngine: Global aggregation cleanup completed. Merged {merged} channels into existing cards.");
         }

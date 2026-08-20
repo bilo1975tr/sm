@@ -27,12 +27,43 @@ namespace StreamMesh.Core.Media
     {
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
         private const int ACESTREAM_PORT = 6878;
+        private static readonly List<int> _spawnedProcessIds = new();
 
         static AceEngine()
         {
             _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
             _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
+
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => CleanupSpawnedProcesses();
+        }
+
+        public static void RegisterSpawnedProcess(int processId)
+        {
+            lock (_spawnedProcessIds)
+            {
+                if (!_spawnedProcessIds.Contains(processId)) _spawnedProcessIds.Add(processId);
+            }
+        }
+
+        public static void CleanupSpawnedProcesses()
+        {
+            lock (_spawnedProcessIds)
+            {
+                foreach (var pid in _spawnedProcessIds)
+                {
+                    try
+                    {
+                        var proc = Process.GetProcessById(pid);
+                        if (!proc.HasExited)
+                        {
+                            proc.Kill();
+                        }
+                    }
+                    catch { }
+                }
+                _spawnedProcessIds.Clear();
+            }
         }
 
         public async Task<string?> GetApiAccessTokenAsync()
@@ -535,15 +566,24 @@ namespace StreamMesh.Core.Media
 
         public async Task<bool> WaitForStreamReadyAsync(string streamUrl, int timeoutSec = 5, Action<string>? onProgress = null)
         {
-            // Simplified: Just ensure the engine is responsive.
             try
             {
                 onProgress?.Invoke("AceStream: Bağlanılıyor...");
-                var request = new HttpRequestMessage(HttpMethod.Head, streamUrl);
-                var res = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-                return res.IsSuccessStatusCode || res.StatusCode == System.Net.HttpStatusCode.Found || res.StatusCode == System.Net.HttpStatusCode.MovedPermanently;
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(timeoutSec));
+                using var request = new HttpRequestMessage(HttpMethod.Get, streamUrl);
+                request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 512);
+                
+                var res = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                return res.IsSuccessStatusCode || 
+                       res.StatusCode == System.Net.HttpStatusCode.Found || 
+                       res.StatusCode == System.Net.HttpStatusCode.MovedPermanently ||
+                       res.StatusCode == System.Net.HttpStatusCode.PartialContent ||
+                       res.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed;
             }
-            catch { return false; }
+            catch 
+            { 
+                return false; 
+            }
         }
       public List<string> GetHttpUrls(string cid)
         {

@@ -68,8 +68,13 @@ namespace StreamMesh
             AppDomain.CurrentDomain.UnhandledException += (s, ev) =>
                 LogService.LogError("AppDomain UnhandledException", ev.ExceptionObject as Exception);
 
+            TaskScheduler.UnobservedTaskException += (s, ev) => {
+                LogService.LogError("UnobservedTaskException (Background Task)", ev.Exception);
+                ev.SetObserved();
+            };
+
             this.DispatcherUnhandledException += (s, ev) => {
-                LogService.LogError("DispatcherUnhandledException", ev.Exception);
+                LogService.LogError("DispatcherUnhandledException (UI Thread)", ev.Exception);
                 ev.Handled = true;
             };
         }

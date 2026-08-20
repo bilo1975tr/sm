@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -15,15 +17,76 @@ namespace StreamMesh.Core.Media
 
         public async Task SyncIfNecessaryAsync()
         {
+            // 1. Always scan local logos folder first
+            ScanLocalLogosFolder();
+
             string last = _db.GetSetting("LogoSyncDate", "");
             if (DateTime.TryParse(last, out DateTime dt) && (DateTime.Now - dt).TotalDays < 30) return;
             await SyncNowAsync();
+        }
+
+        public void ScanLocalLogosFolder()
+        {
+            try
+            {
+                var localLogos = new List<(string key, string file)>();
+                var baseDirs = new List<string>
+                {
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos"),
+                    Path.Combine(Directory.GetCurrentDirectory(), "logos")
+                };
+
+                var validExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp"
+                };
+
+                foreach (var dir in baseDirs.Distinct())
+                {
+                    if (!Directory.Exists(dir)) continue;
+
+                    var files = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
+                    foreach (var file in files)
+                    {
+                        string ext = Path.GetExtension(file);
+                        if (!validExtensions.Contains(ext)) continue;
+
+                        string fileNameNoExt = Path.GetFileNameWithoutExtension(file);
+                        string normalizedKey = fileNameNoExt.ToLowerInvariant().Replace(" ", "-").Trim('-');
+
+                        // Relative path from base directory or pack / direct file path
+                        string relativePath = "logos/" + Path.GetRelativePath(dir, file).Replace("\\", "/");
+                        
+                        localLogos.Add((normalizedKey, relativePath));
+
+                        // Also add raw clean key
+                        string rawClean = ChannelUtils.ToNormalizedKey(fileNameNoExt);
+                        if (!string.IsNullOrEmpty(rawClean) && rawClean != normalizedKey)
+                        {
+                            localLogos.Add((rawClean, relativePath));
+                        }
+                    }
+                }
+
+                if (localLogos.Count > 0)
+                {
+                    _db.UpdateLogoIndex(localLogos);
+                    LogService.LogInfo($"[LogoSync] {localLogos.Count} adet yerel logo indekse kaydedildi.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[LogoSync] Yerel logolar taranırken hata: {ex.Message}");
+            }
         }
 
         public async Task SyncNowAsync()
         {
             try
             {
+                // Local scan first
+                ScanLocalLogosFolder();
+
                 LogService.LogInfo("[LogoSync] GitHub üzerinden logo verileri kontrol ediliyor...");
 
                 _client.DefaultRequestHeaders.UserAgent.Clear();

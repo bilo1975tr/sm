@@ -17,15 +17,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Resource Include="logos\StreamMesh_Logo.svg">
+    <Resource Include="logos\**" />
+    <Content Include="logos\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="logos\StreamMesh_Icon.svg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="logos\StreamMesh_Logo.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    </Content>
     <Content Include="server.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

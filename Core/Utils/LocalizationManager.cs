@@ -55,10 +55,11 @@ namespace StreamMesh.Core.Utils
             _currentDictionary["NavPlayer"] = "Oynatıcı";
             _currentDictionary["NavStats"] = "İstatistikler";
             _currentDictionary["NavSettings"] = "Ayarlar";
+            _currentDictionary["GlobalSearch"] = "Global Arama";
 
             _currentDictionary["Home_MyLibrary"] = "Kütüphanem";
             _currentDictionary["Home_All"] = "Tümü";
-            _currentDictionary["Home_Favorites"] = "Favoriler ⭐";
+            _currentDictionary["Home_Favorites"] = "Favoriler";
             _currentDictionary["Home_TV"] = "TV Kanalları";
             _currentDictionary["Home_Movies"] = "Filmler";
             _currentDictionary["Home_Series"] = "Diziler";
@@ -79,10 +80,11 @@ namespace StreamMesh.Core.Utils
                 _currentDictionary["NavPlayer"] = "Player";
                 _currentDictionary["NavStats"] = "Stats";
                 _currentDictionary["NavSettings"] = "Settings";
+                _currentDictionary["GlobalSearch"] = "Global Search";
 
                 _currentDictionary["Home_MyLibrary"] = "My Library";
                 _currentDictionary["Home_All"] = "All";
-                _currentDictionary["Home_Favorites"] = "Favorites ⭐";
+                _currentDictionary["Home_Favorites"] = "Favorites";
                 _currentDictionary["Home_TV"] = "TV Channels";
                 _currentDictionary["Home_Movies"] = "Movies";
                 _currentDictionary["Home_Series"] = "Series";

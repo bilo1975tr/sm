@@ -41,7 +41,7 @@ namespace StreamMesh.Models
         private int _preferredEpgIndex = 0;
 
         public int PreferredNameIndex { get => _preferredNameIndex; set { _preferredNameIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); } }
-        public int PreferredLogoIndex { get => _preferredLogoIndex; set { _preferredLogoIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogoUrl)); } }
+        public int PreferredLogoIndex { get => _preferredLogoIndex; set { _preferredLogoIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogoUrl)); OnPropertyChanged(nameof(PrimaryLogoUrl)); } }
         public int PreferredEpgIndex { get => _preferredEpgIndex; set { _preferredEpgIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(EpgId)); } }
 
         public string UrlSpeeds { get => _urlSpeeds; set { _urlSpeeds = value; OnPropertyChanged(); } }
@@ -190,7 +190,18 @@ namespace StreamMesh.Models
         public string LogoUrl
         {
             get => _logoUrl;
-            set { if (_logoUrl != value) { _logoUrl = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogosCount)); OnPropertyChanged(nameof(HasMultipleLogos)); } }
+            set { if (_logoUrl != value) { _logoUrl = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryLogoUrl)); OnPropertyChanged(nameof(LogosCount)); OnPropertyChanged(nameof(HasMultipleLogos)); } }
+        }
+
+        public string PrimaryLogoUrl
+        {
+            get
+            {
+                var list = GetLogoList();
+                if (list.Count == 0) return LogoUrl ?? "";
+                if (PreferredLogoIndex >= 0 && PreferredLogoIndex < list.Count) return list[PreferredLogoIndex];
+                return list[0];
+            }
         }
 
         public int LogosCount => GetLogoList().Count;
@@ -404,11 +415,42 @@ namespace StreamMesh.Models
         public List<string> GetUrlList()
         {
             if (string.IsNullOrWhiteSpace(Url)) return new List<string>();
-            return Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                      .Select(u => u.Trim())
-                      .Where(u => !string.IsNullOrEmpty(u))
-                      .Distinct(StringComparer.OrdinalIgnoreCase)
-                      .ToList();
+
+            if (Url.Contains("||"))
+            {
+                return Url.Split(new[] { "||" }, StringSplitOptions.RemoveEmptyEntries)
+                          .Select(u => u.Trim())
+                          .Where(u => !string.IsNullOrEmpty(u))
+                          .Distinct(StringComparer.OrdinalIgnoreCase)
+                          .ToList();
+            }
+
+            if (!Url.Contains(',')) return new List<string> { Url.Trim() };
+
+            var rawParts = Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var result = new List<string>();
+            string current = "";
+
+            foreach (var part in rawParts)
+            {
+                string trimmed = part.Trim();
+                if (Regex.IsMatch(trimmed, @"^(https?://|acestream://|rtmp://|rtsp://|mms://|p2p://|[a-fA-F0-9]{40}$)", RegexOptions.IgnoreCase))
+                {
+                    if (!string.IsNullOrEmpty(current))
+                    {
+                        result.Add(current);
+                    }
+                    current = trimmed;
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(current)) current = trimmed;
+                    else current += "," + trimmed;
+                }
+            }
+            if (!string.IsNullOrEmpty(current)) result.Add(current);
+
+            return result.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         }
 
         public List<string> GetLogoList()

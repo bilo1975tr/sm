@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -200,54 +201,53 @@ namespace StreamMesh.Core.Media
         private bool TryParseXmlTime(string time, string sourceUrl, out DateTime result)
         {
             result = DateTime.MinValue;
-            if (string.IsNullOrEmpty(time)) return false;
+            if (string.IsNullOrWhiteSpace(time)) return false;
             try
             {
-                // V1.9.8: Source-specific offset handling
-                // Special case for iptv-epg.org: They provide local time but mark it as +0000 UTC.
-                // We ignore the offset for this specific source.
-                bool ignoreOffset = sourceUrl.Contains("iptv-epg.org", StringComparison.OrdinalIgnoreCase);
+                // Special case for iptv-epg.org or local providers that output direct local time marked as UTC
+                bool treatAsDirectLocal = sourceUrl.Contains("iptv-epg.org", StringComparison.OrdinalIgnoreCase) ||
+                                          sourceUrl.Contains("turk", StringComparison.OrdinalIgnoreCase);
 
                 // XMLTV format: yyyyMMddHHmmss [+-]HHmm
                 string cleanTime = time.Trim();
                 if (cleanTime.Length >= 14)
                 {
                     string datePart = cleanTime.Substring(0, 14);
-                    DateTime dt = DateTime.ParseExact(datePart, "yyyyMMddHHmmss", null);
-
-                    if (!ignoreOffset && cleanTime.Length > 15)
+                    if (DateTime.TryParseExact(datePart, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt))
                     {
-                        string offsetPart = cleanTime.Substring(14).Trim();
-                        if (offsetPart.Length >= 5 && (offsetPart.StartsWith("+") || offsetPart.StartsWith("-")))
+                        if (!treatAsDirectLocal && cleanTime.Length > 15)
                         {
-                            try
+                            string offsetPart = cleanTime.Substring(14).Trim();
+                            if (offsetPart.Length >= 5 && (offsetPart.StartsWith("+") || offsetPart.StartsWith("-")))
                             {
-                                int hours = int.Parse(offsetPart.Substring(1, 2));
-                                int mins = int.Parse(offsetPart.Substring(3, 2));
-                                TimeSpan offset = new TimeSpan(hours, mins, 0);
-                                if (offsetPart.StartsWith("-")) offset = offset.Negate();
+                                try
+                                {
+                                    int hours = int.Parse(offsetPart.Substring(1, 2), CultureInfo.InvariantCulture);
+                                    int mins = int.Parse(offsetPart.Substring(3, 2), CultureInfo.InvariantCulture);
+                                    TimeSpan offset = new TimeSpan(hours, mins, 0);
+                                    if (offsetPart.StartsWith("-")) offset = offset.Negate();
 
-                                result = new DateTimeOffset(dt, offset).LocalDateTime;
-                                return true;
+                                    result = new DateTimeOffset(dt, offset).LocalDateTime;
+                                    return true;
+                                }
+                                catch { }
                             }
-                            catch { }
                         }
-                    }
 
-                    if (ignoreOffset)
-                    {
-                        // Treat as direct local time
-                        result = DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
+                        if (treatAsDirectLocal)
+                        {
+                            result = DateTime.SpecifyKind(dt, DateTimeKind.Local);
+                            return true;
+                        }
+
+                        // Default: treat as local if no offset given, or UTC if explicit
+                        result = dt;
                         return true;
                     }
-
-                    // If no explicit offset and not ignored, assume UTC and convert to Local
-                    result = DateTime.SpecifyKind(dt, DateTimeKind.Utc).ToLocalTime();
-                    return true;
                 }
             }
             catch { }
-            return DateTime.TryParse(time, out result);
+            return DateTime.TryParse(time, CultureInfo.InvariantCulture, DateTimeStyles.None, out result);
         }
     }
 }

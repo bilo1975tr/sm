@@ -124,6 +124,8 @@ namespace StreamMesh.UI.Windows
             }
         }
 
+        private string _availableRemoteVersion = "";
+
         private async void CheckForUpdatesAsync()
         {
             try
@@ -131,6 +133,7 @@ namespace StreamMesh.UI.Windows
                 var (hasUpdate, remoteVer) = await _updateService.CheckForUpdateAsync();
                 if (hasUpdate)
                 {
+                    _availableRemoteVersion = remoteVer;
                     UpdateBadgeText.Text = $"Yeni Güncelleme Var! (v{remoteVer}) - Tıkla ve Güncelle";
                     UpdateBadgeButton.Visibility = Visibility.Visible;
                 }
@@ -140,43 +143,38 @@ namespace StreamMesh.UI.Windows
 
         private async void UpdateBadge_Click(object sender, RoutedEventArgs e)
         {
+            string targetVer = !string.IsNullOrWhiteSpace(_availableRemoteVersion) ? _availableRemoteVersion : UpdateService.GetCurrentVersion();
+
             var result = System.Windows.MessageBox.Show(
-                "Yeni güncelleme bulundu. Otomatik güncelleme başlatılsın mı?\nİçerik ve sistem dosyaları güncellenecektir.",
-                "Otomatik Güncelleme",
+                $"StreamMesh v{targetVer} sürümüne otomatik güncellensin mi?\n\n- Yeni kurulum paketi indirilecek\n- Uygulama otomatik kapanıp yeni sürüm kurulacak\n- Kurulum bittiğinde uygulama otomatik yeniden açılacaktır.",
+                "StreamMesh Otomatik Güncelleme",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
             if (result != MessageBoxResult.Yes) return;
 
+            var progressWin = new UpdateProgressWindow(targetVer);
+            progressWin.Owner = this;
+            progressWin.Show();
+
             try
             {
                 UpdateBadgeButton.IsEnabled = false;
-                UpdateBadgeText.Text = "Güncelleniyor...";
 
-                bool success = await _updateService.PerformUpdateAsync((percent, msg) => {
-                    Dispatcher.Invoke(() => {
-                        UpdateBadgeText.Text = $"Güncelleniyor (%{percent})...";
-                    });
+                bool success = await _updateService.DownloadAndInstallUpdateAsync(targetVer, (percent, msg, detail) => {
+                    progressWin.UpdateProgress(percent, msg, detail);
                 });
 
-                if (success)
+                if (!success)
                 {
-                    string newVer = UpdateService.GetCurrentVersion();
-                    CurrentVersionBadge.Text = newVer;
-                    Title = $"StreamMesh Hybrid v{newVer}";
-                    UpdateBadgeButton.Visibility = Visibility.Collapsed;
-                    System.Windows.MessageBox.Show($"Güncelleme başarıyla tamamlandı!\nGüncel Sürüm: v{newVer}", "Güncelleme Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
+                    progressWin.ShowError("Kurulum dosyası indirilemedi veya başlatılamadı.");
                     UpdateBadgeButton.IsEnabled = true;
-                    UpdateBadgeText.Text = "Yeni Güncelleme Var! (Tıkla ve Güncelle)";
-                    System.Windows.MessageBox.Show("Güncelleme sırasında bir hata oluştu.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
                 LogService.LogError("UpdateBadge_Click error", ex);
+                progressWin.ShowError(ex.Message);
                 UpdateBadgeButton.IsEnabled = true;
             }
         }

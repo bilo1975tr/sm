@@ -95,16 +95,60 @@
 
                             <!-- Action Controls -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Content="⏪" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Rewind10_Click" ToolTip="10sn Geri"/>
-                                <Button x:Name="PlayPauseBtn" Content="⏸" Style="{StaticResource OsdControlButtonStyle}" Width="54" Height="54" FontSize="24" Background="#2563eb" Click="PlayPause_Click"/>
-                                <Button Content="⏩" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Forward10_Click" ToolTip="10sn İleri"/>
+                                <Button Style="{StaticResource OsdControlButtonStyle}" Click="Rewind10_Click" ToolTip="10sn Geri">
+                                    <Path Data="{StaticResource GeoReplay10}" Fill="White" Width="18" Height="18" Stretch="Uniform"/>
+                                </Button>
+                                <Button x:Name="PlayPauseBtn" Style="{StaticResource OsdControlButtonStyle}" Width="54" Height="54" Background="#2563eb" Click="PlayPause_Click" ToolTip="Oynat / Duraklat">
+                                    <Path Data="{StaticResource GeoPause}" Fill="White" Width="20" Height="20" Stretch="Uniform"/>
+                                </Button>
+                                <Button Style="{StaticResource OsdControlButtonStyle}" Click="Forward10_Click" ToolTip="10sn İleri">
+                                    <Path Data="{StaticResource GeoForward10}" Fill="White" Width="18" Height="18" Stretch="Uniform"/>
+                                </Button>
 
-                                <Border Width="1" Height="30" Background="#44FFFFFF" Margin="10,0"/>
+                                <Border Width="1" Height="30" Background="#44FFFFFF" Margin="6,0"/>
 
-                                <Button Content="🔴 Canlı" FontSize="11" FontWeight="Bold" Style="{StaticResource PrimaryButtonStyle}" Width="75" Height="42" Background="#dc2626" Margin="10,0" Click="GoLive_Click"/>
+                                <!-- Çoklu Dil / Ses İzi Seçici Butonu -->
+                                <Grid Margin="3,0">
+                                    <Button x:Name="AudioTrackBtn" Style="{StaticResource OsdControlButtonStyle}" Width="Auto" MinWidth="52" Padding="12,8" Click="AudioTrackBtn_Click" ToolTip="Ses İzi / Yayın Dili Seçimi">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource GeoLanguage}" Fill="White" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="AudioTrackBtnText" Text="TR" Foreground="White" FontSize="11" FontWeight="Bold" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Border x:Name="AudioTrackCountBadge" Background="#38bdf8" CornerRadius="8" Padding="4,1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-4,0" Visibility="Collapsed">
+                                        <TextBlock x:Name="AudioTrackCountText" Text="2" Foreground="Black" FontSize="9" FontWeight="ExtraBold"/>
+                                    </Border>
+                                </Grid>
 
-                                <Button x:Name="MuteBtn" Content="🔊" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Mute_Click" Background="#334155"/>
-                                <Button Content="⛶" Style="{StaticResource OsdControlButtonStyle}" FontSize="18" Click="Fullscreen_Click" Background="#334155"/>
+                                <!-- Ses Normalizasyonu (Dinamik Aralık / Gece Modu) -->
+                                <Button x:Name="AudioNormBtn" Style="{StaticResource OsdControlButtonStyle}" Background="#334155" Click="AudioNormBtn_Click" ToolTip="Ses Normalizasyonu (Patlamaları Önler, Fısıltıları Netleştirir)">
+                                    <Grid>
+                                        <Path Data="{StaticResource GeoSoundWave}" Fill="White" Width="18" Height="18" Stretch="Uniform"/>
+                                    </Grid>
+                                </Button>
+
+                                <!-- Görüntü Netleştirici (Keskinleştirme & Kontrast İyileştirme) -->
+                                <Button x:Name="VideoEnhanceBtn" Style="{StaticResource OsdControlButtonStyle}" Background="#334155" Click="VideoEnhanceBtn_Click" ToolTip="Görüntü Netleştirici &amp; Keskinlik (Daha Berrak ve Net Görüntü)">
+                                    <Grid>
+                                        <Path Data="{StaticResource GeoSparkle}" Fill="White" Width="18" Height="18" Stretch="Uniform"/>
+                                    </Grid>
+                                </Button>
+
+                                <Border Width="1" Height="30" Background="#44FFFFFF" Margin="6,0"/>
+
+                                <Button Style="{StaticResource PrimaryButtonStyle}" Width="85" Height="42" Background="#dc2626" Margin="6,0" Click="GoLive_Click" ToolTip="Canlı Yayına Dön">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="8" Height="8" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="CANLI" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="MuteBtn" Style="{StaticResource OsdControlButtonStyle}" Click="Mute_Click" Background="#334155" ToolTip="Sesi Kapat / Aç">
+                                    <Path Data="{StaticResource GeoVolume}" Fill="White" Width="18" Height="18" Stretch="Uniform"/>
+                                </Button>
+                                <Button x:Name="FullscreenBtn" Style="{StaticResource OsdControlButtonStyle}" Click="Fullscreen_Click" Background="#334155" ToolTip="Tam Ekran">
+                                    <Path Data="{StaticResource GeoFullscreen}" Fill="White" Width="18" Height="18" Stretch="Uniform"/>
+                                </Button>
                             </StackPanel>
                         </Grid>
 
@@ -127,6 +171,76 @@
                             </Border>
                         </Grid>
                     </Grid>
+                </Border>
+
+                <!-- Floating Audio Track / Dil Seçim Menüsü -->
+                <Border x:Name="AudioTracksFlyout" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,180,150"
+                        Background="#F20F172A" BorderBrush="#38BDF8" BorderThickness="1" CornerRadius="16" Width="290" MaxHeight="340"
+                        Visibility="Collapsed" MouseEnter="OsdPanel_MouseEnter" MouseLeave="OsdPanel_MouseLeave">
+                    <Grid Margin="15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Path Data="{StaticResource GeoLanguage}" Fill="#38bdf8" Width="16" Height="16" Stretch="Uniform" VerticalAlignment="Center"/>
+                                <TextBlock Text="Ses İzi / Yayın Dili" Foreground="White" FontWeight="Bold" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Foreground="#94a3b8" Content="✕" FontSize="12" Cursor="Hand" Click="CloseAudioTracksFlyout_Click" Padding="4"/>
+                        </Grid>
+
+                        <!-- Audio Tracks List -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="220">
+                            <ItemsControl x:Name="AudioTracksItemsList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Background="{Binding BackgroundBrush}" BorderBrush="{Binding BorderBrush}" BorderThickness="1" Margin="0,3" Padding="10,8" Cursor="Hand" Click="AudioTrackItem_Click" Tag="{Binding}">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Path Grid.Column="0" Data="{StaticResource GeoCheck}" Fill="#38bdf8" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" Visibility="{Binding CheckmarkVisibility}"/>
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding DisplayName}" Foreground="White" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                                <TextBlock Text="{Binding Details}" Foreground="#94a3b8" FontSize="10" Margin="0,1,0,0"/>
+                                                            </StackPanel>
+                                                            <Border Grid.Column="2" Background="{Binding BadgeBackground}" CornerRadius="4" Padding="5,1" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                                <TextBlock Text="{Binding LangCode}" Foreground="{Binding BadgeForeground}" FontSize="10" FontWeight="Bold"/>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Subtitle Toggle / Status -->
+                        <Border Grid.Row="2" Margin="0,10,0,0" Padding="8,6" Background="#1e293b" CornerRadius="8">
+                            <TextBlock x:Name="AudioTracksInfoFooter" Text="Otomatik akış algılandı" Foreground="#94a3b8" FontSize="11" TextAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- OSD Toast Anlık Geri Bildirim Bannerı -->
+                <Border x:Name="OsdToastBorder" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,35,0,0"
+                        Background="#E60F172A" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="20" Padding="18,10"
+                        Visibility="Collapsed" IsHitTestVisible="False">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Path x:Name="OsdToastIcon" Data="{StaticResource GeoSoundWave}" Fill="#38bdf8" Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock x:Name="OsdToastText" Text="Ses Normalizasyonu: AÇIK" Foreground="White" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Border>
             </Grid>
         </flyleaf:FlyleafHost>

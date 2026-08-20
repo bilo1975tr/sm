@@ -58,6 +58,50 @@ namespace StreamMesh.Core.Media
             string clean = ChannelUtils.GetCleanName(rawQuery);
             string normKey = ChannelUtils.ToNormalizedKey(clean);
 
+            // 0. Search local /logos directory and subdirectories directly
+            try
+            {
+                var baseDirs = new[]
+                {
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos"),
+                    System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "logos")
+                };
+
+                var validExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp"
+                };
+
+                foreach (var dir in baseDirs.Distinct())
+                {
+                    if (!System.IO.Directory.Exists(dir)) continue;
+                    var files = System.IO.Directory.GetFiles(dir, "*.*", System.IO.SearchOption.AllDirectories);
+                    foreach (var file in files)
+                    {
+                        string ext = System.IO.Path.GetExtension(file);
+                        if (!validExtensions.Contains(ext)) continue;
+
+                        string fn = System.IO.Path.GetFileNameWithoutExtension(file);
+                        if (fn.Contains(clean, StringComparison.OrdinalIgnoreCase) || 
+                            fn.Contains(rawQuery, StringComparison.OrdinalIgnoreCase) ||
+                            ChannelUtils.ToNormalizedKey(fn).Contains(normKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            string rel = "logos/" + System.IO.Path.GetRelativePath(dir, file).Replace("\\", "/");
+                            if (!results.Any(r => r.Url.Equals(rel, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                results.Add(new LogoSearchResult
+                                {
+                                    Name = $"{fn} (Yerel Dosya)",
+                                    Url = rel,
+                                    Source = "Yerel Logo Klasörü"
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+
             // 1. Check local indexed database (ChannelEnricher & LogoIndex table)
             string? indexedLogo = ChannelEnricher.GetLogoFromIndex(rawQuery);
             if (!string.IsNullOrEmpty(indexedLogo))
