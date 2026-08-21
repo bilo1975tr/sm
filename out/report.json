@@ -1,14 +1,14 @@
 {
-  "total_channels_parsed": 113973,
-  "unique_channels": 107107,
-  "alive_channels": 71577,
-  "dead_channels": 35530,
-  "epg_matches_count": 17,
-  "logo_matches_count": 103001,
+  "total_channels_parsed": 132607,
+  "unique_channels": 117724,
+  "alive_channels": 73314,
+  "dead_channels": 44410,
+  "epg_matches_count": 63,
+  "logo_matches_count": 112758,
   "categories": {
-    "TV": 11408,
-    "Film": 38044,
-    "Dizi": 21273,
-    "Radyo": 852
+    "TV": 13184,
+    "Film": 38034,
+    "Dizi": 21246,
+    "Radyo": 850
   }
 }
