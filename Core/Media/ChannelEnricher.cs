@@ -155,6 +155,14 @@ namespace StreamMesh.Core.Media
         private static readonly object _lock = new object();
         private readonly DatabaseEngine _db = new DatabaseEngine();
 
+        public static void InvalidateLogoCache()
+        {
+            lock (_lock)
+            {
+                _globalLogoIndex = null;
+            }
+        }
+
         public static string? GetLogoFromIndex(string rawName)
         {
             if (string.IsNullOrWhiteSpace(rawName)) return null;

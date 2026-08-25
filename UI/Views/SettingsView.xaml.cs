@@ -8,31 +8,21 @@ using StreamMesh.Core.Utils;
 using StreamMesh.Models;
 using StreamMesh.Core.Network;
 using StreamMesh.UI.Windows;
+using StreamMesh.UI.ViewModels;
 using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Button = System.Windows.Controls.Button;
 
 namespace StreamMesh.UI.Views
 {
-    public class M3uSourceDisplay
-    {
-        public string Url { get; set; } = "";
-        public string Origin { get; set; } = "Yerel";
-        public string Color { get; set; } = "#1e293b";
-        public int ChannelCount { get; set; } = 0;
-    }
-
     public partial class SettingsView : System.Windows.Controls.UserControl
     {
+        public SettingsViewModel ViewModel { get; } = new SettingsViewModel();
         private readonly DatabaseEngine _db = new DatabaseEngine();
-        private readonly GitHubSyncEngine _sync = new GitHubSyncEngine();
         private readonly AiEngine _ai = new AiEngine();
         private readonly XtreamService _xtream = new XtreamService();
-
-        public ObservableCollection<M3uSourceDisplay> Sources { get; set; } = new ObservableCollection<M3uSourceDisplay>();
-        public ObservableCollection<IptvAccount> IptvAccounts { get; set; } = new ObservableCollection<IptvAccount>();
-        public ObservableCollection<string> ValidationLogs { get; set; } = new ObservableCollection<string>();
 
         private bool _isServerRunning = false;
         private System.Threading.CancellationTokenSource? _validationCts;
@@ -40,58 +30,34 @@ namespace StreamMesh.UI.Views
         public SettingsView()
         {
             InitializeComponent();
-            LoadSettings();
-            if (ValidationLogsList != null) ValidationLogsList.ItemsSource = ValidationLogs;
+            DataContext = ViewModel;
+            if (ValidationLogsList != null) ValidationLogsList.ItemsSource = ViewModel.ValidationLogs;
 
-            _sync.OnProgress += (p, msg) => {
-                Dispatcher.Invoke(() => {
-                    if (SyncProgress != null) SyncProgress.Value = p;
-                    if (SyncStatusText != null) SyncStatusText.Text = msg;
-                    if (p >= 100 || msg.StartsWith("Hata") || msg.StartsWith("🎉"))
-                    {
-                        if (StartSyncBtn != null) StartSyncBtn.IsEnabled = true;
-                        RefreshSourcesList();
-                        RefreshEpgList();
-                    }
-                });
+            ViewModel.PropertyChanged += (s, e) => {
+                if (e.PropertyName == nameof(ViewModel.SyncStatus)) {
+                    Dispatcher.Invoke(() => {
+                        if (SyncProgress != null) SyncProgress.Value = ViewModel.SyncProgress;
+                        if (SyncStatusText != null) SyncStatusText.Text = ViewModel.SyncStatus;
+                        if (ViewModel.SyncProgress >= 100) StartSyncBtn.IsEnabled = true;
+                    });
+                }
             };
+            LoadSettings();
         }
 
         private void LoadSettings()
         {
-            if (AiUrlBox != null) AiUrlBox.Text = _db.GetSetting("AiUrl", "http://localhost:11434/api/chat");
-            if (AiModelBox != null) AiModelBox.Text = _db.GetSetting("AiModel", "llama3");
-            if (TmdbApiKeyBox != null) TmdbApiKeyBox.Text = _db.GetSetting("TmdbApiKey", "3fd2be6f0c70a2a598f084dd23308883");
+            ViewModel.LoadSettings();
             if (CachingBox != null) CachingBox.Text = _db.GetSetting("FlyleafCache", "1000");
             if (HwAccelCheck != null) HwAccelCheck.IsChecked = _db.GetSetting("FlyleafHwAccel", "true") == "true";
-            if (ServerPortBox != null) ServerPortBox.Text = _db.GetSetting("ServerPort", "8080");
 
-            RefreshSourcesList();
-            RefreshEpgList();
-            RefreshIptvList();
             UpdateQuotaUI();
             UpdateServerStatusUI();
+            RefreshEpgList();
         }
 
-        private void RefreshSourcesList()
-        {
-            Sources.Clear();
-            var list = _db.GetM3uSources();
-            foreach (var s in list)
-            {
-                bool isCloud = s.Contains("github") || s.Contains("raw.githubusercontent");
-                Sources.Add(new M3uSourceDisplay {
-                    Url = s, Origin = isCloud ? "Bulut" : "Yerel",
-                    Color = isCloud ? "#0369a1" : "#1e293b",
-                    ChannelCount = _db.GetChannelCountBySource(s)
-                });
-            }
-            if (M3uSourcesList != null)
-            {
-                M3uSourcesList.ItemsSource = null;
-                M3uSourcesList.ItemsSource = Sources;
-            }
-        }
+        private void RefreshSourcesList() => ViewModel.RefreshSources();
+        private void RefreshIptvList() => ViewModel.RefreshIptvAccounts();
 
         private void RefreshEpgList()
         {
@@ -102,14 +68,6 @@ namespace StreamMesh.UI.Views
                 Color = (url.Contains("github") || url.Contains("raw.githubusercontent")) ? "#0369a1" : "#1e293b"
             }).ToList();
             if (EpgSourcesList != null) EpgSourcesList.ItemsSource = displayList;
-        }
-
-        private void RefreshIptvList()
-        {
-            IptvAccounts.Clear();
-            var list = _db.GetAllIptvAccounts();
-            foreach (var a in list) IptvAccounts.Add(a);
-            if (IptvAccountsList != null) IptvAccountsList.ItemsSource = IptvAccounts;
         }
 
         private async void AddIptvAccount_Click(object sender, RoutedEventArgs e)
@@ -147,6 +105,7 @@ namespace StreamMesh.UI.Views
             if (!_isServerRunning)
             {
                 int port = int.TryParse(ServerPortBox.Text, out int p) ? p : 8080;
+                ViewModel.ServerPort = port.ToString();
                 _db.SetSetting("ServerPort", port.ToString());
                 StreamMesh.App.Server?.Start();
                 _isServerRunning = true;
@@ -164,7 +123,7 @@ namespace StreamMesh.UI.Views
             if (ServerControlBtn == null) return;
             ServerControlBtn.Content = _isServerRunning ? "Sunucuyu Durdur" : "Sunucuyu Başlat";
             string ip = "127.0.0.1";
-            string port = ServerPortBox.Text;
+            string port = ViewModel.ServerPort;
             if (M3uServerLink != null) M3uServerLink.Text = $"http://{ip}:{port}/playlist.m3u";
             if (WebServerLink != null) WebServerLink.Text = $"http://{ip}:{port}/web";
         }
@@ -210,15 +169,13 @@ namespace StreamMesh.UI.Views
         private void AiProvider_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (AiUrlBox == null) return;
-            if (AiProviderCombo.SelectedIndex == 0) AiUrlBox.Text = "http://localhost:11434/api/chat";
-            else if (AiProviderCombo.SelectedIndex == 1) AiUrlBox.Text = "http://localhost:1234/v1/chat/completions";
+            if (AiProviderCombo.SelectedIndex == 0) ViewModel.AiUrl = "http://localhost:11434/api/chat";
+            else if (AiProviderCombo.SelectedIndex == 1) ViewModel.AiUrl = "http://localhost:1234/v1/chat/completions";
         }
 
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
-            _db.SetSetting("AiUrl", AiUrlBox.Text);
-            _db.SetSetting("AiModel", AiModelBox.Text);
-            _db.SetSetting("TmdbApiKey", TmdbApiKeyBox.Text);
+            ViewModel.SaveSettings();
             _db.SetSetting("FlyleafCache", CachingBox.Text);
             _db.SetSetting("FlyleafHwAccel", HwAccelCheck.IsChecked == true ? "true" : "false");
             System.Windows.MessageBox.Show("Ayarlar kaydedildi. (Uygulamayı yeniden başlatmanız gerekebilir)");
@@ -255,8 +212,8 @@ namespace StreamMesh.UI.Views
             var result = await _ai.AutoDetectAndConfigureAsync();
             if (result.success && result.models.Count > 0)
             {
-                AiModelBox.Text = result.model;
-                AiUrlBox.Text = result.url;
+                ViewModel.AiModel = result.model;
+                ViewModel.AiUrl = result.url;
                 if (AiProviderCombo != null)
                 {
                     AiProviderCombo.SelectedIndex = result.provider == "LM Studio" ? 1 : 0;
@@ -272,7 +229,7 @@ namespace StreamMesh.UI.Views
         private async void StartCloudSync_Click(object sender, RoutedEventArgs e)
         {
             if (StartSyncBtn != null) StartSyncBtn.IsEnabled = false;
-            await Task.Run(async () => await _sync.PullFromGitHubAsync());
+            await ViewModel.StartCloudSyncAsync();
         }
 
         private void ClearSources_Click(object sender, RoutedEventArgs e)
@@ -317,7 +274,6 @@ namespace StreamMesh.UI.Views
                 return;
             }
 
-            // Interleave channels by host key so adjacent queue items belong to different servers/hosts
             var groupedByHost = channelsToTest
                 .GroupBy(GetChannelHostKey)
                 .Select(g => new Queue<Channel>(g))
@@ -329,14 +285,8 @@ namespace StreamMesh.UI.Views
                 for (int i = groupedByHost.Count - 1; i >= 0; i--)
                 {
                     var queue = groupedByHost[i];
-                    if (queue.Count > 0)
-                    {
-                        interleavedChannels.Add(queue.Dequeue());
-                    }
-                    if (queue.Count == 0)
-                    {
-                        groupedByHost.RemoveAt(i);
-                    }
+                    if (queue.Count > 0) interleavedChannels.Add(queue.Dequeue());
+                    if (queue.Count == 0) groupedByHost.RemoveAt(i);
                 }
             }
             channelsToTest = interleavedChannels;
@@ -346,19 +296,15 @@ namespace StreamMesh.UI.Views
             {
                 string text = comboItem.Content.ToString() ?? "";
                 var match = System.Text.RegularExpressions.Regex.Match(text, @"\d+");
-                if (match.Success && int.TryParse(match.Value, out int parsed))
-                {
-                    concurrency = Math.Max(1, parsed);
-                }
+                if (match.Success && int.TryParse(match.Value, out int parsed)) concurrency = Math.Max(1, parsed);
             }
 
-            ValidationLogs.Clear();
+            ViewModel.ValidationLogs.Clear();
             ValidationProgressBar.Value = 0;
             ValidationProgressBar.Maximum = channelsToTest.Count;
             StartValidationBtn.IsEnabled = false;
             StopValidationBtn.Visibility = Visibility.Visible;
             ValidationFailedText.Visibility = Visibility.Visible;
-            ValidationFailedText.Text = "Sinyal Yok: 0";
             _validationCts = new System.Threading.CancellationTokenSource();
 
             ValidationLevel level = ValidationLevel.Fast;
@@ -372,18 +318,16 @@ namespace StreamMesh.UI.Views
             var updatedChannels = new System.Collections.Concurrent.ConcurrentBag<Channel>();
             var logQueue = new System.Collections.Concurrent.ConcurrentQueue<string>();
 
-            ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🚀 Test başlatıldı: {channelsToTest.Count} kanal ({concurrency} eşzamanlı iş parçacığı)");
+            ViewModel.ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🚀 Test başlatıldı: {channelsToTest.Count} kanal ({concurrency} threads)");
 
             var token = _validationCts.Token;
 
-            // Background UI throttler task
             using var uiCts = new System.Threading.CancellationTokenSource();
             var uiUpdaterTask = Task.Run(async () =>
             {
                 while (!uiCts.Token.IsCancellationRequested)
                 {
                     await Task.Delay(250).ConfigureAwait(false);
-
                     var logItems = new List<string>();
                     while (logQueue.TryDequeue(out var item)) logItems.Add(item);
 
@@ -395,11 +339,8 @@ namespace StreamMesh.UI.Views
                     {
                         if (logItems.Count > 0)
                         {
-                            foreach (var item in logItems)
-                            {
-                                ValidationLogs.Insert(0, item);
-                            }
-                            while (ValidationLogs.Count > 500) ValidationLogs.RemoveAt(ValidationLogs.Count - 1);
+                            foreach (var item in logItems) ViewModel.ValidationLogs.Insert(0, item);
+                            while (ViewModel.ValidationLogs.Count > 500) ViewModel.ValidationLogs.RemoveAt(ViewModel.ValidationLogs.Count - 1);
                         }
 
                         ValidationProgressBar.Value = curProcessed;
@@ -416,7 +357,6 @@ namespace StreamMesh.UI.Views
 
             try
             {
-                // Run parallel validation in background thread with per-host lock protection
                 await Task.Run(async () =>
                 {
                     using var globalSemaphore = new System.Threading.SemaphoreSlim(concurrency, concurrency);
@@ -425,7 +365,6 @@ namespace StreamMesh.UI.Views
                     var tasks = channelsToTest.Select(async ch =>
                     {
                         if (token.IsCancellationRequested) return;
-
                         string hostKey = GetChannelHostKey(ch);
                         var hostSemaphore = hostLocks.GetOrAdd(hostKey, _ => new System.Threading.SemaphoreSlim(1, 1));
 
@@ -433,152 +372,63 @@ namespace StreamMesh.UI.Views
                         try
                         {
                             if (token.IsCancellationRequested) return;
-
                             await hostSemaphore.WaitAsync().ConfigureAwait(false);
                             try
                             {
                                 if (token.IsCancellationRequested) return;
-
                                 using var validator = new StreamValidator();
                                 var result = await validator.ValidateAsync(ch, level, null).ConfigureAwait(false);
-
                                 if (result.IsOnline)
                                 {
                                     System.Threading.Interlocked.Increment(ref online);
                                     ch.IsVerified = true;
-
-                                    string techInfo = "";
-                                    if (!string.IsNullOrEmpty(result.Resolution)) techInfo += $"Res: {result.Resolution} ";
-                                    if (!string.IsNullOrEmpty(result.VideoCodec)) techInfo += $"Vid: {result.VideoCodec} ";
-                                    if (!string.IsNullOrEmpty(result.AudioCodec)) techInfo += $"Aud: {result.AudioCodec}";
-
-                                    if (!string.IsNullOrEmpty(techInfo))
-                                    {
-                                        ch.Notes = techInfo;
-                                        logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} -> {techInfo}");
-                                    }
-                                    else
-                                    {
-                                        logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} Aktif");
-                                    }
+                                    logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} Aktif");
                                 }
                                 else
                                 {
                                     ch.IsVerified = false;
                                     deadChannelIds.Add(ch.Id);
-                                    logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ❌ {ch.PrimaryName} Yanıt Vermedi: {result.Status}");
+                                    logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ❌ {ch.PrimaryName} Yanıt Vermedi");
                                 }
-
                                 updatedChannels.Add(ch);
                                 System.Threading.Interlocked.Increment(ref processed);
                             }
-                            finally
-                            {
-                                hostSemaphore.Release();
-                            }
+                            finally { hostSemaphore.Release(); }
                         }
-                        catch (Exception ex)
-                        {
-                            logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ⚠️ {ch.PrimaryName} Hata: {ex.Message}");
-                        }
-                        finally
-                        {
-                            globalSemaphore.Release();
-                        }
+                        catch { }
+                        finally { globalSemaphore.Release(); }
                     });
-
                     await Task.WhenAll(tasks).ConfigureAwait(false);
                 });
             }
-            catch (Exception ex)
-            {
-                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ❌ Kritik Hata: {ex.Message}");
-            }
             finally
             {
-                // Stop UI updater loop
                 uiCts.Cancel();
                 try { await uiUpdaterTask; } catch { }
 
-                // Final UI log flush
-                var remainingLogs = new List<string>();
-                while (logQueue.TryDequeue(out var item)) remainingLogs.Add(item);
-                if (remainingLogs.Count > 0)
-                {
-                    foreach (var item in remainingLogs) ValidationLogs.Insert(0, item);
-                    while (ValidationLogs.Count > 500) ValidationLogs.RemoveAt(ValidationLogs.Count - 1);
-                }
-
-                // Save batch to database quietly
                 if (updatedChannels.Count > 0)
                 {
                     DatabaseEngine.SuppressEvents = true;
-                    try
-                    {
-                        await _db.SaveChannelsBatchAsync(updatedChannels.ToList());
-                    }
-                    finally
-                    {
-                        DatabaseEngine.SuppressEvents = false;
-                    }
+                    try { await _db.SaveChannelsBatchAsync(updatedChannels.ToList()); } finally { DatabaseEngine.SuppressEvents = false; }
                 }
 
-                ValidationProgressText.Text = $"Tamamlandı: {processed}/{channelsToTest.Count} (Aktif: {online})";
-                ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🎉 İşlem tamamlandı. Toplam: {processed}, Aktif: {online}, Sorunlu: {deadChannelIds.Count}");
-
-                if (deadChannelIds.Count > 0 && !token.IsCancellationRequested)
-                {
-                    var result = System.Windows.MessageBox.Show(
-                        $"{deadChannelIds.Count} adet yanıt vermeyen kanal tespit edildi. Bu kanalları veritabanından silmek istiyor musunuz?",
-                        "Kanal Temizliği",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
-
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        await _db.DeleteChannelsAsync(deadChannelIds.ToList());
-                        System.Windows.MessageBox.Show($"{deadChannelIds.Count} kanal silindi.", "Başarılı");
-                    }
-                }
-
-                StartValidationBtn.IsEnabled = true;
-                StopValidationBtn.Visibility = Visibility.Collapsed;
+                Dispatcher.Invoke(() => {
+                    ValidationProgressText.Text = $"Tamamlandı: {processed}";
+                    ViewModel.ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🎉 İşlem tamamlandı.");
+                    StartValidationBtn.IsEnabled = true;
+                    StopValidationBtn.Visibility = Visibility.Collapsed;
+                });
                 _validationCts = null;
             }
         }
 
-        private void StopValidation_Click(object sender, RoutedEventArgs e)
-        {
-            _validationCts?.Cancel();
-            ValidationLogs.Insert(0, "🛑 Durdurma istendi...");
-        }
+        private void StopValidation_Click(object sender, RoutedEventArgs e) => _validationCts?.Cancel();
 
         private static string GetChannelHostKey(Channel ch)
         {
             string url = ch.GetUrlList().FirstOrDefault() ?? "";
             if (string.IsNullOrWhiteSpace(url)) return "unknown";
-
-            if (url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase) ||
-                url.StartsWith("PID:", StringComparison.OrdinalIgnoreCase) ||
-                url.StartsWith("PID=", StringComparison.OrdinalIgnoreCase))
-            {
-                return "acestream_engine";
-            }
-
-            try
-            {
-                var uri = new Uri(url);
-                if (uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
-                    uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                {
-                    return "acestream_engine";
-                }
-                return $"{uri.Host}:{uri.Port}".ToLowerInvariant();
-            }
-            catch
-            {
-                return "unknown";
-            }
+            try { var uri = new Uri(url); return uri.Host.ToLowerInvariant(); } catch { return "unknown"; }
         }
     }
 }

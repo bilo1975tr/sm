@@ -10,11 +10,14 @@ using StreamMesh.Core.Media;
 using StreamMesh.Models;
 using StreamMesh.Core.Utils;
 
+using StreamMesh.UI.ViewModels;
+
 namespace StreamMesh.UI.Windows
 {
     public partial class MainWindow : Window
     {
         public static MainWindow? Instance { get; private set; }
+        public MainWindowViewModel ViewModel { get; } = new MainWindowViewModel();
 
         private HomeView _homeView = new HomeView();
         private PlayerView _playerView = new PlayerView();
@@ -54,20 +57,16 @@ namespace StreamMesh.UI.Windows
             }
 
             SetupTrayIcon();
+            DataContext = ViewModel;
             MainContent.Content = _homeView;
 
-            string currentVer = UpdateService.GetCurrentVersion();
-            CurrentVersionBadge.Text = currentVer;
-            Title = $"StreamMesh Hybrid v{currentVer}";
+            Title = $"StreamMesh Hybrid v{ViewModel.Version}";
 
             UpdateService.OnVersionUpdated += (newVer) => {
                 Dispatcher.Invoke(() => {
-                    CurrentVersionBadge.Text = newVer;
+                    ViewModel.Version = newVer;
                     Title = $"StreamMesh Hybrid v{newVer}";
-                    if (_notifyIcon != null)
-                    {
-                        _notifyIcon.Text = $"StreamMesh Hybrid v{newVer}";
-                    }
+                    if (_notifyIcon != null) _notifyIcon.Text = $"StreamMesh Hybrid v{newVer}";
                 });
             };
 
@@ -75,8 +74,8 @@ namespace StreamMesh.UI.Windows
 
             _peerTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
             _peerTimer.Tick += async (s, e) => {
-                int count = await _stun.GetOnlinePeerCountAsync();
-                OnlinePeersText.Text = count.ToString();
+                await ViewModel.RefreshPeersAsync();
+                OnlinePeersText.Text = ViewModel.OnlinePeers.ToString();
             };
             _peerTimer.Start();
 
@@ -84,17 +83,18 @@ namespace StreamMesh.UI.Windows
             _epgTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(12) };
             _epgTimer.Tick += async (s, e) => { await RunAutoEpgUpdateAsync(); };
             _epgTimer.Start();
-            System.Threading.Tasks.Task.Delay(10000).ContinueWith(_ => RunAutoEpgUpdateAsync());
+            _ = Task.Run(async () => { await Task.Delay(10000); await RunAutoEpgUpdateAsync(); });
 
             // 30-Minute Film & Series Metadata Auto-Enricher Worker
             _metaTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(30) };
             _metaTimer.Tick += async (s, e) => { await RunAutoMetadataEnrichmentAsync(); };
             _metaTimer.Start();
-            System.Threading.Tasks.Task.Delay(20000).ContinueWith(_ => RunAutoMetadataEnrichmentAsync());
+            _ = Task.Run(async () => { await Task.Delay(20000); await RunAutoMetadataEnrichmentAsync(); });
 
             // Auto-detect local AI Engine (Ollama / LM Studio) in background
-            System.Threading.Tasks.Task.Delay(3000).ContinueWith(async _ =>
+            _ = Task.Run(async () =>
             {
+                await Task.Delay(3000);
                 try
                 {
                     var ai = new AiEngine();
@@ -134,7 +134,8 @@ namespace StreamMesh.UI.Windows
                 if (hasUpdate)
                 {
                     _availableRemoteVersion = remoteVer;
-                    UpdateBadgeText.Text = $"Yeni Güncelleme Var! (v{remoteVer}) - Tıkla ve Güncelle";
+                    ViewModel.IsUpdateAvailable = true;
+                    ViewModel.UpdateMessage = $"Yeni Güncelleme Var! (v{remoteVer}) - Tıkla ve Güncelle";
                     UpdateBadgeButton.Visibility = Visibility.Visible;
                 }
             }
@@ -463,6 +464,13 @@ namespace StreamMesh.UI.Windows
             try
             {
                 var db = new StreamMesh.Core.Database.DatabaseEngine();
+                string apiKey = db.GetSetting("TmdbApiKey", "");
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    // TMDB API anahtarı tanımlı değilse arka plan sorgusunu çalıştırma
+                    return;
+                }
+
                 var metaEng = new StreamMesh.Core.Media.MetadataEngine();
 
                 // TMDB Günlük Limit kontrolü (1000 istek/gün)

@@ -71,6 +71,7 @@ namespace StreamMesh.Core.Media
                 if (localLogos.Count > 0)
                 {
                     _db.UpdateLogoIndex(localLogos);
+                    ChannelEnricher.InvalidateLogoCache();
                     LogService.LogInfo($"[LogoSync] {localLogos.Count} adet yerel logo indekse kaydedildi.");
                 }
             }
@@ -121,6 +122,7 @@ namespace StreamMesh.Core.Media
                 if (allLogos.Count > 0)
                 {
                     _db.UpdateLogoIndex(allLogos);
+                    ChannelEnricher.InvalidateLogoCache();
                     _db.SetSetting("LogoSyncDate", DateTime.Now.ToString("o"));
                     LogService.LogInfo($"[LogoSync] {allLogos.Count} adet yeni standartta logo güncellendi.");
                 }

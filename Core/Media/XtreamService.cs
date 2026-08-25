@@ -72,13 +72,16 @@ namespace StreamMesh.Core.Media
 
                 foreach (var item in items)
                 {
+                    string rawName = item["name"]?.ToString() ?? "İsimsiz";
+                    string streamIcon = item["stream_icon"]?.ToString() ?? item["cover"]?.ToString() ?? "";
+
                     var ch = new Channel
                     {
                         Id = $"xt_{acc.Id}_{item["stream_id"] ?? item["series_id"]}",
-                        Name = item["name"]?.ToString() ?? "İsimsiz",
+                        Name = rawName,
                         GroupTitle = $"IPTV: {acc.Name} ({item["category_name"] ?? category})",
                         Category = category,
-                        LogoUrl = item["stream_icon"]?.ToString() ?? item["cover"]?.ToString() ?? "",
+                        LogoUrl = streamIcon,
                         SourceType = "M3U",
                         PlaylistUrl = acc.ServerUrl
                     };
@@ -89,6 +92,15 @@ namespace StreamMesh.Core.Media
                     if (type == "live") ch.Url = $"{baseUrl}/live/{acc.Username}/{acc.Password}/{streamId}.ts";
                     else if (type == "movie") ch.Url = $"{baseUrl}/movie/{acc.Username}/{acc.Password}/{streamId}.{ext}";
                     else if (type == "series") ch.Url = $"{baseUrl}/series/{acc.Username}/{acc.Password}/{streamId}.{ext}";
+
+                    SmartNormalizationEngine.Instance.NormalizeChannel(ch);
+
+                    // Automatic logo fallback from index if missing
+                    if (string.IsNullOrWhiteSpace(ch.LogoUrl))
+                    {
+                        string? indexedLogo = ChannelEnricher.GetLogoFromIndex(ch.Name);
+                        if (!string.IsNullOrEmpty(indexedLogo)) ch.LogoUrl = indexedLogo;
+                    }
 
                     allItems.Add(ch);
                 }

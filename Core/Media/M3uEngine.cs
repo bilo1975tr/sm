@@ -4,18 +4,12 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using StreamMesh.Models;
+using StreamMesh.Core.Network;
 
 namespace StreamMesh.Core.Media
 {
     public class M3uEngine
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-
-        static M3uEngine()
-        {
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
-        }
-
         public async Task<List<Channel>> ParseM3uAsync(string urlOrPath, string categoryHint = "TV", bool forceCategory = false, Action<string, double>? progressCallback = null)
         {
             var channels = new List<Channel>();
@@ -27,8 +21,8 @@ namespace StreamMesh.Core.Media
                 {
                     progressCallback?.Invoke($"Bağlanılıyor: {GetShortUrl(urlOrPath)}", 0);
 
-                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
-                    using var response = await _httpClient.GetAsync(urlOrPath, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    using var response = await MediaHttpClient.GetAsync(urlOrPath, HttpCompletionOption.ResponseHeadersRead, 10, cts.Token);
                     if (!response.IsSuccessStatusCode)
                     {
                         progressCallback?.Invoke($"Hata ({response.StatusCode}): {GetShortUrl(urlOrPath)}", 0);
@@ -146,6 +140,19 @@ namespace StreamMesh.Core.Media
                             if (!forceCategory) current.Category = groupMatch.Groups[1].Value;
                         }
 
+                        // HTTP Headers in EXTINF attributes
+                        var uaMatch = System.Text.RegularExpressions.Regex.Match(line, @"(?:http-user-agent|user-agent)=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (uaMatch.Success) current.HttpUserAgent = uaMatch.Groups[1].Value.Trim();
+
+                        var refMatch = System.Text.RegularExpressions.Regex.Match(line, @"(?:http-referrer|http-referer|referer|referrer)=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (refMatch.Success) current.HttpReferer = refMatch.Groups[1].Value.Trim();
+
+                        var cookieMatch = System.Text.RegularExpressions.Regex.Match(line, @"(?:http-cookie|cookie)=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (cookieMatch.Success) current.HttpCookie = cookieMatch.Groups[1].Value.Trim();
+
+                        var originMatch = System.Text.RegularExpressions.Regex.Match(line, @"(?:http-origin|origin)=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (originMatch.Success) current.HttpOrigin = originMatch.Groups[1].Value.Trim();
+
                         int nameIdx = line.LastIndexOf(',');
                         if (nameIdx != -1)
                         {
@@ -153,10 +160,58 @@ namespace StreamMesh.Core.Media
                             if (string.IsNullOrEmpty(current.Name)) current.Name = "İsimsiz Kanal";
                         }
                     }
+                    else if (line.StartsWith("#EXTVLCOPT:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (current == null) current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath };
+                        string opt = line.Substring(11).Trim();
+                        int eq = opt.IndexOf('=');
+                        if (eq > 0)
+                        {
+                            string optKey = opt.Substring(0, eq).Trim().ToLowerInvariant();
+                            string optVal = opt.Substring(eq + 1).Trim('"', '\'', ' ');
+
+                            if (optKey == "http-user-agent" || optKey == "user-agent")
+                                current.HttpUserAgent = optVal;
+                            else if (optKey == "http-referrer" || optKey == "http-referer" || optKey == "referer" || optKey == "referrer")
+                                current.HttpReferer = optVal;
+                            else if (optKey == "http-cookie" || optKey == "cookie")
+                                current.HttpCookie = optVal;
+                            else if (optKey == "http-origin" || optKey == "origin")
+                                current.HttpOrigin = optVal;
+                            else
+                                current.CustomHeaders[optKey] = optVal;
+                        }
+                    }
+                    else if (line.StartsWith("#EXTHTTP:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (current == null) current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath };
+                        string jsonPart = line.Substring(9).Trim();
+                        try
+                        {
+                            var headers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonPart);
+                            if (headers != null)
+                            {
+                                foreach (var kv in headers)
+                                {
+                                    if (kv.Key.Equals("User-Agent", StringComparison.OrdinalIgnoreCase) || kv.Key.Equals("http-user-agent", StringComparison.OrdinalIgnoreCase))
+                                        current.HttpUserAgent = kv.Value;
+                                    else if (kv.Key.Equals("Referer", StringComparison.OrdinalIgnoreCase) || kv.Key.Equals("http-referrer", StringComparison.OrdinalIgnoreCase) || kv.Key.Equals("http-referer", StringComparison.OrdinalIgnoreCase))
+                                        current.HttpReferer = kv.Value;
+                                    else if (kv.Key.Equals("Cookie", StringComparison.OrdinalIgnoreCase) || kv.Key.Equals("http-cookie", StringComparison.OrdinalIgnoreCase))
+                                        current.HttpCookie = kv.Value;
+                                    else if (kv.Key.Equals("Origin", StringComparison.OrdinalIgnoreCase) || kv.Key.Equals("http-origin", StringComparison.OrdinalIgnoreCase))
+                                        current.HttpOrigin = kv.Value;
+                                    else
+                                        current.CustomHeaders[kv.Key] = kv.Value;
+                                }
+                            }
+                        }
+                        catch { }
+                    }
                     else if (!line.StartsWith("#"))
                     {
-                        string url = line;
-                        if (!IsValidStreamUrl(url))
+                        string rawUrl = line;
+                        if (!IsValidStreamUrl(rawUrl))
                         {
                             current = null;
                             continue;
@@ -165,18 +220,56 @@ namespace StreamMesh.Core.Media
                         if (current == null)
                         {
                             // Single line format without #EXTINF
-                            string baseName = Path.GetFileNameWithoutExtension(url);
+                            string baseName = Path.GetFileNameWithoutExtension(rawUrl);
                             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Yayın";
                             current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, Name = baseName };
                         }
 
-                        if (!string.IsNullOrEmpty(url))
+                        // Check for pipe syntax in URL (e.g. url|User-Agent=...&Referer=...)
+                        if (rawUrl.Contains('|'))
                         {
-                            current.Url = url;
+                            int pipeIdx = rawUrl.IndexOf('|');
+                            string headerPart = rawUrl.Substring(pipeIdx + 1).Trim();
+                            var parts = headerPart.Split(new[] { '&', '|' }, StringSplitOptions.RemoveEmptyEntries);
+                            foreach (var part in parts)
+                            {
+                                int eqIdx = part.IndexOf('=');
+                                if (eqIdx > 0)
+                                {
+                                    string key = part.Substring(0, eqIdx).Trim();
+                                    string val = part.Substring(eqIdx + 1).Trim('"', '\'', ' ');
+
+                                    if (key.Equals("http-user-agent", StringComparison.OrdinalIgnoreCase) || key.Equals("user-agent", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        if (string.IsNullOrWhiteSpace(current.HttpUserAgent)) current.HttpUserAgent = val;
+                                    }
+                                    else if (key.Equals("http-referrer", StringComparison.OrdinalIgnoreCase) || key.Equals("http-referer", StringComparison.OrdinalIgnoreCase) || key.Equals("referer", StringComparison.OrdinalIgnoreCase) || key.Equals("referrer", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        if (string.IsNullOrWhiteSpace(current.HttpReferer)) current.HttpReferer = val;
+                                    }
+                                    else if (key.Equals("http-cookie", StringComparison.OrdinalIgnoreCase) || key.Equals("cookie", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        if (string.IsNullOrWhiteSpace(current.HttpCookie)) current.HttpCookie = val;
+                                    }
+                                    else if (key.Equals("http-origin", StringComparison.OrdinalIgnoreCase) || key.Equals("origin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        if (string.IsNullOrWhiteSpace(current.HttpOrigin)) current.HttpOrigin = val;
+                                    }
+                                    else
+                                    {
+                                        if (!current.CustomHeaders.ContainsKey(key)) current.CustomHeaders[key] = val;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(rawUrl))
+                        {
+                            current.Url = rawUrl;
 
                             using (var sha1 = System.Security.Cryptography.SHA1.Create())
                             {
-                                byte[] hash = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(url));
+                                byte[] hash = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawUrl));
                                 current.Id = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                             }
 

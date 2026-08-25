@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
@@ -25,16 +26,11 @@ namespace StreamMesh.Core.Media
 
     public class AceEngine
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
         private const int ACESTREAM_PORT = 6878;
         private static readonly List<int> _spawnedProcessIds = new();
 
         static AceEngine()
         {
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
-
             AppDomain.CurrentDomain.ProcessExit += (s, e) => CleanupSpawnedProcesses();
         }
 
@@ -72,7 +68,7 @@ namespace StreamMesh.Core.Media
             {
                 string url = $"http://127.0.0.1:{ACESTREAM_PORT}/server/api?method=get_api_access_token";
                 LogService.LogInfo($"AceEngine: Getting API Token from {url}");
-                var response = await _httpClient.GetAsync(url);
+                var response = await MediaHttpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
@@ -83,14 +79,6 @@ namespace StreamMesh.Core.Media
                         LogService.LogInfo($"AceEngine: Received Token: {token.Substring(0, 8)}...");
                         return token;
                     }
-                    else
-                    {
-                        LogService.LogWarning($"AceEngine: Token field missing in response: {json}");
-                    }
-                }
-                else
-                {
-                    LogService.LogWarning($"AceEngine: Failed to get token. Status: {response.StatusCode}");
                 }
             }
             catch (Exception ex) { LogService.LogError("AceEngine: GetToken Exception", ex); }
@@ -145,7 +133,7 @@ namespace StreamMesh.Core.Media
             try
             {
                 string url = $"https://search-ace.stream/?q={Uri.EscapeDataString(cleanQuery)}";
-                var html = await _httpClient.GetStringAsync(url);
+                var html = await MediaHttpClient.GetStringAsync(url);
                 var matches = Regex.Matches(html, @"(acestream://[a-f0-9]{40}|[a-f0-9]{40})[^>]*>(.*?)<");
                 foreach (Match m in matches)
                 {
@@ -183,7 +171,7 @@ namespace StreamMesh.Core.Media
             try
             {
                 string url = $"https://ace-stream.net/search?q={Uri.EscapeDataString(cleanQuery)}";
-                var html = await _httpClient.GetStringAsync(url);
+                var html = await MediaHttpClient.GetStringAsync(url);
                 var matches = Regex.Matches(html, @"(acestream://[a-f0-9]{40}|[a-f0-9]{40})[^>]*>(.*?)<");
                 foreach (Match m in matches)
                 {
@@ -291,7 +279,7 @@ namespace StreamMesh.Core.Media
             string url = $"https://search.acestream.net/?method=search&api_version=1&api_key=test_api_key&page_size=250&page_offset={pageOffset}&group_by_channels=1";
             if (!string.IsNullOrEmpty(query)) url += $"&query={Uri.EscapeDataString(query)}";
             if (!string.IsNullOrEmpty(category)) url += $"&category={Uri.EscapeDataString(category)}";
-            var response = await _httpClient.GetAsync(url);
+            var response = await MediaHttpClient.GetAsync(url);
             if (response.IsSuccessStatusCode) ParseAceJsonResults(list, await response.Content.ReadAsStringAsync(), "AceStream Sunucu API");
         }
 
@@ -303,13 +291,13 @@ namespace StreamMesh.Core.Media
             if (string.IsNullOrEmpty(token)) return;
             string url = $"http://127.0.0.1:{ACESTREAM_PORT}/server/api?method=search&token={token}&page_size=250&page_offset={pageOffset}";
             if (!string.IsNullOrEmpty(query)) url += $"&query={Uri.EscapeDataString(query)}";
-            var response = await _httpClient.GetAsync(url);
+            var response = await MediaHttpClient.GetAsync(url);
             if (response.IsSuccessStatusCode) ParseAceJsonResults(list, await response.Content.ReadAsStringAsync(), "AceStream Yerel Motor");
         }
 
         private async Task SearchServerSideAllSnapshotAsync(List<AceResult> list, string query, string category)
         {
-            var response = await _httpClient.GetAsync("https://search.acestream.net/all?api_version=1&api_key=test_api_key");
+            var response = await MediaHttpClient.GetAsync("https://search.acestream.net/all?api_version=1&api_key=test_api_key");
             if (response.IsSuccessStatusCode) ParseAceJsonResults(list, await response.Content.ReadAsStringAsync(), "AceStream P2P Veritabanı");
         }
 
@@ -317,9 +305,20 @@ namespace StreamMesh.Core.Media
         {
             try
             {
-                var data = JObject.Parse(json);
-                var results = data["result"]?["results"] ?? data["result"];
+                var token = JToken.Parse(json);
+                JToken? results = null;
+
+                if (token is JArray arr)
+                {
+                    results = arr;
+                }
+                else if (token is JObject obj)
+                {
+                    results = obj["result"]?["results"] ?? obj["result"] ?? obj["results"];
+                }
+
                 if (results == null) return;
+
                 foreach (var item in results)
                 {
                     if (item["items"] != null)
@@ -360,7 +359,7 @@ namespace StreamMesh.Core.Media
             {
                 try
                 {
-                    var html = await _httpClient.GetStringAsync(url);
+                    var html = await MediaHttpClient.GetStringAsync(url);
                     var matches = Regex.Matches(html, @"(acestream://[a-f0-9]{40}|[a-f0-9]{40})[^>]*>(.*?)<");
                     foreach (Match m in matches)
                     {
@@ -389,7 +388,7 @@ namespace StreamMesh.Core.Media
 
         public async Task<bool> IsEngineRunningAsync()
         {
-            try { var res = await _httpClient.GetAsync($"http://127.0.0.1:{ACESTREAM_PORT}/webui/api/service?method=get_version"); return res.IsSuccessStatusCode; }
+            try { var res = await MediaHttpClient.GetAsync($"http://127.0.0.1:{ACESTREAM_PORT}/webui/api/service?method=get_version"); return res.IsSuccessStatusCode; }
             catch { return false; }
         }
 
@@ -436,12 +435,11 @@ namespace StreamMesh.Core.Media
                 string dlUrl = "https://github.com/bilo1975tr/sm/releases/latest/download/AceStream.zip";
                 LogService.LogInfo($"AceEngine: Downloading from {dlUrl}");
 
-                using var res = await _httpClient.GetAsync(dlUrl);
+                using var res = await MediaHttpClient.GetAsync(dlUrl);
                 if (!res.IsSuccessStatusCode)
                 {
-                    // Fallback to v1.0 if latest tag fails
                     dlUrl = "https://github.com/bilo1975tr/sm/releases/download/v1.0/AceStream.zip";
-                    using var res2 = await _httpClient.GetAsync(dlUrl);
+                    using var res2 = await MediaHttpClient.GetAsync(dlUrl);
                     res2.EnsureSuccessStatusCode();
                     using (var fs = new FileStream(temp, FileMode.Create)) await res2.Content.CopyToAsync(fs);
                 }
@@ -506,13 +504,12 @@ namespace StreamMesh.Core.Media
                 if (!string.IsNullOrEmpty(token))
                 {
                     string url = $"http://127.0.0.1:{ACESTREAM_PORT}/server/api?method=stop&token={token}";
-                    await _httpClient.GetAsync(url);
+                    await MediaHttpClient.GetAsync(url);
                 }
 
-                // Method 2: WebUI Service stop (Force)
                 try
                 {
-                    await _httpClient.GetAsync($"http://127.0.0.1:{ACESTREAM_PORT}/webui/api/service?method=stop_all");
+                    await MediaHttpClient.GetAsync($"http://127.0.0.1:{ACESTREAM_PORT}/webui/api/service?method=stop_all");
                 } catch { }
 
                 await Task.Delay(800); // Give engine time to release port/session
@@ -534,10 +531,9 @@ namespace StreamMesh.Core.Media
                 string url = $"http://127.0.0.1:{ACESTREAM_PORT}/server/api?method=get_version&token={token}";
                 LogService.LogInfo($"AceEngine: Waking up motor for hash {hash}");
 
-                var response = await _httpClient.GetAsync(url);
+                var response = await MediaHttpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
-                    // Engine is responsive, return the exact format requested by user.
                     return $"http://127.0.0.1:{ACESTREAM_PORT}/ace/getstream?id={hash}";
                 }
             }
@@ -573,17 +569,14 @@ namespace StreamMesh.Core.Media
                 using var request = new HttpRequestMessage(HttpMethod.Get, streamUrl);
                 request.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 512);
                 
-                var res = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                var res = await MediaHttpClient.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                 return res.IsSuccessStatusCode || 
                        res.StatusCode == System.Net.HttpStatusCode.Found || 
                        res.StatusCode == System.Net.HttpStatusCode.MovedPermanently ||
                        res.StatusCode == System.Net.HttpStatusCode.PartialContent ||
                        res.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed;
             }
-            catch 
-            { 
-                return false; 
-            }
+            catch { return false; }
         }
       public List<string> GetHttpUrls(string cid)
         {
@@ -632,6 +625,32 @@ namespace StreamMesh.Core.Media
         {
             var list = GetHttpUrls(cid);
             return list.Count > 0 ? list[0] : "";
+        }
+
+        public async Task<int> GetStreamPeersAsync(string cid)
+        {
+            try
+            {
+                string hash = ExtractHash(cid);
+                if (string.IsNullOrEmpty(hash)) return 0;
+
+                string? token = await GetApiAccessTokenAsync();
+                if (string.IsNullOrEmpty(token)) return 0;
+
+                string url = $"http://127.0.0.1:{ACESTREAM_PORT}/server/api?method=get_stream_info&token={token}&infohash={hash}";
+                var res = await MediaHttpClient.GetStringAsync(url);
+                if (!string.IsNullOrEmpty(res))
+                {
+                    var jobj = JObject.Parse(res);
+                    var peersToken = jobj["result"]?["peers"] ?? jobj["result"]?["connected_peers"];
+                    if (peersToken != null && int.TryParse(peersToken.ToString(), out int peers))
+                    {
+                        return peers;
+                    }
+                }
+            }
+            catch { }
+            return 0;
         }
 
         public bool IsAceStreamUrl(string url)

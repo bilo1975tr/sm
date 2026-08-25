@@ -54,6 +54,43 @@ namespace StreamMesh.Models
         private string _backdropUrl = string.Empty;
         private string _cast = string.Empty;
 
+        // HTTP Headers & Metadata (M3U / IPTV)
+        private string _httpUserAgent = string.Empty;
+        private string _httpReferer = string.Empty;
+        private string _httpCookie = string.Empty;
+        private string _httpOrigin = string.Empty;
+        private Dictionary<string, string> _customHeaders = new(StringComparer.OrdinalIgnoreCase);
+
+        public string HttpUserAgent
+        {
+            get => _httpUserAgent;
+            set { if (_httpUserAgent != value) { _httpUserAgent = value; OnPropertyChanged(); } }
+        }
+
+        public string HttpReferer
+        {
+            get => _httpReferer;
+            set { if (_httpReferer != value) { _httpReferer = value; OnPropertyChanged(); } }
+        }
+
+        public string HttpCookie
+        {
+            get => _httpCookie;
+            set { if (_httpCookie != value) { _httpCookie = value; OnPropertyChanged(); } }
+        }
+
+        public string HttpOrigin
+        {
+            get => _httpOrigin;
+            set { if (_httpOrigin != value) { _httpOrigin = value; OnPropertyChanged(); } }
+        }
+
+        public Dictionary<string, string> CustomHeaders
+        {
+            get => _customHeaders;
+            set { if (_customHeaders != value) { _customHeaders = value; OnPropertyChanged(); } }
+        }
+
         public string ImdbId
         {
             get => _imdbId;
@@ -540,6 +577,17 @@ namespace StreamMesh.Models
             if (string.IsNullOrWhiteSpace(Cast) && !string.IsNullOrWhiteSpace(other.Cast)) Cast = other.Cast;
             if ((string.IsNullOrWhiteSpace(Category) || Category == "TV") && !string.IsNullOrWhiteSpace(other.Category) && other.Category != "TV") Category = other.Category;
             if ((string.IsNullOrWhiteSpace(Language) || Language == "und") && !string.IsNullOrWhiteSpace(other.Language) && other.Language != "und") Language = other.Language;
+            if (string.IsNullOrWhiteSpace(HttpUserAgent) && !string.IsNullOrWhiteSpace(other.HttpUserAgent)) HttpUserAgent = other.HttpUserAgent;
+            if (string.IsNullOrWhiteSpace(HttpReferer) && !string.IsNullOrWhiteSpace(other.HttpReferer)) HttpReferer = other.HttpReferer;
+            if (string.IsNullOrWhiteSpace(HttpCookie) && !string.IsNullOrWhiteSpace(other.HttpCookie)) HttpCookie = other.HttpCookie;
+            if (string.IsNullOrWhiteSpace(HttpOrigin) && !string.IsNullOrWhiteSpace(other.HttpOrigin)) HttpOrigin = other.HttpOrigin;
+            if (other.CustomHeaders != null)
+            {
+                foreach (var kv in other.CustomHeaders)
+                {
+                    if (!CustomHeaders.ContainsKey(kv.Key)) CustomHeaders[kv.Key] = kv.Value;
+                }
+            }
 
             // 6. Merge Lock States
             if (other.IsEpgLocked) IsEpgLocked = true;

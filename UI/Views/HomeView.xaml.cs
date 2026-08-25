@@ -113,7 +113,7 @@ namespace StreamMesh.UI.Views
         }
 
         private void Sort_SelectionChanged(object sender, SelectionChangedEventArgs e) { _vm?.SetSort(SortComboBox.SelectedIndex); }
-        private void Refresh_Click(object sender, RoutedEventArgs e) { _vm.LoadData(); }
+        private void Refresh_Click(object sender, RoutedEventArgs e) { _ = _vm.LoadDataAsync(); }
         private void Prev_Click(object sender, RoutedEventArgs e) { _vm.PrevPage(); }
         private void Next_Click(object sender, RoutedEventArgs e) { _vm.NextPage(); }
 
@@ -141,7 +141,7 @@ namespace StreamMesh.UI.Views
             {
                 var editWin = new EditChannelWindow(ch);
                 editWin.Owner = Window.GetWindow(this);
-                if (editWin.ShowDialog() == true) _vm.LoadData();
+                if (editWin.ShowDialog() == true) _ = _vm.LoadDataAsync();
             }
         }
 
@@ -157,13 +157,13 @@ namespace StreamMesh.UI.Views
             }
         }
 
-        private void DeleteContext_Click(object sender, RoutedEventArgs e)
+        private async void DeleteContext_Click(object sender, RoutedEventArgs e)
         {
             if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
             {
                 if (System.Windows.MessageBox.Show($"{ch.Name} silinecek. Emin misiniz?", "Kanal Sil", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    _vm.DeleteChannel(ch);
+                    await _vm.DeleteChannelAsync(ch);
                 }
             }
         }

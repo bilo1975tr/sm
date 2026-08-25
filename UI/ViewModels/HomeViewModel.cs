@@ -46,6 +46,7 @@ namespace StreamMesh.UI.ViewModels
             get => _searchText;
             set
             {
+                if (_searchText == value) return;
                 _searchText = value;
                 OnPropertyChanged();
                 _ = DebouncedRefreshDisplayAsync();
@@ -60,7 +61,7 @@ namespace StreamMesh.UI.ViewModels
             try
             {
                 await Task.Delay(300, _searchCts.Token);
-                RefreshDisplay();
+                _ = RefreshDisplayAsync();
             }
             catch (TaskCanceledException) { }
         }
@@ -80,14 +81,14 @@ namespace StreamMesh.UI.ViewModels
 
         public HomeViewModel()
         {
-            LoadData();
+            _ = LoadDataAsync();
             GitHubSyncEngine.OnSyncStarted += () => {
                 _isSyncing = true;
                 _isDataDirty = false;
             };
             GitHubSyncEngine.OnSyncCompleted += () => {
                 _isSyncing = false;
-                if (_isDataDirty) System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadData());
+                if (_isDataDirty) System.Windows.Application.Current?.Dispatcher.Invoke(() => _ = LoadDataAsync());
                 _isDataDirty = false;
             };
             DatabaseEngine.OnDatabaseUpdated += (s, e) => {
@@ -98,37 +99,34 @@ namespace StreamMesh.UI.ViewModels
                 else
                 {
                     // V1.8.8: Small delay to debounce rapid updates
-                    _ = Task.Delay(1000).ContinueWith(_ => System.Windows.Application.Current?.Dispatcher.Invoke(() => LoadData()));
+                    _ = Task.Delay(1000).ContinueWith(_ => System.Windows.Application.Current?.Dispatcher.Invoke(() => _ = LoadDataAsync()));
                 }
             };
         }
 
-        public async void LoadData()
+        public async Task LoadDataAsync()
         {
-            await Task.Run(async () =>
+            try
             {
-                try
-                {
-                    LogService.LogInfo("HomeViewModel: Kütüphane yükleniyor...");
-                    var stats = _db.GetDailyQueryStats();
-                    var channels = await _db.GetAllChannelsAsync();
-                    LogService.LogInfo($"HomeViewModel: {channels.Count} kanal veritabanından okundu.");
+                LogService.LogInfo("HomeViewModel: Kütüphane yükleniyor...");
+                var stats = _db.GetDailyQueryStats();
+                var channels = await _db.GetAllChannelsAsync();
+                LogService.LogInfo($"HomeViewModel: {channels.Count} kanal veritabanından okundu.");
 
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                    {
-                        DailyApiCount = stats.count;
-                        _allChannels = channels;
-                        RefreshDisplay();
-                    });
-                }
-                catch (Exception ex)
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                 {
-                    LogService.LogError("HomeViewModel.LoadData failed", ex);
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() => {
-                        TotalCountText = "Hata: İçerik yüklenemedi. Logları kontrol edin.";
-                    });
-                }
-            });
+                    DailyApiCount = stats.count;
+                    _allChannels = channels;
+                    _ = RefreshDisplayAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("HomeViewModel.LoadData failed", ex);
+                System.Windows.Application.Current?.Dispatcher.Invoke(() => {
+                    TotalCountText = "Hata: İçerik yüklenemedi. Logları kontrol edin.";
+                });
+            }
         }
 
         public async Task MergeChannelsAsync(Channel source, Channel target)
@@ -146,7 +144,7 @@ namespace StreamMesh.UI.ViewModels
             target.Url = string.Join(",", existingUrls);
             await _db.SaveChannelAsync(target);
             _db.DeleteChannelById(source.Id);
-            LoadData();
+            await LoadDataAsync();
         }
 
         public async Task ToggleFavoriteAsync(Channel ch)
@@ -154,14 +152,14 @@ namespace StreamMesh.UI.ViewModels
             if (ch == null) return;
             ch.IsFavorite = !ch.IsFavorite;
             await _db.SaveChannelAsync(ch);
-            RefreshDisplay();
+            await RefreshDisplayAsync();
         }
 
-        public void DeleteChannel(Channel ch)
+        public async Task DeleteChannelAsync(Channel ch)
         {
             if (ch == null) return;
             _db.DeleteChannelById(ch.Id);
-            LoadData();
+            await LoadDataAsync();
         }
 
         private int _sortIndex = 0;
@@ -170,29 +168,37 @@ namespace StreamMesh.UI.ViewModels
         {
             _activeCategory = tag;
             _currentPage = 1;
-            RefreshDisplay();
+            _ = RefreshDisplayAsync();
         }
 
         public void SetSort(int index)
         {
             _sortIndex = index;
             _currentPage = 1;
-            RefreshDisplay();
+            _ = RefreshDisplayAsync();
         }
-        public void NextPage() { if (_currentPage < _totalPages) { _currentPage++; RefreshDisplay(); } }
-        public void PrevPage() { if (_currentPage > 1) { _currentPage--; RefreshDisplay(); } }
+        public void NextPage() { if (_currentPage < _totalPages) { _currentPage++; _ = RefreshDisplayAsync(); } }
+        public void PrevPage() { if (_currentPage > 1) { _currentPage--; _ = RefreshDisplayAsync(); } }
 
-        private async void RefreshDisplay()
+        private System.Threading.CancellationTokenSource? _enrichmentCts;
+
+        private async Task RefreshDisplayAsync()
         {
             var searchText = _searchText;
             var category = _activeCategory;
             var sort = _sortIndex;
             var page = _currentPage;
             var pageSize = _pageSize;
-            var sourceChannels = _allChannels.ToList(); // Take a snapshot to avoid concurrent modification issues
+            var sourceChannels = _allChannels.ToList(); // Take a snapshot
 
-            await Task.Run(() =>
+            _enrichmentCts?.Cancel();
+            _enrichmentCts = new System.Threading.CancellationTokenSource();
+            var token = _enrichmentCts.Token;
+
+            await Task.Run(async () =>
             {
+                if (token.IsCancellationRequested) return;
+
                 var filtered = sourceChannels.AsEnumerable();
 
                 if (category == "Favorites") filtered = filtered.Where(c => c.IsFavorite);
@@ -276,12 +282,16 @@ namespace StreamMesh.UI.ViewModels
                     foreach (var ch in pageItems) DisplayedChannels.Add(ch);
                 });
 
+                if (token.IsCancellationRequested) return;
+
                 // Asynchronously enrich missing logos and EPG for visible page items only
-                _ = Task.Run(async () =>
+                try
                 {
                     // 1. Enrich EPG (New On-Demand Logic)
                     var epgChannels = pageItems.SelectMany(c => (c is SeriesGroup sg) ? sg.Episodes : new List<Channel> { c }).ToList();
                     await _epg.EnrichBatchEpgAsync(epgChannels);
+
+                    if (token.IsCancellationRequested) return;
 
                     // 2. Enrich Logos
                     var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
@@ -298,8 +308,10 @@ namespace StreamMesh.UI.ViewModels
                             DatabaseEngine.SuppressEvents = false;
                         }
                     }
-                });
-            });
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { LogService.LogWarning($"HomeViewModel: Enrichment background task error: {ex.Message}"); }
+            }, token);
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

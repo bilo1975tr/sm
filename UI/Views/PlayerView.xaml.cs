@@ -16,14 +16,18 @@ using StreamMesh.Core.Database;
 using System.Threading.Tasks;
 using System.Text;
 
+using StreamMesh.UI.ViewModels;
+
 namespace StreamMesh.UI.Views
 {
     public partial class PlayerView : System.Windows.Controls.UserControl, IDisposable
     {
+        public PlayerViewModel ViewModel { get; } = new PlayerViewModel();
+
         private Player? _player;
         private Config? _config;
+        private readonly TaskCompletionSource<bool> _initTcs = new();
 
-        private readonly YoutubeEngine _yt = new YoutubeEngine();
         private readonly AceEngine _ace = new AceEngine();
         private readonly DatabaseEngine _db = new DatabaseEngine();
         private static readonly LogoCacheConverter LogoConverter = new LogoCacheConverter();
@@ -32,8 +36,8 @@ namespace StreamMesh.UI.Views
         private readonly EpgService _epgService = new EpgService();
         private System.Windows.Threading.DispatcherTimer? _osdTimer;
         private System.Windows.Threading.DispatcherTimer? _positionTimer;
-        private Channel? _currentChannel;
-        private List<EpgProgram> _currentChannelEpgList = new();
+        private System.Windows.Threading.DispatcherTimer? _viewersTimer;
+        private string? _currentPlayingUrl;
 
         private bool _isUserDraggingSlider = false;
         private bool _isMouseOverOsd = false;
@@ -42,9 +46,25 @@ namespace StreamMesh.UI.Views
         private static readonly SolidColorBrush DelayedAmberBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 158, 11));
         private static readonly SolidColorBrush VodBlueBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(37, 99, 235));
 
-        private long _lastTeleportPositionMs = 0;
+        private static readonly SolidColorBrush[] MonogramPalette = new SolidColorBrush[]
+        {
+            new SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 64, 175)), // Blue
+            new SolidColorBrush(System.Windows.Media.Color.FromRgb(5, 150, 105)),  // Emerald
+            new SolidColorBrush(System.Windows.Media.Color.FromRgb(124, 58, 237)), // Purple
+            new SolidColorBrush(System.Windows.Media.Color.FromRgb(190, 24, 93)),  // Rose
+            new SolidColorBrush(System.Windows.Media.Color.FromRgb(217, 119, 6)),  // Amber
+            new SolidColorBrush(System.Windows.Media.Color.FromRgb(13, 148, 136)), // Teal
+            new SolidColorBrush(System.Windows.Media.Color.FromRgb(79, 70, 229))   // Indigo
+        };
+
         private DateTime _lastSeekTime = DateTime.MinValue;
+        private long _effectivePositionMs = 0;
+        private bool _isTimeshiftMode = false;
+        private long _timeshiftStartDvrMs = 0;
+        private long _pausedDvrPosMs = 0;
         private System.Threading.CancellationTokenSource? _loadCts;
+        private int _clockLogTickCount = 0;
+        private long _lastReportedCurTimeMs = -1;
 
         // Audio & Video DSP / Enhancement States
         private bool _isAudioNormEnabled = true;
@@ -73,6 +93,7 @@ namespace StreamMesh.UI.Views
 
             InitializeOsdTimer();
             InitializePositionTimer();
+            InitializeViewersTimer();
             this.Focusable = true;
         }
 
@@ -130,13 +151,14 @@ namespace StreamMesh.UI.Views
 
         private bool IsCurrentStreamVod()
         {
-            if (_currentChannel == null) return false;
-            string cat = (_currentChannel.Category ?? "").Trim().ToLowerInvariant();
+            var ch = ViewModel.CurrentChannel;
+            if (ch == null) return false;
+            string cat = (ch.Category ?? "").Trim().ToLowerInvariant();
             if (cat.Contains("dizi") || cat.Contains("film") || cat.Contains("vod") || cat.Contains("sinema") || cat.Contains("movie") || cat.Contains("series"))
             {
                 return true;
             }
-            string url = (_currentChannel.Url ?? "").ToLowerInvariant();
+            string url = (ch.Url ?? "").ToLowerInvariant();
             if (url.EndsWith(".mp4") || url.EndsWith(".mkv") || url.EndsWith(".avi") || url.Contains("/movie/") || url.Contains("/series/"))
             {
                 return true;
@@ -149,56 +171,119 @@ namespace StreamMesh.UI.Views
             _positionTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
             _positionTimer.Tick += (s, e) =>
             {
-                if (_player == null || _isUserDraggingSlider) return;
-
-                // Seek işleminden hemen sonra UI'ın eski değere zıplamasını engelle (2.5sn koruma)
-                if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.5) return;
+                if (_player == null || _player.Status == Status.Stopped || _isUserDraggingSlider) return;
 
                 try
                 {
                     long timeMs = _player.CurTime / 10000;
                     long lengthMs = _player.Duration / 10000;
-                    bool isVod = IsCurrentStreamVod();
+                    bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
 
-                    if (isVod && lengthMs > 0)
+                    _clockLogTickCount++;
+                    if (_clockLogTickCount % 4 == 0) // Every ~2 seconds
+                    {
+                        long delta = _lastReportedCurTimeMs >= 0 ? (timeMs - _lastReportedCurTimeMs) : 0;
+                        bool isAdvancing = delta > 0 || (_lastReportedCurTimeMs < 0 && timeMs > 0);
+                        _lastReportedCurTimeMs = timeMs;
+                        LogService.LogInfo($"[PLAYBACK CLOCK] Status={_player.Status} CurTime={timeMs}ms Duration={lengthMs}ms Advancing={isAdvancing} (delta={delta}ms/2s, IsVod={isVod})");
+                    }
+
+                    // Seek koruması: Motor henüz yeni hedefe ulaşmamışsa eski zamana geri zıplamayı engelle (maksimum 2.0 saniye)
+                    if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0)
+                    {
+                        if (isVod)
+                        {
+                            if (_effectivePositionMs > 0 && Math.Abs(timeMs - _effectivePositionMs) < 1200)
+                            {
+                                _lastSeekTime = DateTime.MinValue;
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
+                    }
+
+                    if (isVod)
                     {
                         if (LiveBadge != null) LiveBadge.Background = VodBlueBrush;
                         if (LiveBadgeText != null) LiveBadgeText.Text = "🎬 VOD";
 
-                        TimeCurrentText.Text = TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss");
-                        TimeTotalText.Text = TimeSpan.FromMilliseconds(lengthMs).ToString(@"hh\:mm\:ss");
+                        if (lengthMs > 0)
+                        {
+                            TimeSlider.IsEnabled = true;
+                            TimeSlider.Minimum = 0;
+                            TimeSlider.Maximum = lengthMs;
+                            _effectivePositionMs = timeMs;
+                            if (!_isUserDraggingSlider) TimeSlider.Value = Math.Clamp(timeMs, 0, lengthMs);
 
-                        TimeSlider.Minimum = 0;
-                        TimeSlider.Maximum = lengthMs;
-                        TimeSlider.Value = Math.Clamp(timeMs, 0, lengthMs);
+                            TimeCurrentText.Text = TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss");
+                            TimeTotalText.Text = TimeSpan.FromMilliseconds(lengthMs).ToString(@"hh\:mm\:ss");
+                        }
+                        else
+                        {
+                            TimeSlider.IsEnabled = false;
+                            TimeCurrentText.Text = TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss");
+                            TimeTotalText.Text = "--:--:--";
+                        }
                     }
                     else
                     {
-                        // Sync Slider with HLS Proxy Session for DVR
-                        var proxySession = HlsProxyEngine.Instance.GetSession(_currentChannel?.Url ?? "");
+                        // Sync Slider with Timeshift HLS/TS Proxy Session for DVR
+                        var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
+                                           ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+
                         if (proxySession != null && proxySession.Segments.Count > 0)
                         {
                             double totalSec = proxySession.TotalDurationSeconds;
                             long totalMsDvr = (long)(totalSec * 1000);
 
-                            // Absolute Position = Initial Seek Point + Current Player Time
-                            long absolutePosMs = _lastTeleportPositionMs + timeMs;
-                            if (_lastTeleportPositionMs < 0) absolutePosMs = totalMsDvr; // Live mode
-
+                            TimeSlider.IsEnabled = true;
                             TimeSlider.Minimum = 0;
-                            TimeSlider.Maximum = totalMsDvr;
-                            TimeSlider.Value = absolutePosMs;
+                            TimeSlider.Maximum = Math.Max(1000, totalMsDvr);
 
-                            UpdateOsdTimeAndBadge(absolutePosMs, totalMsDvr, proxySession.StartWallClockTime);
-                            TimeTotalText.Text = "CANLI ARŞİV";
+                            long currentDvrPosMs;
+                            if (_player.Status == Status.Paused && _pausedDvrPosMs > 0)
+                            {
+                                currentDvrPosMs = _pausedDvrPosMs;
+                            }
+                            else if (_isTimeshiftMode)
+                            {
+                                currentDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + timeMs, 0, totalMsDvr);
+                                long delayFromLive = totalMsDvr - currentDvrPosMs;
+                                if (delayFromLive <= 3000)
+                                {
+                                    _isTimeshiftMode = false;
+                                    _timeshiftStartDvrMs = 0;
+                                    currentDvrPosMs = totalMsDvr;
+                                }
+                            }
+                            else
+                            {
+                                currentDvrPosMs = totalMsDvr;
+                            }
+
+                            _effectivePositionMs = currentDvrPosMs;
+                            if (!_isUserDraggingSlider)
+                            {
+                                TimeSlider.Value = currentDvrPosMs;
+                            }
+
+                            UpdateOsdTimeAndBadge(currentDvrPosMs, totalMsDvr, proxySession.StartWallClockTime);
+                            long offsetMs = Math.Max(0, totalMsDvr - currentDvrPosMs);
+                            TimeTotalText.Text = offsetMs > 3000 ? "GERİDEN YAYIN" : "CANLI YAYIN";
                         }
                         else
                         {
+                            TimeSlider.IsEnabled = false;
                             TimeSlider.Minimum = 0;
                             TimeSlider.Maximum = 100;
                             if (!_isUserDraggingSlider) TimeSlider.Value = 100;
                             TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
                             TimeTotalText.Text = "CANLI YAYIN";
+                            if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
+                            if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
+                            UpdateOsdEpgForTime(DateTime.Now);
                         }
                     }
                 }
@@ -207,31 +292,86 @@ namespace StreamMesh.UI.Views
             _positionTimer.Start();
         }
 
+        private void InitializeViewersTimer()
+        {
+            _viewersTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            _viewersTimer.Tick += async (s, e) =>
+            {
+                if (_player == null || _player.Status != Status.Playing || ViewModel.CurrentChannel == null)
+                {
+                    if (OsdViewersBadge != null) OsdViewersBadge.Visibility = Visibility.Collapsed;
+                    return;
+                }
+
+                try
+                {
+                    string currentUrl = ViewModel.CurrentChannel.Url ?? "";
+                    if (_ace.IsAceStreamUrl(currentUrl) || currentUrl.Contains(":6878/ace/"))
+                    {
+                        int peers = await _ace.GetStreamPeersAsync(currentUrl);
+                        if (peers > 0)
+                        {
+                            OsdViewersText.Text = $"{peers} Eş";
+                            OsdViewersBadge.Visibility = Visibility.Visible;
+                            return;
+                        }
+                    }
+                    else if (currentUrl.Contains("youtube.com") || currentUrl.Contains("youtu.be"))
+                    {
+                        var yt = new YoutubeEngine();
+                        int viewers = await yt.GetActiveLiveViewersAsync(currentUrl);
+                        if (viewers > 0)
+                        {
+                            OsdViewersText.Text = viewers > 1000 ? $"{viewers / 1000.0:0.#}k İzleyici" : $"{viewers} İzleyici";
+                            OsdViewersBadge.Visibility = Visibility.Visible;
+                            return;
+                        }
+                    }
+                }
+                catch { }
+
+                if (OsdViewersBadge != null) OsdViewersBadge.Visibility = Visibility.Collapsed;
+            };
+            _viewersTimer.Start();
+        }
+
         private void UpdateOsdTimeAndBadge(long currentMs, long totalMs, DateTime startWallTime)
         {
             if (TimeCurrentText == null) return;
 
-            // Calculate Aired Time
-            DateTime airedTime = startWallTime.AddMilliseconds(currentMs);
-            TimeCurrentText.Text = airedTime.ToString("HH:mm:ss");
+            long offsetMs = Math.Max(0, totalMs - currentMs);
 
-            // Calculate Delay from Live Edge
-            long offsetMs = totalMs - currentMs;
-            if (offsetMs > 15000)
+            if (offsetMs > 3000)
             {
+                DateTime airedTime = startWallTime.AddMilliseconds(currentMs);
+                TimeCurrentText.Text = airedTime.ToString("HH:mm:ss");
+
                 if (LiveBadge != null) LiveBadge.Background = DelayedAmberBrush;
-                if (LiveBadgeText != null) LiveBadgeText.Text = "-" + TimeSpan.FromMilliseconds(offsetMs).ToString(@"hh\:mm\:ss");
+                if (LiveBadgeText != null)
+                {
+                    TimeSpan delay = TimeSpan.FromMilliseconds(offsetMs);
+                    LiveBadgeText.Text = delay.TotalHours >= 1 
+                        ? $"-{delay:hh\\:mm\\:ss}" 
+                        : $"-{delay:mm\\:ss}";
+                }
+                UpdateOsdEpgForTime(airedTime);
             }
             else
             {
+                TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
                 if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
                 if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
+                UpdateOsdEpgForTime(DateTime.Now);
             }
         }
 
         private async void InitializePlayer()
         {
-            if (_player != null) return;
+            if (_player != null)
+            {
+                VideoPlayer.Player = _player;
+                return;
+            }
 
             try
             {
@@ -254,22 +394,10 @@ namespace StreamMesh.UI.Views
                 _config = new Config();
                 try
                 {
-                    // Demuxer Network & Timeout Configurations (Optimized for lightning fast live playback)
-                    _config.Demuxer.FormatOpt["reconnect"] = "1";
-                    _config.Demuxer.FormatOpt["reconnect_streamed"] = "1";
-                    _config.Demuxer.FormatOpt["reconnect_delay_max"] = "3";
-                    _config.Demuxer.FormatOpt["reconnect_at_eof"] = "1";
-                    _config.Demuxer.FormatOpt["reconnect_on_network_error"] = "1";
-                    _config.Demuxer.FormatOpt["timeout"] = "8000000"; // 8s socket timeout (faster fallback on dead streams)
-                    _config.Demuxer.FormatOpt["stimeout"] = "8000000"; // 8s for RTSP/RTMP
-                    _config.Demuxer.FormatOpt["rw_timeout"] = "8000000"; // 8s socket read/write
-                    _config.Demuxer.FormatOpt["probesize"] = "1048576"; // 1MB probe size (accelerates stream startup)
-                    _config.Demuxer.FormatOpt["analyzeduration"] = "2000000"; // 2s max analyze duration (prevents hanging)
-                    _config.Demuxer.FormatOpt["fflags"] = "+nobuffer+fastseek+flush_packets";
-                    _config.Demuxer.FormatOpt["flags"] = "low_delay";
+                    // Demuxer Network & User Agent Configurations
                     _config.Demuxer.FormatOpt["user_agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
-                    _config.Demuxer.BufferDuration = 1000 * 10000; // 1.0s initial buffer for near-instant stream start
+                    _config.Demuxer.BufferDuration = 2000 * 10000; // 2.0s initial buffer for stable stream start
                     _config.Player.AutoPlay = true;
 
                     // Apply Audio Normalization & Video Enhancement initial filter
@@ -282,10 +410,25 @@ namespace StreamMesh.UI.Views
                 }
 
                 _player = new Player(_config);
+                _initTcs.TrySetResult(true);
+
+                _player.OpenCompleted += (s, e) =>
+                {
+                    LogService.LogInfo($"[PLAYBACK] Player.OpenCompleted: Success={e.Success}, Error={e.Error ?? "None"}, Status={_player?.Status}");
+                };
+
                 _player.PropertyChanged += (s, e) =>
                 {
                     if (e.PropertyName == nameof(Player.Status))
                     {
+                        long curMs = _player?.CurTime / 10000 ?? 0;
+                        long durMs = _player?.Duration / 10000 ?? 0;
+                        LogService.LogInfo($"[PLAYBACK] Player.Status changed: {_player?.Status} (CurTime: {curMs}ms, Duration: {durMs}ms)");
+                        if (_player?.Status == Status.Playing)
+                        {
+                            LogService.LogInfo($"[PLAYBACK] Playback started successfully (Status: Playing, CurTime: {curMs}ms)");
+                        }
+
                         Dispatcher.InvokeAsync(() =>
                         {
                             if (_player == null) return;
@@ -301,9 +444,9 @@ namespace StreamMesh.UI.Views
                             else if (_player.Status == Status.Failed)
                             {
                                 UpdatePlayPauseIcon(false);
-                                if (_currentChannel != null)
+                                if (ViewModel.CurrentChannel != null)
                                 {
-                                    OsdTitle.Text = $"{_currentChannel.PrimaryName} (Sinyal Yok / Bağlantı Koptu)";
+                                    OsdTitle.Text = $"{ViewModel.CurrentChannel.PrimaryName} (Sinyal Yok / Bağlantı Koptu)";
                                     ShowOsdTemporary();
                                 }
                             }
@@ -325,249 +468,264 @@ namespace StreamMesh.UI.Views
             catch (Exception ex)
             {
                 LogService.LogError("Player: Flyleaf Init Failed", ex);
+                _initTcs.TrySetException(ex);
             }
         }
 
-        private string PrepareHlsStream(string url)
+        private async void UpdateChannelLogo(Channel channel)
         {
-            if (url.Contains(".m3u8"))
+            if (channel == null || OsdLogo == null || OsdLogoFallback == null) return;
+
+            try
             {
-                // Register & inspect HLS stream entirely in background so live playback starts instantly
-                _ = Task.Run(async () =>
+                ImageSource? converted = null;
+                if (!string.IsNullOrWhiteSpace(channel.PrimaryLogoUrl))
                 {
-                    try
+                    converted = LogoConverter.Convert(channel.PrimaryLogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture) as ImageSource;
+                }
+
+                // Fallback: If no logo or conversion failed, search locally/online via LogoSearchEngine
+                if (converted == null)
+                {
+                    string cleanName = ChannelUtils.GetCleanName(channel.PrimaryName ?? channel.Name ?? "TV");
+                    var searchResults = await LogoSearchEngine.SearchLogosAsync(cleanName);
+                    if (searchResults != null && searchResults.Count > 0)
                     {
-                        using var cts = new CancellationTokenSource(3000);
-                        var session = await HlsProxyEngine.Instance.InspectAndPrepareHlsAsync(url).WaitAsync(cts.Token).ConfigureAwait(false);
-                        if (session != null)
+                        var firstMatch = searchResults.FirstOrDefault(r => !string.IsNullOrEmpty(r.Url));
+                        if (firstMatch != null)
                         {
-                            LogService.LogInfo($"Player: HLS background session ready for Timeshift: {url}");
+                            channel.LogoUrl = string.IsNullOrEmpty(channel.LogoUrl) ? firstMatch.Url : $"{channel.LogoUrl},{firstMatch.Url}";
+                            try { _db.SaveChannelSync(channel); } catch { }
+                            converted = LogoConverter.Convert(firstMatch.Url, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture) as ImageSource;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        LogService.LogWarning($"Player: HLS background prep notice: {ex.Message}");
-                    }
-                });
+                }
+
+                if (converted != null)
+                {
+                    OsdLogo.Source = converted;
+                    OsdLogo.Visibility = Visibility.Visible;
+                    OsdLogoFallback.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    string cleanName = ChannelUtils.GetCleanName(channel.PrimaryName ?? "TV");
+                    string monogram = GenerateMonogram(cleanName);
+                    OsdLogoFallbackText.Text = monogram;
+                    int hash = Math.Abs(cleanName.GetHashCode());
+                    OsdLogoFallback.Background = MonogramPalette[hash % MonogramPalette.Length];
+                    OsdLogo.Visibility = Visibility.Collapsed;
+                    OsdLogoFallback.Visibility = Visibility.Visible;
+                }
             }
-            return url;
+            catch
+            {
+                OsdLogo.Visibility = Visibility.Collapsed;
+                OsdLogoFallback.Visibility = Visibility.Visible;
+            }
+        }
+
+        private static string GenerateMonogram(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "TV";
+            var parts = name.Split(new[] { ' ', '-', '_' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1)
+            {
+                return parts[0].Length <= 3 ? parts[0].ToUpperInvariant() : parts[0].Substring(0, 2).ToUpperInvariant();
+            }
+            else if (parts.Length == 2)
+            {
+                return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
+            }
+            else
+            {
+                return $"{parts[0][0]}{parts[1][0]}{parts[2][0]}".ToUpperInvariant();
+            }
         }
 
         public void LoadChannel(Channel channel)
         {
             if (channel == null) return;
+            LogService.LogInfo($"[PLAYBACK] CHANNEL SELECTED: {channel.Name} (ID: {channel.Id}, Category: {channel.Category}, Url: {channel.Url})");
 
-            // 1. Cancel previous load operation immediately to release threads
+            ViewModel.CurrentChannel = channel;
+
             _loadCts?.Cancel();
             _loadCts?.Dispose();
             _loadCts = new System.Threading.CancellationTokenSource();
             var token = _loadCts.Token;
 
-            _currentChannel = channel;
+            _currentPlayingUrl = null;
             _streamStartTime = DateTime.UtcNow;
-            _lastTeleportPositionMs = -1; // Reset to Live mode
+            _isTimeshiftMode = false;
+            _timeshiftStartDvrMs = 0;
+            _pausedDvrPosMs = 0;
+            _effectivePositionMs = 0;
 
-            // 2. Instant responsive UI update
             Dispatcher.Invoke(() => {
                 OsdTitle.Text = $"{channel.PrimaryName} (Bağlanıyor...)";
                 OsdCategory.Text = channel.Category;
+                OsdCurrentEpg.Text = "Yayın akışı bilgisi yükleniyor...";
+                OsdNextEpg.Text = "Sıradaki: --:--";
                 ShowOsdTemporary();
                 UpdatePlayPauseIcon(true);
-                try {
-                    var convertedLogo = LogoConverter.Convert(channel.PrimaryLogoUrl, typeof(ImageSource), null!, System.Globalization.CultureInfo.InvariantCulture);
-                    if (convertedLogo != null) OsdLogo.Source = (ImageSource)convertedLogo;
-                } catch { }
+                UpdateChannelLogo(channel);
             });
 
-            // 3. Isolated background task execution (prevents UI freezing)
             Task.Run(async () =>
             {
                 if (token.IsCancellationRequested) return;
 
-                // Wait for player ready
-                for (int i = 0; i < 25 && _player == null; i++)
+                // Wait for Player initialization (Flyleaf/FFmpeg setup)
+                try
+                {
+                    LogService.LogInfo("[PLAYBACK] Waiting for Player Init...");
+                    using var initTimeout = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    using var linkedInit = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(token, initTimeout.Token);
+                    await _initTcs.Task.WaitAsync(linkedInit.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
                 {
                     if (token.IsCancellationRequested) return;
-                    await Task.Delay(150, token).ConfigureAwait(false);
-                }
-
-                if (_player == null)
-                {
-                    LogService.LogError("Player: Flyleaf player not ready.");
+                    LogService.LogError("[PLAYBACK] Player Init TIMEOUT");
+                    _ = Dispatcher.InvokeAsync(() => {
+                        OsdTitle.Text = "Görüntü motoru başlatılamadı (Zaman aşımı)";
+                        ShowOsdTemporary();
+                    });
                     return;
                 }
 
-                // Acquire semaphore with 5s timeout to prevent deadlocks
-                bool acquired = await _playSemaphore.WaitAsync(5000, token).ConfigureAwait(false);
-                if (!acquired || token.IsCancellationRequested) return;
+                if (_player == null) return;
+
+                LogService.LogInfo("[PLAYBACK] Waiting for Play Semaphore...");
+                bool acquired = await _playSemaphore.WaitAsync(10000, token).ConfigureAwait(false);
+                if (!acquired || token.IsCancellationRequested)
+                {
+                    LogService.LogWarning("[PLAYBACK] Play Semaphore Timeout or Cancelled");
+                    return;
+                }
 
                 try
                 {
-                    // Save VOD position if applicable
-                    if (IsCurrentStreamVod() && _currentChannel != null)
+                    if (ViewModel.IsVod(channel))
                     {
-                        try
-                        {
-                            _currentChannel.LastPositionMs = _player.CurTime / 10000;
-                            _ = _db.SaveChannelAsync(_currentChannel);
-                        }
-                        catch { }
+                        ViewModel.SaveVodPosition(channel, _player.CurTime / 10000);
                     }
 
-                    // Stop previous stream safely
-                    try
+                    if (channel.SourceType == "ACESTREAM" || (channel.Url ?? "").Contains("acestream://"))
                     {
-                        if (channel.SourceType == "ACESTREAM" || (channel.Url ?? "").Contains("acestream://"))
-                        {
-                            await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                        }
-                        _player.Stop();
+                        await _ace.StopAllStreamsAsync().ConfigureAwait(false);
                     }
-                    catch (Exception ex)
-                    {
-                        LogService.LogError("Player: Stop exception", ex);
-                    }
+                    _player.Stop();
+                    HlsProxyEngine.Instance.ClearChannelCache();
 
                     if (token.IsCancellationRequested) return;
 
-                    // Fetch EPG in background
                     _selectedAudioTrackIndex = -1;
                     _selectedAudioTrackLangCode = "";
-                    try
-                    {
-                        _currentChannelEpgList = await _epgService.GetChannelEpgHistoryAsync(channel).ConfigureAwait(false);
-                        _ = Dispatcher.InvokeAsync(() => UpdateOsdEpgForTime(DateTime.Now));
-                    }
-                    catch { }
 
-                    // Retrieve URL candidates cleanly using GetUrlList()
-                    var rawUrls = channel.GetUrlList();
-                    if (rawUrls.Count == 0 && !string.IsNullOrWhiteSpace(channel.Url))
-                    {
-                        rawUrls = new List<string> { channel.Url.Trim() };
-                    }
+                    await ViewModel.RefreshEpgAsync(channel);
+                    _ = Dispatcher.InvokeAsync(() => UpdateOsdEpgForTime(DateTime.Now));
 
-                    LogService.LogInfo($"Player: Found {rawUrls.Count} URL candidates in database for {channel.PrimaryName}");
-
-                    // Apply current active audio/video enhancement configuration
                     ApplyAudioNormalization();
                     ApplyVideoEnhancement();
 
-                    bool streamStarted = false;
+                    LogService.LogInfo("[PLAYBACK] Preparing stream URL...");
+                    string tryUrl = await ViewModel.PrepareStreamAsync(channel, token, (status) => {
+                        _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = status; ShowOsdTemporary(); });
+                    }).ConfigureAwait(false);
 
-                    foreach (var raw in rawUrls)
+                    if (token.IsCancellationRequested || string.IsNullOrEmpty(tryUrl))
                     {
-                        if (token.IsCancellationRequested) return;
-
-                        string tryUrl = raw.Trim();
-                        LogService.LogInfo($"Player: Processing candidate URL: {tryUrl}");
-
-                        try
+                        if (!token.IsCancellationRequested)
                         {
-                            bool isAce = _ace.IsAceStreamUrl(tryUrl) || channel.SourceType == "ACESTREAM";
-                            if (isAce)
-                            {
-                                LogService.LogInfo("Player: AceStream playback sequence initiated.");
-                                await _ace.StartEngineAsync().ConfigureAwait(false);
-
-                                string hash = _ace.ExtractHash(tryUrl);
-                                await _ace.OpenStreamAsync(hash).ConfigureAwait(false);
-
-                                var aceUrls = await _ace.GetHttpUrlsWithTokenAsync(tryUrl).ConfigureAwait(false);
-                                if (aceUrls != null && aceUrls.Count > 0)
-                                {
-                                    tryUrl = aceUrls[0];
-                                    _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = "AceStream: Başlatılıyor..."; ShowOsdTemporary(); });
-
-                                    bool ready = await _ace.WaitForStreamReadyAsync(tryUrl, 4).ConfigureAwait(false);
-                                    if (!ready && aceUrls.Count > 1)
-                                    {
-                                        tryUrl = aceUrls[1];
-                                        LogService.LogInfo($"Player: Primary AceStream link failed, trying fallback: {tryUrl}");
-                                    }
-                                }
-                                else
-                                {
-                                    LogService.LogWarning("Player: AceStream engine failed to resolve any playback URLs.");
-                                }
-                            }
-                            else if (tryUrl.Contains("youtube.com"))
-                            {
-                                LogService.LogInfo("Player: YouTube link detected, fetching stream manifest...");
-                                tryUrl = await _yt.GetStreamUrlAsync(tryUrl).ConfigureAwait(false) ?? tryUrl;
-                            }
-                            else if (tryUrl.Contains(".m3u8") && !tryUrl.Contains(":6878/ace/"))
-                            {
-                                // HLS Proxy Integration (background session registration for timeshift)
-                                LogService.LogInfo("Player: HLS (m3u8) detected, ensuring Timeshift cache engine...");
-                                tryUrl = PrepareHlsStream(tryUrl);
-                            }
-
-                            if (token.IsCancellationRequested) return;
-
-                            LogService.LogInfo($"Player: [FINAL] Flyleaf opening -> {tryUrl}");
-
-                            // Execute Player.Open in an isolated task with adaptive watchdog timeout
-                            var openTask = Task.Run(() =>
-                            {
-                                try { _player.Open(tryUrl); }
-                                catch (Exception ex) { LogService.LogError("Flyleaf Player.Open exception", ex); }
-                            }, token);
-
-                            int watchdogTimeoutMs = isAce ? 18000 : 8000;
-                            var completed = await Task.WhenAny(openTask, Task.Delay(watchdogTimeoutMs, token)).ConfigureAwait(false);
-
-                            if (completed != openTask)
-                            {
-                                LogService.LogWarning($"Player: Open timed out for {tryUrl} after {watchdogTimeoutMs}ms, trying next mirror if available");
-                                continue;
-                            }
-
-                            if (token.IsCancellationRequested) return;
-
+                            LogService.LogWarning("[PLAYBACK] Stream URL preparation failed or empty");
                             _ = Dispatcher.InvokeAsync(() => {
-                                if (_currentChannel != null) OsdTitle.Text = _currentChannel.PrimaryName;
+                                OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Zayıf veya Adres Geçersiz)";
+                                UpdatePlayPauseIcon(false);
+                                ShowOsdTemporary();
                             });
-
-                            if (IsCurrentStreamVod() && channel.LastPositionMs > 0)
-                            {
-                                LogService.LogInfo($"Player: Resuming VOD at {channel.LastPositionMs}ms");
-                                try { _player.Seek((int)channel.LastPositionMs); } catch { }
-                            }
-
-                            streamStarted = true;
-                            break;
                         }
-                        catch (Exception ex)
-                        {
-                            LogService.LogError($"Player: Candidate failed -> {tryUrl}", ex);
-                        }
+                        return;
                     }
 
-                    if (!streamStarted && !token.IsCancellationRequested)
+                    LogService.LogInfo($"[PLAYBACK] Calling Player.Open -> {tryUrl}");
+
+                    // Open with a safer watchdog (30s for IPTV, 40s for AceStream)
+                    int watchdogMs = (channel.SourceType == "ACESTREAM") ? 40000 : 30000;
+
+                    var swOpen = System.Diagnostics.Stopwatch.StartNew();
+                    var openTask = Task.Run(() => {
+                        try { _player.Open(tryUrl); } catch (Exception ex) { LogService.LogError("[PLAYBACK] Player.Open Exception", ex); }
+                    }, token);
+
+                    var completed = await Task.WhenAny(openTask, Task.Delay(watchdogMs, token)).ConfigureAwait(false);
+                    swOpen.Stop();
+
+                    if (token.IsCancellationRequested) return;
+
+                    if (completed != openTask)
+                    {
+                        LogService.LogWarning($"[PLAYBACK] Player.Open TIMEOUT after {swOpen.ElapsedMilliseconds}ms for {tryUrl}");
+                        _ = Dispatcher.InvokeAsync(() => {
+                            OsdTitle.Text = $"{channel.PrimaryName} (Bağlantı Zaman Aşımı)";
+                            UpdatePlayPauseIcon(false);
+                            ShowOsdTemporary();
+                        });
+                        return;
+                    }
+
+                    LogService.LogInfo($"[PLAYBACK] Player.Open RETURNED in {swOpen.ElapsedMilliseconds}ms (Player.Status: {_player?.Status})");
+                    _currentPlayingUrl = tryUrl;
+                    _ = Dispatcher.InvokeAsync(() => {
+                        if (ViewModel.CurrentChannel != null) OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
+                    });
+
+                    if (ViewModel.IsVod(channel) && channel.LastPositionMs > 0)
+                    {
+                        try { _player.Seek((int)channel.LastPositionMs); _lastSeekTime = DateTime.Now; _effectivePositionMs = channel.LastPositionMs; } catch { }
+                    }
+
+                    _ = Dispatcher.InvokeAsync(() => _positionTimer?.Start());
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[PLAYBACK] CRITICAL ERROR", ex);
+                    if (!token.IsCancellationRequested)
                     {
                         _ = Dispatcher.InvokeAsync(() => {
-                            OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Zayıf / Yanıt Vermiyor)";
-                            OsdCategory.Text = "Sinyal Yok";
-                            UpdatePlayPauseIcon(false);
+                            OsdTitle.Text = $"{channel.PrimaryName} (Hata: {ex.Message})";
                             ShowOsdTemporary();
                         });
                     }
                 }
-                catch (OperationCanceledException) { }
-                catch (Exception ex) { LogService.LogError("Player: Load error", ex); }
-                finally
-                {
-                    _playSemaphore.Release();
-                }
+                finally { _playSemaphore.Release(); LogService.LogInfo("[PLAYBACK] Play Semaphore Released"); }
             }, token);
         }
 
         public async void Stop()
         {
             _loadCts?.Cancel();
+            _positionTimer?.Stop();
+
+            var ch = ViewModel.CurrentChannel;
+            if (IsCurrentStreamVod() && ch != null && _player != null)
+            {
+                try
+                {
+                    ch.LastPositionMs = _player.CurTime / 10000;
+                    _ = _db.SaveChannelAsync(ch);
+                }
+                catch { }
+            }
+
             _player?.Stop();
-            if (_currentChannel?.SourceType == "ACESTREAM" || (_currentChannel?.Url?.Contains("acestream://") == true))
+            _effectivePositionMs = 0;
+            _pausedDvrPosMs = 0;
+            _isTimeshiftMode = false;
+            _timeshiftStartDvrMs = 0;
+            HlsProxyEngine.Instance.ClearChannelCache();
+            if (ch?.SourceType == "ACESTREAM" || (ch?.Url?.Contains("acestream://") == true))
             {
                 await _ace.StopAllStreamsAsync();
             }
@@ -611,23 +769,185 @@ namespace StreamMesh.UI.Views
 
         public void TogglePause()
         {
-            if (_player == null) return;
+            if (_player == null || ViewModel.CurrentChannel == null) return;
             ShowOsdTemporary();
+
+            bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
 
             if (_player.Status == Status.Playing)
             {
+                if (!isVod)
+                {
+                    // Canlı yayında duraklatılan DVR zamanını sakla
+                    var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
+                                       ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+
+                    if (proxySession != null && proxySession.Segments.Count > 0)
+                    {
+                        long totalMsDvr = (long)(proxySession.TotalDurationSeconds * 1000);
+                        if (_isTimeshiftMode)
+                        {
+                            long curMs = _player.CurTime / 10000;
+                            _pausedDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + curMs, 0, totalMsDvr);
+                        }
+                        else
+                        {
+                            _pausedDvrPosMs = _effectivePositionMs > 0 ? _effectivePositionMs : totalMsDvr;
+                        }
+                    }
+                }
+
                 _player.Pause();
                 UpdatePlayPauseIcon(false);
             }
             else
             {
-                _player.Play();
+                if (!isVod && _pausedDvrPosMs > 0)
+                {
+                    // Canlı yayında duraklatıldığı noktadan mevcut Timeshift zinciriyle devam et
+                    long resumeTargetMs = _pausedDvrPosMs;
+                    _pausedDvrPosMs = 0;
+                    SeekAbsolute(resumeTargetMs);
+                }
+                else
+                {
+                    _player.Play();
+                }
                 UpdatePlayPauseIcon(true);
             }
         }
 
-        public void Rewind(int ms) { if (_player != null) _player.Seek((int)((_player.CurTime / 10000) - ms)); ShowOsdTemporary(); }
-        public void Forward(int ms) { if (_player != null) _player.Seek((int)((_player.CurTime / 10000) + ms)); ShowOsdTemporary(); }
+        public void SeekRelative(int deltaMs)
+        {
+            if (_player == null || ViewModel.CurrentChannel == null) return;
+
+            if (ViewModel.IsVod(ViewModel.CurrentChannel))
+            {
+                long currentPosMs;
+                if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0 && _effectivePositionMs > 0)
+                {
+                    currentPosMs = _effectivePositionMs;
+                }
+                else
+                {
+                    currentPosMs = _player.CurTime / 10000;
+                }
+
+                long targetMs = currentPosMs + deltaMs;
+                PerformSeek(targetMs);
+            }
+            else
+            {
+                var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
+                                   ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+
+                if (proxySession != null && proxySession.Segments.Count > 0)
+                {
+                    long totalMsDvr = (long)(proxySession.TotalDurationSeconds * 1000);
+                    long currentDvrPosMs;
+
+                    if (_isTimeshiftMode)
+                    {
+                        if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0 && _effectivePositionMs > 0)
+                            currentDvrPosMs = _effectivePositionMs;
+                        else
+                            currentDvrPosMs = _timeshiftStartDvrMs + (_player.CurTime / 10000);
+                    }
+                    else
+                    {
+                        currentDvrPosMs = totalMsDvr;
+                    }
+
+                    long targetMs = currentDvrPosMs + deltaMs;
+                    PerformSeek(targetMs);
+                }
+            }
+        }
+
+        public void SeekAbsolute(long targetMs)
+        {
+            PerformSeek(targetMs);
+        }
+
+        private void PerformSeek(long targetMs)
+        {
+            if (_player == null || ViewModel.CurrentChannel == null) return;
+
+            bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
+
+            if (isVod)
+            {
+                long lengthMs = _player.Duration / 10000;
+                if (lengthMs <= 0) return;
+
+                targetMs = Math.Clamp(targetMs, 0, lengthMs);
+
+                try
+                {
+                    _player.Seek((int)targetMs);
+                    _lastSeekTime = DateTime.Now;
+                    _effectivePositionMs = targetMs;
+
+                    TimeSlider.Value = targetMs;
+                    TimeCurrentText.Text = TimeSpan.FromMilliseconds(targetMs).ToString(@"hh\:mm\:ss");
+                    ShowOsdTemporary();
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError($"Player: VOD Seek to {targetMs}ms failed", ex);
+                    _effectivePositionMs = _player.CurTime / 10000;
+                }
+            }
+            else
+            {
+                var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
+                                   ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+
+                if (proxySession != null && proxySession.Segments.Count > 0)
+                {
+                    long totalMsDvr = (long)(proxySession.TotalDurationSeconds * 1000);
+                    targetMs = Math.Clamp(targetMs, 0, totalMsDvr);
+                    long offsetMs = totalMsDvr - targetMs;
+
+                    if (offsetMs <= 3000)
+                    {
+                        GoLive();
+                        return;
+                    }
+
+                    try
+                    {
+                        int targetSec = (int)(targetMs / 1000);
+                        string timeshiftUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(ViewModel.CurrentChannel.Url ?? "", targetSec);
+
+                        _isTimeshiftMode = true;
+                        _timeshiftStartDvrMs = targetMs;
+                        _lastSeekTime = DateTime.Now;
+                        _effectivePositionMs = targetMs;
+
+                        _player.Open(timeshiftUrl);
+
+                        TimeSlider.Value = targetMs;
+                        UpdateOsdTimeAndBadge(targetMs, totalMsDvr, proxySession.StartWallClockTime);
+                        TimeTotalText.Text = "GERİDEN YAYIN";
+                        ShowOsdTemporary();
+                        LogService.LogInfo($"Player: Seeked DVR buffer to {targetSec}s (offset: -{TimeSpan.FromMilliseconds(offsetMs):hh\\:mm\\:ss})");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError($"Player: DVR Seek to {targetMs}ms failed", ex);
+                        _effectivePositionMs = _player.CurTime / 10000;
+                    }
+                }
+                else
+                {
+                    LogService.LogInfo("Player: Live stream has no DVR buffer, seek ignored.");
+                }
+            }
+        }
+
+        public void Rewind(int ms) { SeekRelative(-ms); }
+        public void Forward(int ms) { SeekRelative(ms); }
         public void ChangeVolume(int delta) { if (_player != null) _player.Audio.Volume = Math.Clamp(_player.Audio.Volume + delta, 0, 100); ShowOsdTemporary(); }
         public void ToggleMute()
         {
@@ -651,34 +971,25 @@ namespace StreamMesh.UI.Views
         {
             if (_isUserDraggingSlider)
             {
-                // UI'ı sürükleme anında güncelle (Anlık sarı yazı ve saat geri bildirimi)
-                var proxySession = HlsProxyEngine.Instance.GetSession(_currentChannel?.Url ?? "");
-                if (proxySession != null)
+                if (ViewModel.IsVod(ViewModel.CurrentChannel))
                 {
-                    UpdateOsdTimeAndBadge((long)e.NewValue, (long)(proxySession.TotalDurationSeconds * 1000), proxySession.StartWallClockTime);
+                    TimeCurrentText.Text = TimeSpan.FromMilliseconds((long)e.NewValue).ToString(@"hh\:mm\:ss");
+                }
+                else
+                {
+                    var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
+                                       ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+                    if (proxySession != null)
+                    {
+                        UpdateOsdTimeAndBadge((long)e.NewValue, (long)(proxySession.TotalDurationSeconds * 1000), proxySession.StartWallClockTime);
+                    }
                 }
             }
         }
 
         private void ApplySliderSeek(double value)
         {
-            if (_player == null || _currentChannel == null) return;
-
-            _lastSeekTime = DateTime.Now; // Cooldown başlat
-
-            if (IsCurrentStreamVod())
-            {
-                _player.Seek((int)value);
-            }
-            else if (_currentChannel.Url.Contains(".m3u8"))
-            {
-                // Time-Machine Teleport: Reload stream starting at requested second
-                _player.Stop();
-                _lastTeleportPositionMs = (long)value;
-                string teleportUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(_currentChannel.Url, value / 1000.0);
-                _player.Open(teleportUrl);
-                LogService.LogInfo($"Player: Teleported to {value / 1000}s");
-            }
+            SeekAbsolute((long)value);
         }
 
         public void Rewind10_Click(object sender, RoutedEventArgs e) { Rewind(10000); }
@@ -686,26 +997,39 @@ namespace StreamMesh.UI.Views
 
         public void GoLive()
         {
-            if (_player == null || _currentChannel == null) return;
+            if (_player == null || ViewModel.CurrentChannel == null) return;
 
-            _lastSeekTime = DateTime.Now; // Cooldown
-
-            if (_currentChannel.Url.Contains(".m3u8"))
+            var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel.Url ?? "")
+                               ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+            if (proxySession != null && proxySession.Segments.Count > 0)
             {
-                // Force proxy to return to live edge
-                _player.Stop();
-                _lastTeleportPositionMs = -1; // Live edge
-                string liveUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(_currentChannel.Url, -1);
+                long totalMs = (long)(proxySession.TotalDurationSeconds * 1000);
+                _isTimeshiftMode = false;
+                _timeshiftStartDvrMs = 0;
+                _effectivePositionMs = totalMs;
+
+                string liveUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(ViewModel.CurrentChannel.Url ?? "", -1);
                 _player.Open(liveUrl);
+
+                TimeSlider.Value = totalMs;
+                TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
+                if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
+                if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
+                TimeTotalText.Text = "CANLI YAYIN";
+                UpdateOsdEpgForTime(DateTime.Now);
+
+                LogService.LogInfo($"Player: Returned to Live Edge at {totalMs / 1000}s");
             }
-            else
+            else if (_player.Duration > 0 && !ViewModel.IsVod(ViewModel.CurrentChannel))
             {
-                _player.Seek((int)(_player.Duration / 10000));
+                long durationMs = _player.Duration / 10000;
+                _player.Seek((int)durationMs);
             }
             ShowOsdTemporary();
         }
 
         public void GoLive_Click(object sender, RoutedEventArgs e) { GoLive(); }
+        public void LiveBadge_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) { GoLive(); }
         public void Mute_Click(object sender, RoutedEventArgs e) { ToggleMute(); }
 
         #region Audio Tracks / Language Selection (Çoklu Dil & Ses İzi)
@@ -1103,27 +1427,24 @@ namespace StreamMesh.UI.Views
 
         private void FastReloadCurrentStream()
         {
-            if (_currentChannel == null || _player == null) return;
+            if (ViewModel.CurrentChannel == null || _player == null) return;
 
             try
             {
-                // 1. Keep position for VOD / Film / Dizi
                 long currentPosMs = 0;
-                if (IsCurrentStreamVod())
+                if (ViewModel.IsVod(ViewModel.CurrentChannel))
                 {
                     currentPosMs = _player.CurTime / 10000;
-                    _currentChannel.LastPositionMs = currentPosMs;
+                    ViewModel.CurrentChannel.LastPositionMs = currentPosMs;
                 }
 
-                // 2. Re-apply filter settings to configuration and engine
                 ApplyAudioNormalization();
                 ApplyVideoEnhancement();
 
-                // 3. Fast seamless reload if player is currently active
                 if (_player.Status == Status.Playing || _player.Status == Status.Paused || _player.Status == Status.Opening)
                 {
-                    LogService.LogInfo($"Player: Fast reloading current stream for '{_currentChannel.PrimaryName}' to apply filters immediately (VOD pos: {currentPosMs}ms)");
-                    LoadChannel(_currentChannel);
+                    LogService.LogInfo($"Player: Fast reloading current stream for '{ViewModel.CurrentChannel.PrimaryName}' to apply filters immediately (VOD pos: {currentPosMs}ms)");
+                    LoadChannel(ViewModel.CurrentChannel);
                 }
             }
             catch (Exception ex)
@@ -1233,14 +1554,19 @@ namespace StreamMesh.UI.Views
 
         private void UpdateOsdEpgForTime(DateTime targetTime)
         {
-            if (_currentChannel == null || OsdCurrentEpg == null || OsdNextEpg == null) return;
-            if (_currentChannelEpgList != null && _currentChannelEpgList.Count > 0)
+            if (ViewModel.CurrentChannel == null || OsdCurrentEpg == null || OsdNextEpg == null) return;
+            if (ViewModel.EpgList != null && ViewModel.EpgList.Count > 0)
             {
-                var matching = _currentChannelEpgList.Where(p => targetTime >= p.StartTime && targetTime <= p.EndTime).FirstOrDefault();
+                var matching = ViewModel.EpgList.Where(p => targetTime >= p.StartTime && targetTime <= p.EndTime).FirstOrDefault();
                 OsdCurrentEpg.Text = matching != null ? $"{matching.StartTime:HH:mm} - {matching.EndTime:HH:mm} {matching.Title}" : "Yayın akışı bilgisi yok";
 
-                var future = _currentChannelEpgList.Where(p => p.StartTime > targetTime).OrderBy(p => p.StartTime).FirstOrDefault();
+                var future = ViewModel.EpgList.Where(p => p.StartTime > targetTime).OrderBy(p => p.StartTime).FirstOrDefault();
                 OsdNextEpg.Text = future != null ? $"Sıradaki: {future.StartTime:HH:mm} {future.Title}" : "Sıradaki: --:-- Bilgi yok";
+            }
+            else
+            {
+                OsdCurrentEpg.Text = "Yayın akışı bilgisi yok";
+                OsdNextEpg.Text = "Sıradaki: --:-- Bilgi yok";
             }
         }
 
@@ -1256,14 +1582,14 @@ namespace StreamMesh.UI.Views
             {
                 try
                 {
-                    if (_currentChannel != null && IsCurrentStreamVod())
+                    var ch = ViewModel.CurrentChannel;
+                    if (ch != null && IsCurrentStreamVod())
                     {
-                        _currentChannel.LastPositionMs = _player.CurTime / 10000;
-                        _db.SaveChannelSync(_currentChannel);
+                        ViewModel.SaveVodPosition(ch, _player.CurTime / 10000);
                     }
                     _player.Stop();
 
-                    if (_currentChannel?.SourceType == "ACESTREAM" || (_currentChannel?.Url?.Contains("acestream://") == true))
+                    if (ch?.SourceType == "ACESTREAM" || (ch?.Url?.Contains("acestream://") == true))
                     {
                         Task.Run(async () => await _ace.StopAllStreamsAsync());
                     }

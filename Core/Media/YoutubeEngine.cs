@@ -73,5 +73,19 @@ namespace StreamMesh.Core.Media
             }
             catch { return null; }
         }
+
+        public async Task<int> GetActiveLiveViewersAsync(string videoUrl)
+        {
+            try
+            {
+                var video = await _yt.Videos.GetAsync(videoUrl);
+                // Video engagement metrics if available
+                return (int)(video.Engagement.ViewCount);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
     }
 }

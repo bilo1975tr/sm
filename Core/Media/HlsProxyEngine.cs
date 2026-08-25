@@ -22,7 +22,7 @@ namespace StreamMesh.Core.Media
         public double StartTimeSeconds { get; set; }
         public double EndTimeSeconds => StartTimeSeconds + DurationSeconds;
         public long SequenceNumber { get; set; }
-        public DateTime? ProgramDateTime { get; set; } // Absolute wall clock time from server
+        public DateTime? ProgramDateTime { get; set; }
     }
 
     public class HlsSessionInfo
@@ -40,6 +40,11 @@ namespace StreamMesh.Core.Media
         public double TargetDuration { get; set; } = 6.0;
         public bool IsLive { get; set; } = true;
         public CancellationTokenSource? PollerCts { get; set; }
+        public string? CustomUserAgent { get; set; }
+        public string? CustomReferer { get; set; }
+        public string? CustomCookie { get; set; }
+        public string? CustomOrigin { get; set; }
+        public Dictionary<string, string> CustomHeaders { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
     public class HlsProxyEngine : IDisposable
@@ -50,6 +55,7 @@ namespace StreamMesh.Core.Media
         private HttpListener? _httpListener;
         private CancellationTokenSource? _cts;
         private readonly HttpClient _httpClient;
+        private readonly CookieContainer _cookieContainer = new CookieContainer();
         private readonly ConcurrentDictionary<string, byte[]> _segmentCache = new();
         private readonly ConcurrentDictionary<string, HlsSessionInfo> _sessions = new();
         private int _port = 48931;
@@ -70,6 +76,8 @@ namespace StreamMesh.Core.Media
             var handler = new HttpClientHandler
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                CookieContainer = _cookieContainer,
+                UseCookies = true,
 #if DEBUG
                 ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
 #endif
@@ -79,6 +87,7 @@ namespace StreamMesh.Core.Media
                 Timeout = TimeSpan.FromSeconds(15)
             };
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+            _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
         }
 
         public void Start()
@@ -93,6 +102,7 @@ namespace StreamMesh.Core.Media
                 {
                     _httpListener = new HttpListener();
                     _httpListener.Prefixes.Add($"http://127.0.0.1:{p}/");
+                    _httpListener.Prefixes.Add($"http://localhost:{p}/");
                     _httpListener.Start();
                     _port = p;
                     _isRunning = true;
@@ -140,34 +150,149 @@ namespace StreamMesh.Core.Media
             _segmentCache.Clear();
         }
 
-        public async Task<HlsSessionInfo?> InspectAndPrepareHlsAsync(string m3u8Url)
+        private static string GetShortUrl(string url)
         {
-            if (string.IsNullOrWhiteSpace(m3u8Url)) return null;
+            if (string.IsNullOrEmpty(url)) return "";
+            try
+            {
+                var uri = new Uri(url);
+                string fn = Path.GetFileName(uri.AbsolutePath);
+                if (!string.IsNullOrEmpty(fn)) return fn;
+                return url.Length > 45 ? "..." + url.Substring(url.Length - 45) : url;
+            }
+            catch
+            {
+                return url.Length > 45 ? "..." + url.Substring(url.Length - 45) : url;
+            }
+        }
+
+        public static (string CleanUrl, Dictionary<string, string> Headers) ExtractHeadersFromUrl(string rawUrl)
+        {
+            if (string.IsNullOrWhiteSpace(rawUrl)) return (rawUrl ?? "", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase));
+
+            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            int pipeIdx = rawUrl.IndexOf('|');
+            if (pipeIdx == -1) return (rawUrl.Trim(), headers);
+
+            string cleanUrl = rawUrl.Substring(0, pipeIdx).Trim();
+            string headerPart = rawUrl.Substring(pipeIdx + 1).Trim();
+
+            var parts = headerPart.Split(new[] { '&', '|' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var part in parts)
+            {
+                int eqIdx = part.IndexOf('=');
+                if (eqIdx > 0)
+                {
+                    string key = part.Substring(0, eqIdx).Trim();
+                    string val = part.Substring(eqIdx + 1).Trim('"', '\'', ' ');
+
+                    if (key.Equals("http-user-agent", StringComparison.OrdinalIgnoreCase) || key.Equals("user-agent", StringComparison.OrdinalIgnoreCase))
+                        headers["User-Agent"] = val;
+                    else if (key.Equals("http-referrer", StringComparison.OrdinalIgnoreCase) || key.Equals("http-referer", StringComparison.OrdinalIgnoreCase) || key.Equals("referer", StringComparison.OrdinalIgnoreCase) || key.Equals("referrer", StringComparison.OrdinalIgnoreCase))
+                        headers["Referer"] = val;
+                    else if (key.Equals("http-cookie", StringComparison.OrdinalIgnoreCase) || key.Equals("cookie", StringComparison.OrdinalIgnoreCase))
+                        headers["Cookie"] = val;
+                    else if (key.Equals("http-origin", StringComparison.OrdinalIgnoreCase) || key.Equals("origin", StringComparison.OrdinalIgnoreCase))
+                        headers["Origin"] = val;
+                    else
+                        headers[key] = val;
+                }
+            }
+
+            return (cleanUrl, headers);
+        }
+
+        private void ApplyRequestHeaders(HttpRequestMessage request, HlsSessionInfo? session, string? fallbackReferer = null)
+        {
+            // 1. User-Agent
+            string userAgent = !string.IsNullOrWhiteSpace(session?.CustomUserAgent)
+                ? session.CustomUserAgent
+                : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+
+            request.Headers.Remove("User-Agent");
+            request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+
+            // 2. Referer: Only send if present in session/M3U metadata. Do NOT fabricate fake Referers!
+            string? refererToUse = !string.IsNullOrWhiteSpace(session?.CustomReferer)
+                ? session.CustomReferer
+                : fallbackReferer;
+
+            if (!string.IsNullOrWhiteSpace(refererToUse) && Uri.TryCreate(refererToUse, UriKind.Absolute, out var refUri))
+            {
+                request.Headers.Referrer = refUri;
+            }
+
+            // 3. Origin
+            if (!string.IsNullOrWhiteSpace(session?.CustomOrigin))
+            {
+                request.Headers.TryAddWithoutValidation("Origin", session.CustomOrigin);
+            }
+
+            // 4. Cookie
+            if (!string.IsNullOrWhiteSpace(session?.CustomCookie))
+            {
+                request.Headers.TryAddWithoutValidation("Cookie", session.CustomCookie);
+            }
+
+            // 5. Other custom headers
+            if (session?.CustomHeaders != null)
+            {
+                foreach (var kv in session.CustomHeaders)
+                {
+                    if (kv.Key.Equals("User-Agent", StringComparison.OrdinalIgnoreCase) ||
+                        kv.Key.Equals("Referer", StringComparison.OrdinalIgnoreCase) ||
+                        kv.Key.Equals("Referrer", StringComparison.OrdinalIgnoreCase) ||
+                        kv.Key.Equals("Origin", StringComparison.OrdinalIgnoreCase) ||
+                        kv.Key.Equals("Cookie", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                    request.Headers.TryAddWithoutValidation(kv.Key, kv.Value);
+                }
+            }
+        }
+
+        public async Task<HlsSessionInfo?> InspectAndPrepareHlsAsync(
+            string streamUrl,
+            string? customUserAgent = null,
+            string? customReferer = null,
+            string? customCookie = null,
+            string? customOrigin = null,
+            Dictionary<string, string>? customHeaders = null)
+        {
+            if (string.IsNullOrWhiteSpace(streamUrl)) return null;
 
             try
             {
-                string manifestContent = await _httpClient.GetStringAsync(m3u8Url);
-                if (!manifestContent.Contains("#EXTM3U"))
+                // Parse pipe headers from the URL if present
+                var (cleanUrl, pipeHeaders) = ExtractHeadersFromUrl(streamUrl);
+                string targetUrl = cleanUrl;
+
+                if (string.IsNullOrWhiteSpace(customUserAgent) && pipeHeaders.TryGetValue("User-Agent", out var pipeUa))
+                    customUserAgent = pipeUa;
+                if (string.IsNullOrWhiteSpace(customReferer) && pipeHeaders.TryGetValue("Referer", out var pipeRef))
+                    customReferer = pipeRef;
+                if (string.IsNullOrWhiteSpace(customCookie) && pipeHeaders.TryGetValue("Cookie", out var pipeCk))
+                    customCookie = pipeCk;
+                if (string.IsNullOrWhiteSpace(customOrigin) && pipeHeaders.TryGetValue("Origin", out var pipeOg))
+                    customOrigin = pipeOg;
+
+                var mergedHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                if (customHeaders != null)
                 {
-                    return null;
+                    foreach (var kv in customHeaders) mergedHeaders[kv.Key] = kv.Value;
+                }
+                foreach (var kv in pipeHeaders)
+                {
+                    mergedHeaders[kv.Key] = kv.Value;
                 }
 
-                string mediaPlaylistUrl = m3u8Url;
+                string uaLog = !string.IsNullOrWhiteSpace(customUserAgent) ? customUserAgent : "Default (Chrome)";
+                string refLog = !string.IsNullOrWhiteSpace(customReferer) ? customReferer : "None";
+                LogService.LogInfo($"[HLS PROXY] Inspecting upstream stream: {targetUrl} (UA: {uaLog}, Referer: {refLog})");
 
-                // If Master Playlist with multiple variants, resolve highest/first media stream
-                if (manifestContent.Contains("#EXT-X-STREAM-INF"))
-                {
-                    string targetVariant = ResolveMasterVariant(manifestContent, m3u8Url);
-                    if (!string.IsNullOrEmpty(targetVariant) && targetVariant != m3u8Url)
-                    {
-                        mediaPlaylistUrl = targetVariant;
-                        manifestContent = await _httpClient.GetStringAsync(targetVariant);
-                    }
-                }
-
-                string sessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(m3u8Url)).Replace("=", "").Replace("/", "_").Replace("+", "-");
+                string sessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(streamUrl)).Replace("=", "").Replace("/", "_").Replace("+", "-");
                 
-                // Stop any existing session poller
                 if (_sessions.TryGetValue(sessionId, out var existingSession))
                 {
                     existingSession.PollerCts?.Cancel();
@@ -176,29 +301,112 @@ namespace StreamMesh.Core.Media
                 var session = new HlsSessionInfo
                 {
                     SessionId = sessionId,
-                    OriginalUrl = m3u8Url,
-                    MediaPlaylistUrl = mediaPlaylistUrl,
-                    LastRefreshedUtc = DateTime.UtcNow
+                    OriginalUrl = streamUrl,
+                    MediaPlaylistUrl = targetUrl,
+                    LastRefreshedUtc = DateTime.UtcNow,
+                    CustomUserAgent = customUserAgent,
+                    CustomReferer = customReferer,
+                    CustomCookie = customCookie,
+                    CustomOrigin = customOrigin,
+                    CustomHeaders = mergedHeaders
                 };
 
-                ParseMediaPlaylist(session, manifestContent, mediaPlaylistUrl);
-
-                // Zaman Senkronizasyonu: StartWallClockTime, listenin en başındaki segmentin yayın saatidir.
-                session.StartWallClockTime = DateTime.Now.AddSeconds(-session.TotalDurationSeconds);
-
-                _sessions[sessionId] = session;
-
-                // Start continuous background live poller & TS prefetcher if live
-                if (session.IsLive)
+                // Direct MPEG-TS stream detection (e.g. Stalker/Xtream live.php?extension=ts).
+                // These servers stream continuous progressive MPEG-TS via a single HTTP connection.
+                // Do NOT convert to extension=m3u8 or force HLS segmentation.
+                if (targetUrl.Contains("extension=ts", StringComparison.OrdinalIgnoreCase) ||
+                    (targetUrl.Contains("live.php", StringComparison.OrdinalIgnoreCase) && !targetUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase)))
                 {
-                    StartLivePoller(session);
+                    LogService.LogInfo($"[HLS PROXY] Direct MPEG-TS stream detected ({targetUrl}), bypassing HLS proxy to play natively via Flyleaf/FFmpeg.");
+                    return null;
                 }
 
-                return session;
+                string manifestContent = "";
+                bool isNativeHls = false;
+
+                try
+                {
+                    using var ctsCheck = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    var request = new HttpRequestMessage(HttpMethod.Get, targetUrl);
+                    ApplyRequestHeaders(request, session);
+                    var response = await _httpClient.SendAsync(request, ctsCheck.Token);
+                    manifestContent = await response.Content.ReadAsStringAsync(ctsCheck.Token);
+
+                    if (manifestContent.Contains("#EXTM3U"))
+                    {
+                        isNativeHls = true;
+
+                        // Capture any Set-Cookie headers from manifest response into session if present
+                        if (response.Headers.TryGetValues("Set-Cookie", out var setCookies))
+                        {
+                            var cookieStr = string.Join("; ", setCookies.Select(c => c.Split(';')[0].Trim()));
+                            if (!string.IsNullOrWhiteSpace(cookieStr))
+                            {
+                                session.CustomCookie = string.IsNullOrWhiteSpace(session.CustomCookie)
+                                    ? cookieStr
+                                    : $"{session.CustomCookie}; {cookieStr}";
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError($"[HLS PROXY] Manifest fetch error ({targetUrl}): {ex.Message}", ex);
+                }
+
+                if (isNativeHls)
+                {
+                    string mediaPlaylistUrl = targetUrl;
+                    if (manifestContent.Contains("#EXT-X-STREAM-INF"))
+                    {
+                        string targetVariant = ResolveMasterVariant(manifestContent, targetUrl);
+                        if (!string.IsNullOrEmpty(targetVariant) && targetVariant != targetUrl)
+                        {
+                            LogService.LogInfo($"[HLS PROXY] Master playlist resolved to variant/media playlist: {targetVariant}");
+                            mediaPlaylistUrl = targetVariant;
+                            var request = new HttpRequestMessage(HttpMethod.Get, targetVariant);
+                            ApplyRequestHeaders(request, session, customReferer);
+
+                            using var ctsVariant = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                            var response = await _httpClient.SendAsync(request, ctsVariant.Token);
+                            manifestContent = await response.Content.ReadAsStringAsync(ctsVariant.Token);
+
+                            if (response.Headers.TryGetValues("Set-Cookie", out var variantSetCookies))
+                            {
+                                var cookieStr = string.Join("; ", variantSetCookies.Select(c => c.Split(';')[0].Trim()));
+                                if (!string.IsNullOrWhiteSpace(cookieStr))
+                                {
+                                    session.CustomCookie = string.IsNullOrWhiteSpace(session.CustomCookie)
+                                        ? cookieStr
+                                        : $"{session.CustomCookie}; {cookieStr}";
+                                }
+                            }
+                        }
+                    }
+
+                    session.MediaPlaylistUrl = mediaPlaylistUrl;
+                    ParseMediaPlaylist(session, manifestContent, mediaPlaylistUrl);
+
+                    if (session.Segments.Count > 0)
+                    {
+                        session.StartWallClockTime = DateTime.Now.AddSeconds(-session.TotalDurationSeconds);
+                        _sessions[sessionId] = session;
+
+                        LogService.LogInfo($"[HLS PROXY] Initial parse: {session.Segments.Count} segments, target_duration={session.TargetDuration:0.0}s, is_live={session.IsLive}, media_seq={session.MediaSequence}");
+
+                        if (session.IsLive)
+                        {
+                            StartLivePoller(session);
+                        }
+                        return session;
+                    }
+                }
+
+                return null;
             }
             catch (Exception ex)
             {
-                LogService.LogError($"HlsProxy: HLS çözümleme hatası ({m3u8Url})", ex);
+                LogService.LogError($"[HLS PROXY] Stream parsing error ({streamUrl}): {ex.Message}", ex);
                 return null;
             }
         }
@@ -210,8 +418,8 @@ namespace StreamMesh.Core.Media
             return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={(int)startOffsetSeconds}";
         }
 
-        private const int MaxMemoryCachedSegments = 320; // ~30-35 mins of TS buffer
-        private const int MaxTrackedHistorySegments = 15000; // ~24 hours of timeline tracking
+        private const int MaxMemoryCachedSegments = 320;
+        private const int MaxTrackedHistorySegments = 15000;
 
         private void StartLivePoller(HlsSessionInfo session)
         {
@@ -221,7 +429,9 @@ namespace StreamMesh.Core.Media
 
             Task.Run(async () =>
             {
-                LogService.LogInfo($"HlsProxy: 30 dakikalık TS yerel arabellek indiricisi başlatıldı (Orijinal: {session.MediaPlaylistUrl})");
+                string ua = !string.IsNullOrWhiteSpace(session.CustomUserAgent) ? session.CustomUserAgent : "Default (Chrome)";
+                string refLog = !string.IsNullOrWhiteSpace(session.CustomReferer) ? session.CustomReferer : "None";
+                LogService.LogInfo($"[HLS PROXY] Live poller started for media playlist: {session.MediaPlaylistUrl} (UA: {ua}, Referer: {refLog})");
                 while (!ct.IsCancellationRequested)
                 {
                     try
@@ -229,31 +439,143 @@ namespace StreamMesh.Core.Media
                         double pollDelay = Math.Max(1.5, session.TargetDuration / 2.0);
                         await Task.Delay(TimeSpan.FromSeconds(pollDelay), ct);
 
-                        string updatedManifest = await _httpClient.GetStringAsync(session.MediaPlaylistUrl);
+                        // Upstream URL preserved exactly with original query/token parameters, without _t
+                        string pollUrl = session.MediaPlaylistUrl;
+
+                        var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
+                        request.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue { NoCache = true, NoStore = true };
+                        request.Headers.Pragma.Add(new System.Net.Http.Headers.NameValueHeaderValue("no-cache"));
+
+                        ApplyRequestHeaders(request, session, session.CustomReferer);
+
+                        var swPoll = System.Diagnostics.Stopwatch.StartNew();
+                        var response = await _httpClient.SendAsync(request, ct);
+                        swPoll.Stop();
+                        response.EnsureSuccessStatusCode();
+
+                        string updatedManifest = await response.Content.ReadAsStringAsync(ct);
+                        int beforeCount;
+                        lock (session.SyncLock)
+                        {
+                            beforeCount = session.Segments.Count;
+                        }
+
                         ParseMediaPlaylist(session, updatedManifest, session.MediaPlaylistUrl);
 
-                        // Proactively buffer incoming live segments into local 30-minute cache
+                        int addedCount;
+                        long firstSeq = 0, lastSeq = 0, mediaSeq = session.MediaSequence;
                         List<string> latestSegmentUrls;
                         lock (session.SyncLock)
                         {
+                            addedCount = session.Segments.Count - beforeCount;
+                            firstSeq = session.Segments.Count > 0 ? session.Segments[0].SequenceNumber : 0;
+                            lastSeq = session.Segments.Count > 0 ? session.Segments.Last().SequenceNumber : 0;
                             latestSegmentUrls = session.Segments.TakeLast(6).Select(s => s.Url).ToList();
                         }
+
+                        LogService.LogInfo($"[HLS PROXY] Poller tick: upstream MEDIA-SEQUENCE={mediaSeq}, new_segments_added={addedCount}, total_tracked={session.Segments.Count}, range=[{firstSeq}..{lastSeq}] (Fetch: {swPoll.ElapsedMilliseconds}ms)");
 
                         foreach (var segUrl in latestSegmentUrls)
                         {
                             if (!string.IsNullOrEmpty(segUrl) && !_segmentCache.ContainsKey(segUrl))
                             {
-                                _ = FetchOrGetSegmentAsync(segUrl);
+                                _ = FetchOrGetSegmentAsync(segUrl, session.CustomReferer, session);
                             }
                         }
                     }
-                    catch (TaskCanceledException)
+                    catch (TaskCanceledException) { break; }
+                    catch (Exception ex)
                     {
-                        break;
+                        LogService.LogWarning($"[HLS PROXY] Poller error ({session.SessionId}): {ex.Message}");
                     }
-                    catch
+                }
+            }, ct);
+        }
+
+        private void StartTsLiveStreamChunker(HlsSessionInfo session, string streamUrl)
+        {
+            session.PollerCts?.Cancel();
+            session.PollerCts = new CancellationTokenSource();
+            var ct = session.PollerCts.Token;
+
+            Task.Run(async () =>
+            {
+                LogService.LogInfo($"HlsProxy: Direct TS chunker started -> {streamUrl}");
+                int segIndex = 0;
+                double currentTimeSec = 0;
+
+                while (!ct.IsCancellationRequested)
+                {
+                    try
                     {
-                        // Silent retry on transient upstream glitches
+                        using var req = new HttpRequestMessage(HttpMethod.Get, streamUrl);
+                        ApplyRequestHeaders(req, session, session.CustomReferer);
+                        using var response = await _httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            await Task.Delay(2000, ct);
+                            continue;
+                        }
+
+                        using var stream = await response.Content.ReadAsStreamAsync(ct);
+                        const int targetChunkSize = 1200 * 188;
+                        byte[] buffer = new byte[64 * 1024];
+
+                        using var ms = new MemoryStream();
+                        DateTime segmentStartTime = DateTime.UtcNow;
+
+                        while (!ct.IsCancellationRequested)
+                        {
+                            int read = await stream.ReadAsync(buffer, 0, buffer.Length, ct);
+                            if (read <= 0) break;
+
+                            ms.Write(buffer, 0, read);
+
+                            var elapsed = (DateTime.UtcNow - segmentStartTime).TotalSeconds;
+                            if (ms.Length >= 500 * 188 && (elapsed >= 2.5 || ms.Length >= targetChunkSize))
+                            {
+                                byte[] chunkBytes = ms.ToArray();
+                                ms.SetLength(0);
+                                segmentStartTime = DateTime.UtcNow;
+
+                                double dur = Math.Max(1.0, elapsed);
+                                string segKey = $"rawts://{session.SessionId}/seg_{segIndex}.ts";
+                                _segmentCache[segKey] = chunkBytes;
+
+                                lock (session.SyncLock)
+                                {
+                                    session.Segments.Add(new HlsSegment
+                                    {
+                                        Index = segIndex,
+                                        Url = segKey,
+                                        DurationSeconds = dur,
+                                        StartTimeSeconds = currentTimeSec,
+                                        SequenceNumber = segIndex,
+                                        ProgramDateTime = DateTime.Now.AddSeconds(-dur)
+                                    });
+
+                                    currentTimeSec += dur;
+                                    session.TotalDurationSeconds = currentTimeSec;
+                                    session.LastRefreshedUtc = DateTime.UtcNow;
+                                    session.HasDvrWindow = session.TotalDurationSeconds >= 15;
+
+                                    if (session.Segments.Count > MaxMemoryCachedSegments)
+                                    {
+                                        var oldest = session.Segments[0];
+                                        session.Segments.RemoveAt(0);
+                                        _segmentCache.TryRemove(oldest.Url, out _);
+                                    }
+                                }
+                                segIndex++;
+                            }
+                        }
+                    }
+                    catch (TaskCanceledException) { break; }
+                    catch (Exception ex)
+                    {
+                        LogService.LogWarning($"HlsProxy: TS reader warning: {ex.Message}");
+                        await Task.Delay(1500, ct);
                     }
                 }
             }, ct);
@@ -297,23 +619,17 @@ namespace StreamMesh.Core.Media
                 if (line.StartsWith("#EXT-X-TARGETDURATION:"))
                 {
                     if (double.TryParse(line.Substring(22).Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out double td))
-                    {
                         targetDuration = td;
-                    }
                 }
                 else if (line.StartsWith("#EXT-X-MEDIA-SEQUENCE:"))
                 {
                     if (long.TryParse(line.Substring(22).Trim(), out long seq))
-                    {
                         mediaSequence = seq;
-                    }
                 }
                 else if (line.StartsWith("#EXT-X-PROGRAM-DATE-TIME:"))
                 {
                     if (DateTime.TryParse(line.Substring(25).Trim(), null, DateTimeStyles.RoundtripKind, out DateTime dt))
-                    {
                         currentProgramTime = dt.ToLocalTime();
-                    }
                 }
                 else if (line.StartsWith("#EXT-X-ENDLIST"))
                 {
@@ -323,13 +639,9 @@ namespace StreamMesh.Core.Media
                 {
                     var match = Regex.Match(line, @"#EXTINF:\s*([0-9.]+)", RegexOptions.IgnoreCase);
                     if (match.Success && double.TryParse(match.Groups[1].Value, NumberStyles.Any, CultureInfo.InvariantCulture, out double dur))
-                    {
                         pendingDuration = dur;
-                    }
                     else
-                    {
                         pendingDuration = targetDuration > 0 ? targetDuration : 6.0;
-                    }
                 }
                 else if (!line.StartsWith("#"))
                 {
@@ -343,9 +655,8 @@ namespace StreamMesh.Core.Media
                     });
 
                     if (currentProgramTime.HasValue)
-                    {
                         currentProgramTime = currentProgramTime.Value.AddSeconds(pendingDuration > 0 ? pendingDuration : targetDuration);
-                    }
+
                     pendingDuration = 0;
                 }
             }
@@ -369,21 +680,17 @@ namespace StreamMesh.Core.Media
                     }
                     session.TotalDurationSeconds = curTime;
 
-                    // Fallback WallClock mapping if server doesn't provide #EXT-X-PROGRAM-DATE-TIME
                     if (session.Segments.Count > 0 && !session.Segments[0].ProgramDateTime.HasValue)
-                    {
                         session.StartWallClockTime = DateTime.Now.AddSeconds(-session.TotalDurationSeconds);
-                    }
                     else if (session.Segments.Count > 0 && session.Segments[0].ProgramDateTime.HasValue)
-                    {
                         session.StartWallClockTime = session.Segments[0].ProgramDateTime!.Value;
-                    }
                 }
                 else
                 {
                     var existingUrls = new HashSet<string>(session.Segments.Select(s => s.Url));
                     double curTime = session.Segments.Last().EndTimeSeconds;
                     int idx = session.Segments.Count;
+                    int addedCount = 0;
 
                     foreach (var s in newSegments)
                     {
@@ -393,6 +700,7 @@ namespace StreamMesh.Core.Media
                             s.StartTimeSeconds = curTime;
                             curTime += s.DurationSeconds;
                             session.Segments.Add(s);
+                            addedCount++;
                         }
                     }
                     session.TotalDurationSeconds = curTime;
@@ -400,11 +708,8 @@ namespace StreamMesh.Core.Media
                     if (session.Segments.Count > MaxTrackedHistorySegments)
                     {
                         session.Segments.RemoveRange(0, 500);
-                        // Re-anchor start wall clock time when trimming
                         if (session.Segments.Count > 0 && session.Segments[0].ProgramDateTime.HasValue)
-                        {
                             session.StartWallClockTime = session.Segments[0].ProgramDateTime!.Value;
-                        }
                     }
                 }
 
@@ -440,36 +745,70 @@ namespace StreamMesh.Core.Media
                     string sessionId = query["session"] ?? "";
                     int startSec = -1;
                     if (int.TryParse(query["start"], out int parsedStart))
-                    {
                         startSec = parsedStart;
+
+                    if (!_sessions.TryGetValue(sessionId, out var session))
+                    {
+                        try
+                        {
+                            string padded = sessionId.Replace("_", "/").Replace("-", "+");
+                            switch (padded.Length % 4)
+                            {
+                                case 2: padded += "=="; break;
+                                case 3: padded += "="; break;
+                            }
+                            byte[] rawBytes = Convert.FromBase64String(padded);
+                            string origUrl = Encoding.UTF8.GetString(rawBytes);
+                            session = await InspectAndPrepareHlsAsync(origUrl);
+                        }
+                        catch { }
                     }
 
-                    if (_sessions.TryGetValue(sessionId, out var session))
+                    if (session != null)
                     {
-                        byte[] m3u8Bytes = GenerateManifest(session, startSec);
+                        byte[] m3u8Bytes = GenerateManifest(session, startSec, out long firstSeq, out long lastSeq, out int servedCount);
                         context.Response.ContentType = "application/vnd.apple.mpegurl";
                         context.Response.StatusCode = 200;
                         context.Response.ContentLength64 = m3u8Bytes.Length;
                         await context.Response.OutputStream.WriteAsync(m3u8Bytes);
-                        context.Response.OutputStream.Close();
+                        context.Response.Close();
+
+                        LogService.LogInfo($"[HLS MANIFEST] Served playlist -> media_seq={firstSeq}, count={servedCount}, range=[{firstSeq}..{lastSeq}], total_tracked={session.Segments.Count}, size={m3u8Bytes.Length}B");
                         return;
+                    }
+                    else
+                    {
+                        LogService.LogWarning($"[HLS MANIFEST] Failed to serve M3U8, session {sessionId} not found.");
                     }
                 }
                 else if (path.StartsWith("/seg/"))
                 {
+                    string sessionId = query["session"] ?? "";
                     string encodedUrl = query["url"] ?? "";
                     if (!string.IsNullOrEmpty(encodedUrl))
                     {
+                        // HttpListener automatically decodes query parameters.
+                        // If we UrlEncoded it in the manifest, 'encodedUrl' here is the original Base64.
                         string segUrl = Encoding.UTF8.GetString(Convert.FromBase64String(encodedUrl));
-                        byte[]? data = await FetchOrGetSegmentAsync(segUrl);
+                        HlsSessionInfo? session = null;
+                        if (!string.IsNullOrEmpty(sessionId) && _sessions.TryGetValue(sessionId, out var foundSession))
+                            session = foundSession;
+
+                        byte[]? data = await FetchOrGetSegmentAsync(segUrl, session?.CustomReferer, session);
                         if (data != null)
                         {
                             context.Response.ContentType = "video/MP2T";
                             context.Response.StatusCode = 200;
                             context.Response.ContentLength64 = data.Length;
                             await context.Response.OutputStream.WriteAsync(data);
-                            context.Response.OutputStream.Close();
+                            context.Response.Close();
+
+                            LogService.LogInfo($"[HLS SEGMENT SERVED] {GetShortUrl(segUrl)} -> Player 200 OK ({data.Length} bytes)");
                             return;
+                        }
+                        else
+                        {
+                            LogService.LogWarning($"[HLS SEGMENT SERVED] Failed (null data) -> 404 for {GetShortUrl(segUrl)}");
                         }
                     }
                 }
@@ -477,84 +816,115 @@ namespace StreamMesh.Core.Media
                 context.Response.StatusCode = 404;
                 context.Response.Close();
             }
-            catch
+            catch (Exception ex)
             {
+                if (ex is HttpListenerException hle && (hle.ErrorCode == 995 || hle.NativeErrorCode == 995))
+                {
+                    System.Diagnostics.Trace.WriteLine($"[HLS PROXY] Client disconnected (Socket 995): {hle.Message}");
+                }
+                else if (ex is OperationCanceledException || ex is TaskCanceledException)
+                {
+                    System.Diagnostics.Trace.WriteLine("[HLS PROXY] Request canceled by client");
+                }
+                else
+                {
+                    LogService.LogError("[HLS PROXY] HandleRequest error", ex);
+                }
                 try { context.Response.Close(); } catch { }
             }
         }
 
-        private byte[] GenerateManifest(HlsSessionInfo session, int startSec)
+        private byte[] GenerateManifest(HlsSessionInfo session, int startSec, out long firstSeq, out long lastSeq, out int servedCount)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("#EXTM3U");
-            sb.AppendLine("#EXT-X-VERSION:3");
-            sb.AppendLine($"#EXT-X-TARGETDURATION:{(int)Math.Ceiling(session.TargetDuration > 0 ? session.TargetDuration : 6.0)}");
-
-            // We use EVENT mode to tell the player we have history, but we only serve a sliding window
-            // to avoid manifest bloating.
-            sb.AppendLine("#EXT-X-PLAYLIST-TYPE:EVENT");
+            sb.Append("#EXTM3U\r\n");
+            sb.Append("#EXT-X-VERSION:3\r\n");
+            sb.Append($"#EXT-X-TARGETDURATION:{(int)Math.Ceiling(session.TargetDuration > 0 ? session.TargetDuration : 6.0)}\r\n");
 
             List<HlsSegment> segmentsToServe;
 
             lock (session.SyncLock)
             {
-                if (startSec < 0)
+                bool isTeleportMode = startSec >= 0;
+
+                if (!session.IsLive)
                 {
-                    // Live Mode: Serve last 10 segments and start at the very end
-                    segmentsToServe = session.Segments.TakeLast(10).ToList();
-                    sb.AppendLine("#EXT-X-START:TIME-OFFSET=-2,PRECISE=YES");
+                    sb.Append("#EXT-X-PLAYLIST-TYPE:VOD\r\n");
+                    segmentsToServe = session.Segments.ToList();
                 }
-                else
+                else if (isTeleportMode)
                 {
-                    // Teleport Mode: Serve a 60s window starting from requested second
+                    sb.Append("#EXT-X-PLAYLIST-TYPE:EVENT\r\n");
                     segmentsToServe = session.Segments
                         .Where(s => s.EndTimeSeconds >= startSec)
-                        .Take(12) // Serve about 60-70 seconds
+                        .Take(1000)
                         .ToList();
 
                     if (segmentsToServe.Count == 0)
-                        segmentsToServe = session.Segments.TakeLast(10).ToList();
+                        segmentsToServe = session.Segments.TakeLast(14).ToList();
 
-                    sb.AppendLine("#EXT-X-START:TIME-OFFSET=0,PRECISE=YES");
-                    sb.AppendLine("#EXT-X-DISCONTINUITY");
+                    sb.Append("#EXT-X-START:TIME-OFFSET=0,PRECISE=YES\r\n");
+                }
+                else
+                {
+                    // Standard live sliding window
+                    segmentsToServe = session.Segments.TakeLast(14).ToList();
                 }
 
-                long firstSeq = segmentsToServe.Count > 0 ? segmentsToServe[0].SequenceNumber : 0;
-                sb.AppendLine($"#EXT-X-MEDIA-SEQUENCE:{firstSeq}");
+                firstSeq = segmentsToServe.Count > 0 ? segmentsToServe[0].SequenceNumber : 0;
+                lastSeq = segmentsToServe.Count > 0 ? segmentsToServe.Last().SequenceNumber : 0;
+                servedCount = segmentsToServe.Count;
+
+                sb.Append($"#EXT-X-MEDIA-SEQUENCE:{firstSeq}\r\n");
 
                 foreach (var seg in segmentsToServe)
                 {
                     if (seg.ProgramDateTime.HasValue)
-                        sb.AppendLine($"#EXT-X-PROGRAM-DATE-TIME:{seg.ProgramDateTime.Value:yyyy-MM-ddTHH:mm:ss.fffzzz}");
+                        sb.Append($"#EXT-X-PROGRAM-DATE-TIME:{seg.ProgramDateTime.Value:yyyy-MM-ddTHH:mm:ss.fffzzz}\r\n");
 
-                    string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(seg.Url));
-                    sb.AppendLine($"#EXTINF:{seg.DurationSeconds.ToString("0.000", CultureInfo.InvariantCulture)},");
-                    sb.AppendLine($"http://127.0.0.1:{_port}/seg/{seg.Index}?url={encoded}");
+                    // Double-check: UrlEncode the Base64 so special chars like '+' don't become spaces
+                    string b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(seg.Url));
+                    string encoded = WebUtility.UrlEncode(b64);
+                    string encodedSession = WebUtility.UrlEncode(session.SessionId);
+
+                    sb.Append($"#EXTINF:{seg.DurationSeconds.ToString("0.000", CultureInfo.InvariantCulture)},\r\n");
+                    sb.Append($"http://127.0.0.1:{_port}/seg/{seg.Index}.ts?session={encodedSession}&url={encoded}\r\n");
                 }
 
-                // If not live or if we reached the actual live edge in teleport mode, we don't append ENDLIST
-                // because we want the player to keep requesting updates.
-                if (!session.IsLive && segmentsToServe.LastOrDefault()?.Url == session.Segments.LastOrDefault()?.Url)
-                {
-                    sb.AppendLine("#EXT-X-ENDLIST");
-                }
+                if (!session.IsLive)
+                    sb.Append("#EXT-X-ENDLIST\r\n");
             }
 
             return Encoding.UTF8.GetBytes(sb.ToString());
         }
 
-        private async Task<byte[]?> FetchOrGetSegmentAsync(string url)
+        private async Task<byte[]?> FetchOrGetSegmentAsync(string url, string? referer = null, HlsSessionInfo? session = null)
         {
             if (_segmentCache.TryGetValue(url, out var cached))
             {
+                LogService.LogInfo($"[HLS SEGMENT] CACHE_HIT {GetShortUrl(url)} (bytes={cached.Length})");
                 return cached;
             }
 
+            if (url.StartsWith("rawts://", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                byte[] bytes = await _httpClient.GetByteArrayAsync(url);
-                
-                // Ring buffer: keep ~30-35 mins of TS in memory (MaxMemoryCachedSegments = 320)
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+                ApplyRequestHeaders(request, session, referer ?? session?.CustomReferer);
+
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                sw.Stop();
+                int httpStatus = (int)response.StatusCode;
+                response.EnsureSuccessStatusCode();
+
+                byte[] bytes = await response.Content.ReadAsByteArrayAsync(cts.Token);
+                LogService.LogInfo($"[HLS SEGMENT] DOWNLOAD_OK http={httpStatus} duration={sw.ElapsedMilliseconds}ms bytes={bytes.Length} {GetShortUrl(url)}");
+
                 if (_segmentCache.Count > MaxMemoryCachedSegments)
                 {
                     var oldest = _segmentCache.Keys.Take(50).ToList();
@@ -563,22 +933,38 @@ namespace StreamMesh.Core.Media
                 _segmentCache[url] = bytes;
                 return bytes;
             }
-            catch
+            catch (Exception ex)
             {
+                sw.Stop();
+                LogService.LogError($"[HLS SEGMENT] DOWNLOAD_FAIL duration={sw.ElapsedMilliseconds}ms {GetShortUrl(url)}: {ex.Message}", ex);
                 return null;
             }
         }
 
         private string MakeAbsoluteUrl(string baseUrl, string relativeUrl)
         {
+            if (string.IsNullOrWhiteSpace(relativeUrl)) return baseUrl;
+
+            // 1. If relativeUrl is already absolute (e.g. https://cdn.example.com/seg1.ts), preserve it untouched
             if (Uri.TryCreate(relativeUrl, UriKind.Absolute, out var abs))
-            {
                 return abs.ToString();
-            }
-            if (Uri.TryCreate(new Uri(baseUrl), relativeUrl, out var combined))
+
+            // 2. Resolve relative path against base URL
+            if (Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUriObj) && Uri.TryCreate(baseUriObj, relativeUrl, out var combined))
             {
+                // If the relative URL did not specify its own query parameters, and base URL had query parameters (auth/tokens), inherit them
+                if (string.IsNullOrEmpty(combined.Query) && !string.IsNullOrEmpty(baseUriObj.Query))
+                {
+                    var builder = new UriBuilder(combined)
+                    {
+                        Query = baseUriObj.Query.TrimStart('?')
+                    };
+                    return builder.Uri.ToString();
+                }
+
                 return combined.ToString();
             }
+
             return relativeUrl;
         }
 

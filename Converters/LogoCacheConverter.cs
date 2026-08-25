@@ -73,13 +73,27 @@ namespace StreamMesh.Converters
                     return bitmap;
                 }
 
-                // 3. Check relative path in App Domain Base Directory (e.g. "logos/StreamMesh_logo.png")
-                string localBasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pathOrUrl.TrimStart('/', '\\'));
+                // 3. Check relative path in App Domain Base Directory (e.g. "logos/StreamMesh_Icon.ico")
+                string cleanRelative = pathOrUrl.TrimStart('/', '\\');
+                string localBasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, cleanRelative);
                 if (File.Exists(localBasePath))
                 {
                     var bitmap = new BitmapImage();
                     bitmap.BeginInit();
                     bitmap.UriSource = new Uri(localBasePath, UriKind.Absolute);
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
+                }
+
+                // 4. Check LocalAppData logos cache directory
+                string appDataLogoPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StreamMesh", "logos", Path.GetFileName(cleanRelative));
+                if (File.Exists(appDataLogoPath))
+                {
+                    var bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri(appDataLogoPath, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
                     bitmap.Freeze();

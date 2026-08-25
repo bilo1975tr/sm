@@ -258,9 +258,52 @@ namespace StreamMesh.Core.Media
                 if (!string.IsNullOrWhiteSpace(channel.PrimaryName)) namesToTry.Add(channel.PrimaryName);
                 string clean = ChannelUtils.GetCleanName(channel.Name);
                 if (!string.IsNullOrWhiteSpace(clean)) namesToTry.Add(clean);
+                string cleanPrimary = ChannelUtils.GetCleanName(channel.PrimaryName);
+                if (!string.IsNullOrWhiteSpace(cleanPrimary)) namesToTry.Add(cleanPrimary);
 
                 var programs = await _db.GetEpgForChannelsAsync(namesToTry.Distinct().ToList());
-                return programs.OrderBy(p => p.StartTime).ToList();
+                if (programs != null && programs.Count > 0)
+                {
+                    return programs.OrderBy(p => p.StartTime).ToList();
+                }
+
+                // Dynamic Smart EPG Fallback: Search EpgChannels for best matching clean name
+                string searchKey = !string.IsNullOrWhiteSpace(clean) ? clean : (!string.IsNullOrWhiteSpace(cleanPrimary) ? cleanPrimary : channel.Name);
+                if (!string.IsNullOrWhiteSpace(searchKey))
+                {
+                    var searchResults = await _db.SearchEpgChannelsAsync(searchKey, false);
+                    if (searchResults != null && searchResults.Count > 0)
+                    {
+                        var best = searchResults.FirstOrDefault(r => {
+                            bool nameMatch = string.Equals(ChannelUtils.GetCleanName(r.ChannelName), searchKey, StringComparison.OrdinalIgnoreCase) ||
+                                             string.Equals(r.EpgId, searchKey, StringComparison.OrdinalIgnoreCase) ||
+                                             ChannelUtils.ToNormalizedKey(r.ChannelName) == ChannelUtils.ToNormalizedKey(searchKey);
+
+                            if (!nameMatch) return false;
+
+                            if (!string.IsNullOrEmpty(channel.Language) && channel.Language != "und")
+                            {
+                                return ChannelUtils.MatchesLanguageFilter(r.ChannelName, channel.Language);
+                            }
+                            return true;
+                        }) ?? searchResults.FirstOrDefault();
+
+                        if (best != null && !string.IsNullOrEmpty(best.EpgId))
+                        {
+                            channel.EpgId = best.EpgId;
+                            try { _db.SaveChannelSync(channel); } catch { }
+                            LogService.LogInfo($"[SmartEPG] Dynamic auto-matched '{channel.Name}' to EPG ID '{best.EpgId}'");
+
+                            var matchedPrograms = await _db.GetEpgForChannelsAsync(new List<string> { best.EpgId });
+                            if (matchedPrograms != null && matchedPrograms.Count > 0)
+                            {
+                                return matchedPrograms.OrderBy(p => p.StartTime).ToList();
+                            }
+                        }
+                    }
+                }
+
+                return list;
             }
             catch (Exception ex)
             {

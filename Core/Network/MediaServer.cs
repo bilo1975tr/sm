@@ -18,6 +18,14 @@ namespace StreamMesh.Core.Network
         private bool _isRunning = false;
         private int _port = 8080;
 
+        // Shared HttpClient for proxying to prevent socket exhaustion
+        private static readonly System.Net.Http.HttpClient _proxyClient = new System.Net.Http.HttpClient(new System.Net.Http.HttpClientHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            AllowAutoRedirect = true,
+            MaxConnectionsPerServer = 100
+        }) { Timeout = TimeSpan.FromSeconds(30) };
+
         public MediaServer(int port = 8080)
         {
             _port = port;
@@ -27,21 +35,47 @@ namespace StreamMesh.Core.Network
             _listener.Prefixes.Add($"http://127.0.0.1:{_port}/");
         }
 
-        public void Start()
+        public int Port => _port;
+
+        public bool Start()
         {
-            if (_isRunning) return;
-            try
+            if (_isRunning) return true;
+
+            int attempts = 0;
+            int basePort = _port;
+
+            while (attempts < 5)
             {
-                _listener.Start();
-                _isRunning = true;
-                Task.Run(ListenLoop);
-                Utils.LogService.LogInfo($"MediaServer: Başlatıldı. Port: {_port}");
+                try
+                {
+                    if (_listener != null)
+                    {
+                        try { _listener.Close(); } catch { }
+                    }
+
+                    _listener = new HttpListener();
+                    _listener.Prefixes.Add($"http://localhost:{_port}/");
+                    _listener.Prefixes.Add($"http://127.0.0.1:{_port}/");
+
+                    _listener.Start();
+                    _isRunning = true;
+                    Task.Run(ListenLoop);
+                    Utils.LogService.LogInfo($"MediaServer: Başlatıldı. Port: {_port}");
+                    return true;
+                }
+                catch (HttpListenerException ex) when (ex.ErrorCode == 183 || ex.ErrorCode == 32 || ex.ErrorCode == 48)
+                {
+                    attempts++;
+                    _port = basePort + attempts;
+                    Utils.LogService.LogWarning($"MediaServer: Port {_port - 1} dolu, {_port} deneniyor...");
+                }
+                catch (Exception ex)
+                {
+                    Utils.LogService.LogError("MediaServer Start Error", ex);
+                    return false;
+                }
             }
-            catch (Exception ex)
-            {
-                Utils.LogService.LogError("MediaServer Start Error", ex);
-                // Try fallback to higher port if occupied
-            }
+            return false;
         }
 
         public void Stop()
@@ -49,7 +83,11 @@ namespace StreamMesh.Core.Network
             try
             {
                 _isRunning = false;
-                if (_listener.IsListening) _listener.Stop();
+                if (_listener != null && _listener.IsListening)
+                {
+                    _listener.Stop();
+                    _listener.Close();
+                }
             } catch { }
         }
 
@@ -105,7 +143,7 @@ namespace StreamMesh.Core.Network
                 }
                 else if (path == "/logs")
                 {
-                    await ServeLogs(res);
+                    await ServeLogs(req, res);
                 }
                 else if (path == "/debug")
                 {
@@ -156,33 +194,88 @@ namespace StreamMesh.Core.Network
             finally { try { res.Close(); } catch { } }
         }
 
-        private async Task ServeLogs(HttpListenerResponse res)
+        private async Task ServeLogs(HttpListenerRequest req, HttpListenerResponse res)
         {
             try
             {
                 string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StreamMesh", "app.log");
-                if (File.Exists(logPath))
+                if (!File.Exists(logPath))
                 {
-                    byte[] buffer;
-                    using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (var reader = new StreamReader(fs))
-                    {
-                        string content = await reader.ReadToEndAsync();
-                        buffer = Encoding.UTF8.GetBytes(content);
-                    }
-                    res.ContentType = "text/plain; charset=utf-8";
+                    byte[] buffer = Encoding.UTF8.GetBytes("Log dosyası henüz oluşturulmadı.");
                     await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                    return;
+                }
+
+                bool full = req.QueryString["full"] == "true";
+                int limit = 500;
+                if (int.TryParse(req.QueryString["limit"], out int l))
+                    limit = Math.Clamp(l, 1, 10000); // Safe max limit
+
+                res.ContentType = "text/plain; charset=utf-8";
+
+                if (full)
+                {
+                    // Full streaming - no RAM buffering
+                    using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    {
+                        await fs.CopyToAsync(res.OutputStream);
+                    }
                 }
                 else
                 {
-                    byte[] buffer = Encoding.UTF8.GetBytes("Log dosyası henüz oluşturulmadı.");
+                    // Efficient last N lines reading
+                    string content = await ReadLastLinesAsync(logPath, limit);
+                    byte[] buffer = Encoding.UTF8.GetBytes(content);
                     await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
                 }
             }
             catch (Exception ex)
             {
                 byte[] buffer = Encoding.UTF8.GetBytes("Log okuma hatası: " + ex.Message);
-                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                try { await res.OutputStream.WriteAsync(buffer, 0, buffer.Length); } catch { }
+            }
+        }
+
+        private async Task<string> ReadLastLinesAsync(string path, int lineCount)
+        {
+            using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                if (fs.Length == 0) return "";
+
+                long position = fs.Length;
+                int count = 0;
+                var result = new List<string>();
+                var buffer = new byte[65536]; // 64KB chunks
+                var leftover = "";
+
+                while (position > 0 && count < lineCount)
+                {
+                    int toRead = (int)Math.Min(position, buffer.Length);
+                    position -= toRead;
+                    fs.Seek(position, SeekOrigin.Begin);
+                    await fs.ReadAsync(buffer, 0, toRead);
+
+                    string text = Encoding.UTF8.GetString(buffer, 0, toRead) + leftover;
+                    string[] lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+
+                    // The first item might be partial if we didn't start at a line break
+                    leftover = lines[0];
+
+                    for (int i = lines.Length - 1; i >= 1; i--)
+                    {
+                        result.Add(lines[i]);
+                        count++;
+                        if (count >= lineCount) break;
+                    }
+                }
+
+                if (count < lineCount && !string.IsNullOrEmpty(leftover))
+                {
+                    result.Add(leftover);
+                }
+
+                result.Reverse();
+                return string.Join(Environment.NewLine, result);
             }
         }
 
@@ -457,7 +550,7 @@ namespace StreamMesh.Core.Network
             string url = ch.Url.Split(',')[0];
             Utils.LogService.LogInfo($"MediaServer: Original URL: {url}");
 
-            using (var client = new System.Net.Http.HttpClient())
+            try
             {
                 var ace = new AceEngine();
                 if (ace.IsAceStreamUrl(url))
@@ -471,18 +564,23 @@ namespace StreamMesh.Core.Network
                     }
                 }
 
-                try
+                using (var response = await _proxyClient.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead))
                 {
-                    var stream = await client.GetStreamAsync(url);
-                    res.ContentType = "video/mp2t";
-                    Utils.LogService.LogInfo("MediaServer: Stream successfully established. Sending to output...");
-                    await stream.CopyToAsync(res.OutputStream);
+                    res.ContentType = response.Content.Headers.ContentType?.ToString() ?? "video/mp2t";
+                    res.StatusCode = (int)response.StatusCode;
+
+                    Utils.LogService.LogInfo($"MediaServer: Stream successfully established (HTTP {res.StatusCode}). Sending to output...");
+
+                    using (var stream = await response.Content.ReadAsStreamAsync())
+                    {
+                        await stream.CopyToAsync(res.OutputStream);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Utils.LogService.LogError($"MediaServer: Proxy transmission error for {url}", ex);
-                    res.StatusCode = 500;
-                }
+            }
+            catch (Exception ex)
+            {
+                Utils.LogService.LogError($"MediaServer: Proxy transmission error for {url}", ex);
+                res.StatusCode = 500;
             }
         }
     }

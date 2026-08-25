@@ -28,7 +28,7 @@ namespace StreamMesh
         public static MediaServer? Server { get; private set; }
         public static SsdpService? Ssdp { get; private set; }
 
-        protected override void OnStartup(System.Windows.StartupEventArgs e)
+        protected override async void OnStartup(System.Windows.StartupEventArgs e)
         {
             if (!EnsureSingleInstance()) return;
 
@@ -37,7 +37,7 @@ namespace StreamMesh
             LogService.ClearLogs();
             LogService.LogInfo($"App: Baslatiliyor. Process: {Process.GetCurrentProcess().MainModule?.FileName}");
 
-            InitializeServices();
+            await InitializeServicesAsync();
 
             base.OnStartup(e);
         }
@@ -79,23 +79,68 @@ namespace StreamMesh
             };
         }
 
-        private void InitializeServices()
+        private async Task InitializeServicesAsync()
         {
-            // 1. Maintenance
-            try { MaintenanceEngine.EnsureSelfInstallation(); }
-            catch (Exception ex) { LogService.LogError("App: Maintenance failed", ex); }
+            LogService.LogInfo("[STARTUP] Initializing Services...");
 
-            // 2. Init DB
-            try { _ = new DatabaseEngine(); }
-            catch (Exception ex) { LogService.LogError("App: Database init failed", ex); }
+            // 1. Media Server Init (HIGH PRIORITY - must start even if DB fails)
+            try
+            {
+                Server = new MediaServer();
+                Ssdp = new SsdpService();
 
-            // 3. Media Server Init
-            Server = new MediaServer();
-            Ssdp = new SsdpService();
-            Server.Start();
+                if (Server.Start())
+                {
+                    Ssdp.Start(Server.Port);
+                    LogService.LogInfo($"[STARTUP] MediaServer and SSDP started on port {Server.Port}.");
+                }
+                else
+                {
+                    LogService.LogError("[STARTUP] CRITICAL: MediaServer failed to start (Port issue or Listener error).");
+                    System.Windows.MessageBox.Show("Uygulama sunucusu başlatılamadı. Port çakışması veya yetki sorunu olabilir.", "Kritik Hata", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[STARTUP] CRITICAL: Exception during MediaServer/SSDP init", ex);
+            }
 
-            // 4. AceStream & Cloud Sync
+            // 2. Maintenance
+            try
+            {
+                MaintenanceEngine.EnsureSelfInstallation();
+                LogService.LogInfo("[STARTUP] Maintenance check completed.");
+            }
+            catch (Exception ex) { LogService.LogError("[STARTUP] Maintenance failed", ex); }
+
+            // 3. Init DB (Awaited to ensure tables and migrations are ready before UI loads)
+            try
+            {
+                LogService.LogInfo("[STARTUP] Database initialization starting...");
+                var db = new DatabaseEngine();
+
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                var dbTask = db.InitializeAsync();
+
+                if (await Task.WhenAny(dbTask, Task.Delay(-1, cts.Token)) == dbTask)
+                {
+                    await dbTask; // Propagate exceptions if any
+                    LogService.LogInfo("[STARTUP] Database initialized successfully.");
+                }
+                else
+                {
+                    LogService.LogWarning("[STARTUP] Database initialization TIMEOUT (20s). Background work might continue.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[STARTUP] Database init failed", ex);
+            }
+
+            // 4. AceStream & Cloud Sync (Arka planda devam etsinler)
             StartBackgroundTasks();
+
+            LogService.LogInfo("[STARTUP] Service initialization sequence finished (DB may still be loading).");
         }
 
         private void StartBackgroundTasks()
@@ -173,6 +218,12 @@ namespace StreamMesh
             {
                 // Stop any active AceStream broadcasts on exit
                 new AceEngine().StopAllStreamsAsync().Wait(2000);
+
+                // Stop HLS Local Proxy Server and pollers
+                HlsProxyEngine.Instance.Stop();
+
+                // Flush and shutdown logger
+                LogService.Shutdown();
 
                 if (_appMutex != null)
                 {

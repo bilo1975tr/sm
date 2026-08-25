@@ -64,8 +64,13 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- Channel Logo -->
-                            <Border Width="64" Height="64" Background="#1e293b" CornerRadius="12" VerticalAlignment="Center" BorderBrush="#22FFFFFF" BorderThickness="1">
-                                <Image x:Name="OsdLogo" Stretch="Uniform" Margin="8"/>
+                            <Border Width="64" Height="64" Background="#1e293b" CornerRadius="12" VerticalAlignment="Center" BorderBrush="#22FFFFFF" BorderThickness="1" ClipToBounds="True">
+                                <Grid>
+                                    <Image x:Name="OsdLogo" Stretch="Uniform" Margin="6" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <Border x:Name="OsdLogoFallback" Background="#1e3a8a" CornerRadius="10" Visibility="Collapsed">
+                                        <TextBlock x:Name="OsdLogoFallbackText" Text="TV" Foreground="White" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
                             </Border>
 
                             <!-- EPG Info -->
@@ -78,8 +83,14 @@
 
                                 <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
                                     <TextBlock x:Name="OsdTitle" Text="Kanal Yükleniyor..." FontSize="22" FontWeight="Bold" Foreground="White" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" MaxWidth="400"/>
-                                    <Border x:Name="LiveBadge" Background="#dc2626" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                    <Border x:Name="LiveBadge" Background="#dc2626" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="LiveBadge_MouseLeftButtonUp" ToolTip="Canlı Yayına Dön">
                                         <TextBlock x:Name="LiveBadgeText" Text="🔴 CANLI" Foreground="White" FontWeight="Bold" FontSize="10"/>
+                                    </Border>
+                                    <Border x:Name="OsdViewersBadge" Background="#CC1e293b" BorderBrush="#334155" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="Collapsed">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="{StaticResource GeoEye}" Fill="#38bdf8" Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="OsdViewersText" Text="0" Foreground="#38bdf8" FontWeight="Bold" FontSize="10" VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </Border>
                                 </StackPanel>
 
