@@ -20,6 +20,7 @@ namespace StreamMesh.Core.Media
             var urlMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
             var epgMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
             var aceMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+            var nameMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
 
             var aceEngine = new AceEngine();
 
@@ -30,6 +31,7 @@ namespace StreamMesh.Core.Media
                 Channel? matched = null;
                 var urls = ch.GetUrlList();
                 var epgs = ch.GetEpgIdList();
+                var names = ch.GetNamesList();
 
                 // 1. Try matching by AceStream Hash (Strongest match for P2P)
                 foreach (var u in urls)
@@ -60,6 +62,19 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
+                // 4. Try matching by Normalized Name (if name is meaningful)
+                if (matched == null)
+                {
+                    foreach (var n in names)
+                    {
+                        string normKey = ChannelUtils.ToNormalizedKey(n);
+                        if (!string.IsNullOrEmpty(normKey) && normKey.Length >= 3)
+                        {
+                            if (nameMap.TryGetValue(normKey, out matched)) break;
+                        }
+                    }
+                }
+
                 if (matched != null)
                 {
                     matched.MergeWith(ch);
@@ -80,6 +95,14 @@ namespace StreamMesh.Core.Media
                 foreach (var e in matched.GetEpgIdList())
                 {
                     if (!string.IsNullOrEmpty(e)) epgMap[e] = matched;
+                }
+                foreach (var n in matched.GetNamesList())
+                {
+                    string nk = ChannelUtils.ToNormalizedKey(n);
+                    if (!string.IsNullOrEmpty(nk) && nk.Length >= 3)
+                    {
+                        nameMap[nk] = matched;
+                    }
                 }
             }
 

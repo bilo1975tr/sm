@@ -2,7 +2,7 @@ name: Generate cleaned M3U
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Her gün 03:00 UTC
+    - cron: '1 21 * * 0'  # Her Pazartesi 00:01 TSİ (Pazar 21:01 UTC)
   workflow_dispatch:
 
 permissions:

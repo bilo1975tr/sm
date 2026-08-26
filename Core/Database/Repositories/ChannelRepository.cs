@@ -169,73 +169,18 @@ namespace StreamMesh.Core.Database.Repositories
         {
             if (incoming == null || incoming.Count == 0) return;
 
-            var urls = incoming.SelectMany(c => c.GetUrlList()).Distinct().ToList();
-            var epgs = incoming.SelectMany(c => c.GetEpgIdList()).Where(e => !string.IsNullOrEmpty(e)).Distinct().ToList();
-
-            var existing = new List<Channel>();
-            if (urls.Count > 0 || epgs.Count > 0)
+            try
             {
-                try
-                {
-                    using (var connection = new SqliteConnection(_connectionString))
-                    {
-                        await connection.OpenAsync();
+                var existing = await GetAllChannelsAsync();
+                var combined = existing.Concat(incoming).ToList();
+                var aggregated = ChannelAggregator.Instance.AggregateChannels(combined);
 
-                        if (urls.Count > 0)
-                        {
-                            for (int i = 0; i < urls.Count; i += 400)
-                            {
-                                var chunk = urls.Skip(i).Take(400).ToList();
-                                var cmd = connection.CreateCommand();
-                                var placeholders = new List<string>();
-                                for (int j = 0; j < chunk.Count; j++)
-                                {
-                                    string pName = $"@u{j}";
-                                    placeholders.Add(pName);
-                                    cmd.Parameters.AddWithValue(pName, chunk[j]);
-                                }
-                                string inClause = string.Join(",", placeholders);
-                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked FROM Channels WHERE Url IN ({inClause})";
-                                using var reader = await cmd.ExecuteReaderAsync();
-                                while (await reader.ReadAsync()) existing.Add(MapReaderToChannel(reader));
-                            }
-                        }
-
-                        if (epgs.Count > 0)
-                        {
-                            for (int i = 0; i < epgs.Count; i += 400)
-                            {
-                                var chunk = epgs.Skip(i).Take(400).ToList();
-                                var cmd = connection.CreateCommand();
-                                var placeholders = new List<string>();
-                                for (int j = 0; j < chunk.Count; j++)
-                                {
-                                    string pName = $"@e{j}";
-                                    placeholders.Add(pName);
-                                    cmd.Parameters.AddWithValue(pName, chunk[j]);
-                                }
-                                string inClause = string.Join(",", placeholders);
-                                cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked FROM Channels WHERE EpgId IN ({inClause})";
-                                using var reader = await cmd.ExecuteReaderAsync();
-                                while (await reader.ReadAsync())
-                                {
-                                    var ch = MapReaderToChannel(reader);
-                                    if (existing.All(x => x.Id != ch.Id)) existing.Add(ch);
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogError("ChannelRepository.SyncIncomingChannelsAsync: Metadata fetch failed", ex);
-                }
+                await SaveChannelsBatchAsync(aggregated, true);
             }
-
-            var combined = incoming.Concat(existing).ToList();
-            var aggregated = ChannelAggregator.Instance.AggregateChannels(combined);
-
-            await SaveChannelsBatchAsync(aggregated);
+            catch (Exception ex)
+            {
+                LogService.LogError("ChannelRepository.SyncIncomingChannelsAsync failed", ex);
+            }
         }
 
         public async Task<int> AutoAggregateDatabaseAsync()

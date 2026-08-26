@@ -132,6 +132,14 @@ namespace StreamMesh.Core.Media
                         var epgMatch = System.Text.RegularExpressions.Regex.Match(line, @"tvg-id=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                         if (epgMatch.Success) current.EpgId = epgMatch.Groups[1].Value;
 
+                        // tvg-name
+                        var tvgNameMatch = System.Text.RegularExpressions.Regex.Match(line, @"tvg-name=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (tvgNameMatch.Success)
+                        {
+                            string tvgName = tvgNameMatch.Groups[1].Value.Trim();
+                            if (!string.IsNullOrEmpty(tvgName)) current.AddAlternativeName(tvgName);
+                        }
+
                         // Group Title
                         var groupMatch = System.Text.RegularExpressions.Regex.Match(line, @"group-title=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                         if (groupMatch.Success)

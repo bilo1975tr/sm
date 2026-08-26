@@ -337,8 +337,12 @@ namespace StreamMesh.Core.Network
             {
                 if (ch.SourceType == "M3U" && !ch.Url.Contains("acestream://"))
                 {
-                    sb.AppendLine($"#EXTINF:-1 tvg-logo=\"{ch.LogoUrl}\" group-title=\"{ch.GroupTitle}\",{ch.Name}");
-                    sb.AppendLine(ch.Url.Split(',')[0]);
+                    string streamUrl = ch.GetUrlList().FirstOrDefault() ?? ch.Url;
+                    if (!string.IsNullOrEmpty(streamUrl))
+                    {
+                        sb.AppendLine($"#EXTINF:-1 tvg-logo=\"{ch.PrimaryLogoUrl}\" group-title=\"{ch.GroupTitle}\",{ch.PrimaryName}");
+                        sb.AppendLine(streamUrl);
+                    }
                 }
             }
 
@@ -547,7 +551,7 @@ namespace StreamMesh.Core.Network
                 return;
             }
 
-            string url = ch.Url.Split(',')[0];
+            string url = ch.GetUrlList().FirstOrDefault() ?? ch.Url;
             Utils.LogService.LogInfo($"MediaServer: Original URL: {url}");
 
             try
