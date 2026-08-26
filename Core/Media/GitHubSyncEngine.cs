@@ -142,6 +142,17 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
+                // Logo senkronizasyonunu ve eksik logoların zenginleştirilmesini tetikle
+                try
+                {
+                    var logoSync = new LogoSyncService();
+                    await logoSync.SyncIfNecessaryAsync();
+                }
+                catch (Exception logoEx)
+                {
+                    LogService.LogWarning($"GitHubSyncEngine: LogoSync tetikleme uyarısı: {logoEx.Message}");
+                }
+
                 DatabaseEngine.NotifyDatabaseUpdated();
                 LogService.LogInfo("GitHubSyncEngine: Güncelleme tamamlandı.");
                 OnProgress?.Invoke(100, "🎉 Bulut güncelleme başarıyla tamamlandı!");

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Converters
 {
@@ -35,15 +36,31 @@ namespace StreamMesh.Converters
                 // 1. Check pack URI or web URL
                 if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uriResult))
                 {
-                    if (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps || uriResult.Scheme == "pack")
+                    if (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps)
                     {
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
                         bitmap.UriSource = uriResult;
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.CreateOptions = BitmapCreateOptions.DelayCreation;
                         bitmap.EndInit();
-                        bitmap.Freeze();
+                        // Note: Asynchronous web URIs must not be frozen while downloading
+                        if (bitmap.CanFreeze)
+                        {
+                            bitmap.Freeze();
+                        }
+                        return bitmap;
+                    }
+                    else if (uriResult.Scheme == "pack")
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.UriSource = uriResult;
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        if (bitmap.CanFreeze)
+                        {
+                            bitmap.Freeze();
+                        }
                         return bitmap;
                     }
                     else if (uriResult.Scheme == Uri.UriSchemeFile)
@@ -55,7 +72,10 @@ namespace StreamMesh.Converters
                             bitmap.UriSource = uriResult;
                             bitmap.CacheOption = BitmapCacheOption.OnLoad;
                             bitmap.EndInit();
-                            bitmap.Freeze();
+                            if (bitmap.CanFreeze)
+                            {
+                                bitmap.Freeze();
+                            }
                             return bitmap;
                         }
                     }
@@ -69,7 +89,10 @@ namespace StreamMesh.Converters
                     bitmap.UriSource = new Uri(Path.GetFullPath(pathOrUrl), UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
-                    bitmap.Freeze();
+                    if (bitmap.CanFreeze)
+                    {
+                        bitmap.Freeze();
+                    }
                     return bitmap;
                 }
 
@@ -83,7 +106,10 @@ namespace StreamMesh.Converters
                     bitmap.UriSource = new Uri(localBasePath, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
-                    bitmap.Freeze();
+                    if (bitmap.CanFreeze)
+                    {
+                        bitmap.Freeze();
+                    }
                     return bitmap;
                 }
 
@@ -96,13 +122,16 @@ namespace StreamMesh.Converters
                     bitmap.UriSource = new Uri(appDataLogoPath, UriKind.Absolute);
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
                     bitmap.EndInit();
-                    bitmap.Freeze();
+                    if (bitmap.CanFreeze)
+                    {
+                        bitmap.Freeze();
+                    }
                     return bitmap;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback to next candidate on error
+                LogService.LogWarning($"[LogoCache] Failed to load logo from '{pathOrUrl}': {ex.Message}");
             }
 
             return null;

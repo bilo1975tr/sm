@@ -126,6 +126,16 @@ namespace StreamMesh
                 {
                     await dbTask; // Propagate exceptions if any
                     LogService.LogInfo("[STARTUP] Database initialized successfully.");
+
+                    // Fast initial local logos indexing
+                    try
+                    {
+                        new LogoSyncService().ScanLocalLogosFolder();
+                    }
+                    catch (Exception logoEx)
+                    {
+                        LogService.LogWarning($"[STARTUP] Local logo scanning warning: {logoEx.Message}");
+                    }
                 }
                 else
                 {
@@ -137,7 +147,7 @@ namespace StreamMesh
                 LogService.LogError("[STARTUP] Database init failed", ex);
             }
 
-            // 4. AceStream & Cloud Sync (Arka planda devam etsinler)
+            // 4. AceStream, Logo Sync & Cloud Sync (Arka planda devam etsinler)
             StartBackgroundTasks();
 
             LogService.LogInfo("[STARTUP] Service initialization sequence finished (DB may still be loading).");
@@ -145,6 +155,20 @@ namespace StreamMesh
 
         private void StartBackgroundTasks()
         {
+            // 1. Logo Sync (Sync local + online tv-logos if necessary)
+            Task.Run(async () => {
+                try
+                {
+                    var logoSync = new LogoSyncService();
+                    await logoSync.SyncIfNecessaryAsync();
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[STARTUP] LogoSync background task error", ex);
+                }
+            });
+
+            // 2. AceStream Engine Check / Start
             Task.Run(async () => {
                 var ace = new AceEngine();
                 if (!ace.IsInstalled())
@@ -168,6 +192,7 @@ namespace StreamMesh
                 }
             });
 
+            // 3. GitHub Playlist Sync
             Task.Run(async () => {
                 await Task.Delay(15000);
                 var sync = new GitHubSyncEngine();
