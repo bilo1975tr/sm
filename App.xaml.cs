@@ -96,8 +96,8 @@ namespace StreamMesh
                 }
                 else
                 {
-                    LogService.LogError("[STARTUP] CRITICAL: MediaServer failed to start (Port issue or Listener error).");
-                    System.Windows.MessageBox.Show("Uygulama sunucusu başlatılamadı. Port çakışması veya yetki sorunu olabilir.", "Kritik Hata", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    LogService.LogError("[STARTUP] CRITICAL: MediaServer failed to start on all candidate ports (8080-8084).");
+                    System.Windows.MessageBox.Show("StreamMesh MediaServer başlatılamadı.\n\nSebep: 8080-8084 arasındaki tüm portlar kullanımda veya sistem erişimi engellendi.", "MediaServer Başlatma Hatası", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)

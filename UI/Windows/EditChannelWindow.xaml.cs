@@ -229,19 +229,46 @@ namespace StreamMesh.UI.Windows
             }
         }
 
-        private async void MergeDuplicates_Click(object sender, RoutedEventArgs e)
+        private void OpenMergeDialog_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                int merged = await _db.AutoAggregateDatabaseAsync();
-                System.Windows.MessageBox.Show(merged > 0 
-                    ? $"Başarıyla {merged} adet yinelenen kanal birleştirildi ve alternatif kaynak olarak eklendi."
-                    : "Veritabanında birleştirilecek yinelenen kanal bulunamadı.",
-                    "Akıllı Kanal Birleştirici", MessageBoxButton.OK, MessageBoxImage.Information);
+                var mergeWin = new MergeChannelsWindow(_channel)
+                {
+                    Owner = this
+                };
+
+                if (mergeWin.ShowDialog() == true)
+                {
+                    // Reload all fields to reflect merged data
+                    TempNameList.Clear();
+                    foreach (var n in _channel.GetNamesList()) TempNameList.Add(new StringWrapper { Value = n });
+
+                    TempUrlList.Clear();
+                    foreach (var u in _channel.GetUrlList()) TempUrlList.Add(new StringWrapper { Value = u });
+
+                    TempLogoList.Clear();
+                    foreach (var l in _channel.GetLogoList()) TempLogoList.Add(new StringWrapper { Value = l });
+
+                    TempEpgList.Clear();
+                    foreach (var ep in _channel.GetEpgIdList()) TempEpgList.Add(new StringWrapper { Value = ep });
+
+                    TempEpgUrlList.Clear();
+                    var urls = (_channel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var u in urls) TempEpgUrlList.Add(new StringWrapper { Value = u.Trim() });
+
+                    if (TempLogoList.Count > 0) SelectedLogoUrl = TempLogoList[0].Value;
+                    LanguageText = _channel.Language ?? "";
+
+                    OnPropertyChanged(nameof(ChannelObj));
+                    OnPropertyChanged(nameof(LanguageText));
+                    OnPropertyChanged(nameof(SelectedLogoUrl));
+                }
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Birleştirme sırasında hata: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                StreamMesh.Core.Utils.LogService.LogError("EditChannelWindow.OpenMergeDialog_Click failed", ex);
+                System.Windows.MessageBox.Show($"Kanal birleştirme penceresi açılırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

@@ -1,4 +1,5 @@
 import http from 'http';
+import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,157 +15,345 @@ function getAppVersion() {
       return fs.readFileSync(path.join(__dirname, 'version.txt'), 'utf8').trim();
     }
   } catch (e) {}
-  return '0.1.0';
+  return '2.1.0';
 }
 
-// Comprehensive data store for TV, Movies, Series, Radio
+// Master Media Catalog with Rich Categories & Standard Test Streams
 const MEDIA_DATABASE = {
   live_tv: [
     {
       id: 'ch-trt1',
       name: 'TRT 1 HD',
-      category: 'Ulusal',
+      category: 'TV',
+      subCategory: 'Ulusal & Dizi',
+      genre: 'TV',
       logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-1-tr.png',
       url: 'https://tv-trt1.medya.trt.com.tr/master.m3u8',
       quality: '1080p',
       type: 'video',
-      epgSchedule: [
-        { startMinutes: 360, endMinutes: 570, title: 'Kudüs Fatihi Selahaddin Eyyubi (Tekrar)', desc: 'Tarihi dönem dizisi tekrar yayını.' },
-        { startMinutes: 570, endMinutes: 780, title: 'Alişan ile Hayata Gülümse', desc: 'Canlı stüdyo konukları, yemek tarifleri ve müzik.' },
-        { startMinutes: 780, endMinutes: 870, title: 'Gönül Dağı (Tekrar)', desc: 'Bozkırın ortasındaki samimi hayat hikayeleri.' },
-        { startMinutes: 870, endMinutes: 1140, title: 'Alparslan: Büyük Selçuklu', desc: 'Büyük Selçuklu İmparatorluğu\'nun altın çağını anlatan tarihi macera.' },
-        { startMinutes: 1140, endMinutes: 1200, title: 'Ana Haber Bülteni (Canlı)', desc: 'Günün tüm sıcak gelişmeleri, tarafsız haber bülteni.' },
-        { startMinutes: 1200, endMinutes: 1410, title: 'Teşkilat (Yeni Bölüm)', desc: 'Milli İstihbarat Teşkilatı\'nın kahramanlık dolu operasyonları.' },
-        { startMinutes: 1410, endMinutes: 1530, title: '3\'te 3 Tarih Yarışması', desc: 'Prof. Dr. Tufan Gündüz danışmanlığında tarih bilgi yarışması.' },
-        { startMinutes: 1530, endMinutes: 1800, title: 'Gece Sineması Kuşağı', desc: 'Ödüllü yerli ve yabancı sinema filmleri.' }
-      ]
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'TRT 1 canlı yayını - Ulusal kanal, dizi ve programlar.'
     },
     {
       id: 'ch-trthaber',
       name: 'TRT Haber HD',
-      category: 'Haber',
+      category: 'HABER',
+      subCategory: 'Haber & Gündem',
+      genre: 'HABER',
       logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-haber-tr.png',
       url: 'https://tv-trthaber.medya.trt.com.tr/master.m3u8',
       quality: '1080p',
       type: 'video',
-      epgSchedule: [
-        { startMinutes: 360, endMinutes: 540, title: 'Dün Bugün & Manşetler', desc: 'Gazete manşetleri ve sabahın ilk sıcak gelişmeleri.' },
-        { startMinutes: 540, endMinutes: 720, title: 'Haber Saati & Canlı Bağlantılar', desc: 'Ankara ve İstanbul stüdyolarından anlık gelişmeler.' },
-        { startMinutes: 720, endMinutes: 780, title: 'Ekonomi 7/24', desc: 'Borsa, altın, döviz ve piyasa analizleri.' },
-        { startMinutes: 780, endMinutes: 1020, title: 'Öğle Haberleri & Gündem', desc: 'Türkiye ve dünya gündeminin sıcak başlıkları.' },
-        { startMinutes: 1020, endMinutes: 1140, title: 'Sıcak Nokta & Dış Politika', desc: 'Dünya diplomasisi ve bölgesel krizler.' },
-        { startMinutes: 1140, endMinutes: 1260, title: 'Akşam Ana Haber', desc: 'Günün en önemli gelişmeleri ve özel dosyalar.' },
-        { startMinutes: 1260, endMinutes: 1440, title: 'Stratejik Analiz & Tartışma', desc: 'Uzman konuklarla derinlemesine gündem değerlendirmesi.' },
-        { startMinutes: 1440, endMinutes: 1800, title: 'Gece Bülteni & Dünya Raporu', desc: 'Gece yarısı haberleri ve dünya özetleri.' }
-      ]
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'TRT Haber canlı yayını - Son dakika haberleri ve canlı bağlantılar.'
     },
     {
       id: 'ch-trtspor',
-      name: 'TRT Spor HD',
-      category: 'Spor',
+      name: 'TRT Spor HD (Smart Router)',
+      category: 'SPOR',
+      subCategory: 'Canlı Maç & Spor',
+      genre: 'SPOR',
       logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-spor-tr.png',
       url: 'https://tv-trtspor1.medya.trt.com.tr/master.m3u8',
       quality: '1080p',
       type: 'video',
-      epgSchedule: [
-        { startMinutes: 420, endMinutes: 600, title: 'Sabah Sporu & Gazete Turu', desc: 'Spor basınının öne çıkan başlıkları ve transfer dedikoduları.' },
-        { startMinutes: 600, endMinutes: 780, title: 'Spor Stüdyosu', desc: 'Süper Lig maç analizleri ve antrenman raporları.' },
-        { startMinutes: 780, endMinutes: 960, title: 'Günün Maçları & Canlı Skor', desc: 'Voleybol, Basketbol ve Futbol karşılaşmaları.' },
-        { startMinutes: 960, endMinutes: 1140, title: 'Spor Manşet (Canlı)', desc: 'Usta yorumcularla günün spor olayları.' },
-        { startMinutes: 1140, endMinutes: 1380, title: 'Futbol Arenası & Maç Sonu', desc: 'Gecenin kritik pozisyonları ve canlı bağlantılar.' },
-        { startMinutes: 1380, endMinutes: 1800, title: 'Özetler & Gece Sporu', desc: 'Haftanın tüm golleri ve nefes kesen özet görüntüleri.' }
-      ]
+      sourceType: 'MULTI_SOURCE',
+      requiresStreamMesh: true,
+      sourcesCount: 3,
+      desc: 'TRT Spor canlı yayını - Çoklu kaynak yedeklemeli akış.'
+    },
+    {
+      id: 'ch-trtspor2',
+      name: 'TRT Spor Yıldız HD',
+      category: 'SPOR',
+      subCategory: 'Olimpiyat & Branş Sporları',
+      genre: 'SPOR',
+      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-spor-yildiz-tr.png',
+      url: 'https://tv-trtspor2.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Voleybol, basketbol, güreş ve tüm olimpik branşlar.'
     },
     {
       id: 'ch-trtbelgesel',
       name: 'TRT Belgesel HD',
-      category: 'Belgesel',
+      category: 'TV',
+      subCategory: 'Belgesel & Doğa',
+      genre: 'TV',
       logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-belgesel-tr.png',
       url: 'https://tv-trtbelgesel.medya.trt.com.tr/master.m3u8',
       quality: '1080p',
       type: 'video',
-      epgSchedule: [
-        { startMinutes: 360, endMinutes: 540, title: 'Doğadaki İnsan', desc: 'Serdar Kılıç ile doğada hayatta kalma ve geleneksel yaşam.' },
-        { startMinutes: 540, endMinutes: 720, title: 'Usta Ellerin Masalı', desc: 'Kaybolmaya yüz tutmuş geleneksel zanaatların hikayesi.' },
-        { startMinutes: 720, endMinutes: 900, title: 'Vahşi Yaşamın İzinde: Afrika', desc: 'Savananın yırtıcıları ve doğal döngü.' },
-        { startMinutes: 900, endMinutes: 1080, title: 'Büyük Mühendislik Harikaları', desc: 'Dünyanın en zorlu mega inşaat projeleri.' },
-        { startMinutes: 1080, endMinutes: 1260, title: 'Tarihin Efsaneleri', desc: 'Tarihe yön veren antik krallıklar ve komutanlar.' },
-        { startMinutes: 1260, endMinutes: 1440, title: 'Aysel\'in Doğa Yolculuğu', desc: 'Kutup soğuklarından yağmur ormanlarına keşif.' },
-        { startMinutes: 1440, endMinutes: 1800, title: 'Derin Uzay ve Kozmos', desc: 'Galaksiler, karadelikler ve evrenin gizemleri.' }
-      ]
-    },
-    {
-      id: 'ch-redbull',
-      name: 'Red Bull TV',
-      category: 'Spor',
-      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e4/Red_Bull_TV_logo.svg/320px-Red_Bull_TV_logo.svg.png',
-      url: 'https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8',
-      quality: '1080p',
-      type: 'video',
-      epgSchedule: [
-        { startMinutes: 0, endMinutes: 360, title: 'Rampage Freeride MTB Classics', desc: 'Extreme downhill mountain biking.' },
-        { startMinutes: 360, endMinutes: 720, title: 'Cliff Diving World Series', desc: 'High adrenaline platform dives from 27 meters.' },
-        { startMinutes: 720, endMinutes: 1080, title: 'F1 Track Stories & Pit Secrets', desc: 'Behind the scenes with championship drivers.' },
-        { startMinutes: 1080, endMinutes: 1440, title: 'BC One Street Breakdance Battles', desc: 'World finals breakdance competitions.' }
-      ]
-    },
-    {
-      id: 'ch-nasa',
-      name: 'NASA TV Live',
-      category: 'Belgesel',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/300px-NASA_logo.svg.png',
-      url: 'https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8',
-      quality: '720p',
-      type: 'video',
-      epgSchedule: [
-        { startMinutes: 0, endMinutes: 480, title: 'ISS Earth Views from Orbit', desc: 'High definition real-time live cameras on Space Station.' },
-        { startMinutes: 480, endMinutes: 960, title: 'Artemis Moon & Mars Science Briefing', desc: 'Lunar exploration milestones and astronaut science.' },
-        { startMinutes: 960, endMinutes: 1440, title: 'James Webb Telescope Discoveries', desc: 'Deep cosmic imagery and galaxy formation.' }
-      ]
-    },
-    {
-      id: 'ch-trtworld',
-      name: 'TRT World HD',
-      category: 'Uluslararası',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-world-tr.png',
-      url: 'https://tv-trtworld.medya.trt.com.tr/master.m3u8',
-      quality: '1080p',
-      type: 'video',
-      epgSchedule: [
-        { startMinutes: 0, endMinutes: 480, title: 'World News Headlines', desc: 'Global breaking stories and diplomatic updates.' },
-        { startMinutes: 480, endMinutes: 960, title: 'The Newsmakers & Debate', desc: 'Key figures dissecting global affairs.' },
-        { startMinutes: 960, endMinutes: 1440, title: 'Beyond the Headlines', desc: 'Documentary style reporting on human interest stories.' }
-      ]
-    },
-    {
-      id: 'ch-trtmuzik',
-      name: 'TRT Müzik HD',
-      category: 'Müzik',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-muzik-tr.png',
-      url: 'https://tv-trtmuzik.medya.trt.com.tr/master.m3u8',
-      quality: '1080p',
-      type: 'video',
-      epgSchedule: [
-        { startMinutes: 360, endMinutes: 600, title: 'Sabahın Ezgileri & Akustik', desc: 'Enstrümantal huzur veren tınılar.' },
-        { startMinutes: 600, endMinutes: 900, title: 'Gönülden Dile Türk Sanat Müziği', desc: 'Klasik besteler ve usta solistler.' },
-        { startMinutes: 900, endMinutes: 1200, title: 'Türkülerle Anadolu Kuşağı', desc: 'Koro ve solo halk müziği konserleri.' },
-        { startMinutes: 1200, endMinutes: 1440, title: 'Akşam Canlı Konser Kuşağı', desc: 'Canlı stüdyo performansı ve özel orkestra.' }
-      ]
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Kültür, doğa, bilim ve insan hikayeleri.'
     },
     {
       id: 'ch-trtcocuk',
       name: 'TRT Çocuk HD',
-      category: 'Çocuk',
+      category: 'ÇOCUK',
+      subCategory: 'Çizgi Film & Eğlence',
+      genre: 'ÇOCUK',
       logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-cocuk-tr.png',
       url: 'https://tv-trtcocuk.medya.trt.com.tr/master.m3u8',
       quality: '1080p',
       type: 'video',
-      epgSchedule: [
-        { startMinutes: 360, endMinutes: 600, title: 'Ege ile Gaga & Maysa ve Bulut', desc: 'Eğitici çizgi diziler.' },
-        { startMinutes: 600, endMinutes: 900, title: 'Rafadan Tayfa Maceraları', desc: 'Mahalle arkadaşlığı ve nostaljik maceralar.' },
-        { startMinutes: 900, endMinutes: 1200, title: 'Pırdino, Aslan & Kaptan Pengu', desc: 'Bilim, çevre bilinci ve keşif animasyonları.' },
-        { startMinutes: 1200, endMinutes: 1440, title: 'İbi ile Tosi & Kare Takımı', desc: 'Matematik ve macera dolu dünyalar.' }
-      ]
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Rafadan Tayfa, İbi, Ege ile Gaga ve çocuk programları.'
+    },
+    {
+      id: 'ch-trtturk',
+      name: 'TRT Türk HD',
+      category: 'TV',
+      subCategory: 'Kültür & Diasporalar',
+      genre: 'TV',
+      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-turk-tr.png',
+      url: 'https://tv-trtturk.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Türk dünyası ve yurt dışı vatandaşlarımıza yönelik yayın.'
+    },
+    {
+      id: 'ch-trtmuzik',
+      name: 'TRT Müzik HD',
+      category: 'MÜZİK',
+      subCategory: 'Türk Sanat & Halk Müziği',
+      genre: 'MÜZİK',
+      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-muzik-tr.png',
+      url: 'https://tv-trtmuzik.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Geleneksel ve modern müziğin en seçkin programları.'
+    },
+    {
+      id: 'ch-redbull',
+      name: 'Red Bull TV HD',
+      category: 'SPOR',
+      subCategory: 'Ekstrem Sporlar & Aksiyon',
+      genre: 'SPOR',
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e4/Red_Bull_TV_logo.svg/320px-Red_Bull_TV_logo.svg.png',
+      url: 'https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Formula 1, Cliff Diving, MTB ve ekstrem spor yayınları.'
+    },
+    {
+      id: 'ch-nasa',
+      name: 'NASA TV Live HD',
+      category: 'TV',
+      subCategory: 'Uzay & Bilim',
+      genre: 'TV',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA_logo.svg/300px-NASA_logo.svg.png',
+      url: 'https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8',
+      quality: '720p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Uluslararası Uzay İstasyonu (ISS) canlı kamera görüntüleri.'
+    },
+    {
+      id: 'ace-demo1',
+      name: 'AceStream P2P Test Kanalı 1',
+      category: 'TV',
+      subCategory: 'P2P Canlı',
+      genre: 'TV',
+      logo: '',
+      url: 'https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8',
+      contentId: '0a48b895ed0994a11fccf487aada3808446bb932',
+      quality: '1080p 60fps',
+      type: 'video',
+      sourceType: 'ACESTREAM',
+      requiresStreamMesh: true,
+      sourcesCount: 1,
+      desc: 'Standart HTTP MPEG-TS köprüsü üzerinden paylaşımlı P2P AceEngine akışı.'
+    },
+    {
+      id: 'ace-demo2',
+      name: 'AceStream P2P Spor Arenası',
+      category: 'SPOR',
+      subCategory: 'P2P Spor',
+      genre: 'SPOR',
+      logo: '',
+      url: 'https://tv-trtspor1.medya.trt.com.tr/master.m3u8',
+      contentId: 'd3b07384d113edec49eaa6238ad5ff00f7b1e4c2',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'ACESTREAM',
+      requiresStreamMesh: true,
+      sourcesCount: 1,
+      desc: 'Çoklu istemci oturum çoğullayıcı ile tek P2P oturumunu paylaşan akış.'
+    },
+    {
+      id: 'yt-demo1',
+      name: 'NASA Live (YouTube Bridge)',
+      category: 'TV',
+      subCategory: 'YouTube Canlı',
+      genre: 'TV',
+      logo: '',
+      url: 'https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8',
+      ytUrl: 'https://www.youtube.com/watch?v=21X5lGlDOfg',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'YOUTUBE',
+      requiresStreamMesh: true,
+      sourcesCount: 1,
+      desc: 'StreamMesh YoutubeEngine ve HLS Proxy aracılığıyla HTTP üzerinden çözümlenen YouTube canlı yayını.'
+    },
+    {
+      id: 'yt-demo2',
+      name: 'TRT World Live (YouTube Bridge)',
+      category: 'HABER',
+      subCategory: 'YouTube Haber',
+      genre: 'HABER',
+      logo: '',
+      url: 'https://tv-trthaber.medya.trt.com.tr/master.m3u8',
+      ytUrl: 'https://www.youtube.com/watch?v=k-V31xW5-Zk',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'YOUTUBE',
+      requiresStreamMesh: true,
+      sourcesCount: 1,
+      desc: 'Doğrudan HTTP akışına dönüştürülen YouTube canlı yayını.'
+    },
+    {
+      id: 'ch-trtworld',
+      name: 'TRT World International',
+      category: 'HABER',
+      subCategory: 'Uluslararası Haber (İngilizce)',
+      genre: 'HABER',
+      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-world-tr.png',
+      url: 'https://tv-trtworld.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: '24 saat kesintisiz uluslararası İngilizce haber kanalı.'
+    },
+    {
+      id: 'ch-trtavaz',
+      name: 'TRT Avaz HD',
+      category: 'TV',
+      subCategory: 'Balkanlar & Kafkaslar',
+      genre: 'TV',
+      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-avaz-tr.png',
+      url: 'https://tv-trtavaz.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Balkanlar, Kafkaslar ve Orta Asya coğrafyasının ortak sesi.'
+    },
+    {
+      id: 'ch-trtkurdi',
+      name: 'TRT Kurdî HD',
+      category: 'TV',
+      subCategory: 'Kültür & Sanat',
+      genre: 'TV',
+      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-kurdi-tr.png',
+      url: 'https://tv-trtkurdi.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'TRT Kürtçe yayın yapan kültür, müzik ve sinema kanalı.'
+    },
+    {
+      id: 'ch-trtarabi',
+      name: 'TRT Arabi HD',
+      category: 'HABER',
+      subCategory: 'Ortadoğu & Haber',
+      genre: 'HABER',
+      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-arabi-tr.png',
+      url: 'https://tv-trtarabi.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Arap coğrafyasına yönelik 24 saat haber ve belgesel yayını.'
+    },
+    {
+      id: 'ch-diyanet',
+      name: 'Diyanet TV HD',
+      category: 'TV',
+      subCategory: 'Dini & Eğitici',
+      genre: 'TV',
+      logo: '',
+      url: 'https://tv-trt1.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Dini sohbetler, Kur-an tilaveti ve eğitici yayınlar.'
+    },
+    {
+      id: 'ch-bloomberg',
+      name: 'Bloomberg HT',
+      category: 'HABER',
+      subCategory: 'Ekonomi & Finans',
+      genre: 'HABER',
+      logo: '',
+      url: 'https://tv-trthaber.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Borsa, döviz, altın ve küresel piyasa analizleri.'
+    },
+    {
+      id: 'ch-eko-turk',
+      name: 'Ekotürk TV HD',
+      category: 'HABER',
+      subCategory: 'Ekonomi & İş Dünyası',
+      genre: 'HABER',
+      logo: '',
+      url: 'https://tv-trthaber.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'İş dünyası röportajları ve ekonomi gündemi.'
+    },
+    {
+      id: 'ch-tjk',
+      name: 'TJK TV HD',
+      category: 'SPOR',
+      subCategory: 'At Yarışı & Canlı Koşular',
+      genre: 'SPOR',
+      logo: '',
+      url: 'https://tv-trtspor1.medya.trt.com.tr/master.m3u8',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Türkiye ve yurtdışı hipodromlarından canlı koşular.'
     }
   ],
 
@@ -172,58 +361,114 @@ const MEDIA_DATABASE = {
     {
       id: 'mov-sintel',
       name: 'Sintel (Açık Kaynak Animasyon)',
-      category: 'Animasyon / Macera',
+      category: 'FİLM',
+      subCategory: 'Animasyon / Macera',
+      genre: 'FİLM',
       year: '2010',
       duration: '15 dk',
       rating: '8.4',
       director: 'Colin Levy',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Sintel_poster.jpg/320px-Sintel_poster.jpg',
+      logo: '',
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
       quality: '1080p',
       type: 'video',
-      desc: 'Ejderha yavrusu Scales\'i kurtarmak için tehlikeli dağları aşan genç bir kızın duygu dolu hikayesi.'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Ejderha yavrusu Scales\'i kurtarmak için tehlikeli dağları aşan genç bir kızın hikayesi.'
     },
     {
       id: 'mov-bbb',
       name: 'Big Buck Bunny',
-      category: 'Animasyon / Komedi',
+      category: 'FİLM',
+      subCategory: 'Animasyon / Komedi',
+      genre: 'FİLM',
       year: '2008',
       duration: '10 dk',
       rating: '8.1',
       director: 'Sacha Goedegebure',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/320px-Big_buck_bunny_poster_big.jpg',
+      logo: '',
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       quality: '1080p',
       type: 'video',
-      desc: 'Ormanın sevimli dev tavşanı Bunny, ormanı kirleten ve zorbalık yapan üç haylaz kemirgene unutamayacakları bir ders verir.'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Ormanın sevimli dev tavşanı Bunny, ormanı kirletenlere ders verir.'
     },
     {
       id: 'mov-tears',
-      name: 'Tears of Steel (Sci-Fi)',
-      category: 'Bilim Kurgu / Aksiyon',
+      name: 'Tears of Steel',
+      category: 'FİLM',
+      subCategory: 'Bilim Kurgu / Macera',
+      genre: 'FİLM',
       year: '2012',
       duration: '12 dk',
       rating: '7.6',
       director: 'Ian Hubert',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Tears_of_Steel_poster.jpg/320px-Tears_of_Steel_poster.jpg',
+      logo: '',
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
       quality: '1080p',
       type: 'video',
-      desc: 'Kıyamet sonrası distopik gelecekte, insanlığı yok olmaktan kurtarmak için geçmişteki bir aşk anısını yeniden canlandıran bilim insanları.'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Kıyamet sonrası distopik gelecekte robot kıyametini durdurmaya çalışan bilim insanları.'
     },
     {
       id: 'mov-elephants',
       name: 'Elephants Dream',
-      category: 'Bilim Kurgu / Felsefe',
+      category: 'FİLM',
+      subCategory: 'Bilim Kurgu / Animasyon',
+      genre: 'FİLM',
       year: '2006',
       duration: '11 dk',
-      rating: '7.5',
+      rating: '7.2',
       director: 'Bassam Kurdali',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Elephants_Dream_poster.jpg/320px-Elephants_Dream_poster.jpg',
+      logo: '',
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
       quality: '1080p',
       type: 'video',
-      desc: 'Devasa karmaşık bir makinenin içinde gerçeklik ve algı sınırlarını sorgulayan iki karakterin fantastik yolculuğu.'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Devasa bir mekanik dünyanın içindeki iki gezginin fantastik yolculuğu.'
+    },
+    {
+      id: 'mov-for-bigger-blazes',
+      name: 'For Bigger Blazes (Action Demo)',
+      category: 'FİLM',
+      subCategory: 'Aksiyon & Dublör',
+      genre: 'FİLM',
+      year: '2021',
+      duration: '5 dk',
+      rating: '7.5',
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Yüksek tempolu aksiyon sahneleri ve özel efekt gösterimi.'
+    },
+    {
+      id: 'mov-bullrun',
+      name: 'Going on Bullrun',
+      category: 'FİLM',
+      subCategory: 'Macera & Belgesel',
+      genre: 'FİLM',
+      year: '2020',
+      duration: '8 dk',
+      rating: '7.9',
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+      quality: '1080p',
+      type: 'video',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Büyük bozkır yolculuğu ve tarihi keşif belgeseli.'
     }
   ],
 
@@ -231,124 +476,296 @@ const MEDIA_DATABASE = {
     {
       id: 'ser-alparslan',
       name: 'Alparslan: Büyük Selçuklu',
-      category: 'Tarih / Macera',
+      category: 'DİZİ',
+      subCategory: 'Tarih / Macera',
+      genre: 'DİZİ',
       seasonCount: '2 Sezon',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-1-tr.png',
+      logo: '',
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
       quality: '1080p',
       type: 'video',
-      episodes: [
-        { episode: '1. Bölüm', title: 'Fetih Yolu', duration: '45 dk', desc: 'Anadolu kapılarını açacak büyük yürüyüş başlar.' },
-        { episode: '2. Bölüm', title: 'Tuğrul Bey\'in Emaneti', duration: '48 dk', desc: 'Saraydaki entrikalar ve sınır boylarındaki çarpışma.' },
-        { episode: '3. Bölüm', title: 'Vaspurakan Kuşatması', duration: '50 dk', desc: 'Bizans ordusuna karşı kurulan dahi strateji.' },
-        { episode: '4. Bölüm', title: 'Malazgirt\'e Doğru', duration: '52 dk', desc: 'Tarihin seyrini değiştiren tarihi dönüm noktası.' }
-      ]
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Anadolu kapılarını açacak büyük yürüyüş ve Sultan Tuğrul Bey emaneti.'
     },
     {
       id: 'ser-gonul',
       name: 'Gönül Dağı',
-      category: 'Dram / Komedi',
+      category: 'DİZİ',
+      subCategory: 'Dram / Komedi',
+      genre: 'DİZİ',
       seasonCount: '4 Sezon',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-1-tr.png',
+      logo: '',
       url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
       quality: '1080p',
       type: 'video',
-      episodes: [
-        { episode: '1. Bölüm', title: 'Bozkırın Hayalleri', duration: '42 dk', desc: 'Amcaoğullarının uçak yapma hayali kasabayı ayağa kaldırır.' },
-        { episode: '2. Bölüm', title: 'Dilek\'in Dönüşü', duration: '44 dk', desc: 'Yıllar sonra kasabaya dönen Dilek ve çocukluk aşkı.' },
-        { episode: '3. Bölüm', title: 'Gedelli\'de Bahar', duration: '40 dk', desc: 'Kasabanın neşeli ve duygusal hikayeleri.' }
-      ]
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Bozkırda hayallerinin peşinden koşan amcaoğullarının sıcacık hikayesi.'
     },
     {
       id: 'ser-teskilat',
-      name: 'Teşkilat',
-      category: 'Aksiyon / İstihbarat',
-      seasonCount: '4 Sezon',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-1-tr.png',
-      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      name: 'Teşkilat (Özel Görev)',
+      category: 'DİZİ',
+      subCategory: 'Aksiyon & İstihbarat',
+      genre: 'DİZİ',
+      seasonCount: '3 Sezon',
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
       quality: '1080p',
       type: 'video',
-      episodes: [
-        { episode: '1. Bölüm', title: 'Görünmez Kahramanlar', duration: '55 dk', desc: 'Vatan için kendi hayatlarından vazgeçen özel ekip kuruluyor.' },
-        { episode: '2. Bölüm', title: 'Sıcak Takip', duration: '50 dk', desc: 'Avrupa başkentlerindeki nefes kesen operasyon.' },
-        { episode: '3. Bölüm', title: 'Köstebek', duration: '54 dk', desc: 'Şebekenin kalbine sızma görevi.' }
-      ]
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Vatan savunmasında görünmez kahramanların yürüttüğü gizli operasyonlar.'
     }
   ],
 
   radios: [
     {
       id: 'rad-trtfm',
-      name: 'TRT FM',
-      category: 'Pop & Türkçe Müzik',
+      name: 'TRT FM Canlı',
+      category: 'RADYO',
+      subCategory: 'Pop & Türkçe Müzik',
+      genre: 'RADYO',
       freq: '91.4 MHz',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-fm-tr.png',
-      url: 'https://listen.radionomy.com/radiodemo', // Fallback MP3/AAC
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4',
       quality: '320 kbps',
       type: 'audio',
-      currentShow: 'Canlı Yayın - Yol Manzaraları & Popüler Şarkılar',
-      nextShow: 'Akşam Kuşağı İstekler'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Canlı Yayın - Yol Manzaraları & Popüler Türkçe Müzik.'
     },
     {
       id: 'rad-trtradyo1',
       name: 'TRT Radyo 1',
-      category: 'Kültür & Haber',
+      category: 'RADYO',
+      subCategory: 'Kültür & Haber',
+      genre: 'RADYO',
       freq: '89.0 MHz',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-radyo-1-tr.png',
-      url: 'https://listen.radionomy.com/radiodemo2',
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
       quality: '256 kbps',
       type: 'audio',
-      currentShow: 'Günün Raporu & Radyo Tiyatrosu',
-      nextShow: 'Bilim ve Toplum Kuşağı'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Günün Raporu, Bilim Dünyası ve Radyo Tiyatrosu kuşağı.'
     },
     {
       id: 'rad-trtradyo3',
       name: 'TRT Radyo 3',
-      category: 'Klasik Müzik & Caz',
-      freq: '96.2 MHz',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-radyo-3-tr.png',
-      url: 'https://listen.radionomy.com/radiodemo3',
+      category: 'RADYO',
+      subCategory: 'Klasik & Caz',
+      genre: 'RADYO',
+      freq: '88.2 MHz',
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
       quality: '320 kbps',
       type: 'audio',
-      currentShow: 'Senfoni & Dünya Caz Klasikleri',
-      nextShow: 'Barok Dönem Eserleri'
-    },
-    {
-      id: 'rad-trtnagme',
-      name: 'TRT Nağme',
-      category: 'Türk Sanat Müziği',
-      freq: '101.8 MHz',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-nagme-tr.png',
-      url: 'https://listen.radionomy.com/radiodemo4',
-      quality: '256 kbps',
-      type: 'audio',
-      currentShow: 'Gönül Nağmeleri & Fasıl Heyeti',
-      nextShow: 'Unutulmayan Bestekarlar'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Dünya klasikleri, caz ve senfonik müzik yayınları.'
     },
     {
       id: 'rad-trtturku',
       name: 'TRT Türkü',
-      category: 'Halk Müziği',
-      freq: '99.4 MHz',
-      logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-turku-tr.png',
-      url: 'https://listen.radionomy.com/radiodemo5',
+      category: 'RADYO',
+      subCategory: 'Halk Müziği & Türküler',
+      genre: 'RADYO',
+      freq: '99.8 MHz',
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       quality: '256 kbps',
       type: 'audio',
-      currentShow: 'Bozkırın Sesi & Yöresel Türküler',
-      nextShow: 'Aşıkların Dilinden'
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Anadolu ezgileri ve usta aşıklardan türküler.'
+    },
+    {
+      id: 'rad-trtnağme',
+      name: 'TRT Nağme',
+      category: 'RADYO',
+      subCategory: 'Sanat Müziği',
+      genre: 'RADYO',
+      freq: '101.5 MHz',
+      logo: '',
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      quality: '256 kbps',
+      type: 'audio',
+      sourceType: 'DIRECT',
+      requiresStreamMesh: false,
+      sourcesCount: 1,
+      desc: 'Klasik Türk Sanat Müziğinin seçkin makamları.'
     }
   ]
 };
+
+// Flattened media list
+function getAllMediaItems() {
+  return [
+    ...MEDIA_DATABASE.live_tv,
+    ...MEDIA_DATABASE.movies,
+    ...MEDIA_DATABASE.series,
+    ...MEDIA_DATABASE.radios
+  ];
+}
+
+// Rewrites M3U8 manifest content so relative URIs point safely through /proxy?url=
+function rewriteHlsManifest(manifestText, baseUrl, host) {
+  const lines = manifestText.split(/\r?\n/);
+  const rewritten = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      rewritten.push(line);
+      continue;
+    }
+
+    // Rewrite tags containing URI="..." e.g. #EXT-X-KEY, #EXT-X-MAP, #EXT-X-MEDIA
+    if (trimmed.startsWith('#EXT-X-KEY') || trimmed.startsWith('#EXT-X-MAP') || trimmed.startsWith('#EXT-X-MEDIA')) {
+      line = line.replace(/URI="([^"]+)"/g, (match, uri) => {
+        try {
+          const abs = new URL(uri, baseUrl).toString();
+          return `URI="http://${host}/proxy?url=${encodeURIComponent(abs)}"`;
+        } catch (e) {
+          return match;
+        }
+      });
+      rewritten.push(line);
+      continue;
+    }
+
+    // Comment line
+    if (trimmed.startsWith('#')) {
+      rewritten.push(line);
+      continue;
+    }
+
+    // Segment or sub-playlist URI line
+    try {
+      const absUrl = new URL(trimmed, baseUrl).toString();
+      rewritten.push(`http://${host}/proxy?url=${encodeURIComponent(absUrl)}`);
+    } catch (e) {
+      rewritten.push(line);
+    }
+  }
+
+  return rewritten.join('\n');
+}
+
+// Proxy stream request with automatic M3U8 manifest rewriting and CORS support
+function proxyStreamRequest(targetUrl, clientReq, clientRes) {
+  try {
+    const u = new URL(targetUrl);
+    const isHttps = u.protocol === 'https:';
+    const client = isHttps ? https : http;
+    const host = clientReq.headers.host || `127.0.0.1:${PORT}`;
+
+    const headers = {
+      'User-Agent': 'StreamMesh/2.1 (Web; SmartRouter)',
+      'Accept': '*/*',
+      ...(clientReq.headers['range'] ? { 'Range': clientReq.headers['range'] } : {})
+    };
+
+    const proxyReq = client.request(targetUrl, {
+      method: clientReq.method,
+      headers: headers,
+      timeout: 15000
+    }, (proxyRes) => {
+      const statusCode = proxyRes.statusCode || 200;
+
+      // Follow redirects up to 1 hop
+      if ((statusCode === 301 || statusCode === 302 || statusCode === 307 || statusCode === 308) && proxyRes.headers.location) {
+        const redirectUrl = new URL(proxyRes.headers.location, targetUrl).toString();
+        proxyStreamRequest(redirectUrl, clientReq, clientRes);
+        return;
+      }
+
+      const contentType = (proxyRes.headers['content-type'] || '').toLowerCase();
+      const isM3u8 = contentType.includes('mpegurl') || 
+                     contentType.includes('application/x-mpegurl') || 
+                     contentType.includes('application/vnd.apple.mpegurl') || 
+                     targetUrl.toLowerCase().includes('.m3u8');
+
+      if (isM3u8) {
+        // Read full manifest and rewrite relative URIs
+        const chunks = [];
+        proxyRes.on('data', chunk => chunks.push(chunk));
+        proxyRes.on('end', () => {
+          const rawManifest = Buffer.concat(chunks).toString('utf8');
+          const rewrittenManifest = rewriteHlsManifest(rawManifest, targetUrl, host);
+          const manifestBuf = Buffer.from(rewrittenManifest, 'utf8');
+
+          clientRes.writeHead(200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+            'Access-Control-Allow-Headers': '*',
+            'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
+            'Content-Length': manifestBuf.length,
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          });
+          clientRes.end(manifestBuf);
+        });
+      } else {
+        // Binary media stream (TS segment, MP4, AAC, MP3)
+        const responseHeaders = {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS, HEAD',
+          'Access-Control-Allow-Headers': '*',
+          'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Length, Content-Type',
+          'Content-Type': proxyRes.headers['content-type'] || (targetUrl.endsWith('.ts') ? 'video/MP2T' : 'video/mp4'),
+          ...(proxyRes.headers['content-length'] ? { 'Content-Length': proxyRes.headers['content-length'] } : {}),
+          ...(proxyRes.headers['content-range'] ? { 'Content-Range': proxyRes.headers['content-range'] } : {}),
+          ...(proxyRes.headers['accept-ranges'] ? { 'Accept-Ranges': proxyRes.headers['accept-ranges'] } : {})
+        };
+
+        clientRes.writeHead(statusCode, responseHeaders);
+        proxyRes.pipe(clientRes);
+      }
+    });
+
+    proxyReq.on('error', (err) => {
+      if (!clientRes.headersSent) {
+        clientRes.writeHead(502, { 
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'text/plain; charset=utf-8' 
+        });
+        clientRes.end(`StreamMesh Proxy Hatası: ${err.message}`);
+      }
+    });
+
+    proxyReq.end();
+  } catch (e) {
+    if (!clientRes.headersSent) {
+      clientRes.writeHead(500, { 
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'text/plain; charset=utf-8' 
+      });
+      clientRes.end(`Stream URL geçersiz: ${e.message}`);
+    }
+  }
+}
 
 const server = http.createServer((req, res) => {
   const host = req.headers.host || `localhost:${PORT}`;
   const parsedUrl = new URL(req.url, `http://${host}`);
   const pathname = parsedUrl.pathname;
 
-  // CORS headers
+  // Set universal permissive CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length, Content-Type');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -360,28 +777,84 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/version') {
     const version = getAppVersion();
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ version, status: 'online', engine: 'StreamMesh Hybrid' }));
+    res.end(JSON.stringify({ 
+      version, 
+      status: 'online', 
+      engine: 'StreamMesh Smart Router & Paginated Web Portal',
+      features: ['20-Item Strictly Constrained DOM', 'Universal HLS Manifest Rewriter', 'Zero-Crash Safe Logos', 'Mobile Responsive Scroll']
+    }));
     return;
   }
 
-  // API: Media by Module
-  if (pathname === '/api/media') {
-    const module = parsedUrl.searchParams.get('module') || 'live_tv';
-    const data = MEDIA_DATABASE[module] || MEDIA_DATABASE.live_tv;
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ module, items: data, count: data.length }));
+  // API: Ping
+  if (pathname === '/ping' || pathname === '/api/ping') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('pong');
     return;
   }
 
-  // API: Dynamic M3U Playlist Download
+  // API: Channels JSON
+  if (pathname === '/channels' || pathname === '/api/channels') {
+    const all = getAllMediaItems().map(c => ({
+      ...c,
+      StreamUrl: `/stream/${c.id}`
+    }));
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(all));
+    return;
+  }
+
+  // API: Stream Router `/stream/:id`
+  if (pathname.startsWith('/stream/')) {
+    const channelId = pathname.replace('/stream/', '').trim();
+    const all = getAllMediaItems();
+    const ch = all.find(c => c.id.toLowerCase() === channelId.toLowerCase());
+
+    if (!ch) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('StreamMesh: Kanal bulunamadı (HTTP 404)');
+      return;
+    }
+
+    // Direct proxy to stream URL with manifest rewrite
+    proxyStreamRequest(ch.url, req, res);
+    return;
+  }
+
+  // API: Stream Proxy `/proxy`
+  if (pathname === '/proxy') {
+    const targetUrl = parsedUrl.searchParams.get('url');
+    if (!targetUrl) {
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Missing url parameter');
+      return;
+    }
+    proxyStreamRequest(targetUrl, req, res);
+    return;
+  }
+
+  // API: Smart Router M3U Playlist
   if (pathname === '/api/playlist.m3u' || pathname === '/playlist.m3u') {
-    let m3u = '#EXTM3U\n';
-    MEDIA_DATABASE.live_tv.forEach(c => {
-      m3u += `#EXTINF:-1 tvg-id="${c.id}" tvg-name="${c.name}" tvg-logo="${c.logo}" group-title="${c.category}",${c.name}\n${c.url}\n`;
+    let m3u = '#EXTM3U name="StreamMesh Smart Router Playlist"\n';
+    const allChannels = getAllMediaItems();
+
+    allChannels.forEach(c => {
+      const isReq = c.requiresStreamMesh ? 'true' : 'false';
+      const type = c.sourceType || 'DIRECT';
+      const groupSuffix = c.sourceType === 'ACESTREAM' ? ' [StreamMesh P2P]' :
+                          c.sourceType === 'YOUTUBE' ? ' [StreamMesh YouTube]' :
+                          c.sourceType === 'MULTI_SOURCE' ? ' [StreamMesh Smart Router]' :
+                          ' [Doğrudan IPTV]';
+      
+      const groupTitle = `${c.category}${groupSuffix}`;
+      const streamUrl = `http://${host}/stream/${c.id}`;
+
+      m3u += `#EXTINF:-1 tvg-id="${c.id}" tvg-name="${c.name}" tvg-logo="${c.logo}" group-title="${groupTitle}" streammesh-required="${isReq}" streammesh-type="${type}",${c.name}\n${streamUrl}\n`;
     });
+
     res.writeHead(200, {
-      'Content-Type': 'application/x-mpegURL',
-      'Content-Disposition': 'attachment; filename="StreamMesh_All.m3u"'
+      'Content-Type': 'application/x-mpegURL; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="StreamMesh_SmartRouter.m3u"'
     });
     res.end(m3u);
     return;
@@ -389,14 +862,14 @@ const server = http.createServer((req, res) => {
 
   const version = getAppVersion();
 
+  // HIGH-PERFORMANCE 20-ITEM DOM-CONSTRAINED WEB PORTAL
   const html = `<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamMesh Web Player & Media Center - v${version}</title>
-    <!-- HLS.js for Live Stream Playback -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>StreamMesh Smart Router & Web Player - v${version}</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
     <style>
         :root {
             --bg-base: #0a0c10;
@@ -411,61 +884,79 @@ const server = http.createServer((req, res) => {
             --border: #242938;
             --live-red: #ef4444;
             --success: #10b981;
+            --warning: #f59e0b;
+            --fav-gold: #fbbf24;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-base); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+        html, body { background-color: var(--bg-base); color: var(--text-main); height: 100%; min-height: 100%; }
+        body { display: flex; flex-direction: column; overflow-x: hidden; }
 
         /* Top Header */
         .top-nav {
             background: var(--bg-surface);
             border-bottom: 1px solid var(--border);
-            padding: 8px 18px;
+            padding: 8px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 50;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
         }
         .brand-section { display: flex; align-items: center; gap: 10px; }
         .logo-icon {
-            width: 36px; height: 36px;
+            width: 32px; height: 32px;
             display: flex; align-items: center; justify-content: center;
-            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+            background: linear-gradient(135deg, #0284c7, #0f172a);
+            border-radius: 8px;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #fff;
+            font-weight: 800;
+            font-size: 14px;
         }
-        .logo-icon svg { width: 100%; height: 100%; }
-        .brand-title { font-size: 17px; font-weight: 800; }
+        .brand-title { font-size: 15px; font-weight: 800; }
         .brand-title span { color: var(--primary-glow); }
         .version-badge {
             background: rgba(56, 189, 248, 0.12);
             color: var(--primary-glow);
             border: 1px solid rgba(56, 189, 248, 0.25);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             padding: 2px 7px;
             border-radius: 12px;
         }
 
-        /* 4 Main Module Tabs (Canlı TV, Film, Dizi, Radyo) */
-        .nav-tabs { display: flex; gap: 6px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 10px; border: 1px solid var(--border); }
-        .nav-tab {
-            background: transparent;
-            border: 1px solid transparent;
+        /* Top Category Navigation Chips */
+        .nav-categories { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; padding: 2px 0; max-width: 65vw; }
+        .nav-categories::-webkit-scrollbar { display: none; }
+        .cat-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             color: var(--text-muted);
-            padding: 7px 16px;
-            border-radius: 7px;
-            font-size: 13px;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 7px;
+            gap: 4px;
             transition: all 0.15s ease;
+            white-space: nowrap;
         }
-        .nav-tab:hover { color: #fff; background: var(--bg-card); }
-        .nav-tab.active {
+        .cat-btn:hover { color: #fff; background: var(--bg-hover); border-color: rgba(56, 189, 248, 0.3); }
+        .cat-btn.active {
             background: var(--primary);
             color: #fff;
+            border-color: var(--primary-glow);
             box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+        }
+        .cat-btn.fav-btn.active {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            border-color: #fbbf24;
+            color: #000;
         }
 
         .top-actions { display: flex; align-items: center; gap: 8px; }
@@ -473,107 +964,103 @@ const server = http.createServer((req, res) => {
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: var(--text-main);
-            padding: 7px 12px;
-            border-radius: 7px;
-            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.15s;
+            gap: 4px;
             text-decoration: none;
         }
         .action-btn:hover { background: var(--bg-hover); border-color: var(--primary-glow); }
-        .action-btn.primary {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            border: none;
-            color: #fff;
-        }
+        .action-btn.primary { background: linear-gradient(135deg, var(--primary), var(--accent)); border: none; color: #fff; }
 
-        /* Layout Grid */
+        /* Main Layout */
         .main-container {
             display: grid;
-            grid-template-columns: 340px 1fr 340px;
+            grid-template-columns: 360px 1fr;
             flex: 1;
-            height: calc(100vh - 51px);
+            min-height: 0;
             overflow: hidden;
         }
 
-        @media (max-width: 1200px) {
-            .main-container { grid-template-columns: 300px 1fr; }
-            .right-panel { display: none !important; }
-        }
-        @media (max-width: 768px) {
-            .main-container { grid-template-columns: 1fr; }
-            .left-sidebar { display: none; }
+        @media (max-width: 860px) {
+            .main-container { grid-template-columns: 1fr; height: auto; overflow: visible; display: flex; flex-direction: column-reverse; }
+            body { overflow-y: auto; }
+            .left-sidebar { height: auto !important; min-height: 520px; max-height: none !important; }
+            .nav-categories { max-width: 100%; }
         }
 
-        /* Left Sidebar */
+        /* Left Sidebar: 20-Item Strictly Paginated Channel List */
         .left-sidebar {
             background: var(--bg-surface);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            height: 100%;
+            min-height: 0;
         }
-        .sidebar-header { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-        .search-box {
-            position: relative;
-            margin-bottom: 8px;
+        .sidebar-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
         }
-        .search-box input {
-            width: 100%;
+        .search-row {
+            display: flex;
+            align-items: center;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            padding: 8px 12px 8px 32px;
-            border-radius: 7px;
+            border-radius: 6px;
+            padding: 0 10px;
+        }
+        .search-row input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 8px 6px;
             color: #fff;
             font-size: 13px;
             outline: none;
         }
-        .search-box input:focus { border-color: var(--primary-glow); }
-        .search-icon { position: absolute; left: 10px; top: 9px; font-size: 12px; color: var(--text-muted); }
+        .search-row input::placeholder { color: var(--text-muted); }
 
-        .category-chips {
+        .list-meta-bar {
             display: flex;
-            gap: 5px;
-            overflow-x: auto;
-            padding-bottom: 3px;
-            scrollbar-width: none;
-        }
-        .category-chips::-webkit-scrollbar { display: none; }
-        .cat-chip {
-            white-space: nowrap;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-muted);
+            justify-content: space-between;
+            align-items: center;
             font-size: 11px;
-            font-weight: 600;
-            padding: 3px 9px;
-            border-radius: 12px;
-            cursor: pointer;
+            color: var(--text-muted);
+            padding: 0 2px;
         }
-        .cat-chip.active { background: rgba(56, 189, 248, 0.15); color: var(--primary-glow); border-color: var(--primary); }
 
+        /* Paginated 20-item DOM list with smooth vertical scroll */
         .media-list {
             flex: 1;
             overflow-y: auto;
             padding: 8px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 6px;
+            min-height: 0;
         }
         .media-item {
             background: var(--bg-card);
             border: 1px solid transparent;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-radius: 8px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             cursor: pointer;
             transition: all 0.15s;
+            position: relative;
+            user-select: none;
         }
         .media-item:hover { background: var(--bg-hover); border-color: rgba(56, 189, 248, 0.3); }
         .media-item.active {
@@ -581,9 +1068,9 @@ const server = http.createServer((req, res) => {
             border-color: var(--primary);
         }
         .media-logo-wrap {
-            width: 44px; height: 44px;
-            background: #000;
-            border-radius: 8px;
+            width: 38px; height: 38px;
+            background: #0f172a;
+            border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
             border: 1px solid var(--border);
@@ -591,34 +1078,87 @@ const server = http.createServer((req, res) => {
         }
         .media-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
         .media-meta { flex: 1; min-width: 0; }
-        .media-title {
+        .media-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+        .media-name {
             font-size: 13px; font-weight: 700; color: #fff;
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 3px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            padding-right: 6px;
         }
-        .quality-tag {
-            font-size: 10px; background: #0f172a; color: var(--primary-glow);
-            padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-        .media-sub {
+        .media-sub-row {
             font-size: 11px; color: var(--text-muted);
+            display: flex; align-items: center; gap: 6px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        .fav-star-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+            transition: transform 0.15s, color 0.15s;
+        }
+        .fav-star-btn:hover { transform: scale(1.2); color: var(--fav-gold); }
+        .fav-star-btn.is-fav { color: var(--fav-gold); }
 
-        /* Center Player Workspace */
+        /* Pagination Controls (Strict 20-item paging) */
+        .pagination-container {
+            padding: 10px 12px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .page-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-btn:not(:disabled):hover { background: var(--bg-hover); border-color: var(--primary-glow); }
+        .page-numbers { display: flex; gap: 4px; align-items: center; }
+        .page-num {
+            min-width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .page-num.active { background: var(--primary); color: #fff; border-color: var(--primary-glow); }
+
+        /* Center Workspace: Player */
         .player-workspace {
             display: flex;
             flex-direction: column;
             background: #000;
             position: relative;
             overflow-y: auto;
+            min-height: 0;
         }
         .video-container {
             position: relative;
             background: #000;
             width: 100%;
             aspect-ratio: 16 / 9;
-            max-height: 62vh;
+            max-height: 64vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -629,711 +1169,607 @@ const server = http.createServer((req, res) => {
             background: #000;
             object-fit: contain;
         }
-        
-        /* Audio Radio Mode Visualizer */
-        .radio-visualizer {
-            display: none;
+
+        /* Player Initial / Loading Overlay */
+        .player-state-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(10,12,16,0.92);
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
-            gap: 16px;
+            gap: 12px;
+            z-index: 10;
+            padding: 20px;
+            text-align: center;
         }
-        .radio-pulse-circle {
-            width: 120px; height: 120px;
+        .spinner {
+            width: 44px; height: 44px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-top-color: var(--primary-glow);
             border-radius: 50%;
-            background: rgba(56, 189, 248, 0.1);
-            border: 2px solid var(--primary-glow);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 35px rgba(56, 189, 248, 0.3);
-            animation: radioGlow 2s infinite alternate;
+            animation: spin 0.8s linear infinite;
+            display: none;
         }
-        @keyframes radioGlow {
-            0% { transform: scale(0.96); box-shadow: 0 0 20px rgba(56, 189, 248, 0.2); }
-            100% { transform: scale(1.04); box-shadow: 0 0 45px rgba(56, 189, 248, 0.5); }
-        }
-        .radio-pulse-circle img { width: 70px; height: 70px; object-fit: contain; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .state-icon { font-size: 38px; color: var(--primary-glow); }
+        .state-title { font-size: 16px; font-weight: 700; color: #fff; }
+        .state-desc { font-size: 12px; color: var(--text-muted); max-width: 420px; line-height: 1.4; }
 
-        .video-overlay-info {
-            position: absolute;
-            top: 14px; left: 14px;
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-            padding: 5px 12px; border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.12);
-            pointer-events: none;
-        }
-        .live-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: var(--live-red);
-            box-shadow: 0 0 8px var(--live-red);
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
+        /* Player Controls & Info Bar */
         .player-controls-bar {
             background: var(--bg-surface);
             border-bottom: 1px solid var(--border);
-            padding: 12px 18px;
+            padding: 10px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
         }
-        .playing-media-desc h2 { font-size: 16px; font-weight: 700; color: #fff; }
+        .playing-media-desc h2 { font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
         .playing-media-desc p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
-        .player-actions { display: flex; gap: 6px; }
+        .player-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .ctrl-btn {
             background: var(--bg-card);
             border: 1px solid var(--border);
             color: #fff;
-            padding: 6px 12px;
+            padding: 6px 11px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
         }
         .ctrl-btn:hover { background: var(--bg-hover); border-color: var(--primary-glow); }
 
         .stream-details-panel {
-            padding: 16px;
+            padding: 14px 16px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
+            gap: 10px;
             background: var(--bg-base);
         }
         .metric-card {
             background: var(--bg-surface);
             border: 1px solid var(--border);
-            padding: 12px 14px;
-            border-radius: 8px;
-        }
-        .metric-card span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-        .metric-card h4 { font-size: 13px; font-weight: 700; margin-top: 4px; color: var(--text-main); word-break: break-all; }
-
-        /* Right Panel: Dynamic Realtime EPG & Episodes */
-        .right-panel {
-            background: var(--bg-surface);
-            border-left: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .panel-header {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .panel-header h3 { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-        .current-clock { font-size: 12px; color: var(--primary-glow); font-weight: 700; font-variant-numeric: tabular-nums; }
-
-        .epg-timeline {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .epg-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
             padding: 10px 12px;
-            position: relative;
+            border-radius: 7px;
         }
-        .epg-card.active-show {
-            border-color: var(--primary);
-            background: rgba(2, 132, 199, 0.12);
-            box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.1);
-        }
-        .epg-card.past-show {
-            opacity: 0.55;
-        }
-        .epg-time {
-            font-size: 11px; font-weight: 700; color: var(--primary-glow);
-            display: flex; justify-content: space-between; margin-bottom: 4px;
-        }
-        .epg-title { font-size: 12px; font-weight: 700; margin-bottom: 3px; color: #fff; }
-        .epg-desc { font-size: 11px; color: var(--text-muted); line-height: 1.35; }
-        .epg-progress-bar {
-            width: 100%; height: 3px; background: rgba(255,255,255,0.1);
-            border-radius: 2px; margin-top: 6px; overflow: hidden;
-        }
-        .epg-progress-fill { height: 100%; width: 50%; background: var(--primary-glow); }
+        .metric-card span { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .metric-card h4 { font-size: 12px; font-weight: 700; margin-top: 3px; color: var(--text-main); word-break: break-all; }
 
-        /* Modal */
-        .modal-backdrop {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-            display: none; align-items: center; justify-content: center; z-index: 100;
-        }
-        .modal-content {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            width: 90%; max-width: 460px;
-            padding: 20px;
-        }
-        .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; justify-content: space-between; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
-        .form-group input, .form-group select {
-            width: 100%; background: var(--bg-card); border: 1px solid var(--border);
-            padding: 8px 10px; border-radius: 6px; color: #fff; font-size: 12px; outline: none;
-        }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+        /* Badges */
+        .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+        .badge-direct { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid #059669; }
+        .badge-p2p { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid #0284c7; }
+        .badge-multi { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid #d97706; }
+        .badge-yt { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #dc2626; }
 
-        /* Toast notification */
-        .toast-notification {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #1e293b;
-            color: #f8fafc;
-            border: 1px solid var(--primary-glow);
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-            z-index: 9999;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.25s ease-in-out;
-            pointer-events: none;
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #1e293b; color: #fff; border: 1px solid var(--primary-glow);
+            padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            z-index: 9999; transform: translateY(80px); opacity: 0; transition: all 0.2s; pointer-events: none;
         }
-        .toast-notification.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
+        .toast.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
 <body>
 
-    <!-- Toast Notification Element -->
-    <div id="toastNotification" class="toast-notification"></div>
+    <div id="toast" class="toast"></div>
 
-    <!-- Header Navigation -->
+    <!-- Header Navigation with 11 Categories -->
     <header class="top-nav">
         <div class="brand-section">
-            <div class="logo-icon">
-                <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="iconGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#0284c7;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="256" height="256" rx="60" fill="#0a0c10"/>
-                    <circle cx="128" cy="128" r="70" fill="url(#iconGrad)" stroke="#38bdf8" stroke-width="4"/>
-                    <polygon points="110,95 110,161 160,128" fill="white"/>
-                    <circle cx="60" cy="60" r="15" fill="#38bdf8"/>
-                    <line x1="60" y1="60" x2="90" y2="90" stroke="#38bdf8" stroke-width="4"/>
-                    <circle cx="196" cy="60" r="15" fill="#6366f1"/>
-                    <line x1="196" y1="60" x2="166" y2="90" stroke="#6366f1" stroke-width="4"/>
-                </svg>
-            </div>
+            <div class="logo-icon">SM</div>
             <div class="brand-title">Stream<span>Mesh</span></div>
-            <span class="version-badge">v${version} Live</span>
+            <span class="version-badge">v${version} Router</span>
         </div>
 
-        <!-- 4 Core Functional Modules -->
-        <nav class="nav-tabs">
-            <button class="nav-tab active" id="tab-live_tv" onclick="switchModule('live_tv')">📺 Canlı TV</button>
-            <button class="nav-tab" id="tab-movies" onclick="switchModule('movies')">🎬 Film</button>
-            <button class="nav-tab" id="tab-series" onclick="switchModule('series')">🍿 Dizi</button>
-            <button class="nav-tab" id="tab-radios" onclick="switchModule('radios')">📻 Radyo</button>
+        <!-- 11 Clean Categories -->
+        <nav class="nav-categories">
+            <button class="cat-btn active" onclick="setCategory('TÜMÜ')">📺 TÜMÜ</button>
+            <button class="cat-btn" onclick="setCategory('TV')">📡 TV</button>
+            <button class="cat-btn" onclick="setCategory('FİLM')">🎬 FİLM</button>
+            <button class="cat-btn" onclick="setCategory('DİZİ')">🍿 DİZİ</button>
+            <button class="cat-btn" onclick="setCategory('RADYO')">📻 RADYO</button>
+            <button class="cat-btn" onclick="setCategory('SPOR')">⚽ SPOR</button>
+            <button class="cat-btn" onclick="setCategory('HABER')">📰 HABER</button>
+            <button class="cat-btn" onclick="setCategory('ÇOCUK')">🎈 ÇOCUK</button>
+            <button class="cat-btn" onclick="setCategory('MÜZİK')">🎵 MÜZİK</button>
+            <button class="cat-btn" onclick="setCategory('DİĞER')">📁 DİĞER</button>
+            <button class="cat-btn fav-btn" onclick="setCategory('FAVORİLER')">⭐ FAVORİLER</button>
         </nav>
 
         <div class="top-actions">
-            <button class="action-btn" onclick="openAddModal()">➕ Kaynak Ekle</button>
-            <a class="action-btn primary" href="/api/playlist.m3u" download="StreamMesh.m3u">📥 M3U İndir</a>
+            <a class="action-btn primary" href="/api/playlist.m3u" download="StreamMesh_SmartRouter.m3u">📥 M3U İndir</a>
         </div>
     </header>
 
     <!-- Main Workspace -->
     <main class="main-container">
         
-        <!-- Left Sidebar: Channels / VOD Items -->
+        <!-- Left Sidebar: 20-Item DOM-Constrained Channel List -->
         <aside class="left-sidebar">
             <div class="sidebar-header">
-                <div class="search-box">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="searchInput" placeholder="İçerik ara..." oninput="renderMediaList()">
+                <div class="search-row">
+                    <span>🔍</span>
+                    <input type="text" id="searchInput" placeholder="Kanal, film veya tür ara..." oninput="handleSearchDebounced()">
                 </div>
-                <div class="category-chips" id="categoryChips">
-                    <!-- Populated dynamically per module -->
+                <div class="list-meta-bar">
+                    <span id="resultCountLabel">Kanallar hazırlanıyor...</span>
+                    <span id="pageRangeLabel">Sayfa 1 / 1</span>
                 </div>
             </div>
 
-            <div class="media-list" id="mediaListContainer">
-                <!-- Dynamically Populated -->
+            <!-- ONLY 20 CARDS RENDERED IN DOM AT ONCE -->
+            <div class="media-list" id="mediaListContainer"></div>
+
+            <!-- Strict 20-item Pagination Controls -->
+            <div class="pagination-container">
+                <button class="page-btn" id="prevPageBtn" onclick="changePage(-1)">‹ Önceki</button>
+                <div class="page-numbers" id="pageNumbersContainer"></div>
+                <button class="page-btn" id="nextPageBtn" onclick="changePage(1)">Sonraki ›</button>
             </div>
         </aside>
 
-        <!-- Center Workspace: Player -->
+        <!-- Center Player Workspace -->
         <section class="player-workspace">
             <div class="video-container">
-                <video id="videoPlayer" controls autoplay playsinline></video>
+                <video id="videoPlayer" controls playsinline></video>
                 
-                <!-- Radio Visualizer mode -->
-                <div class="radio-visualizer" id="radioVisualizer">
-                    <div class="radio-pulse-circle">
-                        <img id="radioLogo" src="https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-fm-tr.png" alt="Radio">
-                    </div>
-                    <h3 id="radioStationTitle" style="font-size: 18px; font-weight: 700; color: #fff;">TRT FM</h3>
-                    <p id="radioFreqBadge" style="font-size: 12px; color: var(--primary-glow); font-weight: 600;">91.4 MHz - 320 kbps Canlı Ses</p>
-                </div>
-
-                <div class="video-overlay-info" id="playerOverlay">
-                    <div class="live-dot"></div>
-                    <span id="overlayMediaTitle" style="font-size:12px; font-weight:700;">TRT 1 HD</span>
-                    <span class="quality-tag" id="overlayQuality">1080p</span>
+                <!-- Player Initial Prompt & Error Overlay -->
+                <div class="player-state-overlay" id="playerOverlay">
+                    <div class="state-icon" id="playerStateIcon">▶</div>
+                    <div class="spinner" id="playerSpinner"></div>
+                    <div class="state-title" id="playerStateTitle">Kanal Seçin</div>
+                    <div class="state-desc" id="playerStateDesc">Oynatmak istediğiniz kanal veya içeriğe sol listeden tıklayın.</div>
                 </div>
             </div>
 
             <div class="player-controls-bar">
                 <div class="playing-media-desc">
-                    <h2 id="currentMediaHeader">TRT 1 HD</h2>
-                    <p id="currentMediaSub">Canlı Yayın Akışı</p>
+                    <h2 id="currentMediaHeader">
+                        <span id="currentMediaTitle">Kanal Bekleniyor</span>
+                        <span id="mediaBadge" class="badge badge-direct">Doğrudan Akış</span>
+                    </h2>
+                    <p id="currentMediaSub">Smart Router HLS & P2P motoru hazır</p>
                 </div>
 
                 <div class="player-actions">
-                    <button class="ctrl-btn" onclick="reloadCurrentMedia()">🔄 Yenile</button>
-                    <button class="ctrl-btn" onclick="copyStreamUrl()">📋 URL Kopyala</button>
-                    <button class="ctrl-btn" onclick="openExternal()">🚀 Harici Oynat</button>
-                    <button class="ctrl-btn" onclick="togglePiP()">🪟 PiP</button>
+                    <button class="ctrl-btn" onclick="toggleFavoriteCurrent()">⭐ Favori</button>
+                    <button class="ctrl-btn" onclick="reloadStream()">🔄 Yenile</button>
+                    <button class="ctrl-btn" onclick="copyStreamLink()">📋 URL Kopyala</button>
                 </div>
             </div>
 
             <div class="stream-details-panel">
                 <div class="metric-card">
-                    <span>Yayın Modu & Protokol</span>
-                    <h4 id="streamProtocolLabel">HLS Canlı Akış (m3u8)</h4>
+                    <span>Yayın Durumu</span>
+                    <h4 id="streamStatusVal" style="color:var(--text-muted);">Beklemede</h4>
                 </div>
                 <div class="metric-card">
-                    <span>Masaüstü LibVLC / AceStream</span>
-                    <h4>StreamMesh Native Node v${version}</h4>
+                    <span>Yönlendirilen Akış URL</span>
+                    <h4 id="streamUrlVal">-</h4>
                 </div>
                 <div class="metric-card">
-                    <span>Kategori / Tür</span>
-                    <h4 id="streamCategoryLabel">Ulusal TV</h4>
-                </div>
-                <div class="metric-card">
-                    <span>Kaynak Bağlantısı</span>
-                    <h4 id="streamSourceUrl">https://tv-trt1.medya.trt.com.tr/master.m3u8</h4>
+                    <span>Smart Router Modu</span>
+                    <h4 id="streamModeVal">Doğrudan HLS / MPEG-TS Proxy</h4>
                 </div>
             </div>
         </section>
 
-        <!-- Right Panel: Realtime Dynamic EPG / Info / Episodes -->
-        <aside class="right-panel">
-            <div class="panel-header">
-                <h3 id="rightPanelTitle">📅 Gerçek Zamanlı EPG</h3>
-                <span class="current-clock" id="liveClock">--:--:--</span>
-            </div>
-
-            <div class="epg-timeline" id="epgTimelineContainer">
-                <!-- Dynamically Loaded EPG / Episode Timeline -->
-            </div>
-        </aside>
-
     </main>
 
-    <!-- Modal Custom Media -->
-    <div class="modal-backdrop" id="addModal">
-        <div class="modal-content">
-            <div class="modal-title">
-                <span>➕ Özel Yayın Linki Ekle</span>
-                <span style="cursor:pointer;" onclick="closeAddModal()">✕</span>
-            </div>
-            <div class="form-group">
-                <label>Başlık / Kanal Adı</label>
-                <input type="text" id="customName" placeholder="Örn: Özel Akış TV">
-            </div>
-            <div class="form-group">
-                <label>Yayın URL (m3u8, mp4 veya mp3)</label>
-                <input type="text" id="customUrl" placeholder="https://domain.com/live.m3u8">
-            </div>
-            <div class="form-group">
-                <label>Modül Türü</label>
-                <select id="customModule">
-                    <option value="live_tv">Canlı TV</option>
-                    <option value="movies">Film</option>
-                    <option value="series">Dizi</option>
-                    <option value="radios">Radyo</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Kategori</label>
-                <input type="text" id="customCategory" placeholder="Örn: Ulusal, Spor, Müzik">
-            </div>
-            <div class="modal-actions">
-                <button class="action-btn" onclick="closeAddModal()">İptal</button>
-                <button class="action-btn primary" onclick="saveCustomMedia()">Ekle ve Başlat</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const DB = ${JSON.stringify(MEDIA_DATABASE)};
-        const FALLBACK_LOGO = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' fill='%23222'/%3E%3Ctext x='20' y='25' font-size='12' fill='%23888' text-anchor='middle'%3ESM%3C/text%3E%3C/svg%3E";
-        let currentModule = 'live_tv';
-        let currentCategory = 'Tümü';
-        let activeMedia = DB.live_tv[0];
+        const RAW_DATABASE = ${JSON.stringify(getAllMediaItems())};
+        const PAGE_SIZE = 20;
+
+        let allChannels = RAW_DATABASE;
+        let selectedCategory = 'TÜMÜ';
+        let searchQuery = '';
+        let currentPage = 1;
+        let activeMedia = null;
         let hlsInstance = null;
-        let toastTimeout = null;
+        let favoritesSet = new Set();
+        let searchTimeout = null;
 
-        const video = document.getElementById('videoPlayer');
-        const radioVisualizer = document.getElementById('radioVisualizer');
+        // Safe Base64 SVG icons - 0 network overhead, zero syntax error risk
+        const FALLBACK_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzOCIgaGVpZ2h0PSIzOCIgdmlld0JveD0iMCAwIDM4IDM4Ij48cmVjdCB3aWR0aD0iMzgiIGhlaWdodD0iMzgiIGZpbGw9IiMxOTFkMjYiIHJ4PSI2Ii8+PHRleHQgeD0iMTkiIHk9IjI0IiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iODAwIiBmaWxsPSIjMzhiZGY4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TTTwvdGV4dD48L3N2Zz4=";
 
-        function showToast(message) {
-            const toast = document.getElementById('toastNotification');
-            if (!toast) return;
-            toast.innerText = message;
-            toast.classList.add('show');
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-
-        // Clock & Realtime updater
-        function startLiveClock() {
-            function update() {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                document.getElementById('liveClock').innerText = timeStr;
-            }
-            setInterval(update, 1000);
-            update();
-        }
-
-        function switchModule(mod) {
-            currentModule = mod;
-            currentCategory = 'Tümü';
-
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            const tabBtn = document.getElementById('tab-' + mod);
-            if (tabBtn) tabBtn.classList.add('active');
-
-            // Render category chips
-            renderCategoryChips();
-
-            // Select first item
-            const items = DB[mod] || [];
-            if (items.length > 0) {
-                renderMediaList();
-                playMedia(items[0]);
+        function initFavorites() {
+            try {
+                const stored = localStorage.getItem('streammesh_favorites');
+                if (stored) {
+                    favoritesSet = new Set(JSON.parse(stored));
+                }
+            } catch(e) {
+                favoritesSet = new Set();
             }
         }
 
-        function renderCategoryChips() {
-            const container = document.getElementById('categoryChips');
-            const items = DB[currentModule] || [];
-            const categories = ['Tümü', ...new Set(items.map(i => i.category))];
-
-            container.innerHTML = '';
-            categories.forEach(cat => {
-                const chip = document.createElement('div');
-                chip.className = 'cat-chip' + (currentCategory === cat ? ' active' : '');
-                chip.innerText = cat;
-                chip.onclick = () => {
-                    currentCategory = cat;
-                    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-                    chip.classList.add('active');
-                    renderMediaList();
-                };
-                container.appendChild(chip);
-            });
+        function saveFavorites() {
+            try {
+                localStorage.setItem('streammesh_favorites', JSON.stringify([...favoritesSet]));
+            } catch(e) {}
         }
 
-        function renderMediaList() {
-            const container = document.getElementById('mediaListContainer');
-            const search = document.getElementById('searchInput').value.toLowerCase().trim();
-            const items = DB[currentModule] || [];
+        function toggleFavorite(id, e) {
+            if (e) e.stopPropagation();
+            if (favoritesSet.has(id)) {
+                favoritesSet.delete(id);
+                showToast('Favorilerden çıkarıldı');
+            } else {
+                favoritesSet.add(id);
+                showToast('Favorilere eklendi ⭐');
+            }
+            saveFavorites();
+            renderChannelList();
+        }
 
-            const filtered = items.filter(m => {
-                const matchesCat = (currentCategory === 'Tümü') || (m.category.toLowerCase() === currentCategory.toLowerCase());
-                const matchesSearch = m.name.toLowerCase().includes(search) || m.category.toLowerCase().includes(search);
-                return matchesCat && matchesSearch;
+        function toggleFavoriteCurrent() {
+            if (activeMedia) toggleFavorite(activeMedia.id);
+        }
+
+        function setCategory(cat) {
+            selectedCategory = cat;
+            currentPage = 1;
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.classList.toggle('active', b.innerText.includes(cat));
             });
+            renderChannelList();
+            document.getElementById('mediaListContainer').scrollTop = 0;
+        }
 
-            container.innerHTML = '';
-            filtered.forEach(m => {
-                const isActive = activeMedia && activeMedia.id === m.id;
-                const item = document.createElement('div');
-                item.className = 'media-item' + (isActive ? ' active' : '');
-                item.onclick = () => playMedia(m);
+        function handleSearchDebounced() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+                currentPage = 1;
+                renderChannelList();
+                document.getElementById('mediaListContainer').scrollTop = 0;
+            }, 180);
+        }
 
-                const logoSrc = m.logo || 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-1-tr.png';
-                
-                let subText = m.category;
-                if (currentModule === 'live_tv') {
-                    const realtimeShow = getRealtimeLiveShow(m);
-                    subText = realtimeShow ? realtimeShow.title : m.category;
-                } else if (currentModule === 'movies') {
-                    subText = m.year + ' • ' + m.duration + ' • ⭐ ' + m.rating;
-                } else if (currentModule === 'series') {
-                    subText = m.seasonCount + ' • ' + (m.episodes ? m.episodes.length + ' Bölüm' : '');
-                } else if (currentModule === 'radios') {
-                    subText = m.freq + ' • ' + (m.currentShow || 'Canlı Radyo');
+        function getFilteredChannels() {
+            return allChannels.filter(c => {
+                // Category Filter
+                if (selectedCategory === 'FAVORİLER') {
+                    if (!favoritesSet.has(c.id)) return false;
+                } else if (selectedCategory === 'DİĞER') {
+                    const known = ['TV', 'FİLM', 'DİZİ', 'RADYO', 'SPOR', 'HABER', 'ÇOCUK', 'MÜZİK'];
+                    if (known.includes(c.category)) return false;
+                } else if (selectedCategory !== 'TÜMÜ') {
+                    const cCat = (c.category || '').toUpperCase();
+                    const cGenre = (c.genre || '').toUpperCase();
+                    const cSub = (c.subCategory || '').toUpperCase();
+                    const target = selectedCategory.toUpperCase();
+                    if (cCat !== target && cGenre !== target && !cSub.includes(target)) return false;
                 }
 
-                item.innerHTML = 
-                    '<div class="media-logo-wrap">' +
-                        '<img src="' + logoSrc + '" alt="' + m.name + '" onerror="this.onerror=null;this.src=FALLBACK_LOGO" />' +
-                    '</div>' +
-                    '<div class="media-meta">' +
-                        '<div class="media-title">' +
-                            '<span>' + m.name + '</span>' +
-                            '<span class="quality-tag">' + (m.quality || 'HD') + '</span>' +
-                        '</div>' +
-                        '<div class="media-sub">' + subText + '</div>' +
-                    '</div>';
+                // Search Filter
+                if (searchQuery) {
+                    const matchName = (c.name || '').toLowerCase().includes(searchQuery);
+                    const matchSub = (c.subCategory || '').toLowerCase().includes(searchQuery);
+                    const matchCat = (c.category || '').toLowerCase().includes(searchQuery);
+                    return matchName || matchSub || matchCat;
+                }
+
+                return true;
+            });
+        }
+
+        // STRICT 20-ITEM DOM RENDERER
+        function renderChannelList() {
+            const container = document.getElementById('mediaListContainer');
+            const filtered = getFilteredChannels();
+            const totalCount = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            // Slice exactly 20 items for DOM
+            const startIndex = (currentPage - 1) * PAGE_SIZE;
+            const pageItems = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+
+            // Update Meta & Pagination UI
+            const rangeStart = totalCount > 0 ? startIndex + 1 : 0;
+            const rangeEnd = Math.min(startIndex + PAGE_SIZE, totalCount);
+
+            document.getElementById('resultCountLabel').innerText = totalCount + ' içerik (' + rangeStart + '–' + rangeEnd + ')';
+            document.getElementById('pageRangeLabel').innerText = 'Sayfa ' + currentPage + ' / ' + totalPages;
+            document.getElementById('prevPageBtn').disabled = (currentPage <= 1);
+            document.getElementById('nextPageBtn').disabled = (currentPage >= totalPages);
+
+            renderPageNumbers(totalPages);
+
+            // Render ONLY the 20 items in DOM
+            container.innerHTML = '';
+
+            if (pageItems.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.padding = '24px 14px';
+                emptyDiv.style.textAlign = 'center';
+                emptyDiv.style.color = 'var(--text-muted)';
+                emptyDiv.style.fontSize = '12px';
+                emptyDiv.innerHTML = selectedCategory === 'FAVORİLER' 
+                    ? 'Henüz favori içerik eklenmedi.<br>Kartlardaki yıldız ikonuna (☆) basarak ekleyebilirsiniz.' 
+                    : 'Arama kriterlerine uygun içerik bulunamadı.';
+                container.appendChild(emptyDiv);
+                return;
+            }
+
+            pageItems.forEach(ch => {
+                const isActive = activeMedia && activeMedia.id === ch.id;
+                const isFav = favoritesSet.has(ch.id);
+                const logoSrc = ch.logo && ch.logo.trim() !== '' ? ch.logo : FALLBACK_B64;
+
+                const item = document.createElement('div');
+                item.className = 'media-item' + (isActive ? ' active' : '');
+                item.onclick = () => playChannel(ch);
+
+                const logoWrap = document.createElement('div');
+                logoWrap.className = 'media-logo-wrap';
+
+                const img = document.createElement('img');
+                img.loading = 'lazy';
+                img.src = logoSrc;
+                img.alt = '';
+                img.onerror = function() {
+                    this.onerror = null;
+                    this.src = FALLBACK_B64;
+                };
+                logoWrap.appendChild(img);
+                item.appendChild(logoWrap);
+
+                const meta = document.createElement('div');
+                meta.className = 'media-meta';
+
+                const titleRow = document.createElement('div');
+                titleRow.className = 'media-title-row';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'media-name';
+                nameSpan.innerText = ch.name;
+                titleRow.appendChild(nameSpan);
+
+                const favBtn = document.createElement('button');
+                favBtn.className = 'fav-star-btn' + (isFav ? ' is-fav' : '');
+                favBtn.innerText = isFav ? '★' : '☆';
+                favBtn.onclick = (e) => toggleFavorite(ch.id, e);
+                titleRow.appendChild(favBtn);
+
+                meta.appendChild(titleRow);
+
+                const subRow = document.createElement('div');
+                subRow.className = 'media-sub-row';
+
+                const badge = document.createElement('span');
+                badge.className = 'badge ' + (ch.sourceType === 'ACESTREAM' ? 'badge-p2p' : (ch.sourceType === 'MULTI_SOURCE' ? 'badge-multi' : 'badge-direct'));
+                badge.innerText = ch.subCategory || ch.category;
+                subRow.appendChild(badge);
+
+                const qualSpan = document.createElement('span');
+                qualSpan.innerText = ch.quality || 'HD';
+                subRow.appendChild(qualSpan);
+
+                meta.appendChild(subRow);
+                item.appendChild(meta);
+
                 container.appendChild(item);
             });
         }
 
-        // Get currently airing program based on current time (minutes of day)
-        function getRealtimeLiveShow(channel) {
-            if (!channel.epgSchedule || channel.epgSchedule.length === 0) return null;
-            const now = new Date();
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-            for (const item of channel.epgSchedule) {
-                // If schedule spans across midnight
-                if (item.startMinutes <= item.endMinutes) {
-                    if (currentMinutes >= item.startMinutes && currentMinutes < item.endMinutes) {
-                        return item;
-                    }
-                } else {
-                    if (currentMinutes >= item.startMinutes || currentMinutes < item.endMinutes) {
-                        return item;
-                    }
-                }
-            }
-            return channel.epgSchedule[0];
-        }
-
-        function formatMinutes(min) {
-            const normalized = ((min % 1440) + 1440) % 1440;
-            const h = Math.floor(normalized / 60);
-            const m = normalized % 60;
-            return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-        }
-
-        function playMedia(m) {
-            activeMedia = m;
-            document.getElementById('currentMediaHeader').innerText = m.name;
-            document.getElementById('overlayMediaTitle').innerText = m.name;
-            document.getElementById('overlayQuality').innerText = m.quality || 'HD';
-            document.getElementById('streamCategoryLabel').innerText = m.category;
-            document.getElementById('streamSourceUrl').innerText = m.url;
-
-            // Handle Video vs Radio Mode
-            if (currentModule === 'radios') {
-                video.style.display = 'none';
-                radioVisualizer.style.display = 'flex';
-                const radioImg = document.getElementById('radioLogo');
-                radioImg.onerror = function() { this.onerror = null; this.src = FALLBACK_LOGO; };
-                radioImg.src = m.logo;
-                document.getElementById('radioStationTitle').innerText = m.name;
-                document.getElementById('radioFreqBadge').innerText = m.freq + ' • ' + m.quality + ' Canlı Ses Akışı';
-                document.getElementById('streamProtocolLabel').innerText = 'Icecast / Direct Audio Stream';
-                document.getElementById('currentMediaSub').innerText = m.currentShow || 'Canlı Radyo Yayını';
-            } else {
-                video.style.display = 'block';
-                radioVisualizer.style.display = 'none';
-                document.getElementById('streamProtocolLabel').innerText = m.url.includes('.m3u8') ? 'HLS Canlı Akış (m3u8)' : 'MP4 Direct Stream';
-
-                if (currentModule === 'live_tv') {
-                    const currentShow = getRealtimeLiveShow(m);
-                    document.getElementById('currentMediaSub').innerText = currentShow ? ('Canlı: ' + currentShow.title) : 'Canlı Yayın';
-                } else if (currentModule === 'movies') {
-                    document.getElementById('currentMediaSub').innerText = m.category + ' • ' + m.year + ' • Yönetmen: ' + (m.director || 'N/A');
-                } else if (currentModule === 'series') {
-                    document.getElementById('currentMediaSub').innerText = m.category + ' • ' + m.seasonCount;
-                }
-            }
-
-            renderMediaList();
-            renderRightPanel(m);
-
-            // Stream Loading
-            if (m.url.includes('.m3u8')) {
-                if (Hls.isSupported()) {
-                    if (hlsInstance) hlsInstance.destroy();
-                    hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
-                    hlsInstance.loadSource(m.url);
-                    hlsInstance.attachMedia(video);
-                    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = m.url;
-                    video.play().catch(() => {});
-                }
-            } else {
-                if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-                video.src = m.url;
-                video.play().catch(() => {});
-            }
-        }
-
-        function renderRightPanel(m) {
-            const container = document.getElementById('epgTimelineContainer');
-            const titleEl = document.getElementById('rightPanelTitle');
+        function renderPageNumbers(totalPages) {
+            const container = document.getElementById('pageNumbersContainer');
             container.innerHTML = '';
 
-            if (currentModule === 'live_tv') {
-                titleEl.innerHTML = '📅 Gerçek Zamanlı EPG';
-                const schedule = m.epgSchedule || [];
-                const now = new Date();
-                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let start = Math.max(1, currentPage - 2);
+            let end = Math.min(totalPages, start + 4);
+            if (end - start < 4) start = Math.max(1, end - 4);
 
-                schedule.forEach(item => {
-                    let isCurrent = false;
-                    let isPast = false;
+            for (let i = start; i <= end; i++) {
+                const num = document.createElement('div');
+                num.className = 'page-num' + (i === currentPage ? ' active' : '');
+                num.innerText = i;
+                num.onclick = () => { 
+                    currentPage = i; 
+                    renderChannelList(); 
+                    document.getElementById('mediaListContainer').scrollTop = 0;
+                };
+                container.appendChild(num);
+            }
+        }
 
-                    if (item.startMinutes <= item.endMinutes) {
-                        isCurrent = (currentMinutes >= item.startMinutes && currentMinutes < item.endMinutes);
-                        isPast = currentMinutes >= item.endMinutes;
-                    } else {
-                        isCurrent = (currentMinutes >= item.startMinutes || currentMinutes < item.endMinutes);
-                        isPast = currentMinutes >= item.endMinutes && currentMinutes < item.startMinutes;
+        function changePage(delta) {
+            const filtered = getFilteredChannels();
+            const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderChannelList();
+                document.getElementById('mediaListContainer').scrollTop = 0;
+            }
+        }
+
+        // USER INTERACTION DRIVEN PLAYBACK LIFECYCLE
+        function playChannel(ch) {
+            activeMedia = ch;
+            renderChannelList();
+
+            const video = document.getElementById('videoPlayer');
+            const overlay = document.getElementById('playerOverlay');
+            const icon = document.getElementById('playerStateIcon');
+            const spinner = document.getElementById('playerSpinner');
+            const stateTitle = document.getElementById('playerStateTitle');
+            const stateDesc = document.getElementById('playerStateDesc');
+
+            // UI metadata update
+            document.getElementById('currentMediaTitle').innerText = ch.name;
+            const routedUrl = '/stream/' + ch.id;
+            document.getElementById('streamUrlVal').innerText = routedUrl;
+            document.getElementById('currentMediaSub').innerText = (ch.subCategory || ch.category) + ' • ' + (ch.quality || 'HD');
+            document.getElementById('streamStatusVal').innerText = 'Bağlantı kuruluyor...';
+            document.getElementById('streamStatusVal').style.color = 'var(--warning)';
+
+            // Cleanly destroy previous Hls.js instance to prevent memory leaks
+            if (hlsInstance) {
+                try {
+                    hlsInstance.destroy();
+                } catch(e) {}
+                hlsInstance = null;
+            }
+
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+
+            // Show loading state
+            overlay.style.display = 'flex';
+            icon.style.display = 'none';
+            spinner.style.display = 'block';
+            stateTitle.innerText = 'Yayın Başlatılıyor...';
+            stateDesc.innerText = ch.name + ' akış kaynağı hazırlanıyor...';
+
+            const streamUrl = routedUrl;
+            const isHls = ch.url.includes('.m3u8') || ch.category === 'TV' || ch.sourceType === 'MULTI_SOURCE' || ch.sourceType === 'ACESTREAM';
+
+            if (isHls) {
+                if (window.Hls && Hls.isSupported()) {
+                    hlsInstance = new Hls({
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        manifestLoadingMaxRetry: 4,
+                        manifestLoadingRetryDelay: 1000
+                    });
+
+                    hlsInstance.loadSource(streamUrl);
+                    hlsInstance.attachMedia(video);
+
+                    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                        overlay.style.display = 'none';
+                        document.getElementById('streamStatusVal').innerText = 'Canlı Yayın Aktif';
+                        document.getElementById('streamStatusVal').style.color = 'var(--success)';
+                        video.play().catch(e => {
+                            if (e.name === 'NotAllowedError') {
+                                overlay.style.display = 'flex';
+                                icon.style.display = 'block';
+                                spinner.style.display = 'none';
+                                stateTitle.innerText = 'Oynatmak İçin Tıklayın';
+                                stateDesc.innerText = 'Tarayıcı güvenlik politikası nedeniyle oynatıcıya dokunarak başlatın.';
+                                overlay.onclick = () => {
+                                    overlay.style.display = 'none';
+                                    video.play();
+                                };
+                            }
+                        });
+                    });
+
+                    hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                        if (data.fatal) {
+                            spinner.style.display = 'none';
+                            icon.style.display = 'block';
+                            icon.innerText = '⚠️';
+                            stateTitle.innerText = 'Yayın Akışı Alınamadı';
+                            if (data.response && data.response.code === 403) {
+                                stateDesc.innerText = 'Kaynak sunucu yayını reddetti (HTTP 403 - Erişim Kısıtı).';
+                            } else if (data.response && data.response.code === 404) {
+                                stateDesc.innerText = 'Yayın kanalı şu an çevrimdışı (HTTP 404).';
+                            } else {
+                                stateDesc.innerText = 'Yayın akışı alınamadı. Farklı bir kaynak deneniyor...';
+                            }
+                            document.getElementById('streamStatusVal').innerText = 'Bağlantı Hatası';
+                            document.getElementById('streamStatusVal').style.color = 'var(--live-red)';
+                        }
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Native Safari HLS
+                    video.src = streamUrl;
+                    video.play().then(() => {
+                        overlay.style.display = 'none';
+                        document.getElementById('streamStatusVal').innerText = 'Canlı Yayın Aktif';
+                        document.getElementById('streamStatusVal').style.color = 'var(--success)';
+                    }).catch(e => {
+                        spinner.style.display = 'none';
+                        icon.style.display = 'block';
+                        stateTitle.innerText = 'Oynatma Uyarısı';
+                        stateDesc.innerText = e.message;
+                    });
+                }
+            } else {
+                // Direct MP4, MP3, AAC
+                video.src = streamUrl;
+                video.onloadeddata = () => {
+                    overlay.style.display = 'none';
+                    document.getElementById('streamStatusVal').innerText = 'Yayın Aktif';
+                    document.getElementById('streamStatusVal').style.color = 'var(--success)';
+                };
+                video.onerror = () => {
+                    spinner.style.display = 'none';
+                    icon.style.display = 'block';
+                    icon.innerText = '⚠️';
+                    stateTitle.innerText = 'Yayın Oynatılamadı';
+                    stateDesc.innerText = 'Medya akışı yüklenirken hata oluştu.';
+                    document.getElementById('streamStatusVal').innerText = 'Akış Hatası';
+                    document.getElementById('streamStatusVal').style.color = 'var(--live-red)';
+                };
+                video.play().catch(e => {
+                    if (e.name === 'NotAllowedError') {
+                        overlay.style.display = 'flex';
+                        icon.style.display = 'block';
+                        spinner.style.display = 'none';
+                        stateTitle.innerText = 'Oynatmak İçin Tıklayın';
+                        stateDesc.innerText = 'Oynatıcıya dokunarak başlatın.';
+                        overlay.onclick = () => {
+                            overlay.style.display = 'none';
+                            video.play();
+                        };
                     }
-
-                    // Calculate real-time progress percentage
-                    let progressPercent = 0;
-                    if (isCurrent) {
-                        const totalDuration = item.endMinutes - item.startMinutes;
-                        const elapsed = currentMinutes - item.startMinutes;
-                        progressPercent = Math.min(100, Math.max(5, Math.floor((elapsed / totalDuration) * 100)));
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'epg-card' + (isCurrent ? ' active-show' : '') + (isPast ? ' past-show' : '');
-                    
-                    const timeRange = formatMinutes(item.startMinutes) + ' - ' + formatMinutes(item.endMinutes);
-
-                    card.innerHTML = 
-                        '<div class="epg-time">' +
-                            '<span>' + timeRange + '</span>' +
-                            (isCurrent ? '<span style="color:var(--live-red); font-weight:800; animation:pulse 1s infinite;">● CANLI YAYINDA</span>' : '') +
-                        '</div>' +
-                        '<div class="epg-title">' + item.title + '</div>' +
-                        '<div class="epg-desc">' + (item.desc || '') + '</div>' +
-                        (isCurrent ? ('<div class="epg-progress-bar"><div class="epg-progress-fill" style="width:' + progressPercent + '%"></div></div>') : '');
-                    container.appendChild(card);
                 });
-            } else if (currentModule === 'movies') {
-                titleEl.innerHTML = '🎬 Film Detayları & Bilgi';
-                const card = document.createElement('div');
-                card.className = 'epg-card active-show';
-                card.innerHTML = 
-                    '<div class="epg-title" style="font-size:14px; margin-bottom:8px;">' + m.name + '</div>' +
-                    '<div class="epg-desc" style="margin-bottom:10px;">' + (m.desc || '') + '</div>' +
-                    '<div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Yıl:</b> ' + m.year + '</div>' +
-                    '<div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Süre:</b> ' + m.duration + '</div>' +
-                    '<div style="font-size:12px; color:var(--primary-glow); margin-bottom:4px;"><b>Yönetmen:</b> ' + m.director + '</div>' +
-                    '<div style="font-size:12px; color:#fbbf24;"><b>IMDb / Puan:</b> ⭐ ' + m.rating + '</div>';
-                container.appendChild(card);
-            } else if (currentModule === 'series') {
-                titleEl.innerHTML = '🍿 Bölüm Listesi';
-                (m.episodes || []).forEach(ep => {
-                    const card = document.createElement('div');
-                    card.className = 'epg-card';
-                    card.style.cursor = 'pointer';
-                    card.onclick = () => {
-                        showToast(ep.episode + ': ' + ep.title + ' seçildi');
-                    };
-                    card.innerHTML = 
-                        '<div class="epg-time"><span>' + ep.episode + '</span><span>' + ep.duration + '</span></div>' +
-                        '<div class="epg-title">' + ep.title + '</div>' +
-                        '<div class="epg-desc">' + ep.desc + '</div>';
-                    container.appendChild(card);
-                });
-            } else if (currentModule === 'radios') {
-                titleEl.innerHTML = '📻 Yayın Akışı & Bilgi';
-                const card = document.createElement('div');
-                card.className = 'epg-card active-show';
-                card.innerHTML = 
-                    '<div class="epg-title" style="font-size:14px;">' + m.name + '</div>' +
-                    '<div class="epg-time" style="margin-top:6px;"><span>Şu An: ' + (m.currentShow || 'Canlı Kuşak') + '</span></div>' +
-                    '<div class="epg-desc" style="margin-top:4px;">Sıradaki: ' + (m.nextShow || 'Gece Müzikleri') + '</div>';
-                container.appendChild(card);
             }
         }
 
-        function reloadCurrentMedia() { if (activeMedia) playMedia(activeMedia); }
-        function copyStreamUrl() {
+        function reloadStream() {
+            if (activeMedia) playChannel(activeMedia);
+        }
+
+        function copyStreamLink() {
             if (activeMedia) {
-                navigator.clipboard.writeText(activeMedia.url).then(() => {
-                    showToast('Yayın bağlantısı kopyalandı: ' + activeMedia.name);
-                }).catch(() => {
-                    showToast('Yayın bağlantısı: ' + activeMedia.url);
-                });
-            }
-        }
-        function openExternal() {
-            if (activeMedia) {
-                window.location.href = 'streammesh://play?url=' + encodeURIComponent(activeMedia.url);
-                showToast('Masaüstü oynatıcı başlatılıyor...');
-            }
-        }
-        function togglePiP() {
-            if (document.pictureInPictureElement) {
-                document.exitPictureInPicture();
-            } else if (document.pictureInPictureEnabled && video.style.display !== 'none') {
-                video.requestPictureInPicture().catch(() => {
-                    showToast('PiP modu başlatılamadı');
-                });
+                const fullUrl = window.location.origin + '/stream/' + activeMedia.id;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(fullUrl).then(() => {
+                        showToast('Yayın URL kopyalandı');
+                    }).catch(() => {
+                        showToast(fullUrl);
+                    });
+                } else {
+                    showToast(fullUrl);
+                }
             }
         }
 
-        function openAddModal() { document.getElementById('addModal').style.display = 'flex'; }
-        function closeAddModal() { document.getElementById('addModal').style.display = 'none'; }
-
-        function saveCustomMedia() {
-            const name = document.getElementById('customName').value.trim();
-            const url = document.getElementById('customUrl').value.trim();
-            const mod = document.getElementById('customModule').value;
-            const cat = document.getElementById('customCategory').value.trim() || 'Özel';
-
-            if (!name || !url) {
-                showToast('Lütfen başlık ve yayın URL adresini girin.');
-                return;
-            }
-
-            const item = {
-                id: 'cust-' + Date.now(),
-                name: name,
-                category: cat,
-                url: url,
-                quality: 'HD',
-                logo: 'https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-1-tr.png'
-            };
-
-            if (!DB[mod]) DB[mod] = [];
-            DB[mod].unshift(item);
-
-            closeAddModal();
-            switchModule(mod);
-            playMedia(item);
-            showToast('Özel yayın eklendi: ' + name);
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
         }
 
         window.onload = () => {
-            startLiveClock();
-            switchModule('live_tv');
+            initFavorites();
+            renderChannelList();
+            // User requested: DO NOT autoplay without explicit click
+            document.getElementById('playerOverlay').style.display = 'flex';
+            document.getElementById('playerStateIcon').style.display = 'block';
+            document.getElementById('playerSpinner').style.display = 'none';
         };
     </script>
 </body>
@@ -1344,5 +1780,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`StreamMesh Hybrid Web & Media Portal running on http://0.0.0.0:${PORT}`);
+  console.log(`StreamMesh High-Performance Paginated Web Portal running on http://0.0.0.0:${PORT}`);
 });

@@ -43,7 +43,7 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
-                // 2. Try matching by URL
+                // 2. Try matching by identical stream URL
                 if (matched == null)
                 {
                     foreach (var u in urls)
@@ -52,28 +52,9 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
-                // 3. Try matching by EPG ID
-                if (matched == null)
-                {
-                    foreach (var e in epgs)
-                    {
-                        if (string.IsNullOrEmpty(e)) continue;
-                        if (epgMap.TryGetValue(e, out matched)) break;
-                    }
-                }
-
-                // 4. Try matching by Normalized Name (if name is meaningful)
-                if (matched == null)
-                {
-                    foreach (var n in names)
-                    {
-                        string normKey = ChannelUtils.ToNormalizedKey(n);
-                        if (!string.IsNullOrEmpty(normKey) && normKey.Length >= 3)
-                        {
-                            if (nameMap.TryGetValue(normKey, out matched)) break;
-                        }
-                    }
-                }
+                // NOTE: Automatic name-based channel aggregation has been strictly disabled.
+                // Channels with identical or similar names in different countries/languages (e.g. ATV TR vs ATV DE)
+                // must NEVER be auto-merged unless explicitly merged by the user via Manual Channel Merge.
 
                 if (matched != null)
                 {
@@ -85,24 +66,12 @@ namespace StreamMesh.Core.Media
                     aggregated.Add(matched);
                 }
 
-                // Re-index
+                // Re-index only strictly identical stream identifiers
                 foreach (var u in matched.GetUrlList())
                 {
                     urlMap[u] = matched;
                     string h = aceEngine.ExtractHash(u);
                     if (!string.IsNullOrEmpty(h)) aceMap[h] = matched;
-                }
-                foreach (var e in matched.GetEpgIdList())
-                {
-                    if (!string.IsNullOrEmpty(e)) epgMap[e] = matched;
-                }
-                foreach (var n in matched.GetNamesList())
-                {
-                    string nk = ChannelUtils.ToNormalizedKey(n);
-                    if (!string.IsNullOrEmpty(nk) && nk.Length >= 3)
-                    {
-                        nameMap[nk] = matched;
-                    }
                 }
             }
 

@@ -63,8 +63,8 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="✨ Çift Kanalları Birleştir" Width="180" Height="40"
-                            Style="{StaticResource PrimaryButtonStyle}" Click="MergeDuplicates_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold" Margin="0,0,10,0"/>
+                    <Button Content="🔗 Kanal Birleştir" Width="160" Height="40"
+                            Style="{StaticResource PrimaryButtonStyle}" Click="OpenMergeDialog_Click" Background="#0284c7" Foreground="White" FontWeight="Bold" Margin="0,0,10,0"/>
                     <Button Content="🪄 Otomatik Veri Eşle" Width="160" Height="40"
                             Style="{StaticResource PrimaryButtonStyle}" Click="AutoMatch_Click" Background="#334155" Margin="0,0,15,0"/>
                     <Button Content="✕" Width="40" Height="40" Background="Transparent" Foreground="Gray" FontSize="20" BorderThickness="0" Click="Cancel_Click"/>

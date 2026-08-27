@@ -681,7 +681,7 @@ namespace StreamMesh.UI.Views
                         if (ViewModel.CurrentChannel != null) OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
                     });
 
-                    if (ViewModel.IsVod(channel) && channel.LastPositionMs > 0)
+                    if (ViewModel.IsVod(channel) && channel.LastPositionMs > 0 && _player != null)
                     {
                         try { _player.Seek((int)channel.LastPositionMs); _lastSeekTime = DateTime.Now; _effectivePositionMs = channel.LastPositionMs; } catch { }
                     }
@@ -917,8 +917,11 @@ namespace StreamMesh.UI.Views
 
                     try
                     {
+                        string sourceUrl = ViewModel.CurrentChannel?.Url ?? _currentPlayingUrl ?? "";
+                        if (string.IsNullOrEmpty(sourceUrl) || _player == null) return;
+
                         int targetSec = (int)(targetMs / 1000);
-                        string timeshiftUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(ViewModel.CurrentChannel.Url ?? "", targetSec);
+                        string timeshiftUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(sourceUrl, targetSec);
 
                         _isTimeshiftMode = true;
                         _timeshiftStartDvrMs = targetMs;
