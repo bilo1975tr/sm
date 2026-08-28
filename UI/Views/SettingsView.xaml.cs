@@ -371,7 +371,7 @@ namespace StreamMesh.UI.Views
                 {
                     using var globalSemaphore = new System.Threading.SemaphoreSlim(concurrency, concurrency);
                     var hostLocks = new System.Collections.Concurrent.ConcurrentDictionary<string, System.Threading.SemaphoreSlim>();
-                    var urlCache = new System.Collections.Concurrent.ConcurrentDictionary<string, ValidationResult>();
+                    var urlCache = new System.Collections.Concurrent.ConcurrentDictionary<string, StreamMesh.Core.Utils.ValidationResult>();
 
                     var tasks = channelsToTest.Select(async ch =>
                     {
@@ -385,7 +385,7 @@ namespace StreamMesh.UI.Views
                         {
                             if (token.IsCancellationRequested) return;
 
-                            ValidationResult result;
+                            StreamMesh.Core.Utils.ValidationResult result;
                             if (!string.IsNullOrEmpty(targetUrl) && urlCache.TryGetValue(targetUrl, out var cachedResult))
                             {
                                 result = cachedResult;
