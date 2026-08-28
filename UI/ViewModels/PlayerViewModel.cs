@@ -55,7 +55,7 @@ namespace StreamMesh.UI.ViewModels
 
         public async Task<string> PrepareStreamAsync(Channel channel, CancellationToken token, Action<string> onStatusUpdate)
         {
-            var rawUrls = channel.GetUrlList();
+            var rawUrls = channel.GetOrderedUrlList();
             if (rawUrls.Count == 0 && !string.IsNullOrWhiteSpace(channel.Url))
             {
                 rawUrls = new List<string> { channel.Url.Trim() };

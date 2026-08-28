@@ -198,6 +198,16 @@ namespace StreamMesh.UI.Views
             }
         }
 
+        private void SetDefaultSource_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button b && b.CommandParameter is string url)
+            {
+                _db.SetDefaultM3uSource(url);
+                RefreshSourcesList();
+                System.Windows.MessageBox.Show($"'{url}' başarıyla varsayılan yayın kaynağı olarak ayarlandı.", "Varsayılan Kaynak Güncellendi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void RemoveSource_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button b && b.CommandParameter is string url)
@@ -361,40 +371,54 @@ namespace StreamMesh.UI.Views
                 {
                     using var globalSemaphore = new System.Threading.SemaphoreSlim(concurrency, concurrency);
                     var hostLocks = new System.Collections.Concurrent.ConcurrentDictionary<string, System.Threading.SemaphoreSlim>();
+                    var urlCache = new System.Collections.Concurrent.ConcurrentDictionary<string, ValidationResult>();
 
                     var tasks = channelsToTest.Select(async ch =>
                     {
                         if (token.IsCancellationRequested) return;
+                        string targetUrl = ch.GetOrderedUrlList().FirstOrDefault() ?? ch.GetUrlList().FirstOrDefault() ?? "";
                         string hostKey = GetChannelHostKey(ch);
                         var hostSemaphore = hostLocks.GetOrAdd(hostKey, _ => new System.Threading.SemaphoreSlim(1, 1));
 
-                        await globalSemaphore.WaitAsync().ConfigureAwait(false);
+                        await globalSemaphore.WaitAsync(token).ConfigureAwait(false);
                         try
                         {
                             if (token.IsCancellationRequested) return;
-                            await hostSemaphore.WaitAsync().ConfigureAwait(false);
-                            try
+
+                            ValidationResult result;
+                            if (!string.IsNullOrEmpty(targetUrl) && urlCache.TryGetValue(targetUrl, out var cachedResult))
                             {
-                                if (token.IsCancellationRequested) return;
-                                using var validator = new StreamValidator();
-                                var result = await validator.ValidateAsync(ch, level, null).ConfigureAwait(false);
-                                if (result.IsOnline)
-                                {
-                                    System.Threading.Interlocked.Increment(ref online);
-                                    ch.IsVerified = true;
-                                    logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} Aktif");
-                                }
-                                else
-                                {
-                                    ch.IsVerified = false;
-                                    deadChannelIds.Add(ch.Id);
-                                    logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ❌ {ch.PrimaryName} Yanıt Vermedi");
-                                }
-                                updatedChannels.Add(ch);
-                                System.Threading.Interlocked.Increment(ref processed);
+                                result = cachedResult;
                             }
-                            finally { hostSemaphore.Release(); }
+                            else
+                            {
+                                await hostSemaphore.WaitAsync(token).ConfigureAwait(false);
+                                try
+                                {
+                                    if (token.IsCancellationRequested) return;
+                                    using var validator = new StreamValidator();
+                                    result = await validator.ValidateAsync(ch, level, null, token).ConfigureAwait(false);
+                                    if (!string.IsNullOrEmpty(targetUrl)) urlCache[targetUrl] = result;
+                                }
+                                finally { hostSemaphore.Release(); }
+                            }
+
+                            if (result.IsOnline)
+                            {
+                                System.Threading.Interlocked.Increment(ref online);
+                                ch.IsVerified = true;
+                                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} Aktif ({result.Status})");
+                            }
+                            else
+                            {
+                                ch.IsVerified = false;
+                                deadChannelIds.Add(ch.Id);
+                                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ❌ {ch.PrimaryName} ({result.Status})");
+                            }
+                            updatedChannels.Add(ch);
+                            System.Threading.Interlocked.Increment(ref processed);
                         }
+                        catch (OperationCanceledException) { }
                         catch { }
                         finally { globalSemaphore.Release(); }
                     });

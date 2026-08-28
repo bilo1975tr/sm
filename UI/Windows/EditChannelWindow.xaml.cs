@@ -27,8 +27,45 @@ namespace StreamMesh.UI.Windows
             protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
+        public class ChannelSourceItem : INotifyPropertyChanged
+        {
+            private string _value = "";
+            private bool _isDefault = false;
+
+            public string Value
+            {
+                get => _value;
+                set { _value = value; OnPropertyChanged(); }
+            }
+
+            public bool IsDefault
+            {
+                get => _isDefault;
+                set
+                {
+                    if (_isDefault != value)
+                    {
+                        _isDefault = value;
+                        OnPropertyChanged();
+                        OnPropertyChanged(nameof(DefaultBadgeVisibility));
+                        OnPropertyChanged(nameof(MakeDefaultButtonVisibility));
+                        OnPropertyChanged(nameof(CardBorderBrush));
+                        OnPropertyChanged(nameof(CardBackground));
+                    }
+                }
+            }
+
+            public Visibility DefaultBadgeVisibility => IsDefault ? Visibility.Visible : Visibility.Collapsed;
+            public Visibility MakeDefaultButtonVisibility => IsDefault ? Visibility.Collapsed : Visibility.Visible;
+            public string CardBorderBrush => IsDefault ? "#059669" : "#334155";
+            public string CardBackground => IsDefault ? "#0d2818" : "#0f172a";
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
         public ObservableCollection<StringWrapper> TempNameList { get; set; } = new ObservableCollection<StringWrapper>();
-        public ObservableCollection<StringWrapper> TempUrlList { get; set; } = new ObservableCollection<StringWrapper>();
+        public ObservableCollection<ChannelSourceItem> TempUrlList { get; set; } = new ObservableCollection<ChannelSourceItem>();
         public ObservableCollection<StringWrapper> TempLogoList { get; set; } = new ObservableCollection<StringWrapper>();
         public ObservableCollection<StringWrapper> TempEpgList { get; set; } = new ObservableCollection<StringWrapper>();
         public ObservableCollection<StringWrapper> TempEpgUrlList { get; set; } = new ObservableCollection<StringWrapper>();
@@ -71,7 +108,15 @@ namespace StreamMesh.UI.Windows
 
             // Load multi-alternative data
             foreach (var n in channel.GetNamesList()) TempNameList.Add(new StringWrapper { Value = n });
-            foreach (var u in channel.GetUrlList()) TempUrlList.Add(new StringWrapper { Value = u });
+            var orderedUrls = channel.GetOrderedUrlList();
+            for (int i = 0; i < orderedUrls.Count; i++)
+            {
+                TempUrlList.Add(new ChannelSourceItem { Value = orderedUrls[i], IsDefault = (i == 0) });
+            }
+            if (TempUrlList.Count == 0 && !string.IsNullOrWhiteSpace(channel.Url))
+            {
+                TempUrlList.Add(new ChannelSourceItem { Value = channel.Url.Trim(), IsDefault = true });
+            }
             foreach (var l in channel.GetLogoList()) TempLogoList.Add(new StringWrapper { Value = l });
             foreach (var e in channel.GetEpgIdList()) TempEpgList.Add(new StringWrapper { Value = e });
             var urls = (channel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -194,14 +239,27 @@ namespace StreamMesh.UI.Windows
             }
         }
 
-        private void AddUrl_Click(object sender, RoutedEventArgs e) => TempUrlList.Add(new StringWrapper { Value = "" });
-        private void RemoveUrl_Click(object sender, RoutedEventArgs e) { if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw) TempUrlList.Remove(sw); }
+        private void AddUrl_Click(object sender, RoutedEventArgs e) => TempUrlList.Add(new ChannelSourceItem { Value = "", IsDefault = (TempUrlList.Count == 0) });
+        private void RemoveUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
+            {
+                bool wasDefault = item.IsDefault;
+                TempUrlList.Remove(item);
+                if (wasDefault && TempUrlList.Count > 0)
+                {
+                    TempUrlList[0].IsDefault = true;
+                }
+            }
+        }
         private void SetPrimaryUrl_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw)
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
             {
-                TempUrlList.Remove(sw);
-                TempUrlList.Insert(0, sw);
+                foreach (var x in TempUrlList) x.IsDefault = false;
+                item.IsDefault = true;
+                TempUrlList.Remove(item);
+                TempUrlList.Insert(0, item);
             }
         }
 
@@ -245,7 +303,11 @@ namespace StreamMesh.UI.Windows
                     foreach (var n in _channel.GetNamesList()) TempNameList.Add(new StringWrapper { Value = n });
 
                     TempUrlList.Clear();
-                    foreach (var u in _channel.GetUrlList()) TempUrlList.Add(new StringWrapper { Value = u });
+                    var mergedUrls = _channel.GetOrderedUrlList();
+                    for (int i = 0; i < mergedUrls.Count; i++)
+                    {
+                        TempUrlList.Add(new ChannelSourceItem { Value = mergedUrls[i], IsDefault = (i == 0) });
+                    }
 
                     TempLogoList.Clear();
                     foreach (var l in _channel.GetLogoList()) TempLogoList.Add(new StringWrapper { Value = l });
@@ -311,6 +373,7 @@ namespace StreamMesh.UI.Windows
             if (validNames.Count > 0) _channel.Name = string.Join(", ", validNames);
 
             _channel.Url = string.Join(",", TempUrlList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+            _channel.PreferredUrlIndex = 0;
             _channel.LogoUrl = string.Join(",", TempLogoList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
 
             string newEpgId = string.Join(",", TempEpgList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));

@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using FlyleafLib;
 using FlyleafLib.MediaPlayer;
 using StreamMesh.Models;
 using System.Linq;
 using System.IO;
+using StreamMesh.Core.Network;
 
 namespace StreamMesh.Core.Utils
 {
@@ -29,17 +31,16 @@ namespace StreamMesh.Core.Utils
 
     public class StreamValidator : IDisposable
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-
         public StreamValidator()
         {
             FlyleafHelper.SafeStart();
         }
 
-        public async Task<ValidationResult> ValidateAsync(Channel channel, ValidationLevel level, IProgress<string>? logger = null)
+        public async Task<ValidationResult> ValidateAsync(Channel channel, ValidationLevel level, IProgress<string>? logger = null, CancellationToken ct = default)
         {
             var result = new ValidationResult();
-            string url = channel.GetUrlList().FirstOrDefault() ?? "";
+            // Test the preferred/default URL first
+            string url = channel.GetOrderedUrlList().FirstOrDefault() ?? channel.GetUrlList().FirstOrDefault() ?? "";
 
             if (string.IsNullOrEmpty(url))
             {
@@ -51,9 +52,63 @@ namespace StreamMesh.Core.Utils
             try
             {
                 logger?.Report($"[{channel.PrimaryName}] Hızlı kontrol yapılıyor: {url}");
-                using var getResponse = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-                result.IsOnline = getResponse.IsSuccessStatusCode;
-                result.Status = result.IsOnline ? "Erişilebilir" : $"Hata: {getResponse.StatusCode}";
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(TimeSpan.FromSeconds(6));
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                using var getResponse = await MediaHttpClient.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+                
+                if (getResponse.IsSuccessStatusCode)
+                {
+                    // Check HLS content if it's an m3u8 or video stream
+                    bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || 
+                                 (getResponse.Content.Headers.ContentType?.MediaType?.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) ?? false);
+
+                    if (isHls)
+                    {
+                        using var stream = await getResponse.Content.ReadAsStreamAsync(cts.Token).ConfigureAwait(false);
+                        byte[] buffer = new byte[1024];
+                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token).ConfigureAwait(false);
+                        string headerText = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                        // If it's returning HTML error page with 200 OK (e.g. <!DOCTYPE html> or <html>)
+                        if (headerText.Contains("<html", StringComparison.OrdinalIgnoreCase) || headerText.Contains("<!DOCTYPE", StringComparison.OrdinalIgnoreCase))
+                        {
+                            result.IsOnline = false;
+                            result.Status = "Geçersiz Yanıt (HTML Hata Sayfası)";
+                            return result;
+                        }
+
+                        // Must contain valid HLS tag
+                        if (headerText.Contains("#EXTM3U", StringComparison.OrdinalIgnoreCase))
+                        {
+                            result.IsOnline = true;
+                            result.Status = "Erişilebilir (HLS Canlı)";
+                        }
+                        else
+                        {
+                            // Some non-standard streams might still be media
+                            result.IsOnline = true;
+                            result.Status = "Erişilebilir";
+                        }
+                    }
+                    else
+                    {
+                        result.IsOnline = true;
+                        result.Status = "Erişilebilir";
+                    }
+                }
+                else
+                {
+                    result.IsOnline = false;
+                    result.Status = $"Hata: {(int)getResponse.StatusCode} {getResponse.StatusCode}";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                result.IsOnline = false;
+                result.Status = ct.IsCancellationRequested ? "İptal Edildi" : "Zaman Aşımı (Timeout)";
+                result.Error = "İstek zaman aşımına uğradı.";
             }
             catch (Exception ex)
             {
@@ -62,7 +117,7 @@ namespace StreamMesh.Core.Utils
                 result.Error = ex.Message;
             }
 
-            if (level == ValidationLevel.Fast || !result.IsOnline)
+            if (level == ValidationLevel.Fast || !result.IsOnline || ct.IsCancellationRequested)
             {
                 return result;
             }
@@ -77,7 +132,8 @@ namespace StreamMesh.Core.Utils
                 bool started = false;
                 for (int t = 0; t < 10; t++)
                 {
-                    await Task.Delay(1000);
+                    if (ct.IsCancellationRequested) break;
+                    await Task.Delay(1000, ct).ConfigureAwait(false);
                     if (player.Status == Status.Playing) { started = true; break; }
                 }
 

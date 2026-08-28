@@ -123,6 +123,7 @@ namespace StreamMesh.Core.Database
                         ViewersCount INTEGER DEFAULT 0,
                         UrlSpeeds TEXT DEFAULT '',
                         PreferredNameIndex INTEGER DEFAULT 0,
+                        PreferredUrlIndex INTEGER DEFAULT 0,
                         PreferredLogoIndex INTEGER DEFAULT 0,
                         PreferredEpgIndex INTEGER DEFAULT 0
                     );
@@ -146,7 +147,8 @@ namespace StreamMesh.Core.Database
                         Url TEXT PRIMARY KEY,
                         ForcedLanguage TEXT DEFAULT 'und',
                         ForcedCategory TEXT DEFAULT 'TV',
-                        AddedDate INTEGER
+                        AddedDate INTEGER,
+                        IsDefault INTEGER DEFAULT 0
                     );
                     CREATE TABLE IF NOT EXISTS EpgSources (
                         Url TEXT PRIMARY KEY,
@@ -207,11 +209,13 @@ namespace StreamMesh.Core.Database
                     "ALTER TABLE Channels ADD COLUMN [Cast] TEXT DEFAULT ''",
                     "ALTER TABLE Channels ADD COLUMN UrlSpeeds TEXT DEFAULT ''",
                     "ALTER TABLE Channels ADD COLUMN PreferredNameIndex INTEGER DEFAULT 0",
+                    "ALTER TABLE Channels ADD COLUMN PreferredUrlIndex INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN PreferredLogoIndex INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN PreferredEpgIndex INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN IsEpgLocked INTEGER DEFAULT 0",
                     "ALTER TABLE Channels ADD COLUMN LastPositionMs INTEGER DEFAULT 0",
-                    "ALTER TABLE EpgPrograms ADD COLUMN SourceUrl TEXT DEFAULT ''"
+                    "ALTER TABLE EpgPrograms ADD COLUMN SourceUrl TEXT DEFAULT ''",
+                    "ALTER TABLE M3uSources ADD COLUMN IsDefault INTEGER DEFAULT 0"
                 };
 
                 foreach (var sql in newCols)
@@ -318,7 +322,10 @@ namespace StreamMesh.Core.Database
 
         // Source delegators
         public List<string> GetM3uSources() => _sources.GetM3uSources();
-        public void AddM3uSource(string url) => _sources.AddM3uSource(url);
+        public List<M3uSourceEntity> GetAllM3uSources() => _sources.GetAllM3uSources();
+        public void AddM3uSource(string url, bool isDefault = false) { _sources.AddM3uSource(url, isDefault); NotifyDatabaseUpdated(); }
+        public void SetDefaultM3uSource(string url) { _sources.SetDefaultM3uSource(url); NotifyDatabaseUpdated(); }
+        public string? GetDefaultM3uSource() => _sources.GetDefaultM3uSource();
         public void RemoveM3uSource(string url) { _sources.RemoveM3uSource(url); NotifyDatabaseUpdated(); }
 
         // IPTV delegators

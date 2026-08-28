@@ -37,10 +37,12 @@ namespace StreamMesh.Models
         public long LastPositionMs { get => _lastPositionMs; set { _lastPositionMs = value; OnPropertyChanged(); } }
 
         private int _preferredNameIndex = 0;
+        private int _preferredUrlIndex = 0;
         private int _preferredLogoIndex = 0;
         private int _preferredEpgIndex = 0;
 
         public int PreferredNameIndex { get => _preferredNameIndex; set { _preferredNameIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); } }
+        public int PreferredUrlIndex { get => _preferredUrlIndex; set { _preferredUrlIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryUrl)); } }
         public int PreferredLogoIndex { get => _preferredLogoIndex; set { _preferredLogoIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogoUrl)); OnPropertyChanged(nameof(PrimaryLogoUrl)); } }
         public int PreferredEpgIndex { get => _preferredEpgIndex; set { _preferredEpgIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(EpgId)); } }
 
@@ -218,7 +220,18 @@ namespace StreamMesh.Models
         public string Url
         {
             get => _url;
-            set { if (_url != value) { _url = value; OnPropertyChanged(); OnPropertyChanged(nameof(SourcesCount)); OnPropertyChanged(nameof(HasMultipleSources)); } }
+            set { if (_url != value) { _url = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryUrl)); OnPropertyChanged(nameof(SourcesCount)); OnPropertyChanged(nameof(HasMultipleSources)); } }
+        }
+
+        public string PrimaryUrl
+        {
+            get
+            {
+                var list = GetUrlList();
+                if (list.Count == 0) return Url ?? "";
+                if (PreferredUrlIndex >= 0 && PreferredUrlIndex < list.Count) return list[PreferredUrlIndex];
+                return list[0];
+            }
         }
 
         public int SourcesCount => string.IsNullOrEmpty(_url) ? 0 : _url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -490,6 +503,22 @@ namespace StreamMesh.Models
             return result.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         }
 
+        public List<string> GetOrderedUrlList()
+        {
+            var list = GetUrlList();
+            if (list.Count <= 1) return list;
+
+            int primaryIdx = (PreferredUrlIndex >= 0 && PreferredUrlIndex < list.Count) ? PreferredUrlIndex : 0;
+            if (primaryIdx == 0) return list;
+
+            var ordered = new List<string> { list[primaryIdx] };
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (i != primaryIdx) ordered.Add(list[i]);
+            }
+            return ordered;
+        }
+
         public List<string> GetLogoList()
         {
             if (string.IsNullOrWhiteSpace(LogoUrl)) return new List<string>();
@@ -558,6 +587,10 @@ namespace StreamMesh.Models
         {
             if (other == null) return;
 
+            string savedPrimaryName = PrimaryName;
+            string savedPrimaryUrl = PrimaryUrl;
+            string savedPrimaryLogo = PrimaryLogoUrl;
+
             // 1. Merge Names
             foreach (var n in other.GetNamesList()) AddAlternativeName(n);
 
@@ -569,6 +602,28 @@ namespace StreamMesh.Models
 
             // 4. Merge EPG IDs
             foreach (var e in other.GetEpgIdList()) AddAlternativeEpgId(e);
+
+            // Restore / re-anchor preferred indices
+            if (!string.IsNullOrEmpty(savedPrimaryName))
+            {
+                var names = GetNamesList();
+                int idx = names.FindIndex(x => string.Equals(x, savedPrimaryName, StringComparison.OrdinalIgnoreCase));
+                if (idx >= 0) PreferredNameIndex = idx;
+            }
+
+            if (!string.IsNullOrEmpty(savedPrimaryUrl))
+            {
+                var urls = GetUrlList();
+                int idx = urls.FindIndex(x => string.Equals(x, savedPrimaryUrl, StringComparison.OrdinalIgnoreCase));
+                if (idx >= 0) PreferredUrlIndex = idx;
+            }
+
+            if (!string.IsNullOrEmpty(savedPrimaryLogo))
+            {
+                var logos = GetLogoList();
+                int idx = logos.FindIndex(x => string.Equals(x, savedPrimaryLogo, StringComparison.OrdinalIgnoreCase));
+                if (idx >= 0) PreferredLogoIndex = idx;
+            }
 
             // 5. Merge Metadata if missing
             if (string.IsNullOrWhiteSpace(ImdbId) && !string.IsNullOrWhiteSpace(other.ImdbId)) ImdbId = other.ImdbId;

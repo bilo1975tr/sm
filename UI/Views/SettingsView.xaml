@@ -51,14 +51,19 @@
                             </Grid>
                             <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
                             <TextBlock Text="Aktif Yayın Kaynakları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,10,0,10" FontSize="18"/>
-                            <ListBox x:Name="M3uSourcesList" Height="300" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
+                            <ListBox x:Name="M3uSourcesList" ItemsSource="{Binding Sources}" Height="300" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,5" Padding="10">
                                             <Grid>
                                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                                 <StackPanel>
-                                                    <TextBlock Text="{Binding Url}" Foreground="White" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Background="#059669" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" Visibility="{Binding DefaultBadgeVisibility}">
+                                                            <TextBlock Text="⭐ VARSAYILAN" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Url}" Foreground="White" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
                                                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                                                         <Border Background="{Binding Color}" CornerRadius="4" Padding="4,1" Margin="0,0,10,0">
                                                             <TextBlock Text="{Binding Origin}" Foreground="White" FontSize="10" FontWeight="Bold"/>
@@ -67,6 +72,7 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <Button Content="⭐ Varsayılan Yap" Width="125" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Click="SetDefaultSource_Click" CommandParameter="{Binding Url}" Visibility="{Binding MakeDefaultButtonVisibility}"/>
                                                     <Button Content="⚙️ Düzenle" Width="90" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="EditSource_Click" CommandParameter="{Binding Url}"/>
                                                     <Button Content="🗑️ Kaldır" Background="#7f1d1d" Foreground="#ff8a8a" Width="80" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveSource_Click" CommandParameter="{Binding Url}"/>
                                                 </StackPanel>

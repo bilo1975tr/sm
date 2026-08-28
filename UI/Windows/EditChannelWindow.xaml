@@ -149,16 +149,24 @@
                         <ListBox x:Name="UrlList" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempUrlList}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                    <Border Background="{Binding CardBackground}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,8" Padding="8">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
-                                            <Button Grid.Column="1" Content="⭐ Ana Kaynak Yap" ToolTip="Bu yayını birincil kaynak yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryUrl_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
-                                            <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveUrl_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                    <Border Background="#059669" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" Visibility="{Binding DefaultBadgeVisibility}">
+                                                        <TextBlock Text="⭐ VARSAYILAN KAYNAK" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                    </Border>
+                                                    <TextBlock Text="Yayın Akış URL Adresi" Foreground="#94a3b8" FontSize="10"/>
+                                                </StackPanel>
+                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="#0f172a" Foreground="White" BorderBrush="#334155" BorderThickness="1" Padding="8,4" VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="⭐ Varsayılan Yap" ToolTip="Bu yayını varsayılan / birincil kaynak yap" Margin="8,0,4,0" Padding="12,6" Click="SetPrimaryUrl_Click" Background="#0284c7" Foreground="White" BorderThickness="0" VerticalAlignment="Center" Height="35" Visibility="{Binding MakeDefaultButtonVisibility}"/>
+                                            <Button Grid.Column="2" Content="✕" ToolTip="Bu kaynağı kaldır" Width="35" Height="35" Click="RemoveUrl_Click" Background="#7f1d1d" BorderThickness="0" Foreground="#ff8a8a" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

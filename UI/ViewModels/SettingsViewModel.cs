@@ -75,14 +75,26 @@ namespace StreamMesh.UI.ViewModels
         public void RefreshSources()
         {
             Sources.Clear();
-            var list = _db.GetM3uSources();
+            var list = _db.GetAllM3uSources();
+            string? defaultUrl = _db.GetDefaultM3uSource();
+
+            // If no source is marked default yet but list is non-empty, default to the first one
+            if (string.IsNullOrEmpty(defaultUrl) && list.Count > 0)
+            {
+                defaultUrl = list[0].Url;
+            }
+
             foreach (var s in list)
             {
-                bool isCloud = s.Contains("github") || s.Contains("raw.githubusercontent");
+                bool isCloud = s.Url.Contains("github") || s.Url.Contains("raw.githubusercontent");
+                bool isDef = s.IsDefault || (defaultUrl != null && string.Equals(s.Url, defaultUrl, StringComparison.OrdinalIgnoreCase));
+
                 Sources.Add(new M3uSourceDisplay {
-                    Url = s, Origin = isCloud ? "Bulut" : "Yerel",
-                    Color = isCloud ? "#0369a1" : "#1e293b",
-                    ChannelCount = _db.GetChannelCountBySource(s)
+                    Url = s.Url,
+                    Origin = isCloud ? "Bulut" : "Yerel",
+                    Color = isDef ? "#059669" : (isCloud ? "#0369a1" : "#1e293b"),
+                    ChannelCount = _db.GetChannelCountBySource(s.Url),
+                    IsDefault = isDef
                 });
             }
         }
@@ -109,5 +121,9 @@ namespace StreamMesh.UI.ViewModels
         public string Origin { get; set; } = "Yerel";
         public string Color { get; set; } = "#1e293b";
         public int ChannelCount { get; set; } = 0;
+        public bool IsDefault { get; set; } = false;
+
+        public Visibility DefaultBadgeVisibility => IsDefault ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility MakeDefaultButtonVisibility => IsDefault ? Visibility.Collapsed : Visibility.Visible;
     }
 }
