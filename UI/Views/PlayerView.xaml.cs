@@ -13,6 +13,8 @@ using StreamMesh.Core.Media;
 using StreamMesh.Converters;
 using StreamMesh.Core.Utils;
 using StreamMesh.Core.Database;
+using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
@@ -63,6 +65,8 @@ namespace StreamMesh.UI.Views
         private long _timeshiftStartDvrMs = 0;
         private long _pausedDvrPosMs = 0;
         private System.Threading.CancellationTokenSource? _loadCts;
+        private long _playbackSessionId = 0;
+        private bool _isFallbackActive = false;
         private int _clockLogTickCount = 0;
         private long _lastReportedCurTimeMs = -1;
 
@@ -444,7 +448,7 @@ namespace StreamMesh.UI.Views
                             else if (_player.Status == Status.Failed)
                             {
                                 UpdatePlayPauseIcon(false);
-                                if (ViewModel.CurrentChannel != null)
+                                if (ViewModel.CurrentChannel != null && !_isFallbackActive)
                                 {
                                     OsdTitle.Text = $"{ViewModel.CurrentChannel.PrimaryName} (Sinyal Yok / Bağlantı Koptu)";
                                     ShowOsdTemporary();
@@ -554,6 +558,7 @@ namespace StreamMesh.UI.Views
             _loadCts?.Dispose();
             _loadCts = new System.Threading.CancellationTokenSource();
             var token = _loadCts.Token;
+            long sessionId = Interlocked.Increment(ref _playbackSessionId);
 
             _currentPlayingUrl = null;
             _streamStartTime = DateTime.UtcNow;
@@ -561,6 +566,7 @@ namespace StreamMesh.UI.Views
             _timeshiftStartDvrMs = 0;
             _pausedDvrPosMs = 0;
             _effectivePositionMs = 0;
+            _isFallbackActive = true;
 
             Dispatcher.Invoke(() => {
                 OsdTitle.Text = $"{channel.PrimaryName} (Bağlanıyor...)";
@@ -574,7 +580,7 @@ namespace StreamMesh.UI.Views
 
             Task.Run(async () =>
             {
-                if (token.IsCancellationRequested) return;
+                if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
 
                 // Wait for Player initialization (Flyleaf/FFmpeg setup)
                 try
@@ -586,7 +592,7 @@ namespace StreamMesh.UI.Views
                 }
                 catch (OperationCanceledException)
                 {
-                    if (token.IsCancellationRequested) return;
+                    if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
                     LogService.LogError("[PLAYBACK] Player Init TIMEOUT");
                     _ = Dispatcher.InvokeAsync(() => {
                         OsdTitle.Text = "Görüntü motoru başlatılamadı (Zaman aşımı)";
@@ -595,11 +601,11 @@ namespace StreamMesh.UI.Views
                     return;
                 }
 
-                if (_player == null) return;
+                if (_player == null || token.IsCancellationRequested || sessionId != _playbackSessionId) return;
 
                 LogService.LogInfo("[PLAYBACK] Waiting for Play Semaphore...");
                 bool acquired = await _playSemaphore.WaitAsync(10000, token).ConfigureAwait(false);
-                if (!acquired || token.IsCancellationRequested)
+                if (!acquired || token.IsCancellationRequested || sessionId != _playbackSessionId)
                 {
                     LogService.LogWarning("[PLAYBACK] Play Semaphore Timeout or Cancelled");
                     return;
@@ -619,7 +625,7 @@ namespace StreamMesh.UI.Views
                     _player.Stop();
                     HlsProxyEngine.Instance.ClearChannelCache();
 
-                    if (token.IsCancellationRequested) return;
+                    if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
 
                     _selectedAudioTrackIndex = -1;
                     _selectedAudioTrackLangCode = "";
@@ -630,68 +636,108 @@ namespace StreamMesh.UI.Views
                     ApplyAudioNormalization();
                     ApplyVideoEnhancement();
 
-                    LogService.LogInfo("[PLAYBACK] Preparing stream URL...");
-                    string tryUrl = await ViewModel.PrepareStreamAsync(channel, token, (status) => {
+                    LogService.LogInfo("[PLAYBACK] Getting candidate stream URLs...");
+                    var candidateUrls = await ViewModel.GetSmartOrderedCandidatesAsync(channel, token, (status) => {
                         _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = status; ShowOsdTemporary(); });
                     }).ConfigureAwait(false);
 
-                    if (token.IsCancellationRequested || string.IsNullOrEmpty(tryUrl))
+                    if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
+
+                    if (candidateUrls == null || candidateUrls.Count == 0)
                     {
-                        if (!token.IsCancellationRequested)
-                        {
-                            LogService.LogWarning("[PLAYBACK] Stream URL preparation failed or empty");
-                            _ = Dispatcher.InvokeAsync(() => {
-                                OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Zayıf veya Adres Geçersiz)";
-                                UpdatePlayPauseIcon(false);
-                                ShowOsdTemporary();
-                            });
-                        }
-                        return;
-                    }
-
-                    LogService.LogInfo($"[PLAYBACK] Calling Player.Open -> {tryUrl}");
-
-                    // Open with a safer watchdog (30s for IPTV, 40s for AceStream)
-                    int watchdogMs = (channel.SourceType == "ACESTREAM") ? 40000 : 30000;
-
-                    var swOpen = System.Diagnostics.Stopwatch.StartNew();
-                    var openTask = Task.Run(() => {
-                        try { _player.Open(tryUrl); } catch (Exception ex) { LogService.LogError("[PLAYBACK] Player.Open Exception", ex); }
-                    }, token);
-
-                    var completed = await Task.WhenAny(openTask, Task.Delay(watchdogMs, token)).ConfigureAwait(false);
-                    swOpen.Stop();
-
-                    if (token.IsCancellationRequested) return;
-
-                    if (completed != openTask)
-                    {
-                        LogService.LogWarning($"[PLAYBACK] Player.Open TIMEOUT after {swOpen.ElapsedMilliseconds}ms for {tryUrl}");
+                        LogService.LogWarning("[PLAYBACK] No candidate URLs found for channel");
                         _ = Dispatcher.InvokeAsync(() => {
-                            OsdTitle.Text = $"{channel.PrimaryName} (Bağlantı Zaman Aşımı)";
+                            OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Zayıf veya Adres Geçersiz)";
                             UpdatePlayPauseIcon(false);
                             ShowOsdTemporary();
                         });
                         return;
                     }
 
-                    LogService.LogInfo($"[PLAYBACK] Player.Open RETURNED in {swOpen.ElapsedMilliseconds}ms (Player.Status: {_player?.Status})");
-                    _currentPlayingUrl = tryUrl;
-                    _ = Dispatcher.InvokeAsync(() => {
-                        if (ViewModel.CurrentChannel != null) OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
-                    });
+                    bool playbackSucceeded = false;
+                    string successfulPreparedUrl = "";
 
-                    if (ViewModel.IsVod(channel) && channel.LastPositionMs > 0 && _player != null)
+                    for (int i = 0; i < candidateUrls.Count; i++)
                     {
-                        try { _player.Seek((int)channel.LastPositionMs); _lastSeekTime = DateTime.Now; _effectivePositionMs = channel.LastPositionMs; } catch { }
+                        if (token.IsCancellationRequested || sessionId != _playbackSessionId) break;
+
+                        string rawCandidate = candidateUrls[i];
+                        if (i > 0)
+                        {
+                            _ = Dispatcher.InvokeAsync(() => {
+                                OsdTitle.Text = $"{channel.PrimaryName} (Alternatif {i + 1}/{candidateUrls.Count} deneniyor...)";
+                                ShowOsdTemporary();
+                            });
+                        }
+
+                        LogService.LogInfo($"[SmartRouter] Trying candidate {i + 1}/{candidateUrls.Count}: '{rawCandidate}'");
+
+                        string preparedUrl = await ViewModel.PrepareSingleStreamUrlAsync(rawCandidate, channel, token, (status) => {
+                            _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = status; ShowOsdTemporary(); });
+                        }).ConfigureAwait(false);
+
+                        if (token.IsCancellationRequested || sessionId != _playbackSessionId) break;
+
+                        if (string.IsNullOrEmpty(preparedUrl))
+                        {
+                            LogService.LogWarning($"[SmartRouter] Candidate {i + 1}/{candidateUrls.Count} could not be prepared (empty URL).");
+                            continue;
+                        }
+
+                        // Per-candidate watchdog (12s for IPTV/Direct, 30s for AceStream)
+                        int watchdogMs = (channel.SourceType == "ACESTREAM" || rawCandidate.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase)) ? 30000 : 12000;
+
+                        bool candidateStarted = await OpenAndAwaitPlaybackAsync(preparedUrl, channel, watchdogMs, token, sessionId).ConfigureAwait(false);
+
+                        if (token.IsCancellationRequested || sessionId != _playbackSessionId) break;
+
+                        if (candidateStarted)
+                        {
+                            playbackSucceeded = true;
+                            successfulPreparedUrl = preparedUrl;
+                            LogService.LogInfo($"[SmartRouter] Playback started successfully on candidate {i + 1}/{candidateUrls.Count} -> {preparedUrl}");
+                            break;
+                        }
+                        else
+                        {
+                            LogService.LogWarning($"[SmartRouter] Candidate {i + 1}/{candidateUrls.Count} failed (Status: {_player?.Status}). Moving to next alternative...");
+                            try { _player.Stop(); } catch { }
+                        }
                     }
 
-                    _ = Dispatcher.InvokeAsync(() => _positionTimer?.Start());
+                    if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
+
+                    if (playbackSucceeded)
+                    {
+                        _currentPlayingUrl = successfulPreparedUrl;
+                        _ = Dispatcher.InvokeAsync(() => {
+                            if (ViewModel.CurrentChannel != null) OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
+                            UpdatePlayPauseIcon(true);
+                            ShowOsdTemporary();
+                        });
+
+                        if (ViewModel.IsVod(channel) && channel.LastPositionMs > 0 && _player != null)
+                        {
+                            try { _player.Seek((int)channel.LastPositionMs); _lastSeekTime = DateTime.Now; _effectivePositionMs = channel.LastPositionMs; } catch { }
+                        }
+
+                        _ = Dispatcher.InvokeAsync(() => _positionTimer?.Start());
+                    }
+                    else
+                    {
+                        _currentPlayingUrl = null;
+                        LogService.LogWarning($"[SmartRouter] All {candidateUrls.Count} candidate URLs failed for channel '{channel.Name}'.");
+                        _ = Dispatcher.InvokeAsync(() => {
+                            OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Yok / Tüm Kaynaklar Başarısız)";
+                            UpdatePlayPauseIcon(false);
+                            ShowOsdTemporary();
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
                     LogService.LogError("[PLAYBACK] CRITICAL ERROR", ex);
-                    if (!token.IsCancellationRequested)
+                    if (!token.IsCancellationRequested && sessionId == _playbackSessionId)
                     {
                         _ = Dispatcher.InvokeAsync(() => {
                             OsdTitle.Text = $"{channel.PrimaryName} (Hata: {ex.Message})";
@@ -699,8 +745,110 @@ namespace StreamMesh.UI.Views
                         });
                     }
                 }
-                finally { _playSemaphore.Release(); LogService.LogInfo("[PLAYBACK] Play Semaphore Released"); }
+                finally
+                {
+                    _isFallbackActive = false;
+                    _playSemaphore.Release();
+                    LogService.LogInfo("[PLAYBACK] Play Semaphore Released");
+                }
             }, token);
+        }
+
+        private async Task<bool> OpenAndAwaitPlaybackAsync(string url, Channel channel, int watchdogMs, CancellationToken token, long sessionId)
+        {
+            if (_player == null || token.IsCancellationRequested || sessionId != _playbackSessionId)
+                return false;
+
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            PropertyChangedEventHandler statusHandler = (s, e) =>
+            {
+                if (e.PropertyName == nameof(Player.Status))
+                {
+                    if (sessionId != _playbackSessionId)
+                    {
+                        tcs.TrySetResult(false);
+                        return;
+                    }
+
+                    if (_player.Status == Status.Playing)
+                    {
+                        tcs.TrySetResult(true);
+                    }
+                    else if (_player.Status == Status.Failed)
+                    {
+                        tcs.TrySetResult(false);
+                    }
+                }
+            };
+
+            EventHandler<OpenCompletedArgs>? openHandler = null;
+            openHandler = (s, e) =>
+            {
+                if (sessionId != _playbackSessionId)
+                {
+                    tcs.TrySetResult(false);
+                    return;
+                }
+
+                if (!e.Success)
+                {
+                    tcs.TrySetResult(false);
+                }
+            };
+
+            _player.PropertyChanged += statusHandler;
+            _player.OpenCompleted += openHandler;
+
+            try
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+
+                var openTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        _player.Open(url);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogService.LogError($"[PLAYBACK] Player.Open Exception for {url}", ex);
+                        tcs.TrySetResult(false);
+                    }
+                }, token);
+
+                if (_player.Status == Status.Playing)
+                {
+                    return true;
+                }
+
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                var timeoutTask = Task.Delay(watchdogMs, linkedCts.Token);
+
+                var completed = await Task.WhenAny(tcs.Task, timeoutTask).ConfigureAwait(false);
+                sw.Stop();
+
+                if (token.IsCancellationRequested || sessionId != _playbackSessionId)
+                    return false;
+
+                if (completed == tcs.Task)
+                {
+                    linkedCts.Cancel();
+                    bool isSuccess = await tcs.Task.ConfigureAwait(false);
+                    LogService.LogInfo($"[SmartRouter] Candidate response in {sw.ElapsedMilliseconds}ms -> Success: {isSuccess}, Player.Status: {_player.Status}");
+                    return isSuccess;
+                }
+                else
+                {
+                    LogService.LogWarning($"[SmartRouter] Candidate watchdog timeout after {sw.ElapsedMilliseconds}ms ({watchdogMs}ms limit) for {url}");
+                    return false;
+                }
+            }
+            finally
+            {
+                _player.PropertyChanged -= statusHandler;
+                _player.OpenCompleted -= openHandler;
+            }
         }
 
         public async void Stop()
