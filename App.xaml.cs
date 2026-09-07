@@ -126,16 +126,6 @@ namespace StreamMesh
                 {
                     await dbTask; // Propagate exceptions if any
                     LogService.LogInfo("[STARTUP] Database initialized successfully.");
-
-                    // Fast initial local logos indexing
-                    try
-                    {
-                        new LogoSyncService().ScanLocalLogosFolder();
-                    }
-                    catch (Exception logoEx)
-                    {
-                        LogService.LogWarning($"[STARTUP] Local logo scanning warning: {logoEx.Message}");
-                    }
                 }
                 else
                 {
@@ -192,11 +182,29 @@ namespace StreamMesh
                 }
             });
 
-            // 3. GitHub Playlist Sync
+            // 3. GitHub Playlist Sync (Akıllı Gecikme: DB boşsa derhal, doluysa arka planda 5 sn sonra)
             Task.Run(async () => {
-                await Task.Delay(15000);
-                var sync = new GitHubSyncEngine();
-                await sync.PullFromGitHubAsync();
+                try
+                {
+                    var db = new DatabaseEngine();
+                    int count = await db.GetTotalChannelCountAsync();
+                    if (count > 0)
+                    {
+                        // DB zaten dolu, yerel açılış hızını engellememek için 5 sn sonra sessizce güncelle
+                        await Task.Delay(5000);
+                    }
+                    else
+                    {
+                        // İlk kurulum: DB boş olduğu için beklemeden (200ms) derhal senkronizasyonu başlat
+                        await Task.Delay(200);
+                    }
+                    var sync = new GitHubSyncEngine();
+                    await sync.PullFromGitHubAsync();
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[STARTUP] GitHubSyncEngine background task error", ex);
+                }
             });
         }
 
@@ -243,6 +251,9 @@ namespace StreamMesh
             {
                 // Stop any active AceStream broadcasts on exit
                 new AceEngine().StopAllStreamsAsync().Wait(2000);
+
+                // Clean up spawned AceEngine processes
+                AceEngine.CleanupSpawnedProcesses();
 
                 // Stop HLS Local Proxy Server and pollers
                 HlsProxyEngine.Instance.Stop();

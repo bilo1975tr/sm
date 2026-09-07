@@ -69,6 +69,7 @@ namespace StreamMesh.UI.Views
         private bool _isFallbackActive = false;
         private int _clockLogTickCount = 0;
         private long _lastReportedCurTimeMs = -1;
+        private bool _wasPausedByMinimize = false;
 
         // Audio & Video DSP / Enhancement States
         private bool _isAudioNormEnabled = true;
@@ -621,6 +622,7 @@ namespace StreamMesh.UI.Views
                     if (channel.SourceType == "ACESTREAM" || (channel.Url ?? "").Contains("acestream://"))
                     {
                         await _ace.StopAllStreamsAsync().ConfigureAwait(false);
+                        AceStreamService.Instance.StopAllSessions();
                     }
                     _player.Stop();
                     HlsProxyEngine.Instance.ClearChannelCache();
@@ -701,7 +703,7 @@ namespace StreamMesh.UI.Views
                         else
                         {
                             LogService.LogWarning($"[SmartRouter] Candidate {i + 1}/{candidateUrls.Count} failed (Status: {_player?.Status}). Moving to next alternative...");
-                            try { _player.Stop(); } catch { }
+                            try { _player?.Stop(); } catch { }
                         }
                     }
 
@@ -853,6 +855,7 @@ namespace StreamMesh.UI.Views
 
         public async void Stop()
         {
+            _wasPausedByMinimize = false;
             _loadCts?.Cancel();
             _positionTimer?.Stop();
 
@@ -876,6 +879,34 @@ namespace StreamMesh.UI.Views
             if (ch?.SourceType == "ACESTREAM" || (ch?.Url?.Contains("acestream://") == true))
             {
                 await _ace.StopAllStreamsAsync();
+                AceStreamService.Instance.StopAllSessions();
+            }
+        }
+
+        public void PauseForMinimize()
+        {
+            if (_player == null || ViewModel.CurrentChannel == null) return;
+
+            if (_player.Status == Status.Playing)
+            {
+                _wasPausedByMinimize = true;
+                TogglePause();
+                LogService.LogInfo("[WINDOW] Yayının oynatılması pencere simge durumuna küçültüldüğü için geçici olarak duraklatıldı.");
+            }
+        }
+
+        public void ResumeFromMinimize()
+        {
+            if (_player == null || ViewModel.CurrentChannel == null) return;
+
+            if (_wasPausedByMinimize)
+            {
+                _wasPausedByMinimize = false;
+                if (_player.Status == Status.Paused)
+                {
+                    TogglePause();
+                    LogService.LogInfo("[WINDOW] Pencere tekrar açıldı, yayın duraklatıldığı yerden devam ettiriliyor.");
+                }
             }
         }
 
@@ -1159,7 +1190,8 @@ namespace StreamMesh.UI.Views
                 _timeshiftStartDvrMs = 0;
                 _effectivePositionMs = totalMs;
 
-                string liveUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(ViewModel.CurrentChannel.Url ?? "", -1);
+                string liveSourceUrl = ViewModel.CurrentChannel.Url ?? _currentPlayingUrl ?? "";
+                string liveUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(liveSourceUrl, -1);
                 _player.Open(liveUrl);
 
                 TimeSlider.Value = totalMs;

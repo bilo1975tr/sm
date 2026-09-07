@@ -21,9 +21,9 @@ namespace StreamMesh.UI.Windows
 
         private HomeView _homeView = new HomeView();
         private PlayerView _playerView = new PlayerView();
-        private StatsView _statsView = new StatsView();
-        private SettingsView _settingsView = new SettingsView();
-        private SearchAceStreamView _searchAceView = new SearchAceStreamView();
+        private StatsView? _statsView;
+        private SettingsView? _settingsView;
+        private SearchAceStreamView? _searchAceView;
 
         private readonly StunEngine _stun = new StunEngine();
         private readonly UpdateService _updateService = new UpdateService();
@@ -112,7 +112,17 @@ namespace StreamMesh.UI.Windows
         {
             if (this.WindowState == WindowState.Minimized)
             {
-                _playerView.Stop();
+                if (this.Visibility == Visibility.Visible)
+                {
+                    _playerView.PauseForMinimize();
+                }
+            }
+            else if (this.WindowState == WindowState.Normal || this.WindowState == WindowState.Maximized)
+            {
+                if (this.Visibility == Visibility.Visible)
+                {
+                    _playerView.ResumeFromMinimize();
+                }
             }
         }
 
@@ -387,9 +397,18 @@ namespace StreamMesh.UI.Windows
             {
                 case "Home": MainContent.Content = _homeView; break;
                 case "Player": MainContent.Content = _playerView; break;
-                case "Stats": MainContent.Content = _statsView; break;
-                case "Settings": MainContent.Content = _settingsView; break;
-                case "AceSearch": MainContent.Content = _searchAceView; break;
+                case "Stats":
+                    _statsView ??= new StatsView();
+                    MainContent.Content = _statsView;
+                    break;
+                case "Settings":
+                    _settingsView ??= new SettingsView();
+                    MainContent.Content = _settingsView;
+                    break;
+                case "AceSearch":
+                    _searchAceView ??= new SearchAceStreamView();
+                    MainContent.Content = _searchAceView;
+                    break;
             }
         }
 

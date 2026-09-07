@@ -124,18 +124,24 @@ namespace StreamMesh.UI.Views
 
             try
             {
-                var channels = Results.Select(item => new Channel
+                var channels = Results.Select(item =>
                 {
-                    Name = item.Name,
-                    Url = item.Url,
-                    Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
-                    GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Arama Sonuçları" : item.GroupTitle,
-                    LogoUrl = item.LogoUrl,
-                    Language = GetSelectedOrDetectedLanguage(item.Name),
-                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
+                    var ch = new Channel
+                    {
+                        Name = item.Name,
+                        Url = item.Url,
+                        Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
+                        GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Arama Sonuçları" : item.GroupTitle,
+                        LogoUrl = item.LogoUrl,
+                        Language = GetSelectedOrDetectedLanguage(item.Name),
+                        SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    SmartNormalizationEngine.Instance.NormalizeChannel(ch);
+                    return ch;
                 }).ToList();
 
-                await _db.SyncIncomingChannelsAsync(channels);
+                await _db.SaveChannelsBatchAsync(channels, clearFirst: false);
                 DatabaseEngine.NotifyDatabaseUpdated();
                 System.Windows.MessageBox.Show($"{channels.Count} adet kanal ve medya akışı başarıyla kütüphanenize eklendi.", "Toplu Ekleme Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -157,8 +163,10 @@ namespace StreamMesh.UI.Views
                     GroupTitle = item.GroupTitle,
                     LogoUrl = item.LogoUrl,
                     Language = GetSelectedOrDetectedLanguage(item.Name),
-                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
+                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U",
+                    CreatedAt = DateTime.UtcNow
                 };
+                SmartNormalizationEngine.Instance.NormalizeChannel(ch);
                 MainWindow.Instance?.LoadChannelToPlayer(ch);
             }
         }
@@ -167,20 +175,30 @@ namespace StreamMesh.UI.Views
         {
             if (sender is System.Windows.Controls.Button btn && btn.CommandParameter is SearchResultItem item)
             {
-                var ch = new Channel
+                try
                 {
-                    Name = item.Name,
-                    Url = item.Url,
-                    Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
-                    GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Eklenen Kanallar" : item.GroupTitle,
-                    LogoUrl = item.LogoUrl,
-                    Language = GetSelectedOrDetectedLanguage(item.Name),
-                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
-                };
+                    var ch = new Channel
+                    {
+                        Name = item.Name,
+                        Url = item.Url,
+                        Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
+                        GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Eklenen Kanallar" : item.GroupTitle,
+                        LogoUrl = item.LogoUrl,
+                        Language = GetSelectedOrDetectedLanguage(item.Name),
+                        SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U",
+                        CreatedAt = DateTime.UtcNow
+                    };
 
-                await _db.SaveChannelAsync(ch);
-                DatabaseEngine.NotifyDatabaseUpdated();
-                System.Windows.MessageBox.Show($"'{ch.Name}' başarıyla kütüphanenize eklendi.", "Kütüphaneye Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+                    SmartNormalizationEngine.Instance.NormalizeChannel(ch);
+
+                    await _db.SaveChannelAsync(ch);
+                    DatabaseEngine.NotifyDatabaseUpdated();
+                    System.Windows.MessageBox.Show($"'{ch.Name}' başarıyla kütüphanenize eklendi.", "Kütüphaneye Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Kanal eklenirken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
     }

@@ -85,9 +85,14 @@ namespace StreamMesh.Core.Media
 
                 if (localLogos.Count > 0)
                 {
-                    _db.UpdateLogoIndex(localLogos);
-                    ChannelEnricher.InvalidateLogoCache();
-                    LogService.LogInfo($"[LogoSync] {localLogos.Count} adet yerel logo anahtarı indekse kaydedildi.");
+                    var existingIndex = _db.GetAllLogoIndex();
+                    var newOrModified = localLogos.Where(l => !existingIndex.TryGetValue(l.key, out var f) || f != l.file).ToList();
+                    if (newOrModified.Count > 0)
+                    {
+                        _db.UpdateLogoIndex(newOrModified);
+                        ChannelEnricher.InvalidateLogoCache();
+                        LogService.LogInfo($"[LogoSync] {newOrModified.Count} adet yeni yerel logo anahtarı indekse kaydedildi.");
+                    }
                 }
             }
             catch (Exception ex)

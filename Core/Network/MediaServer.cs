@@ -223,7 +223,7 @@ namespace StreamMesh.Core.Network
                 {
                     await ServeM3u(req, res);
                 }
-                else if (path == "/web")
+                else if (path == "/web" || path == "/web/" || path == "/")
                 {
                     await ServeHtmlPlayer(req, res);
                 }
@@ -235,11 +235,15 @@ namespace StreamMesh.Core.Network
                 {
                     await ServeProxyStream(req, res);
                 }
-                else if (path == "/ping")
+                else if (path == "/ping" || path == "/api/ping")
                 {
                     byte[] buffer = Encoding.UTF8.GetBytes("pong");
                     res.ContentType = "text/plain";
                     await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                }
+                else if (path == "/api/version")
+                {
+                    await ServeVersionJson(res);
                 }
                 else if (path == "/logs")
                 {
@@ -319,8 +323,7 @@ namespace StreamMesh.Core.Network
                 return;
             }
 
-            var channels = await _db.GetAllChannelsAsync();
-            var ch = channels.FirstOrDefault(x => string.Equals(x.Id, channelId, StringComparison.OrdinalIgnoreCase));
+            var ch = await _db.GetChannelByIdAsync(channelId);
 
             // If not found by Id, check if channelId is a raw 40-char AceStream hash
             if (ch == null && channelId.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(channelId, @"^[a-fA-F0-9]{40}$"))
@@ -705,339 +708,94 @@ namespace StreamMesh.Core.Network
             await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 
+        private static string? _cachedHtmlPath = null;
+
+        private static string ResolveWebIndexPath()
+        {
+            if (_cachedHtmlPath != null && File.Exists(_cachedHtmlPath))
+            {
+                return _cachedHtmlPath;
+            }
+
+            var candidates = new List<string>
+            {
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Web", "index.html"),
+                Path.Combine(Directory.GetCurrentDirectory(), "Web", "index.html"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Web", "index.html"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "Web", "index.html"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "Web", "index.html"),
+                Path.Combine("Web", "index.html")
+            };
+
+            foreach (var path in candidates)
+            {
+                try
+                {
+                    string fullPath = Path.GetFullPath(path);
+                    if (File.Exists(fullPath))
+                    {
+                        _cachedHtmlPath = fullPath;
+                        return fullPath;
+                    }
+                }
+                catch { }
+            }
+
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Web", "index.html");
+        }
+
         private async Task ServeHtmlPlayer(HttpListenerRequest req, HttpListenerResponse res)
         {
-            string host = req.Headers["Host"] ?? $"127.0.0.1:{_port}";
-            string html = $@"<!DOCTYPE html>
-<html lang=""tr"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0, maximum-scale=1.0"">
-    <title>StreamMesh Smart Router Web Player</title>
-    <script src=""https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js""></script>
-    <style>
-        :root {{
-            --bg-base: #0a0c10; --bg-surface: #12151c; --bg-card: #191d26; --bg-hover: #232936;
-            --primary: #0284c7; --primary-glow: #38bdf8; --text-main: #f8fafc; --text-muted: #94a3b8;
-            --border: #242938; --fav-gold: #fbbf24; --live-red: #ef4444; --success: #10b981;
-        }}
-        * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, sans-serif; }}
-        body {{ background-color: var(--bg-base); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }}
-        .top-nav {{ background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }}
-        .brand-section {{ display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; }}
-        .nav-categories {{ display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; }}
-        .nav-categories::-webkit-scrollbar {{ display: none; }}
-        .cat-btn {{ background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }}
-        .cat-btn.active {{ background: var(--primary); color: #fff; border-color: var(--primary-glow); }}
-        .main-container {{ display: grid; grid-template-columns: 340px 1fr; flex: 1; min-height: 0; overflow: hidden; }}
-        @media (max-width: 800px) {{ .main-container {{ grid-template-columns: 1fr; display: flex; flex-direction: column-reverse; overflow: visible; }} body {{ overflow-y: auto; }} }}
-        .left-sidebar {{ background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; min-height: 0; }}
-        .sidebar-header {{ padding: 8px 10px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }}
-        .search-box input {{ width: 100%; background: var(--bg-card); border: 1px solid var(--border); padding: 6px 10px; border-radius: 5px; color: #fff; font-size: 12px; outline: none; }}
-        .meta-row {{ display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }}
-        .media-list {{ flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 5px; min-height: 0; }}
-        .media-item {{ background: var(--bg-card); padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; border: 1px solid transparent; user-select: none; }}
-        .media-item:hover {{ background: var(--bg-hover); border-color: var(--primary-glow); }}
-        .media-item.active {{ background: rgba(2,132,199,0.2); border-color: var(--primary); }}
-        .media-logo {{ width: 34px; height: 34px; object-fit: contain; background: #000; border-radius: 4px; flex-shrink: 0; }}
-        .media-info {{ flex: 1; min-width: 0; }}
-        .media-title {{ font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; justify-content: space-between; }}
-        .fav-btn {{ background: transparent; border: none; color: #64748b; font-size: 14px; cursor: pointer; }}
-        .fav-btn.is-fav {{ color: var(--fav-gold); }}
-        .pagination {{ padding: 8px 10px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 11px; background: var(--bg-surface); flex-shrink: 0; }}
-        .page-btn {{ background: var(--bg-card); border: 1px solid var(--border); color: #fff; padding: 4px 8px; border-radius: 4px; cursor: pointer; }}
-        .page-btn:disabled {{ opacity: 0.3; cursor: not-allowed; }}
-        .player-workspace {{ flex: 1; display: flex; flex-direction: column; background: #000; overflow-y: auto; min-height: 0; }}
-        .video-container {{ position: relative; width: 100%; aspect-ratio: 16/9; max-height: 70vh; background: #000; display: flex; align-items: center; justify-content: center; }}
-        video {{ width: 100%; height: 100%; object-fit: contain; }}
-        .player-bar {{ background: var(--bg-surface); border-top: 1px solid var(--border); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }}
-        .overlay {{ position: absolute; inset: 0; background: rgba(10,12,16,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; z-index: 5; text-align: center; padding: 16px; }}
-    </style>
-</head>
-<body>
-    <header class=""top-nav"">
-        <div class=""brand-section"">
-            <span style=""color:var(--primary-glow);"">⚡</span> StreamMesh Router <span style=""font-size:11px; color:var(--text-muted);"">Port {_port}</span>
-        </div>
-        <nav class=""nav-categories"">
-            <button class=""cat-btn active"" onclick=""setCategory('TÜMÜ')"">TÜMÜ</button>
-            <button class=""cat-btn"" onclick=""setCategory('TV')"">TV</button>
-            <button class=""cat-btn"" onclick=""setCategory('FİLM')"">FİLM</button>
-            <button class=""cat-btn"" onclick=""setCategory('DİZİ')"">DİZİ</button>
-            <button class=""cat-btn"" onclick=""setCategory('RADYO')"">RADYO</button>
-            <button class=""cat-btn"" onclick=""setCategory('SPOR')"">SPOR</button>
-            <button class=""cat-btn"" onclick=""setCategory('HABER')"">HABER</button>
-            <button class=""cat-btn"" onclick=""setCategory('FAVORİLER')"">⭐ FAVORİLER</button>
-        </nav>
-        <div>
-            <a href=""/playlist.m3u"" download=""StreamMesh.m3u"" style=""background:var(--primary); color:#fff; padding:4px 10px; border-radius:4px; text-decoration:none; font-size:11px; font-weight:700;"">📥 M3U İndir</a>
-        </div>
-    </header>
-    <main class=""main-container"">
-        <aside class=""left-sidebar"">
-            <div class=""sidebar-header"">
-                <div class=""search-box""><input type=""text"" id=""searchBox"" placeholder=""Kanal veya grup ara..."" oninput=""onSearch()""></div>
-                <div class=""meta-row"">
-                    <span id=""resultCount"">Kanallar yükleniyor...</span>
-                    <span id=""pageInfo"">Sayfa 1</span>
-                </div>
-            </div>
-            <div class=""media-list"" id=""list""></div>
-            <div class=""pagination"">
-                <button class=""page-btn"" id=""prevBtn"" onclick=""changePage(-1)"">‹ Önceki</button>
-                <span id=""pageIndicator"">1</span>
-                <button class=""page-btn"" id=""nextBtn"" onclick=""changePage(1)"">Sonraki ›</button>
-            </div>
-        </aside>
-        <section class=""player-workspace"">
-            <div class=""video-container"">
-                <video id=""vid"" controls playsinline></video>
-                <div class=""overlay"" id=""playerOverlay"">
-                    <div style=""font-size:32px; color:var(--primary-glow);"">▶</div>
-                    <div style=""font-weight:700; color:#fff;"" id=""overlayTitle"">Kanal Seçin</div>
-                    <div style=""font-size:12px; color:var(--text-muted);"" id=""overlayDesc"">İzlemek istediğiniz içeriği sol listeden seçin.</div>
-                </div>
-            </div>
-            <div class=""player-bar"">
-                <div>
-                    <h3 id=""nowPlaying"" style=""font-size:14px; margin:0;"">Kanal Bekleniyor</h3>
-                    <div id=""streamStatus"" style=""font-size:11px; color:var(--text-muted); margin-top:2px;"">Smart Router hazır</div>
-                </div>
-                <div>
-                    <button class=""page-btn"" onclick=""reloadVid()"">🔄 Yenile</button>
-                </div>
-            </div>
-        </section>
-    </main>
-    <script>
-        const PAGE_SIZE = 20;
-        let allChannels = [];
-        let curCategory = 'TÜMÜ';
-        let curPage = 1;
-        let searchQuery = '';
-        let favs = new Set();
-        let activeCh = null;
-        let hlsInstance = null;
+            try
+            {
+                string filePath = ResolveWebIndexPath();
+                if (File.Exists(filePath))
+                {
+                    byte[] buffer = await File.ReadAllBytesAsync(filePath);
+                    res.ContentType = "text/html; charset=utf-8";
+                    res.StatusCode = 200;
+                    res.ContentLength64 = buffer.Length;
+                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                    return;
+                }
 
-        const FALLBACK_B64 = ""data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzOCIgaGVpZ2h0PSIzOCIgdmlld0JveD0iMCAwIDM4IDM4Ij48cmVjdCB3aWR0aD0iMzgiIGhlaWdodD0iMzgiIGZpbGw9IiMxOTFkMjYiIHJ4PSI2Ii8+PHRleHQgeD0iMTkiIHk9IjI0IiBmb250LXNpemU9IjEyIiBmb250LXdlaWdodD0iODAwIiBmaWxsPSIjMzhiZGY4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TTTwvdGV4dD48L3N2Zz4="";
+                LogService.LogWarning($"MediaServer: Web player dosyası bulunamadı ({filePath})");
+                res.StatusCode = 404;
+                byte[] err = Encoding.UTF8.GetBytes("<html><body><h3>StreamMesh Web Player bulunamadı (Web/index.html).</h3></body></html>");
+                res.ContentType = "text/html; charset=utf-8";
+                await res.OutputStream.WriteAsync(err, 0, err.Length);
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("MediaServer: ServeHtmlPlayer error", ex);
+                res.StatusCode = 500;
+            }
+        }
 
-        function initFavs() {{
-            try {{
-                favs = new Set(JSON.parse(localStorage.getItem('sm_favs') || '[]'));
-            }} catch(e) {{ favs = new Set(); }}
-        }}
-
-        async function load() {{
-            initFavs();
-            try {{
-                const res = await fetch('/channels');
-                allChannels = await res.json();
-                render();
-            }} catch(e) {{
-                document.getElementById('list').innerHTML = '<div style=""padding:14px; color:#ef4444; font-size:12px;"">Kanal listesi alınamadı.</div>';
-            }}
-        }}
-
-        function setCategory(cat) {{
-            curCategory = cat; curPage = 1;
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(cat)));
-            render();
-            document.getElementById('list').scrollTop = 0;
-        }}
-
-        function onSearch() {{
-            searchQuery = document.getElementById('searchBox').value.toLowerCase().trim();
-            curPage = 1;
-            render();
-            document.getElementById('list').scrollTop = 0;
-        }}
-
-        function toggleFav(id, e) {{
-            if (e) e.stopPropagation();
-            if (favs.has(id)) favs.delete(id); else favs.add(id);
-            try {{ localStorage.setItem('sm_favs', JSON.stringify([...favs])); }} catch(err) {{}}
-            render();
-        }}
-
-        function getFiltered() {{
-            return allChannels.filter(c => {{
-                if (curCategory === 'FAVORİLER') {{ if (!favs.has(c.Id)) return false; }}
-                else if (curCategory !== 'TÜMÜ') {{
-                    const grp = (c.GroupTitle || '').toUpperCase();
-                    const cat = (c.Category || '').toUpperCase();
-                    if (!grp.includes(curCategory) && !cat.includes(curCategory)) return false;
-                }}
-                if (searchQuery) {{
-                    const name = (c.Name || '').toLowerCase();
-                    const grp = (c.GroupTitle || '').toLowerCase();
-                    return name.includes(searchQuery) || grp.includes(searchQuery);
-                }}
-                return true;
-            }});
-        }}
-
-        function render() {{
-            const filtered = getFiltered();
-            const total = filtered.length;
-            const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-            if (curPage > totalPages) curPage = totalPages;
-            if (curPage < 1) curPage = 1;
-
-            const startIndex = (curPage - 1) * PAGE_SIZE;
-            const items = filtered.slice(startIndex, startIndex + PAGE_SIZE);
-
-            const rStart = total > 0 ? startIndex + 1 : 0;
-            const rEnd = Math.min(startIndex + PAGE_SIZE, total);
-
-            document.getElementById('resultCount').innerText = total + ' kanal (' + rStart + '–' + rEnd + ')';
-            document.getElementById('pageInfo').innerText = 'Sayfa ' + curPage + '/' + totalPages;
-            document.getElementById('pageIndicator').innerText = curPage + ' / ' + totalPages;
-            document.getElementById('prevBtn').disabled = (curPage <= 1);
-            document.getElementById('nextBtn').disabled = (curPage >= totalPages);
-
-            const listEl = document.getElementById('list');
-            listEl.innerHTML = '';
-
-            if (items.length === 0) {{
-                const empty = document.createElement('div');
-                empty.style.padding = '16px';
-                empty.style.textAlign = 'center';
-                empty.style.color = 'var(--text-muted)';
-                empty.style.fontSize = '12px';
-                empty.innerText = curCategory === 'FAVORİLER' ? 'Henüz favori eklenmedi.' : 'İçerik bulunamadı.';
-                listEl.appendChild(empty);
-                return;
-            }}
-
-            items.forEach(ch => {{
-                const div = document.createElement('div');
-                const isAct = activeCh && activeCh.Id === ch.Id;
-                const isFav = favs.has(ch.Id);
-                div.className = 'media-item' + (isAct ? ' active' : '');
-                div.onclick = () => play(ch);
-
-                const img = document.createElement('img');
-                img.className = 'media-logo';
-                img.loading = 'lazy';
-                img.src = ch.LogoUrl && ch.LogoUrl.trim() !== '' ? ch.LogoUrl : FALLBACK_B64;
-                img.onerror = function() {{ this.onerror = null; this.src = FALLBACK_B64; }};
-                div.appendChild(img);
-
-                const info = document.createElement('div');
-                info.className = 'media-info';
-
-                const titleRow = document.createElement('div');
-                titleRow.className = 'media-title';
-
-                const nameSpan = document.createElement('span');
-                nameSpan.innerText = ch.Name;
-                titleRow.appendChild(nameSpan);
-
-                const favBtn = document.createElement('button');
-                favBtn.className = 'fav-btn' + (isFav ? ' is-fav' : '');
-                favBtn.innerText = isFav ? '★' : '☆';
-                favBtn.onclick = (e) => toggleFav(ch.Id, e);
-                titleRow.appendChild(favBtn);
-
-                info.appendChild(titleRow);
-
-                const sub = document.createElement('div');
-                sub.style.fontSize = '10px';
-                sub.style.color = 'var(--text-muted)';
-                sub.style.marginTop = '2px';
-                sub.innerText = ch.GroupTitle || ch.Category || 'Kanal';
-                info.appendChild(sub);
-
-                div.appendChild(info);
-                listEl.appendChild(div);
-            }});
-        }}
-
-        function changePage(d) {{
-            const filtered = getFiltered();
-            const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-            const np = curPage + d;
-            if (np >= 1 && np <= totalPages) {{
-                curPage = np;
-                render();
-                document.getElementById('list').scrollTop = 0;
-            }}
-        }}
-
-        function play(ch) {{
-            activeCh = ch;
-            const vid = document.getElementById('vid');
-            const overlay = document.getElementById('playerOverlay');
-            const title = document.getElementById('overlayTitle');
-            const desc = document.getElementById('overlayDesc');
-
-            if (hlsInstance) {{
-                try {{ hlsInstance.destroy(); }} catch(e) {{}}
-                hlsInstance = null;
-            }}
-
-            vid.pause();
-            vid.removeAttribute('src');
-            vid.load();
-
-            overlay.style.display = 'flex';
-            title.innerText = 'Yayın Başlatılıyor...';
-            desc.innerText = ch.Name + ' akışı hazırlanıyor...';
-
-            document.getElementById('nowPlaying').innerText = ch.Name;
-            document.getElementById('streamStatus').innerText = ch.IsStreamMeshRequired 
-                ? '🟢 StreamMesh Smart Router devrede' 
-                : '⚪ Doğrudan Akış';
-
-            const streamUrl = ch.StreamUrl;
-
-            if (window.Hls && Hls.isSupported()) {{
-                hlsInstance = new Hls({{ enableWorker: true, lowLatencyMode: true }});
-                hlsInstance.loadSource(streamUrl);
-                hlsInstance.attachMedia(vid);
-                hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {{
-                    overlay.style.display = 'none';
-                    vid.play().catch(e => {{
-                        if (e.name === 'NotAllowedError') {{
-                            overlay.style.display = 'flex';
-                            title.innerText = 'Oynatmak İçin Tıklayın';
-                            desc.innerText = 'Oynatıcıya tıklayarak yayını başlatın.';
-                            overlay.onclick = () => {{ overlay.style.display = 'none'; vid.play(); }};
-                        }}
-                    }});
-                }});
-                hlsInstance.on(Hls.Events.ERROR, (evt, data) => {{
-                    if (data.fatal) {{
-                        title.innerText = 'Yayın Hatası';
-                        desc.innerText = 'Akış yüklenemedi.';
-                    }}
-                }});
-            }} else {{
-                vid.src = streamUrl;
-                vid.onloadeddata = () => {{ overlay.style.display = 'none'; }};
-                vid.play().catch(e => {{
-                    if (e.name === 'NotAllowedError') {{
-                        overlay.style.display = 'flex';
-                        title.innerText = 'Oynatmak İçin Tıklayın';
-                        desc.innerText = 'Oynatıcıya dokunarak başlatın.';
-                        overlay.onclick = () => {{ overlay.style.display = 'none'; vid.play(); }};
-                    }}
-                }});
-            }}
-
-            render();
-        }}
-
-        function reloadVid() {{ if (activeCh) play(activeCh); }}
-
-        load();
-    </script>
-</body>
-</html>";
-
-            byte[] buffer = Encoding.UTF8.GetBytes(html);
-            res.ContentType = "text/html; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        private async Task ServeVersionJson(HttpListenerResponse res)
+        {
+            try
+            {
+                string ver = UpdateService.GetCurrentVersion();
+                var verObj = new
+                {
+                    version = ver,
+                    status = "online",
+                    engine = "StreamMesh MediaServer & Smart Router",
+                    features = new[] { "20-Item Paginated Unified Player", "Universal HLS Manifest Rewriter", "SmartRouter", "Zero-Crash Safe Logos" }
+                };
+                string json = Newtonsoft.Json.JsonConvert.SerializeObject(verObj);
+                byte[] buffer = Encoding.UTF8.GetBytes(json);
+                res.ContentType = "application/json; charset=utf-8";
+                res.StatusCode = 200;
+                res.ContentLength64 = buffer.Length;
+                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("MediaServer: ServeVersionJson error", ex);
+                res.StatusCode = 500;
+            }
         }
 
         private async Task ServeApiAceSessions(HttpListenerResponse res)
@@ -1183,8 +941,7 @@ namespace StreamMesh.Core.Network
         private async Task ServeApiPlay(HttpListenerRequest req, HttpListenerResponse res)
         {
             string id = req.QueryString["id"] ?? "";
-            var channels = await _db.GetAllChannelsAsync();
-            var ch = channels.FirstOrDefault(x => x.Id == id);
+            var ch = !string.IsNullOrWhiteSpace(id) ? await _db.GetChannelByIdAsync(id) : null;
 
             if (ch != null)
             {

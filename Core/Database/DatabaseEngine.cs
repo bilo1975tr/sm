@@ -17,7 +17,21 @@ namespace StreamMesh.Core.Database
         private string ConnectionString => $"Data Source={_dbPath};Default Timeout=10;Pooling=True;";
 
         private static readonly System.Threading.SemaphoreSlim AsyncDbLock = new System.Threading.SemaphoreSlim(1, 1);
-        public static bool SuppressEvents { get; set; } = false;
+        private static bool _suppressEvents = false;
+        private static bool _hasPendingUpdate = false;
+        public static bool SuppressEvents
+        {
+            get => _suppressEvents;
+            set
+            {
+                _suppressEvents = value;
+                if (!_suppressEvents && _hasPendingUpdate)
+                {
+                    _hasPendingUpdate = false;
+                    NotifyDatabaseUpdated();
+                }
+            }
+        }
 
         private static bool _cleanupTriggered = false;
 
@@ -197,42 +211,71 @@ namespace StreamMesh.Core.Database
                 ";
                 await command.ExecuteNonQueryAsync();
 
-                // Column Migrations
-                string[] newCols = {
-                    "ALTER TABLE Channels ADD COLUMN ViewersCount INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN PersonalWatchCount INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN IsPremium INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN IsWatched INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN ImdbId TEXT DEFAULT ''",
-                    "ALTER TABLE Channels ADD COLUMN Overview TEXT DEFAULT ''",
-                    "ALTER TABLE Channels ADD COLUMN BackdropUrl TEXT DEFAULT ''",
-                    "ALTER TABLE Channels ADD COLUMN [Cast] TEXT DEFAULT ''",
-                    "ALTER TABLE Channels ADD COLUMN UrlSpeeds TEXT DEFAULT ''",
-                    "ALTER TABLE Channels ADD COLUMN PreferredNameIndex INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN PreferredUrlIndex INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN PreferredLogoIndex INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN PreferredEpgIndex INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN IsEpgLocked INTEGER DEFAULT 0",
-                    "ALTER TABLE Channels ADD COLUMN LastPositionMs INTEGER DEFAULT 0",
+                // Column Migrations: Check existing columns first to avoid throwing duplicate column exceptions on startup
+                var existingChannelCols = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                using (var infoCmd = connection.CreateCommand())
+                {
+                    infoCmd.CommandText = "PRAGMA table_info(Channels);";
+                    using var infoReader = await infoCmd.ExecuteReaderAsync();
+                    while (await infoReader.ReadAsync())
+                    {
+                        existingChannelCols.Add(infoReader.GetString(1));
+                    }
+                }
+
+                (string col, string sql)[] channelAlterCols = {
+                    ("ViewersCount", "ALTER TABLE Channels ADD COLUMN ViewersCount INTEGER DEFAULT 0"),
+                    ("PersonalWatchCount", "ALTER TABLE Channels ADD COLUMN PersonalWatchCount INTEGER DEFAULT 0"),
+                    ("IsPremium", "ALTER TABLE Channels ADD COLUMN IsPremium INTEGER DEFAULT 0"),
+                    ("IsWatched", "ALTER TABLE Channels ADD COLUMN IsWatched INTEGER DEFAULT 0"),
+                    ("ImdbId", "ALTER TABLE Channels ADD COLUMN ImdbId TEXT DEFAULT ''"),
+                    ("Overview", "ALTER TABLE Channels ADD COLUMN Overview TEXT DEFAULT ''"),
+                    ("BackdropUrl", "ALTER TABLE Channels ADD COLUMN BackdropUrl TEXT DEFAULT ''"),
+                    ("Cast", "ALTER TABLE Channels ADD COLUMN [Cast] TEXT DEFAULT ''"),
+                    ("UrlSpeeds", "ALTER TABLE Channels ADD COLUMN UrlSpeeds TEXT DEFAULT ''"),
+                    ("PreferredNameIndex", "ALTER TABLE Channels ADD COLUMN PreferredNameIndex INTEGER DEFAULT 0"),
+                    ("PreferredUrlIndex", "ALTER TABLE Channels ADD COLUMN PreferredUrlIndex INTEGER DEFAULT 0"),
+                    ("PreferredLogoIndex", "ALTER TABLE Channels ADD COLUMN PreferredLogoIndex INTEGER DEFAULT 0"),
+                    ("PreferredEpgIndex", "ALTER TABLE Channels ADD COLUMN PreferredEpgIndex INTEGER DEFAULT 0"),
+                    ("IsEpgLocked", "ALTER TABLE Channels ADD COLUMN IsEpgLocked INTEGER DEFAULT 0"),
+                    ("LastPositionMs", "ALTER TABLE Channels ADD COLUMN LastPositionMs INTEGER DEFAULT 0")
+                };
+
+                foreach (var (col, sql) in channelAlterCols)
+                {
+                    if (!existingChannelCols.Contains(col))
+                    {
+                        try
+                        {
+                            using var cmdAlter = connection.CreateCommand();
+                            cmdAlter.CommandText = sql;
+                            await cmdAlter.ExecuteNonQueryAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            if (!ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
+                            {
+                                LogService.LogWarning($"Database: Column addition warning: {sql}");
+                            }
+                        }
+                    }
+                }
+
+                // Other table column migrations
+                string[] otherCols = {
                     "ALTER TABLE EpgPrograms ADD COLUMN SourceUrl TEXT DEFAULT ''",
                     "ALTER TABLE M3uSources ADD COLUMN IsDefault INTEGER DEFAULT 0"
                 };
 
-                foreach (var sql in newCols)
+                foreach (var sql in otherCols)
                 {
                     try
                     {
-                        var cmdAlter = connection.CreateCommand();
+                        using var cmdAlter = connection.CreateCommand();
                         cmdAlter.CommandText = sql;
                         await cmdAlter.ExecuteNonQueryAsync();
                     }
-                    catch (Exception ex)
-                    {
-                        if (!ex.Message.Contains("duplicate column name", StringComparison.OrdinalIgnoreCase))
-                        {
-                            LogService.LogWarning($"Database: Column addition warning (likely already exists): {sql}");
-                        }
-                    }
+                    catch { }
                 }
 
                 if (GetSetting("MigrationV2Done", "false") != "true")
@@ -292,8 +335,9 @@ namespace StreamMesh.Core.Database
         // Channel delegators
         public async Task<List<Channel>> GetSeriesEpisodesAsync(string seriesBaseName) => await _channels.GetSeriesEpisodesAsync(seriesBaseName);
         public async Task<List<Channel>> GetAllChannelsAsync() => await _channels.GetAllChannelsAsync();
+        public async Task<Channel?> GetChannelByIdAsync(string id) => await _channels.GetChannelByIdAsync(id);
         public async Task SaveChannelAsync(Channel ch) => await _channels.SaveChannelAsync(ch);
-        public async Task SaveChannelsBatchAsync(List<Channel> channels, bool clearFirst = false) => await _channels.SaveChannelsBatchAsync(channels, clearFirst);
+        public async Task SaveChannelsBatchAsync(List<Channel> channels, bool clearFirst = false, bool notifyUpdated = true) => await _channels.SaveChannelsBatchAsync(channels, clearFirst, notifyUpdated);
         public async Task SyncIncomingChannelsAsync(List<Channel> incoming) => await _channels.SyncIncomingChannelsAsync(incoming);
         public async Task<int> AutoAggregateDatabaseAsync() => await _channels.AutoAggregateDatabaseAsync();
         public async Task<int> GetTotalChannelCountAsync() => await _channels.GetTotalChannelCountAsync();
@@ -346,7 +390,16 @@ namespace StreamMesh.Core.Database
         }
 
         public static event EventHandler? OnDatabaseUpdated;
-        public static void NotifyDatabaseUpdated() { if (SuppressEvents) return; OnDatabaseUpdated?.Invoke(null, EventArgs.Empty); }
+        public static void NotifyDatabaseUpdated()
+        {
+            if (SuppressEvents)
+            {
+                _hasPendingUpdate = true;
+                return;
+            }
+            _hasPendingUpdate = false;
+            OnDatabaseUpdated?.Invoke(null, EventArgs.Empty);
+        }
 
         public void ClearAllSources() { ExecuteRawNonQuery("DELETE FROM M3uSources"); ExecuteRawNonQuery("DELETE FROM EpgSources"); NotifyDatabaseUpdated(); }
         public void ClearAllContents() { ExecuteRawNonQuery("DELETE FROM Channels"); ExecuteRawNonQuery("DELETE FROM EpgPrograms"); NotifyDatabaseUpdated(); }

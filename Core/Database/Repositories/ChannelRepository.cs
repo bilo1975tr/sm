@@ -54,6 +54,32 @@ namespace StreamMesh.Core.Database.Repositories
             return list;
         }
 
+        public async Task<Channel?> GetChannelByIdAsync(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return null;
+            try
+            {
+                using (var connection = new SqliteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked FROM Channels WHERE Id = @Id LIMIT 1";
+                    cmd.Parameters.AddWithValue("@Id", id);
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        return MapReaderToChannel(reader);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError($"ChannelRepository.GetChannelByIdAsync failed for Id: {id}", ex);
+            }
+            return null;
+        }
+
         public async Task SaveChannelAsync(Channel ch)
         {
             await _dbLock.WaitAsync();
@@ -70,13 +96,14 @@ namespace StreamMesh.Core.Database.Repositories
                 }
             }
             finally { _dbLock.Release(); }
+            DatabaseEngine.NotifyDatabaseUpdated();
         }
 
-        public async Task SaveChannelsBatchAsync(List<Channel> channels, bool clearFirst = false)
+        public async Task SaveChannelsBatchAsync(List<Channel> channels, bool clearFirst = false, bool notifyUpdated = true)
         {
             if (channels == null || channels.Count == 0)
             {
-                if (clearFirst) await ExecuteRawNonQueryAsync("DELETE FROM Channels");
+                LogService.LogWarning("SaveChannelsBatchAsync: Boş veya null kanal listesi alındı. Veritabanını silmek yerine mevcut kayıtlar korundu.");
                 return;
             }
             await _dbLock.WaitAsync();
@@ -138,7 +165,10 @@ namespace StreamMesh.Core.Database.Repositories
                         pCat.Value = ch.Category ?? "TV";
                         pLang.Value = ch.Language ?? "und";
                         pFav.Value = ch.IsFavorite ? 1 : 0;
-                        pDate.Value = new DateTimeOffset(ch.CreatedAt).ToUnixTimeSeconds();
+                        long unixDate = (ch.CreatedAt > DateTime.MinValue && ch.CreatedAt.Year >= 1970)
+                            ? new DateTimeOffset(ch.CreatedAt.ToUniversalTime()).ToUnixTimeSeconds()
+                            : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                        pDate.Value = unixDate;
                         pSrc.Value = ch.SourceType ?? "M3U";
                         pPlaylist.Value = ch.PlaylistUrl ?? "";
                         pImdb.Value = ch.ImdbId ?? "";
@@ -162,9 +192,14 @@ namespace StreamMesh.Core.Database.Repositories
                         cmd.ExecuteNonQuery();
                     }
                     tx.Commit();
+                    LogService.LogInfo($"SaveChannelsBatchAsync: COMMIT başarılı. {channels.Count} kanal kaydedildi (clearFirst={clearFirst}).");
                 }
             }
             finally { _dbLock.Release(); }
+            if (notifyUpdated)
+            {
+                DatabaseEngine.NotifyDatabaseUpdated();
+            }
         }
 
         public async Task SyncIncomingChannelsAsync(List<Channel> incoming)
@@ -174,10 +209,87 @@ namespace StreamMesh.Core.Database.Repositories
             try
             {
                 var existing = await GetAllChannelsAsync();
+                LogService.LogInfo($"SyncIncomingChannelsAsync: DB'de {existing.Count} mevcut kanal var, {incoming.Count} yeni kanal ekleniyor...");
+
+                // Preserve existing LogoUrl & PreferredLogoIndex if incoming channel has empty LogoUrl
+                var existingMapById = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+                var existingMapByUrl = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+                var existingMapByName = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var exCh in existing)
+                {
+                    if (!string.IsNullOrEmpty(exCh.Id) && !existingMapById.ContainsKey(exCh.Id))
+                    {
+                        existingMapById[exCh.Id] = exCh;
+                    }
+                    foreach (var u in exCh.GetUrlList())
+                    {
+                        if (!existingMapByUrl.ContainsKey(u)) existingMapByUrl[u] = exCh;
+                    }
+                    string clean = ChannelUtils.GetCleanName(exCh.Name);
+                    if (!string.IsNullOrEmpty(clean) && !existingMapByName.ContainsKey(clean))
+                    {
+                        existingMapByName[clean] = exCh;
+                    }
+                }
+
+                foreach (var inCh in incoming)
+                {
+                    Channel? match = null;
+                    if (!string.IsNullOrEmpty(inCh.Id) && existingMapById.TryGetValue(inCh.Id, out match)) { }
+                    else
+                    {
+                        foreach (var u in inCh.GetUrlList())
+                        {
+                            if (existingMapByUrl.TryGetValue(u, out match)) break;
+                        }
+                    }
+
+                    if (match == null)
+                    {
+                        string clean = ChannelUtils.GetCleanName(inCh.Name);
+                        if (!string.IsNullOrEmpty(clean) && existingMapByName.TryGetValue(clean, out match))
+                        {
+                            if (!string.IsNullOrEmpty(inCh.Language) && inCh.Language != "und" &&
+                                !string.IsNullOrEmpty(match.Language) && match.Language != "und" &&
+                                !inCh.Language.Equals(match.Language, StringComparison.OrdinalIgnoreCase))
+                            {
+                                match = null;
+                            }
+                        }
+                    }
+
+                    if (match != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(match.LogoUrl))
+                        {
+                            if (string.IsNullOrWhiteSpace(inCh.LogoUrl))
+                            {
+                                inCh.LogoUrl = match.LogoUrl;
+                                inCh.PreferredLogoIndex = match.PreferredLogoIndex;
+                            }
+                            else
+                            {
+                                inCh.AddAlternativeLogo(match.LogoUrl);
+                            }
+                        }
+
+                        // Preserve user state & modifications
+                        if (match.IsFavorite) inCh.IsFavorite = true;
+                        if (match.IsWatched) inCh.IsWatched = true;
+                        if (match.IsVerified) inCh.IsVerified = true;
+                        if (match.IsLocked) inCh.IsLocked = true;
+                        if (match.IsEpgLocked) inCh.IsEpgLocked = true;
+                        if (match.PersonalWatchCount > inCh.PersonalWatchCount) inCh.PersonalWatchCount = match.PersonalWatchCount;
+                        if (match.LastPositionMs > inCh.LastPositionMs) inCh.LastPositionMs = match.LastPositionMs;
+                        if (!string.IsNullOrWhiteSpace(match.Notes) && string.IsNullOrWhiteSpace(inCh.Notes)) inCh.Notes = match.Notes;
+                    }
+                }
+
                 var combined = existing.Concat(incoming).ToList();
                 var aggregated = ChannelAggregator.Instance.AggregateChannels(combined);
 
-                await SaveChannelsBatchAsync(aggregated, true);
+                await SaveChannelsBatchAsync(aggregated, true, notifyUpdated: false);
             }
             catch (Exception ex)
             {
@@ -422,7 +534,10 @@ namespace StreamMesh.Core.Database.Repositories
             cmd.Parameters.AddWithValue("@Id", ch.Id); cmd.Parameters.AddWithValue("@Name", ch.Name); cmd.Parameters.AddWithValue("@Url", ch.Url);
             cmd.Parameters.AddWithValue("@Logo", ch.LogoUrl); cmd.Parameters.AddWithValue("@Group", ch.GroupTitle); cmd.Parameters.AddWithValue("@Cat", ch.Category);
             cmd.Parameters.AddWithValue("@Lang", ch.Language); cmd.Parameters.AddWithValue("@Fav", ch.IsFavorite ? 1 : 0);
-            cmd.Parameters.AddWithValue("@Date", new DateTimeOffset(ch.CreatedAt).ToUnixTimeSeconds()); cmd.Parameters.AddWithValue("@Src", ch.SourceType);
+            long unixDate = (ch.CreatedAt > DateTime.MinValue && ch.CreatedAt.Year >= 1970)
+                ? new DateTimeOffset(ch.CreatedAt.ToUniversalTime()).ToUnixTimeSeconds()
+                : DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            cmd.Parameters.AddWithValue("@Date", unixDate); cmd.Parameters.AddWithValue("@Src", ch.SourceType);
             cmd.Parameters.AddWithValue("@Playlist", ch.PlaylistUrl); cmd.Parameters.AddWithValue("@Imdb", ch.ImdbId); cmd.Parameters.AddWithValue("@Overview", ch.Overview);
             cmd.Parameters.AddWithValue("@Backdrop", ch.BackdropUrl); cmd.Parameters.AddWithValue("@Cast", ch.Cast);
             cmd.Parameters.AddWithValue("@Pwc", ch.PersonalWatchCount); cmd.Parameters.AddWithValue("@Vc", ch.ViewersCount);

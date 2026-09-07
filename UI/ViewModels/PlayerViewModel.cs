@@ -182,21 +182,41 @@ namespace StreamMesh.UI.ViewModels
 
             try
             {
-                if (_ace.IsAceStreamUrl(tryUrl) || channel.SourceType == "ACESTREAM")
+                if (_ace.IsAceStreamUrl(tryUrl) || channel.SourceType == "ACESTREAM" || (tryUrl.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(tryUrl, @"^[a-fA-F0-9]{40}$")))
                 {
                     onStatusUpdate?.Invoke("AceStream: Motor Hazırlanıyor...");
                     await _ace.StartEngineAsync().ConfigureAwait(false);
                     string hash = _ace.ExtractHash(tryUrl);
-                    await _ace.OpenStreamAsync(hash).ConfigureAwait(false);
-                    var aceUrls = await _ace.GetHttpUrlsWithTokenAsync(tryUrl).ConfigureAwait(false);
-                    if (aceUrls != null && aceUrls.Count > 0)
+                    if (string.IsNullOrEmpty(hash)) hash = tryUrl;
+
+                    onStatusUpdate?.Invoke("AceStream: Akış ve Timeshift Hazırlanıyor...");
+                    var session = await AceStreamService.Instance.EnsureSessionStartedAsync(hash, token).ConfigureAwait(false);
+
+                    // Wait up to 7.0 seconds for the initial segment so HLS Timeshift proxy can start smoothly
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+                    while (session.DvrBuffer.SegmentCount == 0 && sw.ElapsedMilliseconds < 7000 && !token.IsCancellationRequested)
                     {
-                        tryUrl = aceUrls[0];
-                        onStatusUpdate?.Invoke("AceStream: Bağlanılıyor...");
-                        bool ready = await _ace.WaitForStreamReadyAsync(tryUrl, 5).ConfigureAwait(false);
-                        if (!ready && aceUrls.Count > 1) tryUrl = aceUrls[1];
+                        await Task.Delay(100, token).ConfigureAwait(false);
                     }
-                    LogService.LogInfo($"[PLAYBACK] AceStream prepared -> {tryUrl}");
+
+                    if (session.DvrBuffer.SegmentCount > 0)
+                    {
+                        tryUrl = HlsProxyEngine.Instance.GetAceStreamProxyUrl(hash);
+                        LogService.LogInfo($"[PLAYBACK] AceStream HLS Timeshift proxy prepared ({session.DvrBuffer.SegmentCount} segments) -> {tryUrl}");
+                    }
+                    else
+                    {
+                        // Fallback to direct AceEngine HTTP stream if segmenting takes longer
+                        var aceUrls = await _ace.GetHttpUrlsWithTokenAsync(tryUrl).ConfigureAwait(false);
+                        if (aceUrls != null && aceUrls.Count > 0)
+                        {
+                            tryUrl = aceUrls[0];
+                            onStatusUpdate?.Invoke("AceStream: Bağlanılıyor...");
+                            bool ready = await _ace.WaitForStreamReadyAsync(tryUrl, 4).ConfigureAwait(false);
+                            if (!ready && aceUrls.Count > 1) tryUrl = aceUrls[1];
+                        }
+                        LogService.LogInfo($"[PLAYBACK] AceStream direct stream fallback -> {tryUrl}");
+                    }
                 }
                 else if (tryUrl.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) || tryUrl.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
                 {

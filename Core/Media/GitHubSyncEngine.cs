@@ -32,9 +32,21 @@ namespace StreamMesh.Core.Media
 
     public class GitHubSyncEngine
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
+        private static readonly HttpClient _httpClient;
+        private static int _isRunning = 0;
         private readonly DatabaseEngine _db = new DatabaseEngine();
         private readonly M3uEngine _m3u = new M3uEngine();
+
+        static GitHubSyncEngine()
+        {
+            var handler = new HttpClientHandler
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
+                AllowAutoRedirect = true
+            };
+            _httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(12) };
+            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 StreamMesh/1.0");
+        }
 
         public event Action<int, string>? OnProgress;
         public static event Action? OnSyncStarted;
@@ -44,7 +56,14 @@ namespace StreamMesh.Core.Media
 
         public async Task PullFromGitHubAsync()
         {
+            if (System.Threading.Interlocked.CompareExchange(ref _isRunning, 1, 0) != 0)
+            {
+                LogService.LogInfo("GitHubSyncEngine: Senkronizasyon zaten çalışıyor, atlandı.");
+                return;
+            }
+
             RaiseSyncStarted();
+            DatabaseEngine.SuppressEvents = true;
             LogService.LogInfo("GitHubSyncEngine: Otomatik güncelleme başlatıldı.");
             OnProgress?.Invoke(2, "Temizlenmiş yayın listesi kontrol ediliyor (cleaned_playlist.m3u)...");
             try
@@ -55,7 +74,7 @@ namespace StreamMesh.Core.Media
 
                 try
                 {
-                    using var cleanCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    using var cleanCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(3));
                     var response = await _httpClient.GetAsync(cleanM3uUrl, cleanCts.Token);
                     if (response.IsSuccessStatusCode)
                     {
@@ -114,12 +133,30 @@ namespace StreamMesh.Core.Media
                         {
                             int totalSources = (cfg.Tv?.Count ?? 0) + (cfg.Film?.Count ?? 0) + (cfg.Dizi?.Count ?? 0) + (cfg.Radyo?.Count ?? 0) + (cfg.Karma?.Count ?? 0) + (cfg.Epg?.Count ?? 0);
                             int processedSources = 0;
+                            var accumulativeChannels = new List<Channel>();
 
-                            if (cfg.Tv != null && cfg.Tv.Count > 0) await ProcessListWithProgress(cfg.Tv, "TV", totalSources, () => ++processedSources, true);
-                            if (cfg.Film != null && cfg.Film.Count > 0) await ProcessListWithProgress(cfg.Film, "Film", totalSources, () => ++processedSources, true);
-                            if (cfg.Dizi != null && cfg.Dizi.Count > 0) await ProcessListWithProgress(cfg.Dizi, "Dizi", totalSources, () => ++processedSources, true);
-                            if (cfg.Radyo != null && cfg.Radyo.Count > 0) await ProcessListWithProgress(cfg.Radyo, "Radyo", totalSources, () => ++processedSources, true);
-                            if (cfg.Karma != null && cfg.Karma.Count > 0) await ProcessListWithProgress(cfg.Karma, "Karma", totalSources, () => ++processedSources, false);
+                            if (cfg.Tv != null && cfg.Tv.Count > 0)
+                            {
+                                await ProcessListWithProgress(cfg.Tv, "TV", totalSources, () => ++processedSources, true, accumulativeChannels);
+                                if (accumulativeChannels.Count > 0)
+                                {
+                                    LogService.LogInfo($"GitHubSyncEngine: Erken TV gösterimi için {accumulativeChannels.Count} TV kanalı SQLite'a kaydediliyor...");
+                                    await _db.SyncIncomingChannelsAsync(new List<Channel>(accumulativeChannels));
+                                    DatabaseEngine.SuppressEvents = false;
+                                    DatabaseEngine.NotifyDatabaseUpdated();
+                                    DatabaseEngine.SuppressEvents = true;
+                                }
+                            }
+                            if (cfg.Film != null && cfg.Film.Count > 0) await ProcessListWithProgress(cfg.Film, "Film", totalSources, () => ++processedSources, true, accumulativeChannels);
+                            if (cfg.Dizi != null && cfg.Dizi.Count > 0) await ProcessListWithProgress(cfg.Dizi, "Dizi", totalSources, () => ++processedSources, true, accumulativeChannels);
+                            if (cfg.Radyo != null && cfg.Radyo.Count > 0) await ProcessListWithProgress(cfg.Radyo, "Radyo", totalSources, () => ++processedSources, true, accumulativeChannels);
+                            if (cfg.Karma != null && cfg.Karma.Count > 0) await ProcessListWithProgress(cfg.Karma, "Karma", totalSources, () => ++processedSources, false, accumulativeChannels);
+
+                            if (accumulativeChannels.Count > 0)
+                            {
+                                LogService.LogInfo($"GitHubSyncEngine: Toplam {accumulativeChannels.Count} kanal kaynaklardan çözümlendi. SQLite veritabanına senkronize ediliyor...");
+                                await _db.SyncIncomingChannelsAsync(accumulativeChannels);
+                            }
                         }
 
                         // EPG Verilerini Her Durumda Güncelle
@@ -153,19 +190,27 @@ namespace StreamMesh.Core.Media
                     LogService.LogWarning($"GitHubSyncEngine: LogoSync tetikleme uyarısı: {logoEx.Message}");
                 }
 
+                var finalCount = (await _db.GetAllChannelsAsync()).Count;
+                LogService.LogInfo($"GitHubSyncEngine: Senkronizasyon sonu SQLite veritabanında toplam {finalCount} kanal mevcut.");
+
                 DatabaseEngine.NotifyDatabaseUpdated();
                 LogService.LogInfo("GitHubSyncEngine: Güncelleme tamamlandı.");
                 OnProgress?.Invoke(100, "🎉 Bulut güncelleme başarıyla tamamlandı!");
-                OnSyncCompleted?.Invoke();
             }
             catch (Exception ex)
             {
                 LogService.LogError("GitHubSyncEngine error", ex);
                 OnProgress?.Invoke(0, $"Hata oluştu: {ex.Message}");
             }
+            finally
+            {
+                System.Threading.Interlocked.Exchange(ref _isRunning, 0);
+                OnSyncCompleted?.Invoke();
+                DatabaseEngine.SuppressEvents = false;
+            }
         }
 
-        private async Task ProcessListWithProgress(List<string> urls, string categoryLabel, int totalSources, Func<int> incrementCounter, bool forceCategory = true)
+        private async Task ProcessListWithProgress(List<string> urls, string categoryLabel, int totalSources, Func<int> incrementCounter, bool forceCategory, List<Channel> collector)
         {
             if (urls == null) return;
             for (int i = 0; i < urls.Count; i++)
@@ -186,11 +231,11 @@ namespace StreamMesh.Core.Media
                         OnProgress?.Invoke((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {subMsg}");
                     });
 
-                    if (channels.Count > 0)
+                    if (channels != null && channels.Count > 0)
                     {
-                        await _db.SyncIncomingChannelsAsync(channels);
+                        collector.AddRange(channels);
                         double finishedPct = Math.Min(99.0, baseProgress + itemWeight);
-                        OnProgress?.Invoke((int)finishedPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {channels.Count} içerik kaydedildi.");
+                        OnProgress?.Invoke((int)finishedPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {channels.Count} içerik çözümlendi.");
                     }
                 }
                 catch (Exception ex)

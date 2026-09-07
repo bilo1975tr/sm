@@ -61,8 +61,9 @@ namespace StreamMesh.Core.Network
                     request[1] = 0x01; // Binding Request
                     Array.Copy(Guid.NewGuid().ToByteArray(), 0, request, 8, 12);
 
+                    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(2000));
                     await client.SendAsync(request, request.Length, ep);
-                    var result = await client.ReceiveAsync();
+                    var result = await client.ReceiveAsync(cts.Token);
 
                     // STUN parsing for MAPPED-ADDRESS (v4)
                     if (result.Buffer != null && result.Buffer.Length > 28)

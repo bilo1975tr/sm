@@ -232,7 +232,7 @@ namespace StreamMesh.Core.Media
 
             if (updatedChannels.Count > 0)
             {
-                await _db.SaveChannelsBatchAsync(updatedChannels);
+                await _db.SaveChannelsBatchAsync(updatedChannels, clearFirst: false, notifyUpdated: false);
             }
         }
     }

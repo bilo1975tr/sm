@@ -76,32 +76,66 @@ namespace StreamMesh.UI.ViewModels
 
         public string CurrentPageText => $"Sayfa {_currentPage} / {_totalPages}";
 
-        private bool _isSyncing = false;
-        private bool _isDataDirty = false;
+        private readonly System.Threading.SemaphoreSlim _loadSemaphore = new System.Threading.SemaphoreSlim(1, 1);
+        private readonly object _debounceLock = new object();
+        private System.Threading.CancellationTokenSource? _loadDebounceCts;
+        private bool _hasPendingReload = false;
 
         public HomeViewModel()
         {
             _ = LoadDataAsync();
-            GitHubSyncEngine.OnSyncStarted += () => {
-                _isSyncing = true;
-                _isDataDirty = false;
-            };
             GitHubSyncEngine.OnSyncCompleted += () => {
-                _isSyncing = false;
-                if (_isDataDirty) System.Windows.Application.Current?.Dispatcher.Invoke(() => _ = LoadDataAsync());
-                _isDataDirty = false;
+                RequestLoadData(0);
             };
             DatabaseEngine.OnDatabaseUpdated += (s, e) => {
-                if (_isSyncing)
-                {
-                    _isDataDirty = true;
-                }
-                else
-                {
-                    // V1.8.8: Small delay to debounce rapid updates
-                    _ = Task.Delay(1000).ContinueWith(_ => System.Windows.Application.Current?.Dispatcher.Invoke(() => _ = LoadDataAsync()));
-                }
+                // Coalesce / debounce database updates (300ms) so rapid batch writes trigger a single clean UI update
+                RequestLoadData(300);
             };
+        }
+
+        public void RequestLoadData(int delayMs = 300)
+        {
+            System.Threading.CancellationToken token;
+            lock (_debounceLock)
+            {
+                _loadDebounceCts?.Cancel();
+                _loadDebounceCts = new System.Threading.CancellationTokenSource();
+                token = _loadDebounceCts.Token;
+            }
+
+            Task.Run(async () =>
+            {
+                try
+                {
+                    if (delayMs > 0) await Task.Delay(delayMs, token);
+                    if (token.IsCancellationRequested) return;
+
+                    if (!await _loadSemaphore.WaitAsync(0))
+                    {
+                        // Load in progress - mark that a reload is required once current load finishes
+                        _hasPendingReload = true;
+                        return;
+                    }
+
+                    try
+                    {
+                        do
+                        {
+                            _hasPendingReload = false;
+                            await LoadDataAsync();
+                        } while (_hasPendingReload);
+                    }
+                    finally
+                    {
+                        _loadSemaphore.Release();
+                    }
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex)
+                {
+                    LogService.LogError("HomeViewModel.RequestLoadData error", ex);
+                }
+            });
         }
 
         public async Task LoadDataAsync()
@@ -109,15 +143,23 @@ namespace StreamMesh.UI.ViewModels
             try
             {
                 LogService.LogInfo("HomeViewModel: Kütüphane yükleniyor...");
-                var stats = _db.GetDailyQueryStats();
                 var channels = await _db.GetAllChannelsAsync();
                 LogService.LogInfo($"HomeViewModel: {channels.Count} kanal veritabanından okundu.");
 
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                _allChannels = channels;
+                await RefreshDisplayAsync();
+
+                _ = Task.Run(() =>
                 {
-                    DailyApiCount = stats.count;
-                    _allChannels = channels;
-                    _ = RefreshDisplayAsync();
+                    try
+                    {
+                        var stats = _db.GetDailyQueryStats();
+                        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            DailyApiCount = stats.count;
+                        });
+                    }
+                    catch { }
                 });
             }
             catch (Exception ex)
@@ -191,14 +233,8 @@ namespace StreamMesh.UI.ViewModels
             var pageSize = _pageSize;
             var sourceChannels = _allChannels.ToList(); // Take a snapshot
 
-            _enrichmentCts?.Cancel();
-            _enrichmentCts = new System.Threading.CancellationTokenSource();
-            var token = _enrichmentCts.Token;
-
             await Task.Run(async () =>
             {
-                if (token.IsCancellationRequested) return;
-
                 var filtered = sourceChannels.AsEnumerable();
 
                 if (category == "Favorites") filtered = filtered.Where(c => c.IsFavorite);
@@ -282,6 +318,14 @@ namespace StreamMesh.UI.ViewModels
                     foreach (var ch in pageItems) DisplayedChannels.Add(ch);
                 });
 
+                System.Threading.CancellationToken token;
+                lock (_debounceLock)
+                {
+                    _enrichmentCts?.Cancel();
+                    _enrichmentCts = new System.Threading.CancellationTokenSource();
+                    token = _enrichmentCts.Token;
+                }
+
                 if (token.IsCancellationRequested) return;
 
                 // Asynchronously enrich missing logos and EPG for visible page items only
@@ -297,21 +341,13 @@ namespace StreamMesh.UI.ViewModels
                     var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
                     if (missingLogos.Count > 0)
                     {
-                        DatabaseEngine.SuppressEvents = true;
-                        try
-                        {
-                            var enricher = new ChannelEnricher();
-                            await enricher.EnrichChannelsAsync(missingLogos);
-                        }
-                        finally
-                        {
-                            DatabaseEngine.SuppressEvents = false;
-                        }
+                        var enricher = new ChannelEnricher();
+                        await enricher.EnrichChannelsAsync(missingLogos);
                     }
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception ex) { LogService.LogWarning($"HomeViewModel: Enrichment background task error: {ex.Message}"); }
-            }, token);
+            });
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

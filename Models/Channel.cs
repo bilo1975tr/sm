@@ -179,7 +179,7 @@ namespace StreamMesh.Models
         public string Name
         {
             get => _name;
-            set { if (_name != value) { _name = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); OnPropertyChanged(nameof(CleanName)); OnPropertyChanged(nameof(NamesCount)); OnPropertyChanged(nameof(HasMultipleNames)); } }
+            set { if (_name != value) { _name = value; _cachedCleanName = null; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); OnPropertyChanged(nameof(CleanName)); OnPropertyChanged(nameof(NamesCount)); OnPropertyChanged(nameof(HasMultipleNames)); } }
         }
 
         public string PrimaryName
@@ -377,7 +377,16 @@ namespace StreamMesh.Models
         public bool HasMovieGenre => !string.IsNullOrEmpty(MovieGenre);
 
         // Smart Extraction Logic
-        public string CleanName => string.IsNullOrWhiteSpace(Name) ? "" : StreamMesh.Core.Media.ChannelUtils.GetCleanName(Name);
+        private string? _cachedCleanName;
+        public string CleanName
+        {
+            get
+            {
+                if (_cachedCleanName != null) return _cachedCleanName;
+                _cachedCleanName = string.IsNullOrWhiteSpace(Name) ? "" : StreamMesh.Core.Media.ChannelUtils.GetCleanName(Name);
+                return _cachedCleanName;
+            }
+        }
 
         public int SeasonNumber => ParsedMovieDetails.Season;
         public int EpisodeNumber => ParsedMovieDetails.Episode;
@@ -624,6 +633,12 @@ namespace StreamMesh.Models
                 int idx = logos.FindIndex(x => string.Equals(x, savedPrimaryLogo, StringComparison.OrdinalIgnoreCase));
                 if (idx >= 0) PreferredLogoIndex = idx;
             }
+            else if (!string.IsNullOrWhiteSpace(other.PrimaryLogoUrl))
+            {
+                var logos = GetLogoList();
+                int idx = logos.FindIndex(x => string.Equals(x, other.PrimaryLogoUrl, StringComparison.OrdinalIgnoreCase));
+                if (idx >= 0) PreferredLogoIndex = idx;
+            }
 
             // 5. Merge Metadata if missing
             if (string.IsNullOrWhiteSpace(ImdbId) && !string.IsNullOrWhiteSpace(other.ImdbId)) ImdbId = other.ImdbId;
@@ -632,10 +647,12 @@ namespace StreamMesh.Models
             if (string.IsNullOrWhiteSpace(Cast) && !string.IsNullOrWhiteSpace(other.Cast)) Cast = other.Cast;
             if ((string.IsNullOrWhiteSpace(Category) || Category == "TV") && !string.IsNullOrWhiteSpace(other.Category) && other.Category != "TV") Category = other.Category;
             if ((string.IsNullOrWhiteSpace(Language) || Language == "und") && !string.IsNullOrWhiteSpace(other.Language) && other.Language != "und") Language = other.Language;
+            if (string.IsNullOrWhiteSpace(GroupTitle) && !string.IsNullOrWhiteSpace(other.GroupTitle)) GroupTitle = other.GroupTitle;
             if (string.IsNullOrWhiteSpace(HttpUserAgent) && !string.IsNullOrWhiteSpace(other.HttpUserAgent)) HttpUserAgent = other.HttpUserAgent;
             if (string.IsNullOrWhiteSpace(HttpReferer) && !string.IsNullOrWhiteSpace(other.HttpReferer)) HttpReferer = other.HttpReferer;
             if (string.IsNullOrWhiteSpace(HttpCookie) && !string.IsNullOrWhiteSpace(other.HttpCookie)) HttpCookie = other.HttpCookie;
             if (string.IsNullOrWhiteSpace(HttpOrigin) && !string.IsNullOrWhiteSpace(other.HttpOrigin)) HttpOrigin = other.HttpOrigin;
+            if (string.IsNullOrWhiteSpace(Notes) && !string.IsNullOrWhiteSpace(other.Notes)) Notes = other.Notes;
             if (other.CustomHeaders != null)
             {
                 foreach (var kv in other.CustomHeaders)
@@ -644,10 +661,14 @@ namespace StreamMesh.Models
                 }
             }
 
-            // 6. Merge Lock States
+            // 6. Merge Lock States & User Data
             if (other.IsEpgLocked) IsEpgLocked = true;
             if (other.IsLocked) IsLocked = true;
             if (other.IsFavorite) IsFavorite = true;
+            if (other.IsWatched) IsWatched = true;
+            if (other.IsVerified) IsVerified = true;
+            if (other.PersonalWatchCount > PersonalWatchCount) PersonalWatchCount = other.PersonalWatchCount;
+            if (other.LastPositionMs > LastPositionMs) LastPositionMs = other.LastPositionMs;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

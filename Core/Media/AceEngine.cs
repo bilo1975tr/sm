@@ -54,6 +54,7 @@ namespace StreamMesh.Core.Media
                         if (!proc.HasExited)
                         {
                             proc.Kill();
+                            proc.WaitForExit(1000);
                         }
                     }
                     catch { }
@@ -486,7 +487,27 @@ namespace StreamMesh.Core.Media
             if (!string.IsNullOrEmpty(found))
             {
                 LogService.LogInfo($"AceEngine: Starting engine from {found}");
-                Process.Start(new ProcessStartInfo { FileName = found, WindowStyle = ProcessWindowStyle.Hidden, UseShellExecute = true });
+                try
+                {
+                    var process = Process.Start(new ProcessStartInfo { FileName = found, WindowStyle = ProcessWindowStyle.Hidden, UseShellExecute = true });
+                    if (process != null)
+                    {
+                        try
+                        {
+                            RegisterSpawnedProcess(process.Id);
+                            LogService.LogInfo($"AceEngine: Spawned engine process registered with PID {process.Id}");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogService.LogWarning($"AceEngine: Could not read process ID: {ex.Message}");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError($"AceEngine: Failed to start engine process from {found}", ex);
+                }
+
                 for (int i = 0; i < 15; i++) { await Task.Delay(1000); if (await IsEngineRunningAsync()) return; }
             }
         }

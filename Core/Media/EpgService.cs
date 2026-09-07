@@ -185,13 +185,15 @@ namespace StreamMesh.Core.Media
 
                     if (bestMatch != null)
                     {
-                        ch.CurrentEpgTitle = bestMatch.Title;
-                        ch.CurrentEpgTime = $"{bestMatch.StartTime:HH:mm} - {bestMatch.EndTime:HH:mm}";
+                        string newTitle = bestMatch.Title ?? "";
+                        string newTime = $"{bestMatch.StartTime:HH:mm} - {bestMatch.EndTime:HH:mm}";
+                        if (ch.CurrentEpgTitle != newTitle) ch.CurrentEpgTitle = newTitle;
+                        if (ch.CurrentEpgTime != newTime) ch.CurrentEpgTime = newTime;
                     }
                     else
                     {
-                        ch.CurrentEpgTitle = "Yayın akışı bilgisi yok";
-                        ch.CurrentEpgTime = "--:--";
+                        if (ch.CurrentEpgTitle != "Yayın akışı bilgisi yok") ch.CurrentEpgTitle = "Yayın akışı bilgisi yok";
+                        if (ch.CurrentEpgTime != "--:--") ch.CurrentEpgTime = "--:--";
                     }
                 }
             }
@@ -351,8 +353,8 @@ namespace StreamMesh.Core.Media
 
             if (updatedChannels.Count > 0)
             {
-                // Silently save back to DB to "cement" the auto-link
-                await _db.SaveChannelsBatchAsync(updatedChannels);
+                // Silently save back to DB to "cement" the auto-link without triggering UI refresh loop
+                await _db.SaveChannelsBatchAsync(updatedChannels, clearFirst: false, notifyUpdated: false);
             }
         }
     }

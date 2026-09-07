@@ -47,6 +47,131 @@ namespace StreamMesh.Core.Media
         public Dictionary<string, string> CustomHeaders { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Thread-safe, bounded Least Recently Used (LRU) segment cache to prevent unbounded memory growth.
+    /// Evicts the least recently accessed segments first when the capacity threshold is reached.
+    /// </summary>
+    public class LruSegmentCache
+    {
+        private readonly int _capacity;
+        private readonly object _lock = new();
+        private readonly Dictionary<string, LinkedListNode<CacheItem>> _map;
+        private readonly LinkedList<CacheItem> _lruList = new();
+
+        private class CacheItem
+        {
+            public string Key { get; }
+            public byte[] Data { get; }
+
+            public CacheItem(string key, byte[] data)
+            {
+                Key = key;
+                Data = data;
+            }
+        }
+
+        public LruSegmentCache(int capacity = 96)
+        {
+            _capacity = Math.Max(16, capacity);
+            _map = new Dictionary<string, LinkedListNode<CacheItem>>(_capacity, StringComparer.Ordinal);
+        }
+
+        public bool TryGetValue(string key, out byte[]? data)
+        {
+            lock (_lock)
+            {
+                if (_map.TryGetValue(key, out var node))
+                {
+                    _lruList.Remove(node);
+                    _lruList.AddLast(node);
+                    data = node.Value.Data;
+                    return true;
+                }
+                data = null;
+                return false;
+            }
+        }
+
+        public bool ContainsKey(string key)
+        {
+            lock (_lock)
+            {
+                return _map.ContainsKey(key);
+            }
+        }
+
+        public void Set(string key, byte[] data)
+        {
+            lock (_lock)
+            {
+                if (_map.TryGetValue(key, out var existingNode))
+                {
+                    _lruList.Remove(existingNode);
+                    _lruList.AddLast(existingNode);
+                    return;
+                }
+
+                if (_map.Count >= _capacity)
+                {
+                    var oldest = _lruList.First;
+                    if (oldest != null)
+                    {
+                        _lruList.RemoveFirst();
+                        _map.Remove(oldest.Value.Key);
+                    }
+                }
+
+                var node = new LinkedListNode<CacheItem>(new CacheItem(key, data));
+                _lruList.AddLast(node);
+                _map[key] = node;
+            }
+        }
+
+        public byte[]? this[string key]
+        {
+            get => TryGetValue(key, out var d) ? d : null;
+            set { if (value != null) Set(key, value); }
+        }
+
+        public bool TryRemove(string key, out byte[]? data)
+        {
+            lock (_lock)
+            {
+                if (_map.TryGetValue(key, out var node))
+                {
+                    _lruList.Remove(node);
+                    _map.Remove(key);
+                    data = node.Value.Data;
+                    return true;
+                }
+                data = null;
+                return false;
+            }
+        }
+
+        public bool Remove(string key)
+        {
+            return TryRemove(key, out _);
+        }
+
+        public void Clear()
+        {
+            lock (_lock)
+            {
+                _map.Clear();
+                _lruList.Clear();
+            }
+        }
+
+        public int Count
+        {
+            get
+            {
+                lock (_lock) return _map.Count;
+            }
+        }
+    }
+
     public class HlsProxyEngine : IDisposable
     {
         private static readonly Lazy<HlsProxyEngine> _instance = new(() => new HlsProxyEngine());
@@ -56,8 +181,9 @@ namespace StreamMesh.Core.Media
         private CancellationTokenSource? _cts;
         private readonly HttpClient _httpClient;
         private readonly CookieContainer _cookieContainer = new CookieContainer();
-        private readonly ConcurrentDictionary<string, byte[]> _segmentCache = new();
+        private readonly LruSegmentCache _segmentCache = new(96);
         private readonly ConcurrentDictionary<string, HlsSessionInfo> _sessions = new();
+        private readonly AceEngine _ace = new();
         private int _port = 48931;
         private bool _isRunning = false;
 
@@ -66,9 +192,128 @@ namespace StreamMesh.Core.Media
 
         public HlsSessionInfo? GetSession(string originalUrl)
         {
+            if (string.IsNullOrEmpty(originalUrl)) return null;
+
+            // 1. Direct active session ID match (e.g. "ace_HASH" or base64 sessionId)
+            if (_sessions.TryGetValue(originalUrl, out var directSession))
+            {
+                if (originalUrl.StartsWith("ace_"))
+                {
+                    RefreshAceDvrSession(directSession, originalUrl.Substring(4));
+                }
+                return directSession;
+            }
+
+            // 2. Check if URL contains query parameter session=... (e.g. from _currentPlayingUrl)
+            if (originalUrl.Contains("session="))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(originalUrl, @"[?&]session=([^&]+)");
+                if (match.Success)
+                {
+                    string extractedSession = Uri.UnescapeDataString(match.Groups[1].Value);
+                    var sessionFromQuery = GetSession(extractedSession);
+                    if (sessionFromQuery != null) return sessionFromQuery;
+                }
+            }
+
+            // 3. Check if this is an AceStream URL, session, or hash
+            string aceHash = string.Empty;
+            if (originalUrl.StartsWith("ace_"))
+            {
+                aceHash = originalUrl.Substring(4);
+            }
+            else if (_ace.IsAceStreamUrl(originalUrl) || originalUrl.Contains(":6878/ace/") || originalUrl.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
+            {
+                aceHash = _ace.ExtractHash(originalUrl);
+                if (string.IsNullOrEmpty(aceHash)) aceHash = originalUrl;
+            }
+            else if (originalUrl.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(originalUrl, @"^[a-fA-F0-9]{40}$"))
+            {
+                aceHash = originalUrl;
+            }
+
+            if (!string.IsNullOrEmpty(aceHash))
+            {
+                var aceSession = AceStreamService.Instance.GetSharedSession(aceHash);
+                if (aceSession != null)
+                {
+                    string aceSessionId = $"ace_{aceHash}";
+                    var info = _sessions.GetOrAdd(aceSessionId, id => new HlsSessionInfo
+                    {
+                        SessionId = id,
+                        OriginalUrl = originalUrl,
+                        MediaPlaylistUrl = $"acestream://{aceHash}",
+                        IsLive = true,
+                        TargetDuration = 3.0,
+                        StartWallClockTime = aceSession.StartedAt
+                    });
+
+                    RefreshAceDvrSession(info, aceHash);
+                    return info;
+                }
+            }
+
             string sessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(originalUrl)).Replace("=", "").Replace("/", "_").Replace("+", "-");
             _sessions.TryGetValue(sessionId, out var session);
             return session;
+        }
+
+        private void RefreshAceDvrSession(HlsSessionInfo info, string aceHash)
+        {
+            var aceSession = AceStreamService.Instance.GetSharedSession(aceHash);
+            if (aceSession == null) return;
+
+            aceSession.LastHlsAccessUtc = DateTime.UtcNow;
+            var dvrSegs = aceSession.DvrBuffer.GetSegmentsSnapshot();
+            lock (info.SyncLock)
+            {
+                info.Segments.Clear();
+                foreach (var dvr in dvrSegs)
+                {
+                    info.Segments.Add(new HlsSegment
+                    {
+                        Index = dvr.Index,
+                        SequenceNumber = dvr.Index,
+                        DurationSeconds = dvr.DurationSeconds,
+                        StartTimeSeconds = dvr.StartTimeSeconds,
+                        Url = $"acedvr://{aceHash}/{dvr.Index}"
+                    });
+                }
+                info.TotalDurationSeconds = aceSession.DvrBuffer.TotalDurationSeconds;
+                info.HasDvrWindow = info.TotalDurationSeconds >= 5.0;
+                if (dvrSegs.Count > 0)
+                {
+                    info.MediaSequence = dvrSegs[0].Index;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Produces a local HLS Timeshift proxy URL for an AceStream content ID or stream hash.
+        /// </summary>
+        public string GetAceStreamProxyUrl(string contentIdOrUrl, int startSec = -1)
+        {
+            Start();
+            string hash = string.Empty;
+            if (contentIdOrUrl.Contains("session=ace_"))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(contentIdOrUrl, @"[?&]session=ace_([^&]+)");
+                if (match.Success) hash = match.Groups[1].Value;
+            }
+            if (string.IsNullOrEmpty(hash))
+            {
+                if (contentIdOrUrl.StartsWith("ace_"))
+                {
+                    hash = contentIdOrUrl.Substring(4);
+                }
+                else
+                {
+                    hash = _ace.ExtractHash(contentIdOrUrl);
+                    if (string.IsNullOrEmpty(hash)) hash = contentIdOrUrl;
+                }
+            }
+            string sessionId = $"ace_{hash}";
+            return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={startSec}";
         }
 
         private HlsProxyEngine()
@@ -414,6 +659,27 @@ namespace StreamMesh.Core.Media
         public string GetProxyPlaybackUrl(string originalM3u8Url, double startOffsetSeconds = -1)
         {
             if (!_isRunning) Start();
+            if (originalM3u8Url.StartsWith("ace_") ||
+                originalM3u8Url.Contains("session=ace_") ||
+                _ace.IsAceStreamUrl(originalM3u8Url) ||
+                originalM3u8Url.Contains(":6878/ace/") ||
+                originalM3u8Url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase) ||
+                (originalM3u8Url.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(originalM3u8Url, @"^[a-fA-F0-9]{40}$")))
+            {
+                return GetAceStreamProxyUrl(originalM3u8Url, (int)startOffsetSeconds);
+            }
+
+            // If already a local proxy URL, reuse the existing session ID instead of re-encoding
+            if (originalM3u8Url.Contains("session="))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(originalM3u8Url, @"[?&]session=([^&]+)");
+                if (match.Success)
+                {
+                    string existingSession = Uri.UnescapeDataString(match.Groups[1].Value);
+                    return $"http://127.0.0.1:{_port}/playlist.m3u8?session={existingSession}&start={(int)startOffsetSeconds}";
+                }
+            }
+
             string sessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(originalM3u8Url)).Replace("=", "").Replace("/", "_").Replace("+", "-");
             return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={(int)startOffsetSeconds}";
         }
@@ -749,19 +1015,31 @@ namespace StreamMesh.Core.Media
 
                     if (!_sessions.TryGetValue(sessionId, out var session))
                     {
-                        try
+                        if (sessionId.StartsWith("ace_"))
                         {
-                            string padded = sessionId.Replace("_", "/").Replace("-", "+");
-                            switch (padded.Length % 4)
-                            {
-                                case 2: padded += "=="; break;
-                                case 3: padded += "="; break;
-                            }
-                            byte[] rawBytes = Convert.FromBase64String(padded);
-                            string origUrl = Encoding.UTF8.GetString(rawBytes);
-                            session = await InspectAndPrepareHlsAsync(origUrl);
+                            session = GetSession(sessionId);
                         }
-                        catch { }
+                        else
+                        {
+                            try
+                            {
+                                string padded = sessionId.Replace("_", "/").Replace("-", "+");
+                                switch (padded.Length % 4)
+                                {
+                                    case 2: padded += "=="; break;
+                                    case 3: padded += "="; break;
+                                }
+                                byte[] rawBytes = Convert.FromBase64String(padded);
+                                string origUrl = Encoding.UTF8.GetString(rawBytes);
+                                session = await InspectAndPrepareHlsAsync(origUrl);
+                            }
+                            catch { }
+                        }
+                    }
+                    else if (sessionId.StartsWith("ace_"))
+                    {
+                        // Refresh segments from active AceDvrBuffer
+                        session = GetSession(sessionId) ?? session;
                     }
 
                     if (session != null)
@@ -900,10 +1178,38 @@ namespace StreamMesh.Core.Media
 
         private async Task<byte[]?> FetchOrGetSegmentAsync(string url, string? referer = null, HlsSessionInfo? session = null)
         {
-            if (_segmentCache.TryGetValue(url, out var cached))
+            if (_segmentCache.TryGetValue(url, out var cached) && cached != null)
             {
                 LogService.LogInfo($"[HLS SEGMENT] CACHE_HIT {GetShortUrl(url)} (bytes={cached.Length})");
                 return cached;
+            }
+
+            if (url.StartsWith("acedvr://", StringComparison.OrdinalIgnoreCase))
+            {
+                // Format: acedvr://{hash}/{segIndex}
+                try
+                {
+                    string raw = url.Substring("acedvr://".Length).Trim('/');
+                    var parts = raw.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2)
+                    {
+                        string hash = parts[0];
+                        if (int.TryParse(parts[1], out int segIndex))
+                        {
+                            var aceBytes = AceStreamService.Instance.GetDvrSegment(hash, segIndex);
+                            if (aceBytes != null)
+                            {
+                                _segmentCache.Set(url, aceBytes);
+                                return aceBytes;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogWarning($"[HLS ACE DVR] Error extracting segment {url}: {ex.Message}");
+                }
+                return null;
             }
 
             if (url.StartsWith("rawts://", StringComparison.OrdinalIgnoreCase))
@@ -925,12 +1231,7 @@ namespace StreamMesh.Core.Media
                 byte[] bytes = await response.Content.ReadAsByteArrayAsync(cts.Token);
                 LogService.LogInfo($"[HLS SEGMENT] DOWNLOAD_OK http={httpStatus} duration={sw.ElapsedMilliseconds}ms bytes={bytes.Length} {GetShortUrl(url)}");
 
-                if (_segmentCache.Count > MaxMemoryCachedSegments)
-                {
-                    var oldest = _segmentCache.Keys.Take(50).ToList();
-                    foreach (var k in oldest) _segmentCache.TryRemove(k, out _);
-                }
-                _segmentCache[url] = bytes;
+                _segmentCache.Set(url, bytes);
                 return bytes;
             }
             catch (Exception ex)
