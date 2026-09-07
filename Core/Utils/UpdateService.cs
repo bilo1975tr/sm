@@ -13,7 +13,7 @@ namespace StreamMesh.Core.Utils
     {
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         private const string REMOTE_VERSION_URL = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/version.txt";
-        private const string GITHUB_REPO_API = "https://api.github.com/repos/bilo1975tr/sm/releases/latest";
+        private const string GITHUB_REPO_TAG_API = "https://api.github.com/repos/bilo1975tr/sm/releases/tags/v";
 
         public static event Action<string>? OnVersionUpdated;
 
@@ -99,9 +99,14 @@ namespace StreamMesh.Core.Utils
 
         public async Task<(string? downloadUrl, string? fileName)> GetLatestReleaseAssetAsync(string targetVersion)
         {
+            string cleanTargetVersion = targetVersion.TrimStart('v', 'V').Trim();
+            string expectedExeName = $"StreamMesh-Setup-v{cleanTargetVersion}.exe";
+            string fallbackUrl = $"https://github.com/bilo1975tr/sm/releases/download/v{cleanTargetVersion}/{expectedExeName}";
+
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, GITHUB_REPO_API);
+                string tagApiUrl = GITHUB_REPO_TAG_API + cleanTargetVersion;
+                using var request = new HttpRequestMessage(HttpMethod.Get, tagApiUrl);
                 request.Headers.Add("User-Agent", "StreamMesh-Updater");
                 var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
@@ -111,34 +116,66 @@ namespace StreamMesh.Core.Utils
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
-                    if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
+                    string tagName = root.TryGetProperty("tag_name", out var tagProp) ? tagProp.GetString() ?? "" : "";
+                    string cleanTagName = tagName.TrimStart('v', 'V').Trim();
+
+                    // MUST verify tag_name matches target version
+                    if (string.Equals(cleanTagName, cleanTargetVersion, StringComparison.OrdinalIgnoreCase))
                     {
-                        string? installerUrl = null;
-                        string? installerName = null;
-                        string? zipUrl = null;
-                        string? zipName = null;
-
-                        foreach (var asset in assets.EnumerateArray())
+                        if (root.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
                         {
-                            string name = asset.GetProperty("name").GetString() ?? "";
-                            string url = asset.GetProperty("browser_download_url").GetString() ?? "";
+                            string? installerUrl = null;
+                            string? installerName = null;
+                            string? zipUrl = null;
+                            string? zipName = null;
 
-                            if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && name.Contains("Setup", StringComparison.OrdinalIgnoreCase))
+                            foreach (var asset in assets.EnumerateArray())
                             {
-                                installerUrl = url;
-                                installerName = name;
-                                break;
+                                string name = asset.GetProperty("name").GetString() ?? "";
+                                string url = asset.GetProperty("browser_download_url").GetString() ?? "";
+
+                                if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && name.Contains("Setup", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    // Ensure asset file name matches target version if version is present in name
+                                    if (name.Contains("v0.") || name.Contains("v1.") || name.Contains("v2."))
+                                    {
+                                        if (!name.Contains(cleanTargetVersion, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            LogService.LogWarning($"UpdateService: Skipping asset '{name}' because version does not match target '{cleanTargetVersion}'.");
+                                            continue;
+                                        }
+                                    }
+
+                                    installerUrl = url;
+                                    installerName = name;
+                                    break;
+                                }
+                                else if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    if (name.Contains("v0.") || name.Contains("v1.") || name.Contains("v2."))
+                                    {
+                                        if (!name.Contains(cleanTargetVersion, StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            continue;
+                                        }
+                                    }
+                                    zipUrl = url;
+                                    zipName = name;
+                                }
                             }
-                            else if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                            {
-                                zipUrl = url;
-                                zipName = name;
-                            }
+
+                            if (!string.IsNullOrEmpty(installerUrl)) return (installerUrl, installerName);
+                            if (!string.IsNullOrEmpty(zipUrl)) return (zipUrl, zipName);
                         }
-
-                        if (!string.IsNullOrEmpty(installerUrl)) return (installerUrl, installerName);
-                        if (!string.IsNullOrEmpty(zipUrl)) return (zipUrl, zipName);
                     }
+                    else
+                    {
+                        LogService.LogWarning($"UpdateService: Tag mismatch. Expected v{cleanTargetVersion}, got {tagName}. Using fallback.");
+                    }
+                }
+                else
+                {
+                    LogService.LogWarning($"UpdateService: GitHub Release API for tag v{cleanTargetVersion} returned status {response.StatusCode}. Using fallback URL.");
                 }
             }
             catch (Exception ex)
@@ -146,10 +183,8 @@ namespace StreamMesh.Core.Utils
                 LogService.LogWarning($"UpdateService: GitHub Releases API check failed: {ex.Message}");
             }
 
-            // Fallback direct URL schema
-            string cleanVer = targetVersion.TrimStart('v', 'V');
-            string fallbackExe = $"https://github.com/bilo1975tr/sm/releases/download/v{cleanVer}/StreamMesh-Setup-v{cleanVer}.exe";
-            return (fallbackExe, $"StreamMesh-Setup-v{cleanVer}.exe");
+            // Fallback direct URL schema strictly matching target version
+            return (fallbackUrl, expectedExeName);
         }
 
         public async Task<bool> DownloadAndInstallUpdateAsync(string targetVersion, Action<int, string, string?> onProgress)

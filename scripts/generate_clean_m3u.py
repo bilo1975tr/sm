@@ -2,17 +2,14 @@
 """
 generate_clean_m3u.py
 ---------------------
-- auto_update.json dosyasındaki M3U ve EPG (XML) adreslerini retry/backoff ile indirir.
-- M3U listelerini parse ederken User-Agent, Referer, EXTVLCOPT ve header direktiflerini korur.
-- EPG (XML) kaynaklarını parse eder (channel ID, display-name, icon).
-- Akıllı normalizasyon (Smart Canonical Normalization) ile takıları (HD, FHD, 4K, [TR], CANLI vb.)
-  temizleyerek yüksek doğrulukla EPG ve Logo eşleştirmesi yapar.
-- Birincil logo kaynağı olarak bilo1975tr/tv-logos (GitHub) ve ikincil olarak tv-logo/tv-logos reposunu kullanır.
-- Logo URL'lerini (HEAD/GET ve Content-Type kontrolü ile) doğrular ve bellek içi cache kullanır.
-- Bozuk veya eksik logoları sırasıyla EPG icon -> bilo1975tr/tv-logos -> tv-logo/tv-logos zinciriyle tamamlar.
-- HLS (.m3u8) akışlarında master/media playlist ve ilk segment doğrulaması yaparak gerçek canlılığı test eder.
-- Güvenli kanal tekilleştirme (de-duplication) yapar, farklı kanalların (Star TV vs Star Gold) karışmasını engeller.
-- cleaned_playlist.m3u ve report.json dosyalarını atomik (.tmp -> os.replace) olarak üretir.
+- auto_update.json dosyasındaki M3U/M3U8 ve EPG (XML) kaynaklarını kontrol eder.
+- Ardışık 2-3 başarısızlıkta (erişilememe veya 0 çalışan yayın) kaynakları auto_update.json dosyasından otomatik çıkarır.
+- GitHub üzerindeki public repository'lerde bulunan yeni, kaliteli M3U/M3U8 kaynaklarını otomatik keşfeder ve auto_update.json'a ekler.
+- Aynı kaynağın farklı URL/path formatlarıyla tekrar eklenmesini canonicalization ile engeller.
+- Canlı TV, Film, Dizi, Radyo ve tüm VOD içerik türlerini destekler, kategori ve metadata bilgilerini (group-title, tvg-name, tvg-logo, tvg-id vb.) korur.
+- HLS (.m3u8) ve HTTP akışlarını kısa timeout ile derinlemesine doğrular.
+- Tekilleştirme (de-duplication) ve EPG / Logo eşleştirme zincirini çalıştırır.
+- cleaned_playlist.m3u, auto_update.json ve report.json dosyalarını atomik ve güvenli şekilde günceller.
 """
 
 import argparse
@@ -55,6 +52,26 @@ _SUFFIX_REGEX = re.compile(
 _LOGO_VALIDATION_CACHE = {}
 _STREAM_CHECK_CACHE = {}
 
+def canonicalize_source_url(url: str) -> str:
+    """
+    URL'yi kanonik formata dönüştürür.
+    Aynı kaynağın farklı URL/path biçimleriyle (github blob vs raw, http vs https) tekrar eklenmesini engeller.
+    """
+    if not url:
+        return ""
+    url = url.strip()
+
+    m = re.match(r'https?://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/([^/]+)/(.*)', url, re.IGNORECASE)
+    if m:
+        owner, repo, ref, path = m.groups()
+        url = f"https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}"
+
+    if url.startswith("http://raw.githubusercontent.com/"):
+        url = "https://" + url[7:]
+
+    url = url.rstrip('/')
+    return url
+
 def normalize_name(s: str) -> str:
     """Metni küçük harfe çevirir, Türkçe karakterleri ve aksanları temizler."""
     if not s:
@@ -70,9 +87,6 @@ def canonical_channel_name(s: str) -> str:
     """
     Kanal adından parantezleri ve yayın takılarını (HD, FHD, 4K, [TR], CANLI vb.)
     güvenle temizleyip temel kanal ismini döner.
-    Örn: 'TRT 1 HD [TR]' -> 'trt 1'
-    Örn: 'STAR TV' -> 'star tv'
-    Örn: 'STAR GOLD' -> 'star gold'
     """
     if not s:
         return ''
@@ -124,7 +138,6 @@ def validate_logo_url(url: str, timeout: int = 4) -> bool:
     """
     Logo URL'sinin gerçekte çalışıp çalışmadığını test eder.
     HTTP status < 400, Content-Type görsel formatı veya geçerli bayt kontrolü yapar.
-    Sonuçlar bellekte cache'lenir.
     """
     if not url:
         return False
@@ -140,7 +153,6 @@ def validate_logo_url(url: str, timeout: int = 4) -> bool:
     }
 
     is_valid = False
-    # 1. Önce hafif HEAD isteği dene
     try:
         req_head = Request(clean_url, headers=headers, method='HEAD')
         with urlopen(req_head, timeout=timeout) as resp:
@@ -153,7 +165,6 @@ def validate_logo_url(url: str, timeout: int = 4) -> bool:
     except Exception:
         pass
 
-    # 2. HEAD desteklenmiyorsa veya başarısızsa mini Range GET dene
     if not is_valid:
         try:
             req_get = Request(clean_url, headers={**headers, 'Range': 'bytes=0-512'})
@@ -195,7 +206,7 @@ def check_stream_sync(url: str, custom_headers: dict = None, timeout: int = 6) -
                 return res
 
             ct = resp.headers.get('Content-Type', '').lower()
-            if 'mpegurl' in ct:
+            if 'mpegurl' in ct or 'hls' in ct or 'apple' in ct:
                 is_hls = True
 
             if not is_hls:
@@ -210,12 +221,11 @@ def check_stream_sync(url: str, custom_headers: dict = None, timeout: int = 6) -
             charset = resp.headers.get_content_charset() or 'utf-8'
             m3u8_text = resp.read(8192).decode(charset, errors='ignore')
 
-        if not m3u8_text.startswith('#EXTM3U'):
+        if not m3u8_text.startswith('#EXTM3U') and '#EXTM3U' not in m3u8_text:
             res = (False, "Geçersiz HLS Manifest (#EXTM3U eksik)")
             _STREAM_CHECK_CACHE[clean_url] = res
             return res
 
-        # Segment veya alt-playlist linki bul
         lines = [l.strip() for l in m3u8_text.splitlines() if l.strip()]
         target_sub_url = None
 
@@ -229,7 +239,6 @@ def check_stream_sync(url: str, custom_headers: dict = None, timeout: int = 6) -
             _STREAM_CHECK_CACHE[clean_url] = res
             return res
 
-        # Segment için Range GET testi
         sub_req = Request(target_sub_url, headers={**headers, 'Range': 'bytes=0-1024'})
         try:
             with urlopen(sub_req, timeout=timeout) as sub_resp:
@@ -258,7 +267,6 @@ def map_category(cat_key: str, original_group: str, name: str) -> str:
     nm = (name or "").lower()
     ck = (cat_key or "").lower()
 
-    # 1. Öncelik: Açık grup başlığı veya kanal adı anahtar kelimeleri
     if 'dizi' in og or 'series' in og or 'sezon' in og or 'episode' in og or 'bölüm' in og or 'bolum' in og or re.search(r'(?i)\bs\d+\s?e\d+\b|\b\d+x\d+\b', nm):
         return "Dizi"
     if 'film' in og or 'movie' in og or 'sinema' in og or 'vod' in og or 'movie' in nm or 'film' in nm:
@@ -268,7 +276,6 @@ def map_category(cat_key: str, original_group: str, name: str) -> str:
     if 'tv' in og or 'canli' in og or 'live' in og or 'kanal' in og:
         return "TV"
 
-    # 2. Öncelik: Kaynak kategori anahtarı
     if ck in ('series', 'dizi', 'diziler'):
         return "Dizi"
     elif ck in ('movies', 'film', 'filmler', 'sinema'):
@@ -278,7 +285,6 @@ def map_category(cat_key: str, original_group: str, name: str) -> str:
     elif ck in ('channels', 'tv', 'canli', 'live'):
         return "TV"
 
-    # 3. Öncelik: Regex ile isim kontrolleri
     if re.search(r'(?i)\bs\d+\s?e\d+\b|\b\d+x\d+\b', nm) or 'bölüm' in nm or 'bolum' in nm or 'sezon' in nm:
         return "Dizi"
     if 'radyo' in nm or 'radio' in nm:
@@ -289,7 +295,8 @@ def map_category(cat_key: str, original_group: str, name: str) -> str:
 def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
     """
     M3U içeriğini parse eder.
-    User-Agent, Referer, EXTVLCOPT, EXTHTTP ve KODIPROP direktiflerini korur.
+    Metadata bilgilerini (group-title, tvg-name, tvg-logo, tvg-id) ve direktifleri korur.
+    Film ve Dizi içeriklerini Canlı TV ile karıştırmadan orijinal grup/kategori bilgisini saklar.
     """
     channels = []
     lines = content.splitlines()
@@ -332,13 +339,17 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
                 j += 1
 
             if url:
-                group = map_category(default_category, attrs.get('group-title', ''), name)
+                orig_group = attrs.get('group-title', '')
+                cat = map_category(default_category, orig_group, name)
+                final_group = orig_group if orig_group else cat
+
                 channel = {
                     'name': name,
                     'tvg-id': attrs.get('tvg-id') or attrs.get('tvg-name') or None,
                     'tvg-name': attrs.get('tvg-name') or name,
                     'tvg-logo': attrs.get('tvg-logo') or None,
-                    'group-title': group,
+                    'group-title': final_group,
+                    'category': cat,
                     'url': url,
                     'source': source_url,
                     'normalized_name': normalize_name(name),
@@ -352,18 +363,15 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
             i += 1
     return channels
 
-def _local_name(tag: str) -> str:
-    return tag.split('}')[-1] if '}' in tag else tag
-
 def parse_epg_xml(xml_content: str):
-    """EPG XML verisini xml.etree.ElementTree ile parse eder."""
+    """EPG XML verisini parse eder."""
     channels = {}
     if not xml_content or not xml_content.strip():
         return channels
     try:
         root = ET.fromstring(xml_content)
         for ch in root.findall('.//'):
-            if _local_name(ch.tag) != 'channel':
+            if ch.tag.split('}')[-1] != 'channel':
                 continue
             ch_id = ch.get('id') or ch.get('channel')
             if not ch_id:
@@ -371,13 +379,13 @@ def parse_epg_xml(xml_content: str):
 
             display_names = []
             for dn in ch.findall('.//'):
-                if _local_name(dn.tag) == 'display-name' and dn.text:
+                if dn.tag.split('}')[-1] == 'display-name' and dn.text:
                     display_names.append(dn.text.strip())
             primary_name = display_names[0] if display_names else ch_id
 
             icon = None
             for ic in ch.findall('.//'):
-                if _local_name(ic.tag) == 'icon':
+                if ic.tag.split('}')[-1] == 'icon':
                     icon = ic.get('src') or ic.get('url') or None
                     if icon:
                         break
@@ -394,10 +402,7 @@ def parse_epg_xml(xml_content: str):
     return channels
 
 def index_github_repo_logos(repo: str, branch: str = 'main', github_token: str = None) -> dict:
-    """
-    GitHub repository ağacını (git/trees recursive) tek bir API çağrısıyla alıp bellekte indexler.
-    GitHub rate-limit dostudur.
-    """
+    """GitHub repository ağacını indeksler."""
     logos = {}
     api_url = f"https://api.github.com/repos/{repo}/git/trees/{branch}?recursive=1"
     headers = {'User-Agent': DEFAULT_USER_AGENT}
@@ -414,11 +419,11 @@ def index_github_repo_logos(repo: str, branch: str = 'main', github_token: str =
                 if item.get('type') == 'blob' and any(path.lower().endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.svg', '.webp', '.ico')):
                     base_name = os.path.splitext(os.path.basename(path))[0]
                     raw_url = f"https://raw.githubusercontent.com/{repo}/{branch}/{path}"
-                    
+
                     norm_k = normalize_name(base_name)
                     canon_k = canonical_channel_name(base_name)
                     slug_k = base_name.lower().replace(' ', '-').strip('-')
-                    
+
                     if norm_k and norm_k not in logos:
                         logos[norm_k] = raw_url
                     if canon_k and canon_k not in logos:
@@ -426,18 +431,12 @@ def index_github_repo_logos(repo: str, branch: str = 'main', github_token: str =
                     if slug_k and slug_k not in logos:
                         logos[slug_k] = raw_url
     except Exception:
-        # Fallback to master if main fails
         if branch == 'main':
             return index_github_repo_logos(repo, branch='master', github_token=github_token)
     return logos
 
 def fetch_all_logo_databases(github_token: str = None) -> tuple:
-    """
-    1. bilo1975tr/tv-logos (Birincil Logo Kaynağı)
-    2. tv-logo/tv-logos (İkincil Fallback Logo Kaynağı)
-    depolarını indexler.
-    Dönüş: (bilo_logos_db, fallback_logos_db)
-    """
+    """Logo veritabanlarını indeksler."""
     print("[*] bilo1975tr/tv-logos (Birincil Logo Deposu) indeksleniyor...")
     bilo_db = index_github_repo_logos("bilo1975tr/tv-logos", branch="main", github_token=github_token)
     print(f"  [+] bilo1975tr/tv-logos: {len(bilo_db)} adet logo indeksi hazır.")
@@ -449,19 +448,15 @@ def fetch_all_logo_databases(github_token: str = None) -> tuple:
     return bilo_db, fallback_db
 
 def find_best_logo_match(norm_name: str, canon_name: str, logo_db: dict) -> str:
-    """Logo veritabanı içinden güvenli eşleşme arar."""
+    """Logo veritabanında en iyi eşleşmeyi bulur."""
     if not norm_name and not canon_name:
         return ""
 
-    # 1. Exact normalized name
     if norm_name in logo_db:
         return logo_db[norm_name]
-
-    # 2. Canonical name
     if canon_name in logo_db:
         return logo_db[canon_name]
 
-    # 3. Slug match (örn: trt-1)
     slug = norm_name.replace(' ', '-')
     if slug in logo_db:
         return logo_db[slug]
@@ -469,7 +464,6 @@ def find_best_logo_match(norm_name: str, canon_name: str, logo_db: dict) -> str:
     if canon_slug in logo_db:
         return logo_db[canon_slug]
 
-    # 4. Token eşitliği (Tam kelime grubu eşitliği, alt-dize değil)
     norm_tokens = set(norm_name.split())
     canon_tokens = set(canon_name.split())
     for lk, lurl in logo_db.items():
@@ -480,33 +474,25 @@ def find_best_logo_match(norm_name: str, canon_name: str, logo_db: dict) -> str:
     return ""
 
 def match_channel_with_epg(ch: dict, epg_by_id: dict, epg_by_name: dict, epg_by_canon: dict) -> tuple:
-    """
-    Kanalı EPG kayıtlarıyla güvenle eşleştirir.
-    Dönüş: (epg_data, match_method)
-    """
+    """Kanalı EPG kayıtlarıyla eşleştirir."""
     tvg_id = ch.get('tvg-id')
     norm_name = ch.get('normalized_name')
     canon_name = ch.get('canonical_name')
 
-    # 1. Exact tvg-id match
     if tvg_id and tvg_id in epg_by_id:
         return epg_by_id[tvg_id], "exact_tvg_id"
 
-    # 2. Canonical tvg-id match
     if tvg_id:
         canon_id = canonical_channel_name(tvg_id)
         if canon_id in epg_by_canon:
             return epg_by_canon[canon_id], "canonical_tvg_id"
 
-    # 3. Exact normalized name match
     if norm_name and norm_name in epg_by_name:
         return epg_by_name[norm_name], "exact_name"
 
-    # 4. Canonical name match (Örn: 'TRT 1 HD [TR]' -> 'trt 1' == EPG 'trt 1')
     if canon_name and canon_name in epg_by_canon:
         return epg_by_canon[canon_name], "canonical_name"
 
-    # 5. Safe alias match (boşluksuz eşleşme)
     if norm_name:
         condensed = norm_name.replace(' ', '')
         for cname, cdata in epg_by_canon.items():
@@ -515,8 +501,92 @@ def match_channel_with_epg(ch: dict, epg_by_id: dict, epg_by_name: dict, epg_by_
 
     return None, "none"
 
+def discover_github_m3u_sources(github_token: str = None, existing_canonical_urls: set = None, max_candidates: int = 10) -> list:
+    """
+    GitHub üzerindeki PUBLIC repository'lerde bulunan M3U/M3U8 kaynaklarını otomatik keşfeder.
+    Rate-limit duyarlıdır.
+    Dönüş: [(category, raw_url, parsed_channels)]
+    """
+    if existing_canonical_urls is None:
+        existing_canonical_urls = set()
+
+    headers = {'User-Agent': 'StreamMesh-AutoCleaner/1.0'}
+    if github_token:
+        headers['Authorization'] = f"token {github_token}"
+
+    queries = [
+        "filename:m3u+iptv",
+        "filename:m3u+turk",
+        "extension:m3u8+playlist"
+    ]
+
+    candidate_urls = []
+
+    for q in queries:
+        if len(candidate_urls) >= max_candidates:
+            break
+        api_url = f"https://api.github.com/search/code?q={q}&per_page=10"
+        try:
+            req = Request(api_url, headers=headers)
+            with urlopen(req, timeout=10) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    for item in data.get('items', []):
+                        html_url = item.get('html_url', '')
+                        if html_url:
+                            raw_url = canonicalize_source_url(html_url)
+                            if raw_url and raw_url not in existing_canonical_urls and raw_url not in candidate_urls:
+                                candidate_urls.append(raw_url)
+                                existing_canonical_urls.add(raw_url)
+                                if len(candidate_urls) >= max_candidates:
+                                    break
+        except Exception as e:
+            print(f"[*] GitHub Arama uyarısı ({q}): {e}")
+            break
+
+    print(f"[*] GitHub araması sonucu {len(candidate_urls)} yeni aday M3U kaynağı tespit edildi.")
+
+    discovered_valid = []
+
+    for url in candidate_urls:
+        content, ok, err = fetch_text_with_retry(url, max_retries=1, timeout=12)
+        if not ok or not content or '#EXTM3U' not in content:
+            continue
+
+        parsed = parse_m3u(content, url, default_category="TV")
+        if not parsed or len(parsed) < 3 or len(parsed) > 5000:
+            continue
+
+        sample_channels = parsed[:10]
+        alive_count = 0
+        for ch in sample_channels:
+            custom_headers = {}
+            for d in ch.get('directives', []):
+                if 'http-user-agent=' in d:
+                    custom_headers['User-Agent'] = d.split('http-user-agent=', 1)[1].strip()
+                elif 'http-referrer=' in d:
+                    custom_headers['Referer'] = d.split('http-referrer=', 1)[1].strip()
+            is_alive, _ = check_stream_sync(ch['url'], custom_headers=custom_headers, timeout=5)
+            if is_alive:
+                alive_count += 1
+
+        if alive_count >= 2 or (len(sample_channels) > 0 and alive_count / len(sample_channels) >= 0.25):
+            cat_counts = {}
+            for ch in parsed:
+                cat = map_category("TV", ch.get('group-title', ''), ch.get('name', ''))
+                cat_counts[cat.lower()] = cat_counts.get(cat.lower(), 0) + 1
+
+            best_cat = max(cat_counts, key=cat_counts.get) if cat_counts else "tv"
+            if best_cat not in ("tv", "film", "dizi", "radyo", "karma"):
+                best_cat = "tv"
+
+            discovered_valid.append((best_cat, url, parsed))
+            print(f"  [+] Keşfedildi ve Doğrulandı ({best_cat.upper()}): {url} ({alive_count}/{len(sample_channels)} çalışan yayın)")
+
+    return discovered_valid
+
 def main():
-    parser = argparse.ArgumentParser(description="M3U Otomatik Temizleme, EPG ve Logo Entegrasyonu")
+    parser = argparse.ArgumentParser(description="M3U Otomatik Temizleme, Sağlık Kontrolü, EPG ve Logo Entegrasyonu")
     parser.add_argument('--source', default='auto_update.json', help='auto_update.json dosya yolu veya URL')
     parser.add_argument('--outdir', default='.', help='Çıktı klasörü')
     parser.add_argument('--fetch-logos', action='store_true', default=False, help='bilo1975tr ve tv-logos depolarından logo çek')
@@ -525,11 +595,14 @@ def main():
     parser.add_argument('--check-streams', action='store_true', default=False, help='Canlılık kontrolü yap')
     parser.add_argument('--stream-timeout', type=int, default=8, help='Akış kontrolü zaman aşımı (sn)')
     parser.add_argument('--max-workers', type=int, default=15, help='Eşzamanlı işlem sayısı')
+    parser.add_argument('--update-auto-json', action='store_true', default=True, help='auto_update.json dosyasını güncelle')
+    parser.add_argument('--discover-github', action='store_true', default=True, help='GitHub M3U kaynak keşfini çalıştır')
 
     args = parser.parse_args()
 
-    # 1. auto_update.json Dosyası Oku
     data = {}
+    is_local_source = False
+
     if args.source.startswith('http://') or args.source.startswith('https://'):
         txt, ok, err = fetch_text_with_retry(args.source)
         if ok and txt:
@@ -543,34 +616,61 @@ def main():
             sys.exit(1)
     else:
         if os.path.exists(args.source):
+            is_local_source = True
             with open(args.source, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         else:
             print(f"[x] Kaynak dosya bulunamadı: {args.source}")
             sys.exit(1)
 
+    fail_counts = data.get("_fail_counts", {})
+    if not isinstance(fail_counts, dict):
+        fail_counts = {}
+
     m3u_urls = []
     epg_urls = []
+    existing_canonical_urls = set()
 
     for category, urls in data.items():
+        if category.startswith('_'):
+            continue
         if category.lower() in ('epg', 'xml', 'epgs'):
             for u in urls:
-                epg_urls.append(u)
+                if isinstance(u, str):
+                    epg_urls.append(u)
+                    existing_canonical_urls.add(canonicalize_source_url(u))
         else:
             for u in urls:
                 if isinstance(u, str):
+                    canon_u = canonicalize_source_url(u)
+                    existing_canonical_urls.add(canon_u)
                     if u.strip().lower().endswith('.xml'):
                         epg_urls.append(u)
                     else:
                         m3u_urls.append((category, u))
 
-    print(f"[*] Toplam {len(m3u_urls)} M3U playlist adresi ve {len(epg_urls)} EPG adresi işlenecek.")
+    print(f"[*] Başlangıç: {len(m3u_urls)} M3U playlist adresi ve {len(epg_urls)} EPG adresi işlenecek.")
 
-    # 2. M3U İndirme ve Parsing (Retry destekli)
+    github_token = args.github_token or os.environ.get("GITHUB_TOKEN")
+    if args.discover_github and github_token:
+        print("[*] GitHub M3U Kaynak Keşfi başlatılıyor...")
+        new_discovered = discover_github_m3u_sources(
+            github_token=github_token,
+            existing_canonical_urls=existing_canonical_urls,
+            max_candidates=10
+        )
+        for cat, new_url, parsed_ch in new_discovered:
+            if cat not in data or not isinstance(data[cat], list):
+                data[cat] = []
+            data[cat].append(new_url)
+            m3u_urls.append((cat, new_url))
+            print(f"  [+] auto_update.json içine yeni kaliteli kaynak eklendi: {new_url} ({cat})")
+
     print("[*] M3U listeleri indiriliyor...")
     m3u_channels = []
     failed_sources = []
     sources_summary = []
+    source_channel_counts = {}
 
     def fetch_m3u_task(item):
         cat, url = item
@@ -581,19 +681,20 @@ def main():
         m3u_results = list(executor.map(fetch_m3u_task, m3u_urls))
 
     for cat, u, content, ok, err in m3u_results:
-        if ok and content:
+        if ok and content and '#EXTM3U' in content:
             parsed = parse_m3u(content, u, default_category=cat)
             m3u_channels.extend(parsed)
+            source_channel_counts[u] = len(parsed)
             sources_summary.append({'url': u, 'category': cat, 'status': 'success', 'channels_count': len(parsed)})
-            print(f"  [+] {cat.upper()}: {u} -> {len(parsed)} kanal")
+            print(f"  [+] {cat.upper()}: {u} -> {len(parsed)} içerik")
         else:
-            failed_sources.append({'url': u, 'category': cat, 'error': err})
-            sources_summary.append({'url': u, 'category': cat, 'status': 'failed', 'error': err})
-            print(f"  [-] İndirilemedi: {u} ({err})")
+            source_channel_counts[u] = 0
+            failed_sources.append({'url': u, 'category': cat, 'error': err or 'Boş veya geçersiz M3U'})
+            sources_summary.append({'url': u, 'category': cat, 'status': 'failed', 'error': err or 'Boş veya geçersiz M3U'})
+            print(f"  [-] İndirilemedi / Geçersiz M3U: {u} ({err})")
 
-    print(f"[*] Toplam çekilen ham kanal sayısı: {len(m3u_channels)}")
+    print(f"[*] Toplam çekilen ham içerik sayısı: {len(m3u_channels)}")
 
-    # 3. EPG İndirme ve Parsing
     print("[*] EPG verileri indiriliyor...")
     epg_channels_by_id = {}
     epg_channels_by_name = {}
@@ -620,17 +721,15 @@ def main():
             failed_sources.append({'url': u, 'category': 'epg', 'error': err})
             print(f"  [-] EPG İndirilemedi: {u} ({err})")
 
-    # 4. Logo Veritabanlarını İndeksle
     bilo_logos_db = {}
     fallback_logos_db = {}
     if args.fetch_logos:
-        bilo_logos_db, fallback_logos_db = fetch_all_logo_databases(github_token=args.github_token)
+        bilo_logos_db, fallback_logos_db = fetch_all_logo_databases(github_token=github_token)
 
-    # 5. Kanal Eşleştirme, EPG ve Logo Çözümleme Zinciri
     print("[*] Kanallar normalize ediliyor, EPG ve Logo zinciri çalıştırılıyor...")
     processed_channels = []
     seen_urls = set()
-    unique_channel_map = {} # canonical_key -> channel_dict
+    unique_channel_map = {}
 
     epg_match_stats = {
         'exact_tvg_id': 0,
@@ -656,7 +755,6 @@ def main():
             continue
         seen_urls.add(url)
 
-        # 5.1 EPG Eşleştirme
         epg_match, match_method = match_channel_with_epg(
             ch, epg_channels_by_id, epg_channels_by_name, epg_channels_by_canon
         )
@@ -673,12 +771,10 @@ def main():
             ch['epg_matched'] = False
             ch['epg_match_method'] = 'none'
 
-        # 5.2 Logo Çözümleme & Doğrulama Zinciri
         assigned_logo = ""
         raw_logo = ch.get('tvg-logo')
         had_initial_logo = bool(raw_logo)
 
-        # A) M3U'daki mevcut tvg-logo çalışıyor mu?
         if raw_logo and validate_logo_url(raw_logo, timeout=3):
             assigned_logo = raw_logo
             logo_stats['existing_valid'] += 1
@@ -686,12 +782,10 @@ def main():
             if had_initial_logo:
                 logo_stats['broken_replaced'] += 1
 
-            # B) EPG XML <icon> çalışıyor mu?
             if epg_match and epg_match.get('icon') and validate_logo_url(epg_match['icon'], timeout=3):
                 assigned_logo = epg_match['icon']
                 logo_stats['from_epg'] += 1
             else:
-                # C) bilo1975tr/tv-logos deposundan ara
                 norm_n = ch.get('normalized_name', '')
                 canon_n = ch.get('canonical_name', '')
                 bilo_candidate = find_best_logo_match(norm_n, canon_n, bilo_logos_db)
@@ -699,7 +793,6 @@ def main():
                     assigned_logo = bilo_candidate
                     logo_stats['from_bilo1975tr'] += 1
                 else:
-                    # D) Fallback tv-logo/tv-logos deposundan ara
                     fallback_candidate = find_best_logo_match(norm_n, canon_n, fallback_logos_db)
                     if fallback_candidate and validate_logo_url(fallback_candidate, timeout=3):
                         assigned_logo = fallback_candidate
@@ -709,32 +802,32 @@ def main():
 
         ch['tvg-logo'] = assigned_logo or ""
 
-        # 5.3 Güvenli Tekilleştirme & Alternatif Stream Kaydı
-        # Anahtar: TVG-ID veya (Canonical Name + Group Title)
-        dedup_key = f"id:{ch['tvg-id'].lower()}" if ch.get('tvg-id') and ch['epg_matched'] else f"name:{ch['canonical_name']}#{ch['group-title']}"
+        cat = ch.get('category', 'TV')
+        if cat == 'TV':
+            dedup_key = f"id:{ch['tvg-id'].lower()}" if ch.get('tvg-id') and ch['epg_matched'] else f"name:{ch['canonical_name']}#{ch['group-title']}"
+        else:
+            dedup_key = f"cat:{cat}#name:{ch['canonical_name']}#{ch['url']}"
 
         if dedup_key not in unique_channel_map:
             ch['backup_urls'] = []
             unique_channel_map[dedup_key] = ch
             processed_channels.append(ch)
         else:
-            # Alternatif yayın olarak kaydet
             existing = unique_channel_map[dedup_key]
             existing.setdefault('backup_urls', []).append(ch['url'])
 
-    print(f"[*] İşlenen tekil kanal sayısı: {len(processed_channels)} (Toplam ham URL: {len(seen_urls)})")
+    print(f"[*] İşlenen tekil içerik sayısı: {len(processed_channels)} (Toplam ham URL: {len(seen_urls)})")
 
-    # 6. Stream Kontrolü (HLS ve Header korumalı)
     alive_channels = []
     dead_channels = []
     hls_checked = 0
     hls_verified = 0
+    source_working_streams = {}
 
     if args.check_streams and processed_channels:
-        print(f"[*] {len(processed_channels)} kanal için derinlikli canlılık testi başlatılıyor...")
+        print(f"[*] {len(processed_channels)} içerik için derinlikli canlılık testi başlatılıyor...")
 
         def check_task(channel_item):
-            # Varsa direktiflerden header ayıkla
             custom_headers = {}
             for d in channel_item.get('directives', []):
                 if 'http-user-agent=' in d:
@@ -753,6 +846,7 @@ def main():
             results = list(executor.map(check_task, processed_channels))
 
         for ch in results:
+            src = ch.get('source', '')
             if ch.get('is_hls'):
                 hls_checked += 1
                 if ch.get('alive'):
@@ -760,52 +854,90 @@ def main():
 
             if ch.get('alive'):
                 alive_channels.append(ch)
+                source_working_streams[src] = source_working_streams.get(src, 0) + 1
             else:
                 dead_channels.append(ch)
+
         print(f"  [+] Canlı yayın: {len(alive_channels)}, Ölü yayın: {len(dead_channels)} (HLS Doğrulanan: {hls_verified}/{hls_checked})")
     else:
         alive_channels = processed_channels
+        for ch in processed_channels:
+            src = ch.get('source', '')
+            source_working_streams[src] = source_working_streams.get(src, 0) + 1
 
-    # 7. Atomik Çıktı Dosyaları Üretimi
+    removed_sources = []
+    preserved_failed_sources = []
+
+    for cat_name, u in list(m3u_urls):
+        ch_count = source_channel_counts.get(u, 0)
+        working_count = source_working_streams.get(u, 0)
+
+        is_source_dead = (ch_count == 0) or (args.check_streams and working_count == 0)
+
+        if is_source_dead:
+            c_fails = fail_counts.get(u, 0) + 1
+            fail_counts[u] = c_fails
+
+            if c_fails >= 3:
+                if cat_name in data and isinstance(data[cat_name], list) and u in data[cat_name]:
+                    data[cat_name].remove(u)
+                fail_counts.pop(u, None)
+                removed_sources.append({'url': u, 'category': cat_name, 'fail_count': c_fails})
+                print(f"  [!] Kaynak 3 kez üst üste başarısız oldu ve auto_update.json'dan çıkarıldı: {u}")
+            else:
+                preserved_failed_sources.append({'url': u, 'category': cat_name, 'fail_count': c_fails})
+                print(f"  [!] Kaynak başarısız oldu ({c_fails}/3), henüz çıkarılmadı: {u}")
+        else:
+            fail_counts.pop(u, None)
+
+    if is_local_source and args.update_auto_json:
+        data["_fail_counts"] = fail_counts
+        temp_json_path = f"{args.source}.tmp"
+        with open(temp_json_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_json_path, args.source)
+        print(f"[*] auto_update.json başarıyla güncellendi (Atomik). Çıkarılan ölü kaynak sayısı: {len(removed_sources)}")
+
     os.makedirs(args.outdir, exist_ok=True)
     output_m3u_path = os.path.join(args.outdir, 'cleaned_playlist.m3u')
     temp_m3u_path = f"{output_m3u_path}.tmp"
 
-    epg_header_str = f' url-tvg="{",".join(epg_urls)}"' if epg_urls else ''
-    m3u_lines = [f"#EXTM3U{epg_header_str}"]
-
     channels_to_write = alive_channels if args.remove_dead else processed_channels
 
-    for ch in channels_to_write:
-        attrs = []
-        if ch.get('tvg-id'):
-            attrs.append(f'tvg-id="{ch["tvg-id"]}"')
-        if ch.get('tvg-name'):
-            attrs.append(f'tvg-name="{ch["tvg-name"]}"')
-        if ch.get('tvg-logo'):
-            attrs.append(f'tvg-logo="{ch["tvg-logo"]}"')
-        if ch.get('group-title'):
-            attrs.append(f'group-title="{ch["group-title"]}"')
+    if len(channels_to_write) == 0 and os.path.exists(output_m3u_path):
+        print(f"[!] UYARI: 0 çalışan kanal bulundu. Mevcut {output_m3u_path} korundu, üzerine yazılmadı!")
+    else:
+        epg_header_str = f' url-tvg="{",".join(epg_urls)}"' if epg_urls else ''
+        m3u_lines = [f"#EXTM3U{epg_header_str}"]
 
-        attr_str = " " + " ".join(attrs) if attrs else ""
-        
-        # Varsa orijinal EXTVLCOPT / EXTHTTP direktiflerini koru
-        for directive in ch.get('directives', []):
-            m3u_lines.append(directive)
+        for ch in channels_to_write:
+            attrs = []
+            if ch.get('tvg-id'):
+                attrs.append(f'tvg-id="{ch["tvg-id"]}"')
+            if ch.get('tvg-name'):
+                attrs.append(f'tvg-name="{ch["tvg-name"]}"')
+            if ch.get('tvg-logo'):
+                attrs.append(f'tvg-logo="{ch["tvg-logo"]}"')
+            if ch.get('group-title'):
+                attrs.append(f'group-title="{ch["group-title"]}"')
 
-        m3u_lines.append(f"#EXTINF:-1{attr_str},{ch.get('name', 'Kanal')}")
-        m3u_lines.append(ch['url'])
+            attr_str = " " + " ".join(attrs) if attrs else ""
 
-    # Atomik M3U Yazma
-    with open(temp_m3u_path, 'w', encoding='utf-8') as f:
-        f.write("\n".join(m3u_lines) + "\n")
-        f.flush()
-        os.fsync(f.fileno())
-    os.replace(temp_m3u_path, output_m3u_path)
+            for directive in ch.get('directives', []):
+                m3u_lines.append(directive)
 
-    print(f"[*] OLUŞTURULDU (Atomik): {output_m3u_path} ({len(channels_to_write)} kanal)")
+            m3u_lines.append(f"#EXTINF:-1{attr_str},{ch.get('name', 'Kanal')}")
+            m3u_lines.append(ch['url'])
 
-    # 8. Kapsamlı Rapor Hazırlama
+        with open(temp_m3u_path, 'w', encoding='utf-8') as f:
+            f.write("\n".join(m3u_lines) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_m3u_path, output_m3u_path)
+        print(f"[*] OLUŞTURULDU (Atomik): {output_m3u_path} ({len(channels_to_write)} içerik)")
+
     total_parsed = len(m3u_channels)
     total_unique = len(processed_channels)
     epg_matched_count = sum(1 for c in processed_channels if c.get('epg_matched'))
@@ -814,6 +946,8 @@ def main():
 
     report = {
         'failed_sources': failed_sources,
+        'removed_sources': removed_sources,
+        'preserved_failed_sources': preserved_failed_sources,
         'source_success_count': len([s for s in sources_summary if s['status'] == 'success']),
         'source_failure_count': len(failed_sources),
         'total_channels_parsed': total_parsed,
