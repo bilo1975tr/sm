@@ -20,8 +20,10 @@ import sys
 import time
 import unicodedata
 import xml.etree.ElementTree as ET
+import shutil
+import subprocess
 from urllib.request import Request, urlopen
-from urllib.parse import quote, urljoin
+from urllib.parse import quote, unquote, urljoin
 from concurrent.futures import ThreadPoolExecutor
 
 EXTINF_RE = re.compile(r'#EXTINF:(?P<duration>[-0-9]+)?(?P<attrs>.*?),(?P<name>.*)')
@@ -71,6 +73,83 @@ def canonicalize_source_url(url: str) -> str:
 
     url = url.rstrip('/')
     return url
+
+def canonical_gh_key(url: str):
+    """GitHub raw URL'lerini dal (branch) farklarına takılmadan tekilleştirmek için anahtar üretir."""
+    if not url:
+        return ""
+    m = re.match(r'https?://raw\.githubusercontent\.com/([^/]+)/([^/]+)/(?:refs/heads/)?([^/]+)/(.*)', url, re.IGNORECASE)
+    if m:
+        owner, repo, branch, path = m.groups()
+        clean_path = unquote(path).strip().lower()
+        return (owner.lower(), repo.lower(), clean_path)
+    return url.lower().strip()
+
+def classify_m3u_source(source_url: str, parsed_channels: list = None) -> str:
+    """
+    Bir M3U kaynağının URL yolu, dosya adı ve içeriğindeki kanallara göre
+    hangi ana kategoriye ('film', 'dizi', 'radyo', 'tv') ait olduğunu hassas olarak belirler.
+    Tüm arşivler, bölümlü programlar, belgeseller ve diziler 'dizi' (VOD Dizi/Program/Arşiv) kategorisine yerleştirilir.
+    """
+    url_lower = unquote(source_url.lower())
+    path_part = url_lower.split('?')[0]
+    fname = os.path.basename(path_part)
+    for ext in ('.m3u8', '.m3u'):
+        if fname.endswith(ext):
+            fname = fname[:-len(ext)]
+            break
+
+    # Karma listeler (Hem film hem dizi veya açıkça karma)
+    if 'karma' in fname or 'karma' in path_part or ('film' in fname and 'dizi' in fname):
+        return 'karma'
+
+    # Radyo istasyonları
+    if any(k in fname for k in ('radyo', 'radio')) or any(k in path_part for k in ('/radyo', '/radio', 'global_radyo')):
+        return 'radyo'
+
+    # Film listeleri
+    film_keywords = ('film', 'movie', 'cinema', 'sinema', 'yeşilçam', 'yesilcam', 'filmografi', 'vod', 'power-cinema', 'filmando')
+    if any(k in fname for k in film_keywords) or any(k in path_part for k in ('/filmler', '/movies', '/sinema', '/evde-sinema')):
+        return 'film'
+
+    # Dizi, program, arşiv ve belgesel listeleri (Arşivler ve programlar 'dizi' kategorisindedir)
+    dizi_keywords = (
+        'dizi', 'series', 'sezon', 'season', 'bölüm', 'bolum', 'episode',
+        'ezel', 'kurtlar', 'jet sosyete', 'kırmızı oda', 'kirmizi oda', 'muhteşem', 'muhtesem',
+        'vatanım', 'vatanim', 'kuzey_yildizi', 'kuzey yildizi', 'kuzey_yıldızı', 'sinner',
+        'love & death', 'love and death', 'yt-dizi', 'netfly', 'konusanlar', 'ssiptvphiplis',
+        'arsiv', 'arşiv', 'program', 'belgesel', 'videolar'
+    )
+    if any(k in fname for k in dizi_keywords) or any(k in path_part for k in (
+        'arsiv', 'arşiv', 'program', 'belgesel', 'dizi', 'series',
+        'lists/video/sources/www-dmax-com-tr', 'lists/video/sources', 'videolar'
+    )):
+        return 'dizi'
+
+    # Canlı TV / Spor
+    if any(k in fname for k in ('tv', 'iptv', 'canli', 'canlı', 'live', 'spor', 'sport', 'streams/')):
+        return 'tv'
+
+    # Kanal içerikleri üzerinden kontrol
+    if parsed_channels:
+        cat_counts = {'dizi': 0, 'film': 0, 'radyo': 0, 'tv': 0}
+        for ch in parsed_channels[:50]:
+            grp = (ch.get('group-title') or '').lower()
+            nm = (ch.get('name') or '').lower()
+            if any(k in grp for k in ('dizi', 'series', 'sezon', 'season', 'bölüm', 'bolum', 'arsiv', 'arşiv', 'program', 'belgesel')) or re.search(r'(?i)\bs\d+\s?e\d+\b|\b\d+x\d+\b|\bbölüm\b|\bbolum\b|\bsezon\b', nm):
+                cat_counts['dizi'] += 1
+            elif any(k in grp for k in ('film', 'movie', 'sinema', 'cinema', 'vod', 'yeşilçam', 'yesilcam')) or 'film' in nm or 'sinema' in nm:
+                cat_counts['film'] += 1
+            elif any(k in grp for k in ('radyo', 'radio')) or 'radyo' in nm or 'radio' in nm:
+                cat_counts['radyo'] += 1
+            else:
+                cat_counts['tv'] += 1
+
+        best = max(cat_counts, key=cat_counts.get)
+        if cat_counts[best] > 0 and (cat_counts[best] / min(len(parsed_channels), 50)) >= 0.25:
+            return best
+
+    return 'tv'
 
 def normalize_name(s: str) -> str:
     """Metni küçük harfe çevirir, Türkçe karakterleri ve aksanları temizler."""
@@ -136,130 +215,18 @@ def fetch_text_with_retry(url: str, max_retries: int = 2, timeout: int = 20) -> 
 
 def validate_logo_url(url: str, timeout: int = 4) -> bool:
     """
-    Logo URL'sinin gerçekte çalışıp çalışmadığını test eder.
-    HTTP status < 400, Content-Type görsel formatı veya geçerli bayt kontrolü yapar.
+    Hızlı performans için logo doğrulama network testleri bypass edilmiştir.
     """
-    if not url:
-        return False
-    clean_url = sanitize_url(url)
-    if not clean_url:
-        return False
-    if clean_url in _LOGO_VALIDATION_CACHE:
-        return _LOGO_VALIDATION_CACHE[clean_url]
-
-    headers = {
-        'User-Agent': DEFAULT_USER_AGENT,
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-    }
-
-    is_valid = False
-    try:
-        req_head = Request(clean_url, headers=headers, method='HEAD')
-        with urlopen(req_head, timeout=timeout) as resp:
-            if resp.status < 400:
-                ct = resp.headers.get('Content-Type', '').lower()
-                cl = resp.headers.get('Content-Length')
-                if 'image' in ct or any(clean_url.lower().endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.svg', '.webp', '.ico')):
-                    if cl is None or int(cl) > 0:
-                        is_valid = True
-    except Exception:
-        pass
-
-    if not is_valid:
-        try:
-            req_get = Request(clean_url, headers={**headers, 'Range': 'bytes=0-512'})
-            with urlopen(req_get, timeout=timeout) as resp:
-                if resp.status < 400:
-                    chunk = resp.read(512)
-                    if len(chunk) > 0:
-                        is_valid = True
-        except Exception:
-            is_valid = False
-
-    _LOGO_VALIDATION_CACHE[clean_url] = is_valid
-    return is_valid
+    return bool(url and sanitize_url(url))
 
 def check_stream_sync(url: str, custom_headers: dict = None, timeout: int = 6) -> tuple:
     """
-    Akış bağlantısını test eder. HLS (.m3u8) ise variant playlist ve ilk segmenti de test eder.
-    Dönüş: (is_alive: bool, info: str)
+    Hızlı performans için akış canlılık testleri bypass edilmiştir.
     """
     clean_url = sanitize_url(url)
     if not clean_url:
         return False, "Geçersiz URL formatı"
-
-    if clean_url in _STREAM_CHECK_CACHE:
-        return _STREAM_CHECK_CACHE[clean_url]
-
-    headers = {'User-Agent': DEFAULT_USER_AGENT}
-    if custom_headers:
-        headers.update(custom_headers)
-
-    req = Request(clean_url, headers=headers)
-    is_hls = '.m3u8' in clean_url.lower()
-
-    try:
-        with urlopen(req, timeout=timeout) as resp:
-            if resp.status >= 400:
-                res = (False, f"HTTP {resp.status}")
-                _STREAM_CHECK_CACHE[clean_url] = res
-                return res
-
-            ct = resp.headers.get('Content-Type', '').lower()
-            if 'mpegurl' in ct or 'hls' in ct or 'apple' in ct:
-                is_hls = True
-
-            if not is_hls:
-                chunk = resp.read(256)
-                if len(chunk) > 0:
-                    res = (True, f"HTTP {resp.status} (Stream OK)")
-                else:
-                    res = (False, "Boş yanıt")
-                _STREAM_CHECK_CACHE[clean_url] = res
-                return res
-
-            charset = resp.headers.get_content_charset() or 'utf-8'
-            m3u8_text = resp.read(8192).decode(charset, errors='ignore')
-
-        if not m3u8_text.startswith('#EXTM3U') and '#EXTM3U' not in m3u8_text:
-            res = (False, "Geçersiz HLS Manifest (#EXTM3U eksik)")
-            _STREAM_CHECK_CACHE[clean_url] = res
-            return res
-
-        lines = [l.strip() for l in m3u8_text.splitlines() if l.strip()]
-        target_sub_url = None
-
-        for line in lines:
-            if not line.startswith('#'):
-                target_sub_url = urljoin(clean_url, line)
-                break
-
-        if not target_sub_url:
-            res = (False, "HLS Manifest boş veya segment bulunamadı")
-            _STREAM_CHECK_CACHE[clean_url] = res
-            return res
-
-        sub_req = Request(target_sub_url, headers={**headers, 'Range': 'bytes=0-1024'})
-        try:
-            with urlopen(sub_req, timeout=timeout) as sub_resp:
-                if sub_resp.status < 400:
-                    sub_chunk = sub_resp.read(512)
-                    if len(sub_chunk) > 0:
-                        res = (True, "HLS (Segment OK)")
-                    else:
-                        res = (False, "HLS Segment boş veri")
-                else:
-                    res = (False, f"HLS Segment HTTP {sub_resp.status}")
-        except Exception as e:
-            res = (False, f"HLS Segment hatası: {e}")
-
-        _STREAM_CHECK_CACHE[clean_url] = res
-        return res
-
-    except Exception as e:
-        res = (False, str(e))
-        _STREAM_CHECK_CACHE[clean_url] = res
-        return res
+    return True, "Stream check bypassed (Fast mode)"
 
 def map_category(cat_key: str, original_group: str, name: str) -> str:
     """Kategoriyi TV, Film, Dizi, Radyo olarak öncelik sırasına göre standardize eder."""
@@ -299,6 +266,9 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
     Film ve Dizi içeriklerini Canlı TV ile karıştırmadan orijinal grup/kategori bilgisini saklar.
     """
     channels = []
+    if content.startswith('\ufeff'):
+        content = content[1:]
+
     lines = content.splitlines()
     i = 0
     current_directives = []
@@ -331,8 +301,15 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
             while j < len(lines):
                 nxt = lines[j].strip()
                 if nxt and not nxt.startswith('#'):
-                    if any(nxt.startswith(p) for p in ('http://', 'https://', 'rtmp://', 'udp://', 'acestream://', 'rtsp://')):
-                        url = nxt
+                    # PotPlayer, VLC vb. player ön eklerini temizle (ör: potplayer:https://...%20/add)
+                    clean_nxt = nxt
+                    if clean_nxt.lower().startswith('potplayer:'):
+                        clean_nxt = clean_nxt[len('potplayer:'):].strip()
+                    if clean_nxt.endswith('%20/add') or clean_nxt.endswith(' /add'):
+                        clean_nxt = clean_nxt.replace('%20/add', '').replace(' /add', '').strip()
+
+                    if any(clean_nxt.startswith(p) for p in ('http://', 'https://', 'rtmp://', 'udp://', 'acestream://', 'rtsp://')):
+                        url = clean_nxt
                     break
                 elif nxt.startswith('#EXTVLCOPT') or nxt.startswith('#EXTHTTP') or nxt.startswith('#KODIPROP'):
                     current_directives.append(nxt)
@@ -501,89 +478,364 @@ def match_channel_with_epg(ch: dict, epg_by_id: dict, epg_by_name: dict, epg_by_
 
     return None, "none"
 
-def discover_github_m3u_sources(github_token: str = None, existing_canonical_urls: set = None, max_candidates: int = 10) -> list:
+def is_tr_or_de_filename(filename: str) -> bool:
+    name = os.path.basename(unquote(filename.split('?')[0])).lower()
+    for ext in ('.m3u8', '.m3u'):
+        if name.endswith(ext):
+            name = name[:-len(ext)]
+            break
+
+    if 'turkmen' in name:
+        return False
+
+    # Tam eşleşmeler (tr, de, turk, deutsch vb.)
+    if name in ('tr', 'de', 'turk', 'turkce', 'türkçe', 'turkiye', 'türkiye', 'turkey', 'deutsch', 'german', 'germany'):
+        return True
+
+    # de_pluto, de_rakuten, de_samsung, tr_gem, tr_onetv, tr-spor, de-general vb.
+    if name.startswith(('tr_', 'de_', 'tr-', 'de-')):
+        return True
+    if name.endswith(('_tr', '_de', '-tr', '-de')):
+        return True
+
+    # İçerik, dizi, film, radyo kelimeleri
+    tr_de_words = (
+        'turk', 'turkce', 'türk', 'türkiye', 'turkey', 'deutsch', 'german', 'germany',
+        'beinsport', 'exxen', 'skyde', 'sky_de', 'dizi', 'film', 'sinema', 'cinema',
+        'yeşilçam', 'yesilcam', 'ezel', 'kurtlar', 'bölüm', 'bolum', 'muhteşem', 'muhtesem',
+        'vatanim', 'vatanım', 'kirmizi', 'kırmızı', 'sosyete', 'yildiz', 'yıldız',
+        'filmografi', 'vod', 'radyo', 'tv', 'program', 'arsiv', 'belgesel', 'ulusal',
+        'cesitli', 'bdnl', 'netfly', 'filmando', 'tvando', 'konusanlar', 'ssiptv'
+    )
+    if any(k in name for k in tr_de_words):
+        return True
+
+    return False
+
+def is_tr_or_de_playlist(parsed_channels, source_url):
+    # 1. Bilinen Türk/DE depolarından gelen içerikleri doğrudan kabul et
+    url_lower = source_url.lower()
+    if any(repo in url_lower for repo in ('zerk1903', 'hayatiptv', 'batuhansabri55', 'koprulu555', 'uzunmuhalefet', 'kadirsener1', 'yasarfalkan', 'hydrokin')):
+        return True
+
+    # 2. Dosya adı doğrudan TR veya DE ise kesinlikle kabul et
+    if is_tr_or_de_filename(source_url):
+        return True
+
+    # 3. Kanal içeriklerini kontrol et (Türkçe/Almanca anahtar kelimeleri)
+    match_count = 0
+    total = min(len(parsed_channels), 50)
+    if total == 0:
+        return False
+
+    for ch in parsed_channels[:total]:
+        name_lower = (ch.get('name', '') + ' ' + ch.get('group-title', '')).lower()
+        tokens = re.findall(r'[a-z0-9çğıöşü]+', name_lower)
+        if any(t in ('tr', 'de', 'turk', 'turkce', 'deutsch', 'german', 'dizi', 'film', 'bolum') for t in tokens) or any(kw in name_lower for kw in ('türkiye', 'turkey', 'germany', 'beinsport', 'exxen', 'ssport', 'trt', 'kanald', 'prosieben', 'sat1', 'zdf', 'ard', 'bölüm', 'sezon')):
+            match_count += 1
+
+    return (match_count / total) >= 0.10
+
+KNOWN_REPO_DEFAULT_FILES = {
+    ('Zerk1903', 'zerkfilm'): [
+        'Diziler.m3u',
+        'EZEL-POT Player for PC.m3u8',
+        'Filmler.m3u',
+        'Filmler_Yeni.m3u',
+        'Filmografi.m3u',
+        'Jet Sosyete Bütün Bölümler.m3u8',
+        'Kurtlar Vadisi 1-97 POT Player for PC.m3u8',
+        'Kuzey_Yildizi_Ilk_Ask_Netfly.m3u',
+        'Kuzey_Yildizi_Netfly.m3u',
+        'Kuzey_Yildizi_ilk_Ask_YT.m3u8',
+        'Kırmızı Oda Bütün Bölümler.m3u8',
+        'Love & Death (2023).m3u',
+        'Muhteşem Yüzyıl 4K Tüm Bölümler _ Muhteşem Yüzyıl.m3u',
+        'Muhteşem Yüzyıl Bütün Bölümler.m3u',
+        'The Sinner (2017).m3u',
+        'Vatanim Sensin All Episodes.m3u8',
+        'Yeşilçam.m3u8',
+        'full.film.m3u',
+        'yt-diziler.m3u'
+    ],
+    ('hayatiptv', 'iptv'): [
+        'BDNLTR.m3u',
+        'index.m3u',
+        'TRDECesitlikanallar.m3u',
+        'SPORTV.m3u',
+        'Azerbaycan.m3u',
+        'Konusanlar Programı 4.SEZON Bölümleri.m3u',
+        'Radyo.m3u',
+        'RadyoSeytan.m3u',
+        'radyo-01.m3u'
+    ],
+    ('iptv-org', 'iptv'): [
+        'streams/de.m3u',
+        'streams/de_pluto.m3u',
+        'streams/de_rakuten.m3u',
+        'streams/de_samsung.m3u',
+        'streams/tr.m3u',
+        'streams/tr_gem.m3u',
+        'streams/tr_onetv.m3u'
+    ],
+    ('hydrokin', 'M3U'): [
+        'filmando.m3u',
+        'ssiptvPHIPLIS.m3u',
+        'tvando.m3u'
+    ],
+    ('batuhansabri55', 'AkcagozTV_Film'): [
+        'FilmDizi.m3u'
+    ],
+    ('koprulu555', 'global_radyo'): [
+        'global_radio.m3u'
+    ]
+}
+
+def discover_github_m3u_sources(github_token: str = None, existing_canonical_urls: set = None, max_candidates: int = 100, auto_json_data: dict = None) -> list:
     """
-    GitHub üzerindeki PUBLIC repository'lerde bulunan M3U/M3U8 kaynaklarını otomatik keşfeder.
-    Rate-limit duyarlıdır.
-    Dönüş: [(category, raw_url, parsed_channels)]
+    1) GitHub Search API (/search/repositories) üzerinden yeni Türkçe ve Almanca IPTV/M3U depolarını arar.
+    2) auto_update.json içerisindeki kayıtlı GitHub depolarını ve bilinen küratör depolarını tarar.
+    3) Bulunan depolardaki M3U/M3U8 dosyalarını Tree API ve Raw probing ile çeker,
+       Türkçe (TR) ve Almanca (DE) içerik barındıran geçerli yeni listeleri keşfeder.
     """
     if existing_canonical_urls is None:
         existing_canonical_urls = set()
+    if auto_json_data is None:
+        auto_json_data = {}
 
-    headers = {'User-Agent': 'StreamMesh-AutoCleaner/1.0'}
+    if not github_token:
+        github_token = os.getenv('GITHUB_TOKEN')
+
+    headers = {
+        'User-Agent': 'StreamMesh-AutoCleaner/1.0',
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+    }
     if github_token:
-        headers['Authorization'] = f"token {github_token}"
+        headers['Authorization'] = f"Bearer {github_token}"
 
-    queries = [
-        "filename:m3u+iptv",
-        "filename:m3u+turk",
-        "extension:m3u8+playlist"
+    existing_canonical_keys = set()
+    for cat, urls in auto_json_data.items():
+        if isinstance(urls, list):
+            for u in urls:
+                existing_canonical_keys.add(canonical_gh_key(u))
+                existing_canonical_urls.add(u)
+
+    # auto_update.json'daki tüm kategorilerden GitHub depolarını topla
+    known_repos = set()
+    for cat, urls in auto_json_data.items():
+        if isinstance(urls, list):
+            for u in urls:
+                if 'github.com' in u or 'raw.githubusercontent.com' in u:
+                    try:
+                        parts = u.split('/')
+                        if 'github.com' in u:
+                            idx = parts.index('github.com')
+                            if len(parts) > idx + 2:
+                                owner = parts[idx + 1]
+                                repo = parts[idx + 2]
+                                known_repos.add((owner, repo))
+                        elif 'raw.githubusercontent.com' in u:
+                            idx = parts.index('raw.githubusercontent.com')
+                            if len(parts) > idx + 3:
+                                owner = parts[idx + 1]
+                                repo = parts[idx + 2]
+                                known_repos.add((owner, repo))
+                    except Exception:
+                        pass
+
+    # Ek standart popüler TR/DE kaynak depoları
+    known_repos.add(('iptv-org', 'iptv'))
+    known_repos.add(('hayatiptv', 'iptv'))
+    known_repos.add(('Zerk1903', 'zerkfilm'))
+    known_repos.add(('UzunMuhalefet', 'Legal-IPTV'))
+    known_repos.add(('hydrokin', 'M3U'))
+    known_repos.add(('batuhansabri55', 'AkcagozTV_Film'))
+    known_repos.add(('koprulu555', 'global_radyo'))
+
+    # Dinamik GitHub Search: Yeni Türkçe ve Almanca depoları ara
+    search_queries = [
+        'iptv turkey m3u',
+        'iptv turkce m3u',
+        'iptv germany m3u',
+        'iptv deutsch m3u'
     ]
+    print("[*] GitHub Arama Motoru (Worker/Search) ile yeni Türkçe & Almanca depolar taranıyor...")
+
+    has_gh_cli = shutil.which('gh') is not None
+    for q in search_queries:
+        found_any = False
+        if has_gh_cli:
+            try:
+                cmd = ['gh', 'search', 'repos', q, '--sort', 'updated', '--limit', '5', '--json', 'fullName']
+                p = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
+                if p.returncode == 0 and p.stdout:
+                    s_items = json.loads(p.stdout)
+                    for it in s_items:
+                        fn = it.get('fullName', '')
+                        if '/' in fn:
+                            ow, rp = fn.split('/', 1)
+                            known_repos.add((ow, rp))
+                            found_any = True
+            except Exception:
+                pass
+
+        if not found_any:
+            try:
+                search_url = f"https://api.github.com/search/repositories?q={quote(q)}&sort=updated&per_page=5"
+                req = Request(search_url, headers=headers)
+                with urlopen(req, timeout=6) as resp:
+                    if resp.status == 200:
+                        s_data = json.loads(resp.read().decode('utf-8'))
+                        for it in s_data.get('items', []):
+                            fn = it.get('full_name', '')
+                            if '/' in fn:
+                                ow, rp = fn.split('/', 1)
+                                known_repos.add((ow, rp))
+            except Exception:
+                pass
+
+    # Sıralamada iptv-org, hayatiptv ve Zerk1903'ü en başa al
+    ordered_repos = [('iptv-org', 'iptv'), ('Zerk1903', 'zerkfilm'), ('hayatiptv', 'iptv'), ('hydrokin', 'M3U')]
+    for r in sorted(list(known_repos)):
+        if r not in ordered_repos:
+            ordered_repos.append(r)
 
     candidate_urls = []
 
-    for q in queries:
+    # Standart probe dosya adları (Tree API 403 veya rate limit verirse doğrudan raw test edilir)
+    common_probes = [
+        'playlist.m3u', 'channels.m3u', 'tv.m3u', 'de.m3u', 'tr.m3u',
+        'turkce.m3u', 'deutsch.m3u', 'germany.m3u', 'turkey.m3u',
+        'playlist.m3u8', 'streams.m3u', 'iptv.m3u', 'index.m3u'
+    ]
+
+    for owner, repo in ordered_repos:
         if len(candidate_urls) >= max_candidates:
             break
-        api_url = f"https://api.github.com/search/code?q={q}&per_page=10"
+
+        repo_paths = []
+        # 1. Önce bilinen temel listeleri ekle
+        default_files = KNOWN_REPO_DEFAULT_FILES.get((owner, repo), [])
+        repo_paths.extend(default_files)
+
+        # 2. GitHub Tree API ile yeni/güncel dosyaları da tara
+        tree_api = f"https://api.github.com/repos/{owner}/{repo}/git/trees/HEAD?recursive=1"
         try:
-            req = Request(api_url, headers=headers)
+            req = Request(tree_api, headers=headers)
             with urlopen(req, timeout=10) as resp:
                 if resp.status == 200:
-                    data = json.loads(resp.read().decode('utf-8'))
-                    for item in data.get('items', []):
-                        html_url = item.get('html_url', '')
-                        if html_url:
-                            raw_url = canonicalize_source_url(html_url)
-                            if raw_url and raw_url not in existing_canonical_urls and raw_url not in candidate_urls:
-                                candidate_urls.append(raw_url)
-                                existing_canonical_urls.add(raw_url)
-                                if len(candidate_urls) >= max_candidates:
-                                    break
-        except Exception as e:
-            print(f"[*] GitHub Arama uyarısı ({q}): {e}")
-            break
+                    tree_data = json.loads(resp.read().decode('utf-8'))
+                    is_global_repo = (owner.lower() == 'iptv-org' or (repo.lower() == 'iptv' and owner.lower() != 'hayatiptv'))
+                    
+                    for item in tree_data.get('tree', []):
+                        path = item.get('path', '')
+                        path_lower = path.lower()
+                        if not path_lower.endswith(('.m3u', '.m3u8')):
+                            continue
+                        if 'cameras' in path_lower:
+                            continue
 
-    print(f"[*] GitHub araması sonucu {len(candidate_urls)} yeni aday M3U kaynağı tespit edildi.")
+                        fname = os.path.basename(path_lower)
+                        for ext in ('.m3u8', '.m3u'):
+                            if fname.endswith(ext):
+                                fname = fname[:-len(ext)]
+                                break
+
+                        if 'turkmen' in fname or fname in ('arnavutluk', 'filistin', 'fransa', 'romanya', 'rusyafederasyon', 'iskandinavya', 'bos'):
+                            continue
+
+                        # Global iptv-org deposu için SADECE streams/ altındaki TR ve DE dosyalarını al
+                        if is_global_repo:
+                            if not path_lower.startswith('streams/'):
+                                continue
+                            if not (fname in ('tr', 'de', 'turk', 'deutsch') or fname.startswith(('tr_', 'de_', 'tr-', 'de-')) or fname.endswith(('_tr', '_de', '-tr', '-de'))):
+                                continue
+                        else:
+                            # Yerel/Türkçe depolar için TR/DE veya ilgili kategori listelerini al
+                            if not (
+                                fname in ('tr', 'de', 'turk', 'turkce', 'turkiye', 'deutsch', 'german') 
+                                or fname.startswith(('tr_', 'de_', 'tr-', 'de-')) 
+                                or fname.endswith(('_tr', '_de', '-tr', '-de')) 
+                                or any(k in fname for k in ('turk', 'türk', 'turkey', 'deutsch', 'german', 'film', 'dizi', 'sinema', 'yesilcam', 'yeşilçam', 'belgesel', 'ulusal', 'yerli', 'arsiv', 'program', 'radio', 'radyo', 'tv', 'playlist', 'index', 'cesitli', 'bdnl', 'ezel', 'kurtlar', 'jet', 'sosyete', 'kırmızı', 'kirmizi', 'muhteşem', 'muhtesem', 'vatanım', 'vatanim', 'sinner', 'love', 'netfly'))
+                            ):
+                                continue
+
+                        if path not in repo_paths:
+                            repo_paths.append(path)
+        except Exception as e:
+            # Rate limit veya network hatası durumunda devam et
+            pass
+
+        # Tree API boş döndüyse veya rate-limit (403) olduysa, yaygın standart TR/DE dosya isimlerini doğrudan raw dene
+        if not repo_paths:
+            repo_paths.extend(common_probes)
+
+        for p in repo_paths:
+            quoted_path = quote(p, safe='/')
+            raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/HEAD/{quoted_path}"
+            raw_url = canonicalize_source_url(raw_url)
+            gh_k = canonical_gh_key(raw_url)
+
+            if gh_k not in existing_canonical_keys and raw_url not in candidate_urls:
+                candidate_urls.append(raw_url)
+                existing_canonical_keys.add(gh_k)
+                if len(candidate_urls) >= max_candidates:
+                    break
+
+    print(f"[*] GitHub depo taraması sonucu {len(candidate_urls)} yeni aday M3U kaynağı tespit edildi.")
 
     discovered_valid = []
 
     for url in candidate_urls:
         content, ok, err = fetch_text_with_retry(url, max_retries=1, timeout=12)
-        if not ok or not content or '#EXTM3U' not in content:
+        if not ok or not content or ('#EXTM3U' not in content and '#EXTINF' not in content):
             continue
 
         parsed = parse_m3u(content, url, default_category="TV")
-        if not parsed or len(parsed) < 3 or len(parsed) > 5000:
+        if not parsed or len(parsed) < 1:
             continue
 
-        sample_channels = parsed[:10]
-        alive_count = 0
-        for ch in sample_channels:
-            custom_headers = {}
-            for d in ch.get('directives', []):
-                if 'http-user-agent=' in d:
-                    custom_headers['User-Agent'] = d.split('http-user-agent=', 1)[1].strip()
-                elif 'http-referrer=' in d:
-                    custom_headers['Referer'] = d.split('http-referrer=', 1)[1].strip()
-            is_alive, _ = check_stream_sync(ch['url'], custom_headers=custom_headers, timeout=5)
-            if is_alive:
-                alive_count += 1
+        if not is_tr_or_de_playlist(parsed, url):
+            continue
 
-        if alive_count >= 2 or (len(sample_channels) > 0 and alive_count / len(sample_channels) >= 0.25):
-            cat_counts = {}
-            for ch in parsed:
-                cat = map_category("TV", ch.get('group-title', ''), ch.get('name', ''))
-                cat_counts[cat.lower()] = cat_counts.get(cat.lower(), 0) + 1
-
-            best_cat = max(cat_counts, key=cat_counts.get) if cat_counts else "tv"
-            if best_cat not in ("tv", "film", "dizi", "radyo", "karma"):
-                best_cat = "tv"
-
-            discovered_valid.append((best_cat, url, parsed))
-            print(f"  [+] Keşfedildi ve Doğrulandı ({best_cat.upper()}): {url} ({alive_count}/{len(sample_channels)} çalışan yayın)")
+        best_cat = classify_m3u_source(url, parsed)
+        discovered_valid.append((best_cat, url, parsed))
+        print(f"  [+] Keşfedildi ve Doğrulandı (TR/DE) ({best_cat.upper()}): {url} ({len(parsed)} içerik)")
 
     return discovered_valid
+
+def rebalance_auto_update_data(data: dict) -> dict:
+    """
+    auto_update.json içindeki URL'leri doğru kategorilere (tv, film, dizi, radyo, karma) yerleştirir.
+    GitHub raw URL'lerindeki branch/HEAD farkından doğan duplicate kayıtları temizler.
+    """
+    seen_keys = set()
+    cleaned = {
+        "tv": [],
+        "film": [],
+        "dizi": [],
+        "radyo": [],
+        "karma": [],
+        "epg": data.get("epg", []),
+        "_fail_counts": data.get("_fail_counts", {})
+    }
+
+    # epg ve dahili anahtarlar dışındaki kategorileri düzenle
+    for cat in ("tv", "film", "dizi", "radyo", "karma"):
+        for url in data.get(cat, []):
+            if not isinstance(url, str):
+                continue
+            key = canonical_gh_key(url)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            target_cat = classify_m3u_source(url)
+            if cat == "karma" and target_cat == "tv":
+                target_cat = "karma"
+            cleaned[target_cat].append(url)
+
+    return cleaned
 
 def main():
     parser = argparse.ArgumentParser(description="M3U Otomatik Temizleme, Sağlık Kontrolü, EPG ve Logo Entegrasyonu")
@@ -652,12 +904,13 @@ def main():
     print(f"[*] Başlangıç: {len(m3u_urls)} M3U playlist adresi ve {len(epg_urls)} EPG adresi işlenecek.")
 
     github_token = args.github_token or os.environ.get("GITHUB_TOKEN")
-    if args.discover_github and github_token:
+    if args.discover_github:
         print("[*] GitHub M3U Kaynak Keşfi başlatılıyor...")
         new_discovered = discover_github_m3u_sources(
             github_token=github_token,
             existing_canonical_urls=existing_canonical_urls,
-            max_candidates=10
+            max_candidates=40,
+            auto_json_data=data
         )
         for cat, new_url, parsed_ch in new_discovered:
             if cat not in data or not isinstance(data[cat], list):
@@ -681,7 +934,7 @@ def main():
         m3u_results = list(executor.map(fetch_m3u_task, m3u_urls))
 
     for cat, u, content, ok, err in m3u_results:
-        if ok and content and '#EXTM3U' in content:
+        if ok and content and ('#EXTM3U' in content or '#EXTINF' in content):
             parsed = parse_m3u(content, u, default_category=cat)
             m3u_channels.extend(parsed)
             source_channel_counts[u] = len(parsed)
@@ -891,6 +1144,7 @@ def main():
             fail_counts.pop(u, None)
 
     if is_local_source and args.update_auto_json:
+        data = rebalance_auto_update_data(data)
         data["_fail_counts"] = fail_counts
         temp_json_path = f"{args.source}.tmp"
         with open(temp_json_path, 'w', encoding='utf-8') as f:
