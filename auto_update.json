@@ -20,7 +20,8 @@
     "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/tr_gem.m3u",
     "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/tr_onetv.m3u",
     "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/SPORTV.m3u",
-    "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Azerbaycan.m3u"
+    "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Azerbaycan.m3u",
+    "https://raw.githubusercontent.com/Efeisot/iptv/HEAD/index.m3u"
   ],
   "film": [
     "https://tinyurl.com/power-cinema",
@@ -113,5 +114,30 @@
     "https://iptv-epg.org/files/epg-de.xml",
     "https://iptv-epg.org/files/epg-tr.xml"
   ],
-  "_fail_counts": {}
+  "_fail_counts": {
+    "https://raw.githubusercontent.com/hayatiptv/iptv/refs/heads/master/BDNLTR.m3u": 1,
+    "https://raw.githubusercontent.com/hayatiptv/iptv/refs/heads/master/TRDECesitlikanallar.m3u": 1,
+    "https://onureroz.com/indirmeler/turk/index.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-dmax-com-tr/programlar/larry-ve-george-turkiyede.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-dmax-com-tr/programlar/merak-yellowstone-ulusal-parki.m3u": 1,
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/HEAD/Kuzey_Yildizi_Netfly.m3u": 1,
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/HEAD/Love%20%26%20Death%20%282023%29.m3u": 1,
+    "https://raw.githubusercontent.com/Zerk1903/zerkfilm/HEAD/Muhte%C5%9Fem%20Y%C3%BCzy%C4%B1l%20B%C3%BCt%C3%BCn%20B%C3%B6l%C3%BCmler.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-cnnturk-com/belgeseller/1914-1915-belgeseli.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-cnnturk-com/belgeseller/ay-belgeseli.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-cnnturk-com/belgeseller/bizim-deniz-marmara-belgeseli.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-cnnturk-com/belgeseller/o-belgeseli.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-cnnturk-com/belgeseller/omer-halisdemir-belgeseli.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-cnnturk-com/belgeseller/sao-paulo-belgeseli.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-dmax-com-tr/programlar/insan-yiyen-super-kurtlar.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-dmax-com-tr/programlar/muhtesem-karavanlar.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-kanald-com-tr/arsiv-diziler/kurtlar-vadisi-pusu.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-kanald-com-tr/arsiv-diziler/urfaliyam-ezelden.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-nowtv-com-tr/dizi-arsivi/coban-yildizi.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-showtv-com-tr/video/kuzey-yildizi-ilk-ask.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-startv-com-tr/arsiv/deniz-yildizi.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-startv-com-tr/arsiv/urfaliyam-ezelden.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-teve2-com-tr/diziler/muhtesem-ikili.m3u": 1,
+    "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/HEAD/lists/video/sources/www-teve2-com-tr/diziler/vatanim-sensin.m3u": 1
+  }
 }
