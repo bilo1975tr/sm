@@ -53,13 +53,30 @@ namespace StreamMesh.Core.Utils
             {
                 logger?.Report($"[{channel.PrimaryName}] Hızlı kontrol yapılıyor: {url}");
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(TimeSpan.FromSeconds(6));
+                int timeoutMs = (level == ValidationLevel.Fast) ? 2500 : 4000;
+                cts.CancelAfter(timeoutMs);
 
-                using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                using var getResponse = await MediaHttpClient.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
-                
-                if (getResponse.IsSuccessStatusCode)
+                bool headSuccess = false;
+                try
                 {
+                    using var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
+                    using var headResponse = await MediaHttpClient.Client.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+                    if (headResponse.IsSuccessStatusCode)
+                    {
+                        headSuccess = true;
+                        result.IsOnline = true;
+                        result.Status = "Erişilebilir";
+                    }
+                }
+                catch { }
+
+                if (!headSuccess)
+                {
+                    using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                    using var getResponse = await MediaHttpClient.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+                    
+                    if (getResponse.IsSuccessStatusCode)
+                    {
                     // Check HLS content if it's an m3u8 or video stream
                     bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || 
                                  (getResponse.Content.Headers.ContentType?.MediaType?.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) ?? false);
@@ -103,6 +120,7 @@ namespace StreamMesh.Core.Utils
                     result.IsOnline = false;
                     result.Status = $"Hata: {(int)getResponse.StatusCode} {getResponse.StatusCode}";
                 }
+                }
             }
             catch (OperationCanceledException)
             {
@@ -130,21 +148,41 @@ namespace StreamMesh.Core.Utils
                 player.Open(url);
 
                 bool started = false;
-                for (int t = 0; t < 10; t++)
+                // 100ms aralıklarla en fazla 5 saniye bekle; başladığı anda çık
+                for (int t = 0; t < 50; t++)
                 {
                     if (ct.IsCancellationRequested) break;
-                    await Task.Delay(1000, ct).ConfigureAwait(false);
-                    if (player.Status == Status.Playing) { started = true; break; }
+                    await Task.Delay(100, ct).ConfigureAwait(false);
+
+                    if (player.Status == Status.Playing)
+                    {
+                        started = true;
+                        if (level == ValidationLevel.Full && player.Video != null && player.Video.Width > 0)
+                        {
+                            break;
+                        }
+                        else if (level == ValidationLevel.Detailed)
+                        {
+                            break;
+                        }
+                    }
+                    else if (player.Status == Status.Failed || player.Status == Status.Ended)
+                    {
+                        break;
+                    }
                 }
 
                 if (started)
                 {
                     result.Status = "Oynatılabilir";
-                    if (level == ValidationLevel.Full)
+                    if (level == ValidationLevel.Full && player.Video != null)
                     {
                         result.Resolution = $"{player.Video.Width}x{player.Video.Height}";
-                        result.VideoCodec = player.Video.Codec;
-                        result.Status = $"Analiz Tamam: {result.Resolution}";
+                        result.VideoCodec = player.Video.Codec ?? "";
+                        result.AudioCodec = player.Audio?.Codec ?? "";
+                        result.Status = (string.IsNullOrWhiteSpace(result.Resolution) || result.Resolution == "0x0")
+                            ? "Oynatılabilir"
+                            : $"Analiz Tamam: {result.Resolution}";
                     }
                 }
                 else

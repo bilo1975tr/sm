@@ -49,10 +49,17 @@ namespace StreamMesh.Core.Media
         }
 
         public event Action<int, string>? OnProgress;
+        public static event Action<int, string>? OnStaticProgress;
         public static event Action? OnSyncStarted;
         public static event Action? OnSyncCompleted;
         public static void RaiseSyncStarted() => OnSyncStarted?.Invoke();
         public static void RaiseSyncCompleted() => OnSyncCompleted?.Invoke();
+
+        private void ReportProgress(int pct, string message)
+        {
+            OnProgress?.Invoke(pct, message);
+            OnStaticProgress?.Invoke(pct, message);
+        }
 
         public async Task PullFromGitHubAsync()
         {
@@ -65,7 +72,7 @@ namespace StreamMesh.Core.Media
             RaiseSyncStarted();
             DatabaseEngine.SuppressEvents = true;
             LogService.LogInfo("GitHubSyncEngine: Otomatik güncelleme başlatıldı.");
-            OnProgress?.Invoke(2, "Temizlenmiş yayın listesi kontrol ediliyor (cleaned_playlist.m3u)...");
+            ReportProgress(2, "Temizlenmiş yayın listesi kontrol ediliyor (cleaned_playlist.m3u)...");
             try
             {
                 // 1. Önce GitHub Actions tarafından oluşturulan temizlenmiş master M3U listesini dene
@@ -78,18 +85,18 @@ namespace StreamMesh.Core.Media
                     var response = await _httpClient.GetAsync(cleanM3uUrl, cleanCts.Token);
                     if (response.IsSuccessStatusCode)
                     {
-                        OnProgress?.Invoke(15, "Temizlenmiş master liste indiriliyor...");
+                        ReportProgress(15, "Temizlenmiş master liste indiriliyor...");
                         _db.AddM3uSource(cleanM3uUrl);
                         var channels = await _m3u.ParseM3uAsync(cleanM3uUrl, "TV", false, (subMsg, subPct) =>
                         {
-                            OnProgress?.Invoke(20 + (int)(subPct * 0.6), $"Temizlenmiş liste işleniyor: {subMsg}");
+                            ReportProgress(20 + (int)(subPct * 0.6), $"Temizlenmiş liste işleniyor: {subMsg}");
                         });
 
                         if (channels != null && channels.Count > 0)
                         {
                             await _db.SyncIncomingChannelsAsync(channels);
                             cleanM3uLoaded = true;
-                            OnProgress?.Invoke(80, $"🎉 {channels.Count} adet doğrulanmış ve temizlenmiş kanal eklendi!");
+                            ReportProgress(80, $"🎉 {channels.Count} adet doğrulanmış ve temizlenmiş kanal eklendi!");
                         }
                     }
                 }
@@ -162,7 +169,7 @@ namespace StreamMesh.Core.Media
                         // EPG Verilerini Her Durumda Güncelle
                         if (cfg.Epg != null && cfg.Epg.Count > 0)
                         {
-                            OnProgress?.Invoke(85, "Yayın akışları (EPG) güncelleniyor...");
+                            ReportProgress(85, "Yayın akışları (EPG) güncelleniyor...");
                             var epgEng = new EpgEngine();
                             for (int i = 0; i < cfg.Epg.Count; i++)
                             {
@@ -172,7 +179,7 @@ namespace StreamMesh.Core.Media
                                 _db.AddEpgSource(url);
                                 await epgEng.LoadEpgAsync(url, (subMsg, subPct) =>
                                 {
-                                    OnProgress?.Invoke(85 + (int)(subPct * 0.14), $"EPG Rehberi ({i + 1}/{cfg.Epg.Count}): {subMsg}");
+                                    ReportProgress(85 + (int)(subPct * 0.14), $"EPG Rehberi ({i + 1}/{cfg.Epg.Count}): {subMsg}");
                                 });
                             }
                         }
@@ -195,12 +202,12 @@ namespace StreamMesh.Core.Media
 
                 DatabaseEngine.NotifyDatabaseUpdated();
                 LogService.LogInfo("GitHubSyncEngine: Güncelleme tamamlandı.");
-                OnProgress?.Invoke(100, "🎉 Bulut güncelleme başarıyla tamamlandı!");
+                ReportProgress(100, "🎉 Bulut güncelleme başarıyla tamamlandı!");
             }
             catch (Exception ex)
             {
                 LogService.LogError("GitHubSyncEngine error", ex);
-                OnProgress?.Invoke(0, $"Hata oluştu: {ex.Message}");
+                ReportProgress(0, $"Hata oluştu: {ex.Message}");
             }
             finally
             {
@@ -228,19 +235,19 @@ namespace StreamMesh.Core.Media
                     var channels = await _m3u.ParseM3uAsync(url, categoryLabel, forceCategory, (subMsg, subPct) =>
                     {
                         double overallPct = Math.Min(99.0, baseProgress + (subPct / 100.0) * itemWeight);
-                        OnProgress?.Invoke((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {subMsg}");
+                        ReportProgress((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {subMsg}");
                     });
 
                     if (channels != null && channels.Count > 0)
                     {
                         collector.AddRange(channels);
                         double finishedPct = Math.Min(99.0, baseProgress + itemWeight);
-                        OnProgress?.Invoke((int)finishedPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {channels.Count} içerik çözümlendi.");
+                        ReportProgress((int)finishedPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {channels.Count} içerik çözümlendi.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    OnProgress?.Invoke((int)baseProgress, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}) Hata: {ex.Message}");
+                    ReportProgress((int)baseProgress, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}) Hata: {ex.Message}");
                 }
             }
         }

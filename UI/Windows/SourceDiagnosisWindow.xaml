@@ -1,0 +1,263 @@
+<Window x:Class="StreamMesh.UI.Windows.SourceDiagnosisWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="M3U Kaynak ve Çözümleme Tanısı"
+        Width="920" Height="680"
+        WindowStartupLocation="CenterOwner"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Background="Transparent"
+        MouseDown="Window_MouseDown">
+
+    <Window.Resources>
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#1e293b"/>
+            <Setter Property="Foreground" Value="#f8fafc"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#334155"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#38bdf8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0f172a"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0284c7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0ea5e9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#0369a1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="#0f172a" BorderBrush="#38bdf8" BorderThickness="1.5" CornerRadius="16" Padding="24">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Background="#0284c7" CornerRadius="8" Padding="8,4" Margin="0,0,10,0">
+                            <TextBlock Text="🔍 M3U KAYNAK TANISI" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                        </Border>
+                        <TextBlock x:Name="TxtHeaderChannelName" Text="Kanal Adı" Foreground="#f8fafc" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="Bu kanalın hangi M3U dosyasından, hangi satırdan ve ne içerikle okunduğunu inceler." Foreground="#94a3b8" FontSize="12" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Content="✕" Width="36" Height="36" Click="Close_Click" Background="#1e293b" Foreground="#94a3b8" BorderBrush="#334155" BorderThickness="1" Style="{StaticResource ActionButtonStyle}" FontSize="14" VerticalAlignment="Top"/>
+            </Grid>
+
+            <!-- Main Content Scrollable -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,16" Padding="0,0,8,0">
+                <StackPanel>
+                    <!-- Diagnostic Status Banner -->
+                    <Border x:Name="StatusBanner" Background="#1e293b" BorderBrush="#38bdf8" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="TxtStatusIcon" Text="ℹ️" FontSize="22" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtStatusTitle" Text="Durum Tespiti" Foreground="#f8fafc" FontWeight="Bold" FontSize="13"/>
+                                <TextBlock x:Name="TxtStatusDesc" Text="Açıklama" Foreground="#94a3b8" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Button x:Name="BtnQuickFixConvert" Grid.Column="2" Content="🎬 Filme Dönüştür" Style="{StaticResource PrimaryButtonStyle}" Background="#10b981" Visibility="Collapsed" Click="QuickFixConvert_Click" ToolTip="Bu tek bölümlü diziyi doğrudan geçerli URL'ye sahip bağımsız bir film/video kaydına dönüştürür." Margin="10,0,0,0"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Key Metadata Grid -->
+                    <Border Background="#1e293b" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,14">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- M3U Source -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,12">
+                                <TextBlock Text="M3U Kaynak Adresi / Dosyası:" Foreground="#64748b" FontSize="11" FontWeight="SemiBold"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TxtPlaylistSource" IsReadOnly="True" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155" BorderThickness="1" Padding="6,4" FontSize="11" TextWrapping="NoWrap"/>
+                                    <Button Grid.Column="1" Content="📋" Margin="4,0,0,0" Padding="8,4" Style="{StaticResource ActionButtonStyle}" Click="CopySource_Click" ToolTip="Kaynak yolunu panoya kopyala"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- M3U Line Number -->
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,12">
+                                <TextBlock Text="M3U Satır Numarası:" Foreground="#64748b" FontSize="11" FontWeight="SemiBold"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Background="#0f172a" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="8,4">
+                                        <TextBlock x:Name="TxtLineNumber" Text="Satır: Bilinmiyor" Foreground="#f8fafc" FontWeight="Bold" FontSize="12"/>
+                                    </Border>
+                                    <Button Grid.Column="1" x:Name="BtnLiveScan" Content="🔍 Dosyada Canlı Ara" Margin="6,0,0,0" Style="{StaticResource ActionButtonStyle}" Click="LiveScan_Click" ToolTip="M3U dosyasını yeniden tarayarak satır numarasını ve çevresini bulur"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Channel Category / Group -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,12">
+                                <TextBlock Text="Kategori ve Grup Başlığı:" Foreground="#64748b" FontSize="11" FontWeight="SemiBold"/>
+                                <Border Background="#0f172a" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="8,5" Margin="0,4,0,0">
+                                    <TextBlock x:Name="TxtCategoryGroup" Text="TV | Genel" Foreground="#f8fafc" FontSize="11"/>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Current Stream URL -->
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,12">
+                                <TextBlock Text="Aktif Akış (Stream) URL'si:" Foreground="#64748b" FontSize="11" FontWeight="SemiBold"/>
+                                <Grid Margin="0,4,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TxtStreamUrl" IsReadOnly="True" Background="#0f172a" Foreground="#34d399" BorderBrush="#334155" BorderThickness="1" Padding="6,4" FontSize="11" TextWrapping="NoWrap"/>
+                                    <Button Grid.Column="1" Content="📋" Margin="4,0,0,0" Padding="8,4" Style="{StaticResource ActionButtonStyle}" Click="CopyStreamUrl_Click" ToolTip="Akış adresini kopyala"/>
+                                    <Button Grid.Column="2" x:Name="BtnPurgeAccountDiag" Content="🗑️ Hesabı Sil" Margin="4,0,0,0" Padding="8,4" Background="#7f1d1d" Foreground="#ff8a8a" BorderBrush="#991b1b" BorderThickness="1" Click="PurgeAccountDiag_Click" ToolTip="Bu yayının ait olduğu IPTV hesabındaki tüm kanalları topluca sil" Visibility="Collapsed"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- EPG ID & Source Info -->
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="EPG tvg-id &amp; tvg-name:" Foreground="#64748b" FontSize="11" FontWeight="SemiBold"/>
+                                <Border Background="#0f172a" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="8,5" Margin="0,4,0,0">
+                                    <TextBlock x:Name="TxtEpgInfo" Text="tvg-id: -" Foreground="#f8fafc" FontSize="11"/>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Channel Unique ID -->
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="Sistem Kimliği (SHA1 ID):" Foreground="#64748b" FontSize="11" FontWeight="SemiBold"/>
+                                <Border Background="#0f172a" BorderBrush="#334155" BorderThickness="1" CornerRadius="6" Padding="8,5" Margin="0,4,0,0">
+                                    <TextBlock x:Name="TxtChannelId" Text="-" Foreground="#94a3b8" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Raw M3U Block View -->
+                    <Border Background="#1e293b" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,14">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="📄 M3U Kaynağından Okunan Ham Satırlar" Foreground="#f8fafc" FontWeight="Bold" FontSize="12"/>
+                                    <TextBlock Text="(#EXTINF ve direktifler)" Foreground="#64748b" FontSize="11" Margin="6,0,0,0"/>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="📋 Ham Metni Kopyala" Style="{StaticResource ActionButtonStyle}" Click="CopyRawBlock_Click" Padding="8,4" FontSize="11"/>
+                            </Grid>
+                            <TextBox x:Name="TxtRawBlock" Height="140" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Background="#0f172a" Foreground="#38bdf8" BorderBrush="#334155" BorderThickness="1" FontFamily="Consolas, Cascadia Code, Courier New" FontSize="11" Padding="8" AcceptsReturn="True"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Series Episodes Breakdown (Visible only for SeriesGroup) -->
+                    <Border x:Name="SeriesGroupPanel" Background="#1e293b" BorderBrush="#334155" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,14" Visibility="Collapsed">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="📁 Dizi Bölümleri ve Akış Linkleri" Foreground="#f8fafc" FontWeight="Bold" FontSize="12"/>
+                                <TextBlock x:Name="TxtSeriesCountSummary" Grid.Column="1" Text="0 Sezon, 0 Bölüm" Foreground="#38bdf8" FontSize="11" FontWeight="SemiBold"/>
+                            </Grid>
+                            <ListView x:Name="ListEpisodes" Height="150" Background="#0f172a" BorderBrush="#334155" BorderThickness="1" Foreground="#f8fafc">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="Sezon / Bölüm" Width="100" DisplayMemberBinding="{Binding DisplaySeasonEpisode}"/>
+                                        <GridViewColumn Header="Bölüm Başlığı" Width="200" DisplayMemberBinding="{Binding Name}"/>
+                                        <GridViewColumn Header="Akış Adresi (URL)" Width="460" DisplayMemberBinding="{Binding Url}"/>
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Live Scanner Output Panel -->
+                    <Border x:Name="LiveScannerPanel" Background="#1e293b" BorderBrush="#0284c7" BorderThickness="1" CornerRadius="10" Padding="14" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock x:Name="TxtLiveScannerStatus" Text="Canlı Tarama Sonuçları" Foreground="#38bdf8" FontWeight="Bold" FontSize="12" Margin="0,0,0,6"/>
+                            <TextBox x:Name="TxtLiveScannerOutput" Height="130" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Background="#0f172a" Foreground="#f1f5f9" BorderBrush="#334155" BorderThickness="1" FontFamily="Consolas, Cascadia Code, Courier New" FontSize="11" Padding="8" AcceptsReturn="True"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer Buttons -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Content="📋 Tüm Tanı Raporunu Panoya Kopyala" HorizontalAlignment="Left" Style="{StaticResource ActionButtonStyle}" Click="CopyFullReport_Click"/>
+                <Button Grid.Column="1" Content="Kapat" Width="120" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="Close_Click"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

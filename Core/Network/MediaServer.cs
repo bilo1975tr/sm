@@ -219,9 +219,10 @@ namespace StreamMesh.Core.Network
                 {
                     await ServeDeviceDescription(res);
                 }
-                else if (path == "/playlist.m3u" || path == "/api/playlist.m3u")
+                else if (path == "/playlist.m3u" || path == "/api/playlist.m3u" || path == "/direct.m3u" || path == "/api/direct.m3u")
                 {
-                    await ServeM3u(req, res);
+                    bool isDirect = path.Contains("direct") || (req.QueryString["direct"] == "1" || string.Equals(req.QueryString["direct"], "true", StringComparison.OrdinalIgnoreCase));
+                    await ServeM3u(req, res, isDirect);
                 }
                 else if (path == "/web" || path == "/web/" || path == "/")
                 {
@@ -647,13 +648,14 @@ namespace StreamMesh.Core.Network
             }
         }
 
-        private async Task ServeM3u(HttpListenerRequest req, HttpListenerResponse res)
+        private async Task ServeM3u(HttpListenerRequest req, HttpListenerResponse res, bool isDirect = false)
         {
             var channels = await _db.GetAllChannelsAsync();
             string host = req.Headers["Host"] ?? $"127.0.0.1:{_port}";
 
             var sb = new StringBuilder();
-            sb.AppendLine("#EXTM3U name=\"StreamMesh Smart Router Playlist\"");
+            string playlistName = isDirect ? "StreamMesh Direct Playlist" : "StreamMesh Smart Router Playlist";
+            sb.AppendLine($"#EXTM3U name=\"{playlistName}\"");
 
             foreach (var ch in channels)
             {
@@ -661,25 +663,42 @@ namespace StreamMesh.Core.Network
                 bool isYt = string.Equals(ch.SourceType, "YOUTUBE", StringComparison.OrdinalIgnoreCase) || ch.Url.Contains("youtube.com") || ch.Url.Contains("youtu.be");
                 bool isMulti = ch.SourcesCount > 1;
 
-                string groupSuffix = isAce ? " [StreamMesh P2P]" :
-                                     isYt ? " [StreamMesh YouTube]" :
-                                     isMulti ? " [StreamMesh Smart Router]" :
-                                     " [Doğrudan IPTV]";
+                string groupTitle = ch.GroupTitle ?? "Genel";
+                if (!isDirect)
+                {
+                    string groupSuffix = isAce ? " [StreamMesh P2P]" :
+                                         isYt ? " [StreamMesh YouTube]" :
+                                         isMulti ? " [StreamMesh Smart Router]" :
+                                         " [Doğrudan IPTV]";
+                    groupTitle = $"{groupTitle}{groupSuffix}";
+                }
 
-                string groupTitle = $"{ch.GroupTitle}{groupSuffix}";
                 string streammeshRequired = (isAce || isYt || isMulti) ? "true" : "false";
                 string streamType = isAce ? "ACESTREAM" : (isYt ? "YOUTUBE" : (isMulti ? "MULTI_SOURCE" : "DIRECT"));
 
-                // Universal Smart Router Endpoint
-                string routedPlaybackUrl = $"http://{host}/stream/{ch.Id}";
+                // Playback URL: Direct internet URL or Universal Smart Router Endpoint
+                string playbackUrl;
+                if (isDirect)
+                {
+                    playbackUrl = ch.GetOrderedUrlList().FirstOrDefault() ?? ch.GetUrlList().FirstOrDefault() ?? ch.Url;
+                    if (string.IsNullOrWhiteSpace(playbackUrl))
+                    {
+                        playbackUrl = $"http://{host}/stream/{ch.Id}";
+                    }
+                }
+                else
+                {
+                    playbackUrl = $"http://{host}/stream/{ch.Id}";
+                }
 
                 sb.AppendLine($"#EXTINF:-1 tvg-id=\"{ch.EpgId}\" tvg-name=\"{ch.PrimaryName}\" tvg-logo=\"{ch.PrimaryLogoUrl}\" group-title=\"{groupTitle}\" streammesh-required=\"{streammeshRequired}\" streammesh-type=\"{streamType}\",{ch.PrimaryName}");
-                sb.AppendLine(routedPlaybackUrl);
+                sb.AppendLine(playbackUrl);
             }
 
             byte[] buffer = Encoding.UTF8.GetBytes(sb.ToString());
             res.ContentType = "application/x-mpegurl; charset=utf-8";
-            res.Headers.Add("Content-Disposition", "attachment; filename=\"StreamMesh.m3u\"");
+            string filename = isDirect ? "StreamMesh-Direct.m3u" : "StreamMesh.m3u";
+            res.Headers.Add("Content-Disposition", $"attachment; filename=\"{filename}\"");
             await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
         }
 

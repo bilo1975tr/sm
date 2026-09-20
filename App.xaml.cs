@@ -182,24 +182,24 @@ namespace StreamMesh
                 }
             });
 
-            // 3. GitHub Playlist Sync (Akıllı Gecikme: DB boşsa derhal, doluysa arka planda 5 sn sonra)
+            // 3. GitHub Playlist Sync: Yalnızca veritabanında hiç kanal yokken (ilk kurulum veya liste boşaltılmışken) çalıştır.
+            // Kanal varsa her açılışta internetten tekrar çekilmez; uygulama doğrudan yerel SQLite verileriyle anında açılır.
             Task.Run(async () => {
                 try
                 {
                     var db = new DatabaseEngine();
                     int count = await db.GetTotalChannelCountAsync();
-                    if (count > 0)
+                    if (count == 0)
                     {
-                        // DB zaten dolu, yerel açılış hızını engellememek için 5 sn sonra sessizce güncelle
-                        await Task.Delay(5000);
+                        LogService.LogInfo("[STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...");
+                        await Task.Delay(300);
+                        var sync = new GitHubSyncEngine();
+                        await sync.PullFromGitHubAsync();
                     }
                     else
                     {
-                        // İlk kurulum: DB boş olduğu için beklemeden (200ms) derhal senkronizasyonu başlat
-                        await Task.Delay(200);
+                        LogService.LogInfo($"[STARTUP] Veritabanında {count} adet kanal mevcut. Açılışta otomatik internet indirmesi atlandı, yerel liste yüklendi.");
                     }
-                    var sync = new GitHubSyncEngine();
-                    await sync.PullFromGitHubAsync();
                 }
                 catch (Exception ex)
                 {

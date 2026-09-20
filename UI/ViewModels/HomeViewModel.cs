@@ -71,8 +71,65 @@ namespace StreamMesh.UI.ViewModels
         private int _totalPages = 1;
 
         private string _activeCategory = "All";
+        private string _selectedGroup = "All";
+
+        public ObservableCollection<GroupCategoryItem> GroupCategories { get; set; } = new ObservableCollection<GroupCategoryItem>();
+
+        public bool HasGroupCategories => GroupCategories.Count > 1;
+
+        public string SelectedGroup
+        {
+            get => _selectedGroup;
+            set
+            {
+                if (_selectedGroup != value)
+                {
+                    _selectedGroup = value;
+                    OnPropertyChanged();
+                    UpdateSelectedGroupInList();
+                    _currentPage = 1;
+                    _ = RefreshDisplayAsync();
+                }
+            }
+        }
+
+        private void UpdateSelectedGroupInList()
+        {
+            foreach (var item in GroupCategories)
+            {
+                item.IsSelected = string.Equals(item.Name, _selectedGroup, StringComparison.OrdinalIgnoreCase);
+            }
+        }
 
         public ObservableCollection<Channel> DisplayedChannels { get; set; } = new ObservableCollection<Channel>();
+
+        private bool _isSyncing;
+        public bool IsSyncing
+        {
+            get => _isSyncing;
+            set
+            {
+                _isSyncing = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasNoChannels));
+            }
+        }
+
+        private string _syncStatusMessage = "";
+        public string SyncStatusMessage
+        {
+            get => _syncStatusMessage;
+            set { _syncStatusMessage = value; OnPropertyChanged(); }
+        }
+
+        private int _syncProgressPercent;
+        public int SyncProgressPercent
+        {
+            get => _syncProgressPercent;
+            set { _syncProgressPercent = value; OnPropertyChanged(); }
+        }
+
+        public bool HasNoChannels => DisplayedChannels.Count == 0 && !IsSyncing;
 
         public string CurrentPageText => $"Sayfa {_currentPage} / {_totalPages}";
 
@@ -84,9 +141,36 @@ namespace StreamMesh.UI.ViewModels
         public HomeViewModel()
         {
             _ = LoadDataAsync();
+
+            GitHubSyncEngine.OnSyncStarted += () =>
+            {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    IsSyncing = true;
+                    SyncStatusMessage = "Kanal listeniz boş. İlk kurulum için yayın listesi indiriliyor...";
+                    SyncProgressPercent = 5;
+                });
+            };
+
+            GitHubSyncEngine.OnStaticProgress += (pct, msg) =>
+            {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    IsSyncing = true;
+                    SyncProgressPercent = pct;
+                    SyncStatusMessage = msg;
+                });
+            };
+
             GitHubSyncEngine.OnSyncCompleted += () => {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    IsSyncing = false;
+                    SyncStatusMessage = "";
+                });
                 RequestLoadData(0);
             };
+
             DatabaseEngine.OnDatabaseUpdated += (s, e) => {
                 // Coalesce / debounce database updates (300ms) so rapid batch writes trigger a single clean UI update
                 RequestLoadData(300);
@@ -149,6 +233,22 @@ namespace StreamMesh.UI.ViewModels
                 _allChannels = channels;
                 await RefreshDisplayAsync();
 
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    if (channels.Count == 0)
+                    {
+                        if (IsSyncing)
+                        {
+                            TotalCountText = "Kütüphane boş - İlk kurulum yapılıyor, yayın listesi indiriliyor...";
+                        }
+                        else
+                        {
+                            TotalCountText = "Kütüphanenizde henüz kanal yok.";
+                        }
+                    }
+                    OnPropertyChanged(nameof(HasNoChannels));
+                });
+
                 _ = Task.Run(() =>
                 {
                     try
@@ -209,8 +309,14 @@ namespace StreamMesh.UI.ViewModels
         public void SetCategory(string tag)
         {
             _activeCategory = tag;
+            _selectedGroup = "All"; // Reset sub-category filter on main category switch
             _currentPage = 1;
             _ = RefreshDisplayAsync();
+        }
+
+        public void SetGroup(string group)
+        {
+            SelectedGroup = group;
         }
 
         public void SetSort(int index)
@@ -228,6 +334,7 @@ namespace StreamMesh.UI.ViewModels
         {
             var searchText = _searchText;
             var category = _activeCategory;
+            var selectedGroup = _selectedGroup;
             var sort = _sortIndex;
             var page = _currentPage;
             var pageSize = _pageSize;
@@ -235,13 +342,61 @@ namespace StreamMesh.UI.ViewModels
 
             await Task.Run(async () =>
             {
-                var filtered = sourceChannels.AsEnumerable();
+                var baseCategoryFiltered = sourceChannels.AsEnumerable();
 
-                if (category == "Favorites") filtered = filtered.Where(c => c.IsFavorite);
-                else if (category == "TV") filtered = filtered.Where(c => string.Equals(c.Category, "TV", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(c.Category));
-                else if (category == "Movies") filtered = filtered.Where(c => string.Equals(c.Category, "Film", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Movie", StringComparison.OrdinalIgnoreCase));
-                else if (category == "Series") filtered = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase));
-                else if (category == "Radio") filtered = filtered.Where(c => string.Equals(c.Category, "Radyo", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Radio", StringComparison.OrdinalIgnoreCase));
+                if (category == "Favorites") baseCategoryFiltered = baseCategoryFiltered.Where(c => c.IsFavorite);
+                else if (category == "TV") baseCategoryFiltered = baseCategoryFiltered.Where(c => string.Equals(c.Category, "TV", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(c.Category));
+                else if (category == "Movies") baseCategoryFiltered = baseCategoryFiltered.Where(c => string.Equals(c.Category, "Film", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Movie", StringComparison.OrdinalIgnoreCase));
+                else if (category == "Series") baseCategoryFiltered = baseCategoryFiltered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase));
+                else if (category == "Radio") baseCategoryFiltered = baseCategoryFiltered.Where(c => string.Equals(c.Category, "Radyo", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Radio", StringComparison.OrdinalIgnoreCase));
+
+                var baseCategoryList = baseCategoryFiltered.ToList();
+
+                // Compute GroupTitle categories for this active category
+                var groupCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                foreach (var ch in baseCategoryList)
+                {
+                    string grp = (ch.GroupTitle ?? "").Trim();
+                    if (string.IsNullOrWhiteSpace(grp)) grp = "Genel";
+                    groupCounts[grp] = groupCounts.TryGetValue(grp, out int count) ? count + 1 : 1;
+                }
+
+                var groupList = new List<GroupCategoryItem>();
+                groupList.Add(new GroupCategoryItem
+                {
+                    Name = "All",
+                    Count = baseCategoryList.Count,
+                    IsSelected = string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase)
+                });
+
+                foreach (var kvp in groupCounts.OrderByDescending(x => x.Value).ThenBy(x => x.Key))
+                {
+                    groupList.Add(new GroupCategoryItem
+                    {
+                        Name = kvp.Key,
+                        Count = kvp.Value,
+                        IsSelected = string.Equals(selectedGroup, kvp.Key, StringComparison.OrdinalIgnoreCase)
+                    });
+                }
+
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    GroupCategories.Clear();
+                    foreach (var g in groupList) GroupCategories.Add(g);
+                    OnPropertyChanged(nameof(HasGroupCategories));
+                });
+
+                // Apply group filter if specific group selected
+                var filtered = baseCategoryList.AsEnumerable();
+                if (!string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase))
+                {
+                    filtered = filtered.Where(c =>
+                    {
+                        string g = (c.GroupTitle ?? "").Trim();
+                        if (string.IsNullOrWhiteSpace(g)) g = "Genel";
+                        return string.Equals(g, selectedGroup, StringComparison.OrdinalIgnoreCase);
+                    });
+                }
 
                 if (!string.IsNullOrWhiteSpace(searchText))
                 {
@@ -316,6 +471,7 @@ namespace StreamMesh.UI.ViewModels
 
                     DisplayedChannels.Clear();
                     foreach (var ch in pageItems) DisplayedChannels.Add(ch);
+                    OnPropertyChanged(nameof(HasNoChannels));
                 });
 
                 System.Threading.CancellationToken token;

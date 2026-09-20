@@ -90,12 +90,17 @@ namespace StreamMesh.Core.Media
 
                 progressCallback?.Invoke("Ayrıştırılıyor...", 80);
 
-                var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
                 Channel? current = null;
+                int currentLineNumber = 0;
+                int extinfLineNumber = 0;
+                string rawExtinf = "";
+                var extraDirectives = new List<string>();
                 var db = new StreamMesh.Core.Database.DatabaseEngine();
 
                 foreach (var rawLine in lines)
                 {
+                    currentLineNumber++;
                     string line = rawLine.Trim();
                     if (string.IsNullOrEmpty(line)) continue;
 
@@ -121,7 +126,11 @@ namespace StreamMesh.Core.Media
 
                     if (line.StartsWith("#EXTINF:", StringComparison.OrdinalIgnoreCase) || line.StartsWith("#EXTINF", StringComparison.OrdinalIgnoreCase))
                     {
-                        current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath };
+                        extinfLineNumber = currentLineNumber;
+                        rawExtinf = rawLine;
+                        extraDirectives.Clear();
+
+                        current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, M3uLineNumber = extinfLineNumber };
                         if (forceCategory) current.Notes = "FORCE_CAT";
 
                         // Logo
@@ -170,7 +179,8 @@ namespace StreamMesh.Core.Media
                     }
                     else if (line.StartsWith("#EXTVLCOPT:", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (current == null) current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath };
+                        extraDirectives.Add(rawLine);
+                        if (current == null) current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, M3uLineNumber = currentLineNumber };
                         string opt = line.Substring(11).Trim();
                         int eq = opt.IndexOf('=');
                         if (eq > 0)
@@ -192,7 +202,8 @@ namespace StreamMesh.Core.Media
                     }
                     else if (line.StartsWith("#EXTHTTP:", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (current == null) current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath };
+                        extraDirectives.Add(rawLine);
+                        if (current == null) current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, M3uLineNumber = currentLineNumber };
                         string jsonPart = line.Substring(9).Trim();
                         try
                         {
@@ -222,6 +233,8 @@ namespace StreamMesh.Core.Media
                         if (!IsValidStreamUrl(rawUrl))
                         {
                             current = null;
+                            rawExtinf = "";
+                            extraDirectives.Clear();
                             continue;
                         }
 
@@ -230,7 +243,18 @@ namespace StreamMesh.Core.Media
                             // Single line format without #EXTINF
                             string baseName = Path.GetFileNameWithoutExtension(rawUrl);
                             if (string.IsNullOrWhiteSpace(baseName)) baseName = "Yayın";
-                            current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, Name = baseName };
+                            current = new Channel { Category = categoryHint, PlaylistUrl = urlOrPath, Name = baseName, M3uLineNumber = currentLineNumber };
+                        }
+
+                        // Assemble RawM3uBlock
+                        var rawSb = new System.Text.StringBuilder();
+                        if (!string.IsNullOrEmpty(rawExtinf)) rawSb.AppendLine(rawExtinf);
+                        foreach (var ed in extraDirectives) rawSb.AppendLine(ed);
+                        rawSb.Append(rawLine);
+                        current.RawM3uBlock = rawSb.ToString();
+                        if (current.M3uLineNumber <= 0)
+                        {
+                            current.M3uLineNumber = extinfLineNumber > 0 ? extinfLineNumber : currentLineNumber;
                         }
 
                         // Check for pipe syntax in URL (e.g. url|User-Agent=...&Referer=...)
@@ -285,6 +309,8 @@ namespace StreamMesh.Core.Media
                             channels.Add(current);
                         }
                         current = null;
+                        rawExtinf = "";
+                        extraDirectives.Clear();
                     }
                 }
 

@@ -733,6 +733,7 @@ namespace StreamMesh.UI.Views
                             OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Yok / Tüm Kaynaklar Başarısız)";
                             UpdatePlayPauseIcon(false);
                             ShowOsdTemporary();
+                            CheckAndShowDeadAccountAlert(candidateUrls);
                         });
                     }
                 }
@@ -1751,6 +1752,71 @@ namespace StreamMesh.UI.Views
                 OsdCurrentEpg.Text = "Yayın akışı bilgisi yok";
                 OsdNextEpg.Text = "Sıradaki: --:-- Bilgi yok";
             }
+        }
+
+        private IptvAccountInfo? _currentDeadAccountDetected = null;
+
+        private async void CheckAndShowDeadAccountAlert(List<string> candidateUrls)
+        {
+            try
+            {
+                if (candidateUrls == null || candidateUrls.Count == 0) return;
+
+                IptvAccountInfo? foundAccount = null;
+                foreach (var url in candidateUrls)
+                {
+                    foundAccount = IptvAccountHelper.ParseAccountFromUrl(url);
+                    if (foundAccount != null && !string.IsNullOrEmpty(foundAccount.Username)) break;
+                }
+
+                if (foundAccount == null)
+                {
+                    DeadAccountAlertCard.Visibility = Visibility.Collapsed;
+                    return;
+                }
+
+                _currentDeadAccountDetected = foundAccount;
+                var counts = await IptvAccountHelper.CountAccountOccurrencesAsync(foundAccount);
+
+                if (counts.totalChannels > 1 || counts.totalUrls > 1)
+                {
+                    DeadAccountAlertText.Text = $"Bu yayın `{foundAccount.Username}` (@{foundAccount.HostWithPort}) hesabına bağlı ve yanıt vermiyor. Veritabanında bu hesaba ait toplam {counts.totalUrls} adet link ({counts.totalChannels} kanal/içerik) var. Bu hesaba ait tüm linkleri topluca temizlemek ister misiniz?";
+                    DeadAccountAlertCard.Visibility = Visibility.Visible;
+                }
+            }
+            catch { }
+        }
+
+        private async void BtnPurgeDeadAccount_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentDeadAccountDetected == null) return;
+
+            var acc = _currentDeadAccountDetected;
+            DeadAccountAlertCard.Visibility = Visibility.Collapsed;
+
+            var res = System.Windows.MessageBox.Show(
+                $"'{acc.Username}' (@{acc.HostWithPort}) hesabına ait tüm IPTV yayınları ve bu hesaba özel kanallar veritabanından kalıcı olarak silinecektir.\n\nOnaylıyor musunuz?",
+                "Ölü IPTV Hesabını Temizle",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (res == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    var purgeResult = await IptvAccountHelper.PurgeAccountFromDatabaseAsync(acc);
+                    ShowOsdToast($"Ölü Hesap Temizlendi: {purgeResult.TotalUrlsRemoved} URL, {purgeResult.ChannelsDeletedEntirely} Kanal Silindi", "GeoTrash");
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Temizleme hatası: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void BtnCloseDeadAccountAlert_Click(object sender, RoutedEventArgs e)
+        {
+            DeadAccountAlertCard.Visibility = Visibility.Collapsed;
         }
 
         public void Dispose()

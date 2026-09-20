@@ -139,7 +139,9 @@ namespace StreamMesh.Core.Database
                         PreferredNameIndex INTEGER DEFAULT 0,
                         PreferredUrlIndex INTEGER DEFAULT 0,
                         PreferredLogoIndex INTEGER DEFAULT 0,
-                        PreferredEpgIndex INTEGER DEFAULT 0
+                        PreferredEpgIndex INTEGER DEFAULT 0,
+                        M3uLineNumber INTEGER DEFAULT 0,
+                        RawM3uBlock TEXT DEFAULT ''
                     );
                     CREATE TABLE IF NOT EXISTS EpgPrograms (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -238,7 +240,9 @@ namespace StreamMesh.Core.Database
                     ("PreferredLogoIndex", "ALTER TABLE Channels ADD COLUMN PreferredLogoIndex INTEGER DEFAULT 0"),
                     ("PreferredEpgIndex", "ALTER TABLE Channels ADD COLUMN PreferredEpgIndex INTEGER DEFAULT 0"),
                     ("IsEpgLocked", "ALTER TABLE Channels ADD COLUMN IsEpgLocked INTEGER DEFAULT 0"),
-                    ("LastPositionMs", "ALTER TABLE Channels ADD COLUMN LastPositionMs INTEGER DEFAULT 0")
+                    ("LastPositionMs", "ALTER TABLE Channels ADD COLUMN LastPositionMs INTEGER DEFAULT 0"),
+                    ("M3uLineNumber", "ALTER TABLE Channels ADD COLUMN M3uLineNumber INTEGER DEFAULT 0"),
+                    ("RawM3uBlock", "ALTER TABLE Channels ADD COLUMN RawM3uBlock TEXT DEFAULT ''")
                 };
 
                 foreach (var (col, sql) in channelAlterCols)

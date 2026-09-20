@@ -33,6 +33,8 @@ namespace StreamMesh.Models
         private int _viewersCount = 0;
         private long _lastPositionMs = 0;
         private string _urlSpeeds = ""; // JSON string for URL-speed mapping
+        private int _m3uLineNumber = 0;
+        private string _rawM3uBlock = string.Empty;
 
         public long LastPositionMs { get => _lastPositionMs; set { _lastPositionMs = value; OnPropertyChanged(); } }
 
@@ -360,6 +362,18 @@ namespace StreamMesh.Models
             set { if (_playlistUrl != value) { _playlistUrl = value; OnPropertyChanged(); } }
         }
 
+        public int M3uLineNumber
+        {
+            get => _m3uLineNumber;
+            set { if (_m3uLineNumber != value) { _m3uLineNumber = value; OnPropertyChanged(); } }
+        }
+
+        public string RawM3uBlock
+        {
+            get => _rawM3uBlock;
+            set { if (_rawM3uBlock != value) { _rawM3uBlock = value; OnPropertyChanged(); } }
+        }
+
         public string CurrentEpgTitle
         {
             get => _currentEpgTitle;
@@ -450,10 +464,10 @@ namespace StreamMesh.Models
                     int.TryParse(seriesMatch.Groups[3].Value, out int s); details.Season = s;
                     int.TryParse(seriesMatch.Groups[4].Value, out int e); details.Episode = e;
                 }
-                details.SeriesTitle = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':');
+                details.SeriesTitle = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':', '\'', '"', '`', '’', '‘', '“', '”');
             }
 
-            working = Regex.Replace(working, @"\s+", " ").Trim(' ', ':', '-', '(', ')');
+            working = Regex.Replace(working, @"\s+", " ").Trim(' ', ':', '-', '(', ')', '\'', '"', '`', '’', '‘', '“', '”');
             details.CleanName = string.IsNullOrWhiteSpace(working) ? rawName : working;
             return details;
         }
@@ -669,6 +683,16 @@ namespace StreamMesh.Models
             if (other.IsVerified) IsVerified = true;
             if (other.PersonalWatchCount > PersonalWatchCount) PersonalWatchCount = other.PersonalWatchCount;
             if (other.LastPositionMs > LastPositionMs) LastPositionMs = other.LastPositionMs;
+
+            // 7. Merge Diagnostic & Source M3U Info
+            if (string.IsNullOrEmpty(PlaylistUrl) && !string.IsNullOrEmpty(other.PlaylistUrl))
+                PlaylistUrl = other.PlaylistUrl;
+            if (M3uLineNumber <= 0 && other.M3uLineNumber > 0)
+                M3uLineNumber = other.M3uLineNumber;
+            if (string.IsNullOrEmpty(RawM3uBlock) && !string.IsNullOrEmpty(other.RawM3uBlock))
+                RawM3uBlock = other.RawM3uBlock;
+            else if (!string.IsNullOrEmpty(other.RawM3uBlock) && !RawM3uBlock.Contains(other.RawM3uBlock))
+                RawM3uBlock = $"{RawM3uBlock}\n---\n{other.RawM3uBlock}";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

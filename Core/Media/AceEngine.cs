@@ -564,6 +564,7 @@ namespace StreamMesh.Core.Media
 
         public async Task<List<string>> GetHttpUrlsWithTokenAsync(string cid)
         {
+            await Task.CompletedTask;
             var urls = new List<string>();
             if (string.IsNullOrWhiteSpace(cid)) return urls;
 

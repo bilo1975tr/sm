@@ -11,6 +11,7 @@ namespace StreamMesh.UI.Windows
     {
         public SeriesGroup Series { get; set; }
         public List<string> CastList { get; set; } = new List<string>();
+        public bool HasCast => CastList != null && CastList.Count > 0;
         private readonly DatabaseEngine _db = new DatabaseEngine();
         private readonly MetadataEngine _meta = new MetadataEngine();
 

@@ -9,6 +9,7 @@ using StreamMesh.UI.ViewModels;
 using StreamMesh.UI.Windows;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.UI.Views
 {
@@ -37,25 +38,47 @@ namespace StreamMesh.UI.Views
 
         private void Card_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement fe && fe.DataContext is Channel item)
+            try
             {
-                if (item is SeriesGroup series)
+                if (sender is FrameworkElement fe && fe.DataContext is Channel item)
                 {
-                    var seriesWin = new SeriesDetailsWindow(series);
-                    seriesWin.Owner = Window.GetWindow(this);
-                    seriesWin.ShowDialog();
-                    return;
-                }
+                    if (item is SeriesGroup series)
+                    {
+                        var seriesWin = new SeriesDetailsWindow(series);
+                        seriesWin.Owner = Window.GetWindow(this);
+                        seriesWin.ShowDialog();
+                        return;
+                    }
 
-                string cat = (item.Category ?? "").Trim().ToUpperInvariant();
-                if (cat == "TV" || cat == "RADYO" || cat == "GENEL")
-                {
-                    MainWindow.Instance?.LoadChannelToPlayer(item);
-                    return;
+                    string cat = (item.Category ?? "").Trim().ToUpperInvariant();
+                    if (cat == "TV" || cat == "RADYO" || cat == "GENEL")
+                    {
+                        MainWindow.Instance?.LoadChannelToPlayer(item);
+                        return;
+                    }
+                    var details = new MediaDetailsWindow(item);
+                    details.Owner = Window.GetWindow(this);
+                    details.Show();
                 }
-                var details = new MediaDetailsWindow(item);
-                details.Owner = Window.GetWindow(this);
-                details.Show();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("HomeView.Card_Click error", ex);
+                System.Windows.MessageBox.Show($"İçerik açılırken bir hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private async void ManualSync_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var sync = new GitHubSyncEngine();
+                await sync.PullFromGitHubAsync();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("HomeView.ManualSync_Click error", ex);
+                System.Windows.MessageBox.Show($"Güncelleme başlatılırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -109,6 +132,30 @@ namespace StreamMesh.UI.Views
                 btn.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#38bdf8"));
                 btn.Foreground = System.Windows.Media.Brushes.Black;
                 _vm.SetCategory(tag);
+            }
+        }
+
+        private void GroupChip_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is string groupName)
+            {
+                _vm.SetGroup(groupName);
+            }
+        }
+
+        private void DirectPlay_Click(object sender, RoutedEventArgs e)
+        {
+            e.Handled = true;
+            if (sender is FrameworkElement fe && fe.DataContext is Channel channel)
+            {
+                if (channel is SeriesGroup series)
+                {
+                    var seriesWin = new SeriesDetailsWindow(series);
+                    seriesWin.Owner = Window.GetWindow(this);
+                    seriesWin.ShowDialog();
+                    return;
+                }
+                MainWindow.Instance?.LoadChannelToPlayer(channel);
             }
         }
 

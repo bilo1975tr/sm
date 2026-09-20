@@ -174,7 +174,12 @@
                             <StackPanel><TextBlock Text="Port" Foreground="Gray"/><TextBox x:Name="ServerPortBox" Text="8080" Width="80" HorizontalAlignment="Left"/></StackPanel>
                             <Button Grid.Column="1" x:Name="ServerControlBtn" Content="Sunucuyu Başlat" Width="150" Style="{StaticResource PrimaryButtonStyle}" Click="ToggleServer_Click"/>
                         </Grid>
-                        <TextBox x:Name="M3uServerLink" IsReadOnly="True" Margin="0,0,0,10"/><TextBox x:Name="WebServerLink" IsReadOnly="True"/>
+                        <TextBlock Text="Akıllı Yönlendirici M3U (StreamMesh Üzerinden, Yedek Korumalı):" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBox x:Name="M3uServerLink" IsReadOnly="True" Margin="0,0,0,12"/>
+                        <TextBlock Text="Doğrudan (Düz / Normal) M3U (Orijinal İnternet Linkleri):" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBox x:Name="M3uDirectServerLink" IsReadOnly="True" Margin="0,0,0,12"/>
+                        <TextBlock Text="Web Tarayıcı Arayüzü:" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,4"/>
+                        <TextBox x:Name="WebServerLink" IsReadOnly="True"/>
                     </StackPanel>
                 </Border>
             </TabItem>
@@ -218,6 +223,7 @@
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                                 <CheckBox x:Name="CheckOnlyUnverified" Content="Sadece Kontrol Edilmeyenleri (Taranmayanları) Tara" Foreground="#38bdf8" IsChecked="True" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                                <CheckBox x:Name="CheckFastDeadAccountPurge" Content="⚡ Ölü Hesap Algılandığında Paketi Komple Sil (Hızlı Temizlik)" Foreground="#f43f5e" IsChecked="True" FontWeight="SemiBold" VerticalAlignment="Center" ToolTip="Bir IPTV hesabında üst üste 3 kanal hata verirse, kalan binlerce kanalı tek tek beklemek yerine hesaba ait tüm kanalları tek seferde komple siler." Margin="0,0,20,0"/>
                                 <TextBlock Text="Eşzamanlı İş Parçacığı:" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <ComboBox x:Name="ComboConcurrency" Width="70" Height="30" VerticalAlignment="Center" Background="#0f172a" Foreground="White">
                                     <ComboBoxItem Content="3 x" />
@@ -249,13 +255,15 @@
 
                         <StackPanel Grid.Row="2" Margin="0,15,0,0">
                             <Grid Margin="0,0,0,5">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock x:Name="ValidationProgressText" Text="Bekliyor..." Foreground="Gray" FontSize="12" Margin="0,0,15,0"/>
-                                    <TextBlock x:Name="ValidationFailedText" Text="Hata: 0" Foreground="#f87171" FontSize="12" Visibility="Collapsed"/>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock x:Name="ValidationHealthyText" Text="✅ Sağlam: 0" Foreground="#4ade80" FontWeight="SemiBold" FontSize="13" Margin="0,0,16,0"/>
+                                    <TextBlock x:Name="ValidationDeletedText" Text="🗑️ Silinen (Bozuk): 0" Foreground="#f87171" FontWeight="SemiBold" FontSize="13" Margin="0,0,16,0"/>
+                                    <TextBlock x:Name="ValidationPendingText" Text="⏳ Kalan: 0" Foreground="#94a3b8" FontSize="13" Margin="0,0,16,0"/>
+                                    <TextBlock x:Name="ValidationTotalText" Text="(Toplam: 0)" Foreground="#64748b" FontSize="12"/>
                                 </StackPanel>
-                                <TextBlock x:Name="ValidationTimeText" Text="--:--" HorizontalAlignment="Right" Foreground="Gray" FontSize="12"/>
+                                <TextBlock x:Name="ValidationTimeText" Text="--:--" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#94a3b8" FontSize="12"/>
                             </Grid>
-                            <ProgressBar x:Name="ValidationProgressBar" Height="10" Background="#1e293b" Foreground="#38bdf8" BorderThickness="0"/>
+                            <ProgressBar x:Name="ValidationProgressBar" Height="10" Background="#0f172a" Foreground="#38bdf8" BorderThickness="0"/>
                         </StackPanel>
                     </Grid>
                 </Border>

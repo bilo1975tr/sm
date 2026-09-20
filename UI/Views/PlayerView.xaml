@@ -253,6 +253,28 @@
                         <TextBlock x:Name="OsdToastText" Text="Ses Normalizasyonu: AÇIK" Foreground="White" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
+
+                <!-- Ölü / Kapanmış IPTV Hesabı Bildirim ve Toplu Temizleme Kartı -->
+                <Border x:Name="DeadAccountAlertCard" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,70,25,0"
+                        Background="#F20F172A" BorderBrush="#EF4444" BorderThickness="1.5" CornerRadius="12" Padding="16"
+                        Visibility="Collapsed" MaxWidth="360">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="⚠️" FontSize="16" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="IPTV Hesabı Kapanmış Görünüyor" Foreground="#f87171" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock x:Name="DeadAccountAlertText" Text="Bu yayının ait olduğu hesap (kullanıcı) yanıt vermiyor. Bu hesaba ait diğer yayınları da topluca temizlemek ister misiniz?"
+                                   Foreground="#cbd5e1" FontSize="11" TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,12"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="BtnPurgeDeadAccount" Content="🗑️ Bu Hesabı Temizle" Background="#dc2626" Foreground="White" FontWeight="Bold" FontSize="11" Height="32" Padding="12,0" BorderThickness="0" Click="BtnPurgeDeadAccount_Click" Cursor="Hand"/>
+                            <Button Grid.Column="1" Content="Kapat" Background="#334155" Foreground="#94a3b8" FontSize="11" Height="32" Padding="12,0" Margin="8,0,0,0" BorderThickness="0" Click="BtnCloseDeadAccountAlert_Click" Cursor="Hand"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </Grid>
         </flyleaf:FlyleafHost>
     </Grid>

@@ -31,7 +31,7 @@ namespace StreamMesh.Core.Media
             }
 
             cleaned = Regex.Replace(cleaned, @"\b(fhd|hd|sd|4k|raw|1080p|720p|hevc|h265|h264)\b", "", RegexOptions.IgnoreCase).Trim();
-            cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim(' ', '-', '_', ':', '|', '.');
+            cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim(' ', '-', '_', ':', '|', '.', '\'', '"', '`', '’', '‘', '“', '”');
             return string.IsNullOrWhiteSpace(cleaned) ? rawName : cleaned;
         }
 

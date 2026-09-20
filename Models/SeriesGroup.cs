@@ -7,7 +7,7 @@ namespace StreamMesh.Models
     {
         public List<Channel> Episodes { get; set; } = new List<Channel>();
 
-        public int SeasonCount => Episodes.Select(e => e.SeasonNumber).Distinct().Count();
+        public int SeasonCount => Episodes.Where(e => e.SeasonNumber > 0).Select(e => e.SeasonNumber).Distinct().Count();
         public int EpisodeCount => Episodes.Count;
 
         public SeriesGroup(string name, List<Channel> episodes)
@@ -20,9 +20,22 @@ namespace StreamMesh.Models
             if (first != null)
             {
                 this.LogoUrl = first.LogoUrl;
-                this.GroupTitle = $"{this.SeasonCount} Sezon, {this.EpisodeCount} Bölüm";
+                if (this.SeasonCount > 0)
+                {
+                    this.GroupTitle = $"{this.SeasonCount} Sezon, {this.EpisodeCount} Bölüm";
+                }
+                else
+                {
+                    this.GroupTitle = $"{this.EpisodeCount} Bölüm / Parça";
+                }
                 this.BackdropUrl = first.BackdropUrl;
                 this.ImdbId = first.ImdbId;
+                this.PlaylistUrl = first.PlaylistUrl;
+                this.M3uLineNumber = first.M3uLineNumber;
+                this.RawM3uBlock = first.RawM3uBlock;
+                this.Language = first.Language;
+                var epUrls = episodes.Select(e => e.PrimaryUrl).Where(u => !string.IsNullOrEmpty(u)).Distinct().ToList();
+                this.Url = epUrls.Count > 0 ? string.Join("||", epUrls) : (first.Url ?? "");
             }
         }
 

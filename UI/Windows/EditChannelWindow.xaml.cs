@@ -35,7 +35,12 @@ namespace StreamMesh.UI.Windows
             public string Value
             {
                 get => _value;
-                set { _value = value; OnPropertyChanged(); }
+                set
+                {
+                    _value = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(PurgeAccountButtonVisibility));
+                }
             }
 
             public bool IsDefault
@@ -57,6 +62,14 @@ namespace StreamMesh.UI.Windows
 
             public Visibility DefaultBadgeVisibility => IsDefault ? Visibility.Visible : Visibility.Collapsed;
             public Visibility MakeDefaultButtonVisibility => IsDefault ? Visibility.Collapsed : Visibility.Visible;
+            public Visibility PurgeAccountButtonVisibility
+            {
+                get
+                {
+                    var acc = IptvAccountHelper.ParseAccountFromUrl(_value);
+                    return (acc != null && !string.IsNullOrEmpty(acc.Username)) ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
             public string CardBorderBrush => IsDefault ? "#059669" : "#334155";
             public string CardBackground => IsDefault ? "#0d2818" : "#0f172a";
 
@@ -239,6 +252,71 @@ namespace StreamMesh.UI.Windows
             }
         }
 
+        private async void PurgeAccountFromUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
+            {
+                var acc = IptvAccountHelper.ParseAccountFromUrl(item.Value);
+                if (acc == null || string.IsNullOrWhiteSpace(acc.Username))
+                {
+                    System.Windows.MessageBox.Show("Bu URL adresinden geçerli bir IPTV hesap bilgisi (kullanıcı adı/şifre) tespit edilemedi.", "Hesap Bulunamadı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Sayımları al
+                var counts = await IptvAccountHelper.CountAccountOccurrencesAsync(acc);
+
+                string confirmMessage = $"IPTV HESAP BİLGİSİ:\n" +
+                                       $"• Sunucu: {acc.HostWithPort}\n" +
+                                       $"• Kullanıcı Adı: {acc.Username}\n\n" +
+                                       $"Bu hesaba ait veritabanında toplam:\n" +
+                                       $"• {counts.totalUrls} adet yayın/bölüm adresi\n" +
+                                       $"• {counts.totalChannels} adet kanal/içerik kaydı\n" +
+                                       $"  ({counts.exclusiveChannels} tanesi SADECE bu hesaba ait ve tamamen silinecek)\n\n" +
+                                       $"Bu hesaba ait TÜM yayın linklerini ve sadece bu hesaba bağlı kanalları topluca silmek istediğinizden emin misiniz?";
+
+                var res = System.Windows.MessageBox.Show(confirmMessage, "Toplu IPTV Hesabı Temizleme Onayı", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+
+                try
+                {
+                    var purgeResult = await IptvAccountHelper.PurgeAccountFromDatabaseAsync(acc);
+
+                    // Mevcut açık penceredeki TempUrlList içinden de temizle
+                    var toRemove = TempUrlList.Where(u => IptvAccountHelper.UrlBelongsToAccount(u.Value, acc)).ToList();
+                    foreach (var tr in toRemove)
+                    {
+                        TempUrlList.Remove(tr);
+                    }
+                    if (TempUrlList.Count > 0 && !TempUrlList.Any(u => u.IsDefault))
+                    {
+                        TempUrlList[0].IsDefault = true;
+                    }
+
+                    System.Windows.MessageBox.Show(
+                        $"İşlem Başarıyla Tamamlandı:\n\n" +
+                        $"• Silinen toplam ölü URL: {purgeResult.TotalUrlsRemoved}\n" +
+                        $"• Tamamen kaldırılan kanal: {purgeResult.ChannelsDeletedEntirely}\n" +
+                        $"• Kaynakları temizlenen kanal: {purgeResult.ChannelsModifiedSourcesRemoved}\n" +
+                        $"• Temizlenen M3U kaynakları: {purgeResult.SourcesRemovedFromM3uSources}",
+                        "Hesap Temizlendi",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+                    // Eğer düzenlenen kanalın hiç kaynağı kalmadıysa pencereyi kapat
+                    if (TempUrlList.Count == 0)
+                    {
+                        this.DialogResult = true;
+                        this.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Temizleme sırasında hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         private void AddUrl_Click(object sender, RoutedEventArgs e) => TempUrlList.Add(new ChannelSourceItem { Value = "", IsDefault = (TempUrlList.Count == 0) });
         private void RemoveUrl_Click(object sender, RoutedEventArgs e)
         {
@@ -388,6 +466,22 @@ namespace StreamMesh.UI.Windows
             await _db.SaveChannelAsync(_channel);
             DialogResult = true;
             Close();
+        }
+
+        private void M3uSourceInfo_Click(object sender, RoutedEventArgs e)
+        {
+            var diagWin = new SourceDiagnosisWindow(_channel)
+            {
+                Owner = this
+            };
+            diagWin.ShowDialog();
+
+            // In case the user converted a series group to a movie or modified the channel in the diagnosis window
+            if (!string.IsNullOrWhiteSpace(_channel.Url) && (TempUrlList.Count == 0 || string.IsNullOrWhiteSpace(TempUrlList[0].Value)))
+            {
+                TempUrlList.Clear();
+                TempUrlList.Add(new ChannelSourceItem { Value = _channel.Url, IsDefault = true });
+            }
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e) => Close();

@@ -30,7 +30,7 @@ namespace StreamMesh.Core.Database.Repositories
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked FROM Channels ORDER BY PersonalWatchCount DESC, AddedDate DESC";
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock FROM Channels ORDER BY PersonalWatchCount DESC, AddedDate DESC";
 
                     using var reader = await cmd.ExecuteReaderAsync();
                     while (await reader.ReadAsync())
@@ -63,7 +63,7 @@ namespace StreamMesh.Core.Database.Repositories
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked FROM Channels WHERE Id = @Id LIMIT 1";
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock FROM Channels WHERE Id = @Id LIMIT 1";
                     cmd.Parameters.AddWithValue("@Id", id);
 
                     using var reader = await cmd.ExecuteReaderAsync();
@@ -89,7 +89,7 @@ namespace StreamMesh.Core.Database.Repositories
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pui, @Pli, @Pei, @Watched, @Verified, @Lp, @EpgL) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredUrlIndex=excluded.PreferredUrlIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified, LastPositionMs=excluded.LastPositionMs, IsEpgLocked=excluded.IsEpgLocked";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pui, @Pli, @Pei, @Watched, @Verified, @Lp, @EpgL, @M3uLine, @RawM3u) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredUrlIndex=excluded.PreferredUrlIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified, LastPositionMs=excluded.LastPositionMs, IsEpgLocked=excluded.IsEpgLocked, M3uLineNumber=excluded.M3uLineNumber, RawM3uBlock=excluded.RawM3uBlock";
 
                     AddChannelParameters(cmd, ch);
                     await cmd.ExecuteNonQueryAsync();
@@ -124,7 +124,7 @@ namespace StreamMesh.Core.Database.Repositories
 
                     var cmd = connection.CreateCommand();
                     cmd.Transaction = tx;
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pui, @Pli, @Pei, @Watched, @Verified, @Lp, @EpgL) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredUrlIndex=excluded.PreferredUrlIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified, LastPositionMs=excluded.LastPositionMs, IsEpgLocked=excluded.IsEpgLocked";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pui, @Pli, @Pei, @Watched, @Verified, @Lp, @EpgL, @M3uLine, @RawM3u) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredUrlIndex=excluded.PreferredUrlIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified, LastPositionMs=excluded.LastPositionMs, IsEpgLocked=excluded.IsEpgLocked, M3uLineNumber=excluded.M3uLineNumber, RawM3uBlock=excluded.RawM3uBlock";
 
                     var pId = cmd.Parameters.Add("@Id", SqliteType.Text);
                     var pName = cmd.Parameters.Add("@Name", SqliteType.Text);
@@ -154,6 +154,8 @@ namespace StreamMesh.Core.Database.Repositories
                     var pVerified = cmd.Parameters.Add("@Verified", SqliteType.Integer);
                     var pLp = cmd.Parameters.Add("@Lp", SqliteType.Integer);
                     var pEpgL = cmd.Parameters.Add("@EpgL", SqliteType.Integer);
+                    var pM3uLine = cmd.Parameters.Add("@M3uLine", SqliteType.Integer);
+                    var pRawM3u = cmd.Parameters.Add("@RawM3u", SqliteType.Text);
 
                     foreach (var ch in channels)
                     {
@@ -188,6 +190,8 @@ namespace StreamMesh.Core.Database.Repositories
                         pVerified.Value = ch.IsVerified ? 1 : 0;
                         pLp.Value = ch.LastPositionMs;
                         pEpgL.Value = ch.IsEpgLocked ? 1 : 0;
+                        pM3uLine.Value = ch.M3uLineNumber;
+                        pRawM3u.Value = ch.RawM3uBlock ?? "";
 
                         cmd.ExecuteNonQuery();
                     }
@@ -324,7 +328,7 @@ namespace StreamMesh.Core.Database.Repositories
                 {
                     await connection.OpenAsync();
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked FROM Channels WHERE Category='Dizi' AND (Name LIKE @q OR Name LIKE @q2)";
+                    cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock FROM Channels WHERE Category='Dizi' AND (Name LIKE @q OR Name LIKE @q2)";
                     cmd.Parameters.AddWithValue("@q", seriesBaseName + "%");
                     cmd.Parameters.AddWithValue("@q2", "%" + seriesBaseName + "%");
 
@@ -523,7 +527,9 @@ namespace StreamMesh.Core.Database.Repositories
                 IsWatched = !reader.IsDBNull(24) && reader.GetInt32(24) == 1,
                 IsVerified = !reader.IsDBNull(25) && reader.GetInt32(25) == 1,
                 LastPositionMs = (reader.FieldCount > 26 && !reader.IsDBNull(26)) ? reader.GetInt64(26) : 0,
-                IsEpgLocked = (reader.FieldCount > 27 && !reader.IsDBNull(27)) && reader.GetInt32(27) == 1
+                IsEpgLocked = (reader.FieldCount > 27 && !reader.IsDBNull(27)) && reader.GetInt32(27) == 1,
+                M3uLineNumber = (reader.FieldCount > 28 && !reader.IsDBNull(28)) ? reader.GetInt32(28) : 0,
+                RawM3uBlock = (reader.FieldCount > 29 && !reader.IsDBNull(29)) ? reader.GetString(29) : ""
             };
             if (!reader.IsDBNull(8)) { try { ch.CreatedAt = DateTimeOffset.FromUnixTimeSeconds(reader.GetInt64(8)).DateTime; } catch { } }
             return ch;
@@ -551,6 +557,8 @@ namespace StreamMesh.Core.Database.Repositories
             cmd.Parameters.AddWithValue("@Verified", ch.IsVerified ? 1 : 0);
             cmd.Parameters.AddWithValue("@Lp", ch.LastPositionMs);
             cmd.Parameters.AddWithValue("@EpgL", ch.IsEpgLocked ? 1 : 0);
+            cmd.Parameters.AddWithValue("@M3uLine", ch.M3uLineNumber);
+            cmd.Parameters.AddWithValue("@RawM3u", ch.RawM3uBlock ?? "");
         }
 
         private async Task ExecuteRawNonQueryAsync(string sql)

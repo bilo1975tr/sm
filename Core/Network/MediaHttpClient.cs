@@ -17,7 +17,7 @@ namespace StreamMesh.Core.Network
             {
                 AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
                 AllowAutoRedirect = true,
-                MaxConnectionsPerServer = 10
+                MaxConnectionsPerServer = 50
             };
 
             _client = new HttpClient(handler);

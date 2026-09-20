@@ -22,6 +22,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
@@ -56,92 +57,207 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Toolbar / Categories -->
-            <Border Grid.Row="1" Background="#1e293b" CornerRadius="12" Padding="12" Margin="0,0,0,20" BorderBrush="#334155" BorderThickness="1">
+            <!-- Sync / First Run Info Banner -->
+            <Border Grid.Row="1" Background="#0f766e" CornerRadius="10" Padding="16,12" Margin="0,0,0,18"
+                    BorderBrush="#14b8a6" BorderThickness="1"
+                    Visibility="{Binding IsSyncing, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid>
-                    <StackPanel x:Name="CategoryPanel" Orientation="Horizontal">
-                        <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90"/>
-                        <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="110" Background="#334155"/>
-                        <Button Content="TV" Tag="TV" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="80" Background="#334155"/>
-                        <Button Content="Filmler" Tag="Movies" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90" Background="#334155"/>
-                        <Button Content="Diziler" Tag="Series" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90" Background="#334155"/>
-                        <Button Content="Radyo" Tag="Radio" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Width="90" Background="#334155"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="140"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="🔄" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Yayın Listesi İndiriliyor &amp; Hazırlanıyor" FontWeight="Bold" FontSize="14" Foreground="White"/>
+                        <TextBlock Text="{Binding SyncStatusMessage}" FontSize="12" Foreground="#ccfbf1" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
 
-                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                        <ComboBox Width="140" Height="35" Margin="0,0,10,0" x:Name="SortComboBox" SelectionChanged="Sort_SelectionChanged">
-                            <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True"/>
-                            <ComboBoxItem Content="Alfabetik (Z-A)"/>
-                            <ComboBoxItem Content="Yeni Eklenenler"/>
-                            <ComboBoxItem Content="Favoriler Önce"/>
-                        </ComboBox>
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <ProgressBar Height="8" Width="130" Minimum="0" Maximum="100"
+                                     Value="{Binding SyncProgressPercent}"
+                                     Foreground="#2dd4bf" Background="#134e4a" BorderThickness="0"/>
+                        <TextBlock Text="{Binding SyncProgressPercent, StringFormat='{}{0}%'}" FontSize="11" Foreground="#ccfbf1" HorizontalAlignment="Right" Margin="0,3,0,0"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
+            <!-- Toolbar / Categories -->
+            <Border Grid.Row="2" Background="#1e293b" CornerRadius="12" Padding="12" Margin="0,0,0,12" BorderBrush="#334155" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <StackPanel x:Name="CategoryPanel" Orientation="Horizontal">
+                            <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90"/>
+                            <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="110" Background="#334155"/>
+                            <Button Content="TV" Tag="TV" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="80" Background="#334155"/>
+                            <Button Content="Filmler" Tag="Movies" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90" Background="#334155"/>
+                            <Button Content="Diziler" Tag="Series" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90" Background="#334155"/>
+                            <Button Content="Radyo" Tag="Radio" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Width="90" Background="#334155"/>
+                        </StackPanel>
+
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                            <Button Content="🔄 Listeyi Yenile" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Height="35" Padding="12,0" Margin="0,0,10,0" Click="ManualSync_Click" ToolTip="Yayın listelerini internetten tekrar kontrol et"/>
+                            <ComboBox Width="140" Height="35" x:Name="SortComboBox" SelectionChanged="Sort_SelectionChanged">
+                                <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True"/>
+                                <ComboBoxItem Content="Alfabetik (Z-A)"/>
+                                <ComboBoxItem Content="Yeni Eklenenler"/>
+                                <ComboBoxItem Content="Favoriler Önce"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Group / Category Title Filter Bar -->
+                    <Border Grid.Row="1" Margin="0,10,0,0" Padding="0,8,0,0" BorderBrush="#334155" BorderThickness="0,1,0,0"
+                            Visibility="{Binding HasGroupCategories, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding GroupCategories}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Margin="0,0,6,0" Padding="12,5" Height="30" FontSize="11" FontWeight="SemiBold"
+                                                Click="GroupChip_Click" Tag="{Binding Name}" Cursor="Hand">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#0f172a"/>
+                                                    <Setter Property="Foreground" Value="#94a3b8"/>
+                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                        CornerRadius="15" Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="Background" Value="#0284c7"/>
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Setter Property="BorderBrush" Value="#38bdf8"/>
+                                                        </DataTrigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="BorderBrush" Value="#38bdf8"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Border>
+
             <!-- Library Content -->
-            <ListView x:Name="ChannelGrid" Grid.Row="2" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
-                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                <ListView.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/></ItemsPanelTemplate></ListView.ItemsPanel>
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="#1e293b" CornerRadius="15" Width="200" Height="270" Margin="10" BorderThickness="1" BorderBrush="#334155" x:Name="CardBorder" ClipToBounds="True"
-                                MouseLeftButtonUp="Card_Click" MouseEnter="Card_MouseEnter" MouseLeave="Card_MouseLeave"
-                                AllowDrop="True" Drop="Card_Drop" PreviewMouseMove="Card_MouseMove" PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown">
-                            <Border.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
-                                    <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
-                                    <Separator/>
-                                    <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
-                                </ContextMenu>
-                            </Border.ContextMenu>
-                            <Grid>
-                                <Grid.RowDefinitions><RowDefinition Height="140"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+            <Grid Grid.Row="3">
+                <ListView x:Name="ChannelGrid" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListView.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/></ItemsPanelTemplate></ListView.ItemsPanel>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#1e293b" CornerRadius="15" Width="200" Height="270" Margin="10" BorderThickness="1" BorderBrush="#334155" x:Name="CardBorder" ClipToBounds="True"
+                                    MouseLeftButtonUp="Card_Click" MouseEnter="Card_MouseEnter" MouseLeave="Card_MouseLeave"
+                                    AllowDrop="True" Drop="Card_Drop" PreviewMouseMove="Card_MouseMove" PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown">
+                                <Border.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
+                                        <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
+                                        <Separator/>
+                                        <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
+                                    </ContextMenu>
+                                </Border.ContextMenu>
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="140"/><RowDefinition Height="*"/></Grid.RowDefinitions>
 
-                                <!-- Poster Area -->
-                                <Border Grid.Row="0" Background="#0f172a" CornerRadius="15,15,0,0">
-                                    <Grid>
-                                        <Path Data="{StaticResource GeoTv}" Fill="White" Width="40" Height="40" Stretch="Uniform" Opacity="0.15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <Image Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="15"/>
+                                    <!-- Poster Area -->
+                                    <Border Grid.Row="0" Background="#0f172a" CornerRadius="15,15,0,0">
+                                        <Grid>
+                                            <Path Data="{StaticResource GeoTv}" Fill="White" Width="40" Height="40" Stretch="Uniform" Opacity="0.15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <Image Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="15"/>
 
-                                        <!-- Action Overlays -->
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
-                                            <Button Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Click="FavContext_Click" CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand" ToolTip="Favorilere Ekle / Çıkar">
-                                                <Path Data="{StaticResource GeoStar}" Fill="{Binding IsFavorite, Converter={StaticResource BooleanToBrushConverter}, ConverterParameter='Fav'}" Width="14" Height="14" Stretch="Uniform"/>
+                                            <!-- Action Overlays -->
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="8">
+                                                <Button Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Click="FavContext_Click" CommandParameter="{Binding}" Margin="0,0,5,0" Cursor="Hand" ToolTip="Favorilere Ekle / Çıkar">
+                                                    <Path Data="{StaticResource GeoStar}" Fill="{Binding IsFavorite, Converter={StaticResource BooleanToBrushConverter}, ConverterParameter='Fav'}" Width="14" Height="14" Stretch="Uniform"/>
+                                                </Button>
+                                                <Button Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Click="EditContext_Click" CommandParameter="{Binding}" Cursor="Hand" ToolTip="Kanalı Düzenle">
+                                                    <Path Data="{StaticResource GeoEdit}" Fill="White" Width="13" Height="13" Stretch="Uniform"/>
+                                                </Button>
+                                            </StackPanel>
+
+                                            <!-- Direct Play Button Overlay -->
+                                            <Button x:Name="PlayOverlayBtn" Width="42" Height="42" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Click="DirectPlay_Click" CommandParameter="{Binding}" Cursor="Hand" ToolTip="Hemen Oynat" Opacity="0">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="#E60284c7" CornerRadius="21" BorderBrush="#38bdf8" BorderThickness="1.5">
+                                                            <Path Data="{StaticResource GeoPlay}" Fill="White" Width="16" Height="16" Stretch="Uniform" Margin="3,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
                                             </Button>
-                                            <Button Width="28" Height="28" Background="#CC1e293b" BorderThickness="0" Click="EditContext_Click" CommandParameter="{Binding}" Cursor="Hand" ToolTip="Kanalı Düzenle">
-                                                <Path Data="{StaticResource GeoEdit}" Fill="White" Width="13" Height="13" Stretch="Uniform"/>
-                                            </Button>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Info Area -->
+                                    <StackPanel Grid.Row="1" Margin="15,12">
+                                        <TextBlock Text="{Binding PrimaryName}" FontWeight="Bold" FontSize="15" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding GroupTitle}" Foreground="#94a3b8" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+
+                                        <StackPanel Margin="0,10,0,0">
+                                            <TextBlock Text="{Binding CurrentEpgTime}" FontSize="10" Foreground="#38bdf8" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding CurrentEpgTitle}" FontSize="11" Foreground="#cbd5e1" TextTrimming="CharacterEllipsis" MaxHeight="32"/>
                                         </StackPanel>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Info Area -->
-                                <StackPanel Grid.Row="1" Margin="15,12">
-                                    <TextBlock Text="{Binding PrimaryName}" FontWeight="Bold" FontSize="15" Foreground="White" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding GroupTitle}" Foreground="#94a3b8" FontSize="11" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
-
-                                    <StackPanel Margin="0,10,0,0">
-                                        <TextBlock Text="{Binding CurrentEpgTime}" FontSize="10" Foreground="#38bdf8" FontWeight="Bold"/>
-                                        <TextBlock Text="{Binding CurrentEpgTitle}" FontSize="11" Foreground="#cbd5e1" TextTrimming="CharacterEllipsis" MaxHeight="32"/>
                                     </StackPanel>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                        <DataTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#38bdf8"/>
-                                <Setter TargetName="CardBorder" Property="Background" Value="#334155"/>
-                            </Trigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-                <ListView.ItemContainerStyle><Style TargetType="ListViewItem"><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style></ListView.ItemContainerStyle>
-            </ListView>
+                                </Grid>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#38bdf8"/>
+                                    <Setter TargetName="CardBorder" Property="Background" Value="#334155"/>
+                                    <Setter TargetName="PlayOverlayBtn" Property="Opacity" Value="1"/>
+                                </Trigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    <ListView.ItemContainerStyle><Style TargetType="ListViewItem"><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style></ListView.ItemContainerStyle>
+                </ListView>
+
+                <!-- Empty State Notice when database is empty and not syncing -->
+                <Border Background="#141c2e" CornerRadius="15" BorderBrush="#1e293b" BorderThickness="1"
+                        VerticalAlignment="Center" HorizontalAlignment="Center" Padding="40,30"
+                        Visibility="{Binding HasNoChannels, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center" MaxWidth="480">
+                        <TextBlock Text="📺" FontSize="44" HorizontalAlignment="Center" Margin="0,0,0,10" Opacity="0.7"/>
+                        <TextBlock Text="Kütüphanenizde Henüz İçerik Yok" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="Uygulama ilk kurulumda listeyi internetten otomatik çeker. İsterseniz aşağıdaki butonla listeleri şimdi getirebilir veya Ayarlar'dan kendi M3U adresinizi ekleyebilirsiniz."
+                                   FontSize="13" Foreground="#94a3b8" TextWrapping="Wrap" TextAlignment="Center" LineHeight="19" Margin="0,0,0,20"/>
+                        <Button Content="🚀 Yayın Listesini Şimdi İndir" Style="{StaticResource PrimaryButtonStyle}" Height="40" Padding="20,0" HorizontalAlignment="Center" Click="ManualSync_Click"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
             <!-- Pagination -->
-            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                 <Button x:Name="PrevBtn" Content="&lt; Önceki" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="40" Margin="0,0,20,0" Click="Prev_Click"/>
                 <TextBlock x:Name="PageText" Text="{Binding CurrentPageText}" VerticalAlignment="Center" Foreground="Gray" FontSize="16" FontWeight="SemiBold"/>
                 <Button x:Name="NextBtn" Content="Sonraki &gt;" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="40" Margin="20,0,0,0" Click="Next_Click"/>
