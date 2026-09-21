@@ -21,7 +21,8 @@
     "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/tr_onetv.m3u",
     "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/SPORTV.m3u",
     "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Azerbaycan.m3u",
-    "https://raw.githubusercontent.com/Efeisot/iptv/HEAD/index.m3u"
+    "https://raw.githubusercontent.com/Efeisot/iptv/HEAD/index.m3u",
+    "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/f4435ac36aaa880254b2d87bced4b3f392991c17/GermanTV/ZEEONE.m3u8",
   ],
   "film": [
     "https://tinyurl.com/power-cinema",
