@@ -1,0 +1,2367 @@
+{
+  "index": 1653,
+  "valid_channels": [
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRT1\" tvg-name=\"TRT1\" tvg-logo=\"https://iptv-epg.org/images/x9rE3sDmN5tjnxniK8_jqz7ZMz926dDn3qqFka9x-YQC88MCKmdfdfT2TmZYOdUt7OLq-FG2ZVDjvDVHlPor2w7ED1xky6q9jy5Ecn0\" group-title=\"ULUSAL\",TRT1",
+      "url": "https://tv-trt1.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRT 4K.tr\" tvg-name=\"TRT 4K\" tvg-logo=\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuf0VbbCYUyd_hUcaxw_iOtp84-aGKdfkvog&s\" group-title=\"ULUSAL\",TRT 4K",
+      "url": "http://c3921155.edmonst.net/iptv/DVHP2VB5QXL7UC/4001/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NOW TV\" tvg-name=\"NOW TV\" tvg-logo=\"https://iptv-epg.org/images/5pG0ddNinyVbulp_npMS5B3eW_Rdcaide6AnNN1Hz6RmXOCbpy378d7Mm4UgpcsQ_jCucZSCqc-R9PkQHphmiULM_1zBRlvjH9dRjV7d\" group-title=\"ULUSAL\",NOW TV",
+      "url": "https://uycyyuuzyh.turknet.ercdn.net/nphindgytw/nowtv/nowtv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TV8 HD.tr\" tvg-name=\"TV 8\" tvg-logo=\"https://i.ibb.co/Kr5SFY1/tv8.png\" group-title=\"ULUSAL\",TV 8",
+      "url": "https://rkhubpaomb.turknet.ercdn.net/fwjkgpasof/tv8/tv8_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SHOW TV.tr\" tvg-name=\"SHOW TV HD\" tvg-logo=\"https://dsmart-static-v2.ercdn.net//resize-width/400/content/E/aM/11889/Thumbnail.png\" group-title=\"ULUSAL\",SHOW TV HD",
+      "url": "https://ciner.daioncdn.net/showtv/showtv.m3u8?ce=3&app=4bc856ef-4c68-4a94-bc87-37dfaaa66558"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KANAL D\" tvg-name=\"KANAL D\" tvg-logo=\"https://iptv-epg.org/images/5pXoIJtUZaxg_Zn5Rn7CrAXbLUXN7m7b8zrIYEYio5NaJFlLapjOeW_hkNIBePKqbTMFlCIFUpOnCh8ndNMTNemedhEp7JBfvXCFmaCySQ\" group-title=\"ULUSAL\",KANAL D",
+      "url": "https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web&ce=3"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ext\" tvg-name=\"STAR TV\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/turkey/star-tv-tr.png\" group-title=\"ULUSAL\",STAR TV",
+      "url": "https://dogus.daioncdn.net/startv/startv.m3u8?ce=3&app=1740db13-3ee9-4858-8d2c-b1a9cfaa3718"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Tabii\" tvg-name=\"Tabii\" tvg-logo=\"https://cms-tabii-assets.tabii.com/thumbnails/23963_781e9dee-cbd8-491a-b166-0b1df25b3bd0_720.jpeg\" group-title=\"SiNEMA\",Tabii",
+      "url": "https://ceokzokgtd.erbvr.com/tabiitv/tabiitv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Halk TV\" tvg-name=\"Halk TV\" tvg-logo=\"https://raw.githubusercontent.com/GitLatte/m3ueditor/refs/heads/site/images/kanal-gorselleri/turkiye/halk-tv-tr.png\" group-title=\"HABER\",Halk TV",
+      "url": "https://halktv-live.daioncdn.net/halktv/halktv_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ext\" tvg-name=\"24\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/turkey/24-tr.png\" group-title=\"ULUSAL\",24",
+      "url": "https://turkmedya-live.ercdn.net/tv24/tv24_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ext\" tvg-name=\"DOST TV\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/turkey/dost-tv-tr.png\" group-title=\"ULUSAL\",DOST TV",
+      "url": "https://dost.stream.emsal.im/tv/live.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ext\" tvg-name=\"TRT EBA ORTAKUL\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/turkey/eba-tv-ortaokul-tr.png\" group-title=\"ULUSAL\",TRT EBA ORTAKUL",
+      "url": "https://tv-e-okul01.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ext\" tvg-name=\"TRT COCUK DIYANET\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/refs/heads/main/countries/turkey/trt-cocuk-tr.png\" group-title=\"ULUSAL\",TRT COCUK DIYANET",
+      "url": "https://tv-trtdiyanetcocuk.medya.trt.com.tr/master_720.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"EuroD.tr\" tvg-name=\"EURO D\" tvg-logo=\"https://i.ibb.co/jMQTJmh/euro-d.png\" group-title=\"ULUSAL\",EURO D",
+      "url": "https://live.duhnet.tv/S2/HLS_LIVE/eurodnp/track_4_1000/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTCocuk.tr\" tvg-name=\"TRT COCUK\" tvg-logo=\"https://i.ibb.co/mbvwYMB/trt-cocuk.png\" group-title=\"ULUSAL\",TRT COCUK",
+      "url": "https://tv-trtcocuk.medya.trt.com.tr/master_720.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KANAL 7 AVRUPA\" tvg-name=\"KANAL 7 AVRUPA\" tvg-logo=\"https://i.ibb.co/F4P8ddm/kanal-7-avrupa.png\" group-title=\"ULUSAL\",KANAL 7 AVRUPA",
+      "url": "https://livetv.radyotvonline.net/kanal7live/kanal7avr/chunklist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Teve2.tr\" tvg-name=\"TEVE2\" tvg-logo=\"https://i.ibb.co/JRpJc2P/teve2.png\" group-title=\"ULUSAL\",TEVE 2",
+      "url": "https://live.duhnet.tv/S2/HLS_LIVE/teve2np/track_4_1000/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Tivi6.tr\" tvg-name=\"Tivi 6\" tvg-logo=\"https://i.ibb.co/9H3DMWz/tivi6.png\" group-title=\"ULUSAL\",TIVI 6",
+      "url": "https://live.artidijitalmedya.com/artidijital_tivi6/tivi6/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HABERGlobal.tr\" tvg-name=\"HABER GLOBAL\" tvg-logo=\"https://i.ibb.co/4ZpZWkf/haber-global.png\" group-title=\"HABER\",HABER GLOBAL",
+      "url": "https://tv.ensonhaber.com/haberglobal/haberglobal_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 3\" group-title=\"TV\",KANAL 3",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanal3/kanal3/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 12\" group-title=\"TV\",KANAL 12",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanal12/kanal12/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 15\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-15-tr.png\" group-title=\"TV\",KANAL 15",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanal15/kanal15/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 23\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-23-tr.png\" group-title=\"TV\",KANAL 23",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanal23/kanal23/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 26\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-26-tr.png\" group-title=\"TV\",KANAL 26",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanal26/kanal26/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 33\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-33-tr.png\" group-title=\"TV\",KANAL 33",
+      "url": "https://edge1.socialsmart.tv/kanal33/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 34\" group-title=\"TV\",KANAL 34",
+      "url": "https://live.euromediacenter.com/kanal34/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 53\" group-title=\"TV\",KANAL 53",
+      "url": "https://kanal53.ozelip.com:3448/hybrid/play.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 58\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-58-tr.png\" group-title=\"TV\",KANAL 58",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanal58/kanal58/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL ADA\" group-title=\"TV\",KANAL ADA",
+      "url": "http://145.239.58.133:28008/kanalada/kanalada/sec-f5-v1-a1.m3u8?app=supersatforum"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL AVRUPA\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-avrupa-tr.png\" group-title=\"TV\",KANAL AVRUPA",
+      "url": "https://api-tv27.yayin.com.tr/kanalavrupa/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL PLUS\" group-title=\"TV\",KANAL PLUS",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanalplus/kanalplus/mpeg/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL URFA\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-urfa-tr.png\" group-title=\"TV\",KANAL URFA",
+      "url": "https://edge1.socialsmart.tv/kanalurfa/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL FIRAT\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-firat-tr.png\" group-title=\"TV\",KANAL FIRAT",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanalfirat/kanalfirat/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KOCAELİ TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kocaeli-tv-tr.png\" group-title=\"TV\",KOCAELİ TV",
+      "url": "https://edge1.socialsmart.tv/kocaelitv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KTV KONYA\" group-title=\"TV\",KTV KONYA",
+      "url": "https://cdn-ktvtv.yayin.com.tr/ktvtv/ktvtv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"LİFE TV\" group-title=\"TV\",LİFE TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_lifetv/lifetv/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"MAVi KARADENiZ TV\" group-title=\"TV\",MAVi KARADENiZ TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_mavikaradeniz/mavikaradeniz/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"MERCAN TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/mercan-tv-tr.png\" group-title=\"TV\",MERCAN TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_mercantv/mercantv/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"METROPOL TV\" group-title=\"TV\",METROPOL TV",
+      "url": "https://edge1.socialsmart.tv/metropoltv/smil/metropoltv/bant1/chunks.m3u8?app=supersatforum"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"MUGLA TÜRK TV\" group-title=\"TV\",MUGLA TÜRK TV",
+      "url": "https://edge1.socialsmart.tv/muglaturk/bant1/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"OLAY TURK\" group-title=\"TV\",OLAY TURK",
+      "url": "https://live.artidijitalmedya.com/artidijital_olayturk/olayturk/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SUN TV\" group-title=\"TV\",SUN TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_sunrtv/sunrtv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TEMPO TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/tempo-tv-tr.png\" group-title=\"TV\",TEMPO TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_tempotv/tempotv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TON TV\" group-title=\"TV\",TON TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_tontv/tontv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TV 41\" group-title=\"TV\",TV 41",
+      "url": "https://live.artidijitalmedya.com/artidijital_tv41/tv41/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TV 52\" group-title=\"TV\",TV 52",
+      "url": "https://edge1.socialsmart.tv/tv52/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TV 264\" group-title=\"TV\",TV 264",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtdxkkitgbrckilive/broadcast_5ee244263fd6d.smil/playlist.m3u8?md5=qb_9l3erQIDqZMjbKfALzA&expires=1651666386"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"UR FANATiK TV\" group-title=\"TV\",UR FANATiK TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_urfanatiktv/urfanatiktv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"VUSLAT TV\" group-title=\"TV\",VUSLAT TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_vuslattv/vuslattv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"RIZE TURK HD\" group-title=\"TV\",RIZE TURK HD",
+      "url": "https://yayin.rizeturk.com:3777/hybrid/play.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ORDU BEL TV\" group-title=\"TV\",ORDU BEL TV",
+      "url": "https://cdn1-ordubeltv.yayin.com.tr/ordubeltv/ordubeltv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"DAMAR TV\" group-title=\"TV\",DAMAR TV",
+      "url": "https://tvsms.club/tv.php?kanal=damar&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ARABESK TV\" group-title=\"TV\",ARABESK TV",
+      "url": "https://tvsms.club/tv.php?kanal=arabeskyeni&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SILA TV\" group-title=\"TV\",SILA TV",
+      "url": "https://tvsms.club/tv.php?kanal=silatv&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ZEYNO TV\" group-title=\"TV\",ZEYNO TV",
+      "url": "https://tvsms.club/tv.php?kanal=zeynotv&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"DOST TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/dost-tv-tr.png\" group-title=\"TV\",DOST TV",
+      "url": "https://tvsms.club/tvz.php?kanal=dost&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"EZO TV\" group-title=\"TV\",EZO TV",
+      "url": "https://tvsms.club/tvz.php?kanal=ezo&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TOP POP TV\" group-title=\"TV\",TOP POP TV",
+      "url": "https://tvsms.club/tvz.php?kanal=toppop&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"A VİVA TV\" group-title=\"TV\",A VİVA TV",
+      "url": "https://tvsms.club/tv.php?kanal=vivatv&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ARMA TV\" group-title=\"TV\",ARMA TV",
+      "url": "https://tvsms.club/tvz.php?kanal=arma&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"GENC SMS TV\" group-title=\"TV\",GENC SMS TV",
+      "url": "https://tvsms.club/tv.php?kanal=genctv&file=.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SAGLIK CHANEL\" group-title=\"TV\",SAGLIK CHANEL",
+      "url": "https://live.euromediacenter.com/saglikchannel/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ALANYA ATV\" group-title=\"TV\",ALANYA ATV",
+      "url": "https://helga.iptv2022.com/sh/AlanyaTV/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"HÜR TV\" group-title=\"TV\",HÜR TV",
+      "url": "https://live.euromediacenter.com/hurtv/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BRÜKSEL TÜRK\" group-title=\"TV\",BRÜKSEL TÜRK",
+      "url": "https://live.euromediacenter.com/brukselturk/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BEYAZ TV HD.tr\" tvg-name=\"BEYAZ TV\" tvg-logo=\"https://tvprofil.com/img/kanali-logo/Beyaz_TV_TR_logo_v2.png?1734094253\" group-title=\"ULUSAL\",BEYAZ TV",
+      "url": "https://beyaztv-live.daioncdn.net/beyaztv/beyaztv_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TGRT HABER HD.tr\" tvg-name=\"TGRT HABER\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/e/e1/TGRT_HABER_logosu.png\" group-title=\"HABER\",TGRT HABER",
+      "url": "https://canli.tgrthaber.com/tgrt.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SiNEMA 1\" tvg-logo=\"https://e7.pngegg.com/pngimages/879/420/png-clipart-film-video-production-television-graphy-cine-miscellaneous-label-thumbnail.png\" group-title=\"SiNEMA\",SiNEMA 1",
+      "url": "https://host.onlineradyotv.net:8081/sdmtv/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MinikaGO.tr\" tvg-name=\"MINIKA GO\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/MinikaGO_logo.png/1536px-MinikaGO_logo.png?20200428070543\" group-title=\"ÇOCUK\",MINIKA GO",
+      "url": "http://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago/minikago_720p.m3u8?tv=1"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"5 HD.tr\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/6/68/Tv8_Yeni_Logo.png\" group-title=\"SPOR\",TV 8.5\" group-title=\"TV\",5 HD.tr\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/6/68/Tv8_Yeni_Logo.png\" group-title=\"SPOR\",TV 8.5",
+      "url": "https://rkhubpaomb.turknet.ercdn.net/fwjkgpasof/tv8bucuk/tv8bucuk_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TV4.tr\" tvg-name=\"TV 4\" tvg-logo=\"https://i.postimg.cc/FKkHW8KK/tv4.png\" group-title=\"ULUSAL\",TV 4",
+      "url": "https://turkmedya-live.ercdn.net/tv4/tv4_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BIR TV\" tvg-name=\"BIR TV\" tvg-logo=\"https://i.ibb.co/dDdPMWq/birtv.png\" group-title=\"ULUSAL\",BIR TV",
+      "url": "https://edge1.socialsmart.tv/birtv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"LIFE TV\" tvg-name=\"LIFE TV\" tvg-logo=\"https://i.ibb.co/9hCVNks/life-tv.png\" group-title=\"ULUSAL\",LIFE TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_lifetv/lifetv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NTV.tr\" tvg-name=\"NTV\" tvg-logo=\"https://i.ibb.co/gRR1zpm/ntv.png\" group-title=\"HABER\",NTV",
+      "url": "https://dogus.daioncdn.net/ntv/ntv_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KanalD.tr\" tvg-name=\"KANAL D HD\" tvg-logo=\"https://mediacms01.digiturkplay.com/channel_logo/kanald_250x150.png\" group-title=\"ULUSAL\",KANAL D HD",
+      "url": "https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MovieSmart Turk.tr\" tvg-name=\"Moviesmart Türk HD\" tvg-logo=\"https://dsmart-static-v2.ercdn.net//resize-width/400//content/e/ZI/13863/Thumbnail.png?v=636987856299906443\" group-title=\"SiNEMA\",Moviesmart Türk HD",
+      "url": "https://ds.ayakkabiparti.lol/mvturk/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Film Screen.tr\" tvg-name=\"Film Screen HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/7d58e86c-d38e-4ef5-8ee0-fda0a7e65914.png\" group-title=\"SiNEMA\",Film Screen HD",
+      "url": "https://edge-e3.evrideo.tv/f2dcbecf-5af0-47db-a82e-032112050a23_1000027346_HLS/manifest.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TV4\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/tv4-tr.png\" group-title=\"TV\",TV4",
+      "url": "https://turkmedya-live.ercdn.net/tv4/tv4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRT1.tr\" tvg-name=\"TRT 1\" tvg-logo=\"https://iptv-epg.org/images/x9rE3sDmN5tjnxniK8_jqz7ZMz926dDn3qqFka9x-YQC88MCKmdfdfT2TmZYOdUt7OLq-FG2ZVDjvDVHlPor2w7ED1xky6q9jy5Ecn0\" group-title=\"TV\",TRT 1",
+      "url": "https://tv-trt1.medya.trt.com.tr/master_720.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TJK TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/tjk-tv-tr.png\" group-title=\"TV\",TJK TV",
+      "url": "https://tjktv-live.tjk.org/tjktv_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTAVAZ.tr\" tvg-name=\"TRT AVAZ\" tvg-logo=\"https://iptv-epg.org/images/8aw0MjrYHbTZS3XwD76qL0lz8n93hmTzoWTypCy0miSHp2AoIJIK1cKTR42dhXSvnWYg47V2yHKkYqHuBCEmgqE_DacoX-cVlK-lgbyp7gE\" group-title=\"TV\",TRT AVAZ",
+      "url": "https://tv-trtavaz.medya.trt.com.tr/master_720.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HalkTV.tr\" tvg-name=\"HALK TV\" tvg-logo=\"https://iptv-epg.org/images/QVPdU-hv9vynVDD5sV3yf4MPBsabum1QlN69btIs1Z5WT_CP4IF6eYazsmnMY_erRLN6QZgyvnGmbRdAPqb86ace9kI29HYvt3zj2tYq_Q\" group-title=\"TV\",HALK TV",
+      "url": "https://halktv.daioncdn.net/halktv/halktv_1080p.m3u8?app=c86957d3-74a7-44da-9ad2-dc358c769609"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BENGU TURK\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/bengu-turk-tr.png\" group-title=\"TV\",BENGU TURK",
+      "url": "https://tv.ensonhaber.com/benguturk/benguturk_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TURKHABER\" group-title=\"TV\",TURKHABER",
+      "url": "https://edge1.socialsmart.tv/turkhaber/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"NR1\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/nr1-hd-tr.png\" group-title=\"TV\",NR1",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e17cd6360b_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KRAL POP\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kral-pop-tr.png\" group-title=\"TV\",KRAL POP",
+      "url": "http://dygvideo.dygdigital.com/live/hls/kralpop"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"NR1 ASK\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/nr1-ask-hd-tr.png\" group-title=\"TV\",NR1 ASK",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e18f9cea15_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"NR1 DAMAR\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/nr1-damar-hd-tr.png\" group-title=\"TV\",NR1 DAMAR",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e198784bdc_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"NR1 DANCE\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/nr1-dance-hd-tr.png\" group-title=\"TV\",NR1 DANCE",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e2aa8acf44_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTMüzik.tr\" tvg-name=\"TRT MUZIK\" tvg-logo=\"https://iptv-epg.org/images/vFK8919BU3rccbnJiwpWKcVyjVRMuLo9AU6cKsgRPaVmYzYTqeaZb6jYT27ENf3NegIdkp8Aal9WfFVQj_xIey780nRy4xJUI3hLhE472BObxanJmoU\" group-title=\"TV\",TRT MUZIK",
+      "url": "https://tv-trtmuzik.medya.trt.com.tr/master_720.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"DREAM TURK\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/dream-turk-tr.png\" group-title=\"TV\",DREAM TURK",
+      "url": "https://live.duhnet.tv/S2/HLS_LIVE/dreamturknp/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"POWER TURK TAPTAZE\" group-title=\"TV\",POWER TURK TAPTAZE",
+      "url": "http://livetv.powerapp.com.tr/pturktaptaze/taptaze.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KANAL7.tr\" tvg-name=\"KANAL 7\" tvg-logo=\"https://iptv-epg.org/images/dUsxlychU_l6ESwkPUALJ2MsJT9vk_toCGsd0YsEj2FwcAdvOD2zmfEs-bu0GCqR8Y4Kj9TTMRXiHAVWAjIY6dUWQQ-9rGWwznrEu-teQg\" group-title=\"TV\",KANAL 7",
+      "url": "https://kanal7-live.daioncdn.net/kanal7/kanal7.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"360 TV\" group-title=\"TV\",360 TV",
+      "url": "https://turkmedya-live.ercdn.net/tv360/tv360.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TV8,5.tr\" tvg-name=\"TV 8.5\" tvg-logo=\"https://iptv-epg.org/images/__ONQla4VlY1wthc_WyAoo38Eo4rDTpr73Ho5wIg8cCjDgaDZ9BNCZSdeeMd4MCgasKCE876njyggQYehvf_ZZzHQSAZQCJbQKGrTG7dmEQ\" group-title=\"TV\",TV 8.5",
+      "url": "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk_1080p.m3u8?app=tv8bucuk_web&ce=3"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTHaber.tr\" tvg-name=\"TRT HABER\" tvg-logo=\"https://iptv-epg.org/images/mjtqzo9Wsiww6tU1uPa-n_tqp0ASImcIvL6r_ohzT2JtsTyd1ZD9CMN7glI3qyT7IuUCrpb7PMqc12L-_nJMFR4KZPJQVvPKxmJ28iv4Sijp\" group-title=\"TV\",TRT HABER",
+      "url": "https://tv-trthaber.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TGRTHaber.tr\" tvg-name=\"TGRT HABER\" tvg-logo=\"https://iptv-epg.org/images/WkdXn-4AOKxHkuMKVQyhXlh1STWBsWh7-rk-Ep8RjXT9xAcd9lC7u3WhTngDj-qdmbB6wVh4Cid8ABLwME83bDsn6M-gkeSTJbOyeuhOVaP8FA\" group-title=\"TV\",TGRT HABER",
+      "url": "https://tgrthaber-live.daioncdn.net/tgrthaber/tgrthaber.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"UlkeTV.tr\" tvg-name=\"ÜLKE TV\" tvg-logo=\"https://iptv-epg.org/images/9yWLRshsqoIQPD7ahZk0IpgwvHc-f2e68rGjXwzDJ2zpbaUP7HL2QJiaQMZ6BNXxJwy-MPXIez_PWNHtoCPwjRgkqNnMaI3oCsDRfny5ag\" group-title=\"TV\",ÜLKE TV",
+      "url": "https://livetv.radyotvonline.net/kanal7live/ulketv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"EKOL TV\" group-title=\"TV\",EKOL TV",
+      "url": "https://ekoltv-live.ercdn.net/ekoltv/ekoltv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TH TURK HABER TV\" group-title=\"TV\",TH TURK HABER TV",
+      "url": "https://edge1.socialsmart.tv/turkhaber/bant1/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"HABER 61\" group-title=\"TV\",HABER 61",
+      "url": "http://win8.yayin.com.tr/haber61tv/smil:haber61tv.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"EuroD.de\" tvg-name=\"EURO D\" tvg-logo=\"https://iptv-epg.org/images/N_6jqdzsXXVmx5YM1lxRQhPouyUmPZ1RAMa5sx66POg749jb3MHPsFeIbuCT4gWdZru21pXVb_CumYHroHfou3qDjH9ewfbTcJP8uZD6oQ\" group-title=\"TV\",EURO D",
+      "url": "https://live.duhnet.tv/S2/HLS_LIVE/eurodnp/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 7 AVRUPA\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-7-avrupa-tr.png\" group-title=\"TV\",KANAL 7 AVRUPA",
+      "url": "https://livetv.radyotvonline.net/kanal7live/kanal7avr/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTTURK.tr\" tvg-name=\"TRT TÜRK\" tvg-logo=\"https://iptv-epg.org/images/Pcq25tfyQZNmONHo5ikIHNwYI81rb-DfcF2s8exYUZHxT91QVKNHb_V9wUUSyRXd7yws7Ro6tON2BDI9rqtIMieq40o-aFQ6YRE04Wv3hro\" group-title=\"TV\",TRT TÜRK",
+      "url": "https://tv-trtturk.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"NR 1 TURK\" group-title=\"TV\",NR 1 TURK",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/broadcast_5c9e187770143.smil/chunklist_b400000.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"POWER LOVE\" group-title=\"TV\",POWER LOVE",
+      "url": "https://listen.powerapp.com.tr/plove/love.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"NR 1 DAMAR\" group-title=\"TV\",NR 1 DAMAR",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/broadcast_5c9e19877b340.smil/chunklist_b400000.m3u8?md5=api5VtN5dEXl5cvRHMQBNQ&expires=1696713505"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"NR 1 TV\" group-title=\"TV\",NR 1 TV",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/broadcast_5c9e17cd59e8b.smil/chunklist_b400000.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"POWER TURK\" group-title=\"TV\",POWER TURK",
+      "url": "https://livetv.powerapp.com.tr/powerturkTV/powerturkhd.smil/playlists.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"POWER TURK SLOW\" group-title=\"TV\",POWER TURK SLOW",
+      "url": "https://listen.powerapp.com.tr/pturkslow/slow.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"POWER TV AKUSTiK\" group-title=\"TV\",POWER TV AKUSTiK",
+      "url": "https://listen.powerapp.com.tr/pturkakustik/akustik.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"POWER DANCE\" group-title=\"TV\",POWER DANCE",
+      "url": "https://listen.powerapp.com.tr/dance/dance.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SLOW KARADENIZ TV\" group-title=\"TV\",SLOW KARADENIZ TV",
+      "url": "https://yayin.slowkaradeniztv.com:3390/multi_web/play.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"MELTEM TV\" group-title=\"TV\",MELTEM TV",
+      "url": "https://vhxyrsly.rocketcdn.com/meltemtv/chunklist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"DENiZ POSTASI TV\" group-title=\"TV\",DENiZ POSTASI TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_denizpostasi/denizpostasi/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"İSVİÇRE TV\" group-title=\"TV\",İSVİÇRE TV",
+      "url": "https://i41.ozelip.com:3269/hybrid/play.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"DİZİ TV\" group-title=\"TV\",DİZİ TV",
+      "url": "https://playlist.fasttvcdn.com/pl/rfrk9821hdy9dayo8wfyha/dizi-tv/playlist/0.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DiyanetTV.tr\" tvg-name=\"DiYANET TV\" tvg-logo=\"https://iptv-epg.org/images/Zu1rmzfINlcRjyQsydCBnc-xWPFNj3lcytGHxniOpcFmyZvYF8g44Um87l3pZm27gRSf7mxqHpo7xoobIs1udomw-evfy9NDXbVOh_B6dJ8FbA\" group-title=\"TV\",DiYANET TV",
+      "url": "http://eustr73.mediatriple.net/videoonlylive/mtikoimxnztxlive/broadcast_5e3bf95a47e07.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"LALEGUL TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/lalegul-tv-tr.png\" group-title=\"TV\",LALEGUL TV",
+      "url": "https://lbl.netmedya.net/hls/lalegultv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SEMERKAND TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/semerkand-tv-tr.png\" group-title=\"TV\",SEMERKAND TV",
+      "url": "http://b01c02nl.mediatriple.net/videoonlylive/mtisvwurbfcyslive/broadcast_58d915bd40efc.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"REHBER TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/rehber-tv-tr.png\" group-title=\"TV\",REHBER TV",
+      "url": "https://cdn4.yayin.com.tr/rehbertv/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"AL ZAHRA TURK TV\" group-title=\"TV\",AL ZAHRA TURK TV",
+      "url": "https://live.al-zahratv.com/live/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"MC TV\" group-title=\"TV\",MC TV",
+      "url": "https://rrr.sz.xlcdn.com/?account=mceutv&file=mc2&type=live&service=wowza&protocol=https&output=playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"MUKABELE TV\" group-title=\"TV\",MUKABELE TV",
+      "url": "https://playlist.fasttvcdn.com/pl/rfrk9821hdy9dayo8wfyha/mukabele-tv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TÜRKMENELİ TV\" group-title=\"TV\",TÜRKMENELİ TV",
+      "url": "https://135962.global.ssl.fastly.net/5ff366a512987e2c0a3dabfe/live_14378e1002eb11ef9cb025207067897a/index.fmp4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"AKSU TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/aksu-tv-tr.png\" group-title=\"TV\",AKSU TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_aksutv/aksutv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ANADOLUNET TV\" group-title=\"TV\",ANADOLUNET TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_anadolunet/anadolunet/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BİR TV\" group-title=\"TV\",BİR TV",
+      "url": "https://edge1.socialsmart.tv/birtv/bant1/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BODRUM KENT TV\" group-title=\"TV\",BODRUM KENT TV",
+      "url": "https://edge1.socialsmart.tv/bodrumkenttv/bant1/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BRTV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/brtv-tr.png\" group-title=\"TV\",BRTV",
+      "url": "https://live.artidijitalmedya.com/artidijital_brtv/brtv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BURSA LiNE TV\" group-title=\"TV\",BURSA LiNE TV",
+      "url": "https://edge1.socialsmart.tv/linetv/bant1/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"CAY TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/cay-tv-tr.png\" group-title=\"TV\",CAY TV",
+      "url": "https://edge1.socialsmart.tv/caytv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ÇİFTÇİ TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/ciftci-tv-tr.png\" group-title=\"TV\",ÇİFTÇİ TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_ciftcitv/ciftcitv/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"DERiN TV\" group-title=\"TV\",DERiN TV",
+      "url": "https://cdn1-derintv.yayin.com.tr/derintv/derintv/chunklist_w1486394141_b1796000.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"DİM TV\" group-title=\"TV\",DİM TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_dimtv/dimtv/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ERCİYES TV\" group-title=\"TV\",ERCİYES TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_erciyestv/erciyestv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ER TV\" group-title=\"TV\",ER TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_ertv_new/ertv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ES TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/azerbaijan/az-tv-tr.png\" group-title=\"TV\",ES TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_estv/estv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ETV KAYSERi\" group-title=\"TV\",ETV KAYSERi",
+      "url": "https://live.artidijitalmedya.com/artidijital_etv/etv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"ETV MANiSA\" group-title=\"TV\",ETV MANiSA",
+      "url": "https://edge1.socialsmart.tv/manisaetv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"GRT GAZİANTEP TV\" group-title=\"TV\",GRT GAZİANTEP TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_grt/grt/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"GUNEYDOGU TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/guneydogu-tv-tr.png\" group-title=\"TV\",GUNEYDOGU TV",
+      "url": "https://edge1.socialsmart.tv/gtv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"GURBET 24 TV\" group-title=\"TV\",GURBET 24 TV",
+      "url": "http://cdn-gurbet24.yayin.com.tr/gurbet24/gurbet24/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"HUNAT TV\" group-title=\"TV\",HUNAT TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_hunattv/hunattv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"iCEL TV\" group-title=\"TV\",iCEL TV",
+      "url": "https://edge1.socialsmart.tv/iceltv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"İZMİR TIME 35 TV\" group-title=\"TV\",İZMİR TIME 35 TV",
+      "url": "https://cdn-time35tv.yayin.com.tr/time35tv/time35tv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"İKRA TV\" group-title=\"TV\",İKRA TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_diyartv/diyartv/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KARDELEN TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kardelen-tv-tr.png\" group-title=\"TV\",KARDELEN TV",
+      "url": "https://edge1.socialsmart.tv/kardelentv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 19\" group-title=\"TV\",KANAL 19",
+      "url": "https://live.euromediacenter.com/kanal19/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"KANAL 32\" group-title=\"TV\",KANAL 32",
+      "url": "https://edge1.socialsmart.tv/kanal32/bant1/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TOKAT TV\" group-title=\"TV\",TOKAT TV",
+      "url": "https://cdn-tokattv.yayin.com.tr/tokattv/tokattv/chunklist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BELEMTÜRK\" group-title=\"TV\",BELEMTÜRK",
+      "url": "https://edge.socialsmart.tv/belemturktv/bant1/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"tabii TV.tr\" tvg-name=\"TABII TV\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Tabii_logo.svg/1024px-Tabii_logo.svg.png\" group-title=\"SiNEMA\",TABII TV",
+      "url": "https://ceokzokgtd.erbvr.com/tabiitv/tabiitv_1080p.m3u8?sid=IUlyczhCBES7nvvwJSIycw&bvr_flags=10&bvr_ch=tabiitv&bvr_bw=2800000"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NR1 FASHION ONE\" tvg-name=\"NR1 FASHION ONE\" tvg-logo=\"https://i.ibb.co/HV0x9JZ/fashion-one.png\" group-title=\"MUZIK\",NR1 FASHION ONE",
+      "url": "http://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/u_stream_5c9e2ee6997cb_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"Zarok TV Kürtçe\" tvg-logo=\"http://assets.tvcdn.net/15e32d50-4058-4fa6-a6e2-3e1dbc35c70c.jpeg\" group-title=\"ÇOCUK\",Zarok TV Kürtçe",
+      "url": "https://zindikurmanci.zaroktv.com.tr/hls/stream.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KANAL D HD.tr\" tvg-name=\"KANAL D\" tvg-logo=\"https://i.ibb.co/hf2mSz5/kanal-d.png\" group-title=\"ULUSAL\",KANAL D",
+      "url": "http://live.duhnet.tv/S2/HLS_LIVE/kanalddainp/track_4_1250/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"STAR TV HD.tr\" tvg-name=\"STAR TV\" tvg-logo=\"https://i.ibb.co/hY3Z8zx/star-tv.png\" group-title=\"ULUSAL\",STAR TV",
+      "url": "http://dygvideo.dygdigital.com/live/hls/startv4puhu?m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HABERTÜRK HD.tr\" tvg-name=\"HABER TURK\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/7/78/Haberturk_logo.png\" group-title=\"ULUSAL\",HABER TURK",
+      "url": "https://ciner.daioncdn.net/haberturktv/haberturktv_1080p.m3u8?sid=8b65nnyxpdwm&app=c98ab0b0-50cc-495b-bb37-778e91f5ff5b&ce=2"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"CNN TÜRK HD.tr\" tvg-name=\"CNN TURK\" tvg-logo=\"https://i.ibb.co/bFsmkwJ/cnn-turk.png\" group-title=\"ULUSAL\",CNN TURK",
+      "url": "http://c3921155.edmonst.net/iptv/DVHP2VB5QXL7UC/6926/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TVNET HD.tr\" tvg-name=\"TV NET\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Tvnet_logo_%282022%29.svg/1280px-Tvnet_logo_%282022%29.svg.png\" group-title=\"ULUSAL\",TV NET",
+      "url": "https://tvnet-live.lg.mncdn.com/tvnet/tvnet/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"CINE 1\" tvg-logo=\"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShGcdX8RFFGHnr6abeuEUZYKUW9xNNlW_GmQ&s\" group-title=\"ULUSAL\",CINE 1",
+      "url": "https://canliyayin.cine1.com.tr/memfs/cbaef080-a742-4644-9e9e-2b9f6a5103c3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MİNİKA GO.tr\" tvg-name=\"MINIKA GO\" tvg-logo=\"https://i.pinimg.com/originals/5b/9f/c9/5b9fc921bb50cff6ac0678d7bf6df06e.jpg\" group-title=\"ULUSAL\",MINIKA GO",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago/minikago_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"A2 HD.tr\" tvg-name=\"A2\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/e/e8/A2_logosu.jpg\" group-title=\"ULUSAL\",A2",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/a2tv/a2tv_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DMAX HD.tr\" tvg-name=\"DMAX\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/2/25/DMAX_Logo_16_05_2011.jpg\" group-title=\"ULUSAL\",DMAX",
+      "url": "http://c3921155.edmonst.net/iptv/DVHP2VB5QXL7UC/2290/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TLC.tr\" tvg-name=\"TLC\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/9/92/Tlc_logo_discovery.jpg\" group-title=\"ULUSAL\",TLC",
+      "url": "http://c3921155.edmonst.net/iptv/DVHP2VB5QXL7UC/6915/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"tagesschau24.de\" tvg-name=\"TAGESSCHAU 24\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/2/20/Tagesschau24_Cornerlogo.png\" group-title=\"ULUSAL\",TAGESSCHAU 24",
+      "url": "https://tagesschau-live.ard-mcdn.de/tagesschau/live/hls/de/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NDR.de\" tvg-name=\"NDR\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/commons/d/de/NDR_Dachmarke.png\" group-title=\"ULUSAL\",NDR",
+      "url": "https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_nds/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"MADINAH TV\" tvg-logo=\"https://e7.pngegg.com/pngimages/758/259/png-clipart-medina-mecca-television-channel-streaming-media-others-miscellaneous-television.png\" group-title=\"ULUSAL\",MADINAH TV",
+      "url": "https://cdn-globecast.akamaized.net/live/eds/saudi_sunnah/hls_roku/saudi_sunnah-avc1_600000=2-mp4a_145600_ara=3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"A SPOR HD.tr\" tvg-name=\"A SPOR\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/archive/e/e9/20140920094552%21A_Spor_logosu.png\" group-title=\"ULUSAL\",A SPOR",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ATV FHD\" tvg-name=\"ATV FHD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/atv.png\" group-title=\"Ulusal\",ATV FHD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/atv/atv_360p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"A2 HD\" tvg-name=\"A2 HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/a2.png\" group-title=\"Ulusal\",A2 HD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/a2tv/a2tv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KANAL D FHD\" tvg-name=\"KANAL D FHD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/kanal-d.png\" group-title=\"Ulusal\",KANAL D FHD",
+      "url": "https://ackaxsqacw.turknet.ercdn.net/ozfkfbbjba/kanald/kanald.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SHOW TV FHD\" tvg-name=\"SHOW TV FHD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/show-tv.png\" group-title=\"Ulusal\",SHOW TV FHD",
+      "url": "https://rmtftbjlne.turknet.ercdn.net/bpeytmnqyp/showtv/showtv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TV 8 FHD\" tvg-name=\"TV 8 FHD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/tv8.png\" group-title=\"Ulusal\",TV 8 FHD",
+      "url": "https://rkhubpaomb.turknet.ercdn.net/fwjkgpasof/tv8/tv8.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TV 8.5 HD\" tvg-name=\"TV 8.5 HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/tv8-5.png\" group-title=\"Ulusal\",TV 8.5 HD",
+      "url": "https://rkhubpaomb.turknet.ercdn.net/fwjkgpasof/tv8bucuk/tv8bucuk.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TEVE2 HD\" tvg-name=\"TEVE2 HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/teve2.png\" group-title=\"Ulusal\",TEVE2 HD",
+      "url": "https://ackaxsqacw.turknet.ercdn.net/ozfkfbbjba/teve2/teve2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"CNBC-e HD\" tvg-name=\"CNBC-e HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/cnbc-e.png\" group-title=\"Ulusal\",CNBC-e HD",
+      "url": "https://hnpsechtsc.turknet.ercdn.net/xpnvudnlsv/cnbc-e/cnbc-e.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HABERTURK HD\" tvg-name=\"HABERTURK HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/haberturk.png\" group-title=\"Haber\",HABERTURK HD",
+      "url": "https://rmtftbjlne.turknet.ercdn.net/bpeytmnqyp/haberturktv/haberturktv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NTV HD\" tvg-name=\"NTV HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/ntv.png\" group-title=\"Haber\",NTV HD",
+      "url": "https://dogus.daioncdn.net/ntv/ntv.m3u8?app=ntv_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"A HABER FHD\" tvg-name=\"A HABER FHD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/a-haber.png\" group-title=\"Haber\",A HABER FHD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/ahaber/ahaber.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"24 HD\" tvg-name=\"24 HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/24-tv.png\" group-title=\"Haber\",24 HD",
+      "url": "https://turkmedya-live.ercdn.net/tv24/tv24.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BLOOMBERG HT HD\" tvg-name=\"BLOOMBERG HT HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bloomberg-ht.png\" group-title=\"Haber\",BLOOMBERG HT HD",
+      "url": "https://ciner.daioncdn.net/bloomberght/bloomberght.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"A SPOR FHD\" tvg-name=\"A SPOR FHD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/a-spor.png\" group-title=\"Spor\",A SPOR FHD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HT SPOR HD\" tvg-name=\"HT SPOR HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/ht-spor.png\" group-title=\"Spor\",HT SPOR HD",
+      "url": "https://ciner.daioncdn.net/ht-spor/ht-spor.m3u8?app=web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRT COCUK HD\" tvg-name=\"TRT COCUK HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-cocuk.png\" group-title=\"Cocuk\",TRT COCUK HD",
+      "url": "https://tv-trtcocuk.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRT COCUK DIYANET HD\" tvg-name=\"TRT COCUK DIYANET HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-diyanet-cocuk.png\" group-title=\"Cocuk\",TRT COCUK DIYANET HD",
+      "url": "https://tv-trtdiyanetcocuk.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MINIKA COCUK HD\" tvg-name=\"MINIKA COCUK HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/minika-cocuk.png\" group-title=\"Cocuk\",MINIKA COCUK HD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago_cocuk/minikago_cocuk.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MINIKA GO HD\" tvg-name=\"MINIKA GO HD\" tvg-logo=\"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/minika-go.png\" group-title=\"Cocuk\",MINIKA GO HD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago/minikago.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"123tv.de@SD\" tvg-name=\"1-2-3 TV (270p)\" tvg-logo=\"https://iptv-epg.org/images/uouM5MEJt2TCyMbwKCgZ8nOhtETLGXn0WiLNdlZQ2dQqT0yrVk6zt6R8bgOC69eL2P2nhuFi1vYIdgYeyz9H-dU8dE4suRz-365OnJZSuc8x\" group-title=\"TV\",1-2-3 TV (270p)",
+      "url": "https://123tv-mx1.flex-cdn.net/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AdriaMusicTelevision.de@SD\" tvg-name=\"Adria Music Television\" group-title=\"TV\",Adria Music Television",
+      "url": "https://adriaapp.b-cdn.net/1080p/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AdventureEarth.de@SD\" tvg-name=\"Adventure Earth (1080p)\" group-title=\"TV\",Adventure Earth (1080p)",
+      "url": "https://a57e9c69976649b582a8d7604c00e69a.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/RlaxxTV-eu_AdventureEarth/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AlexBerlin.de@SD\" tvg-name=\"Alex Berlin (1080p)\" tvg-logo=\"https://iptv-epg.org/images/xYrNyU62geoibVAt01UoJmaLwiTpgTrdoXpDOhGbIraL9qNtudN8z4UoWh3bCZIHab_JPvxOub1X9b1BLmVQoUTQsrt-4R-UDy_-oT3Ivz8sD90k\" group-title=\"TV\",Alex Berlin (1080p)",
+      "url": "https://alex-stream.rosebud-media.de/bounce/alexlivetv50.smil/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AllgauTV.de@SD\" tvg-name=\"Allgäu TV (1080p)\" tvg-logo=\"https://iptv-epg.org/images/BA3X-ZDWKY2WSreAPUW0VaaRfrynoKepT2rb-B0EjbKEtsKRKmmbiKSfgVyt6PPP48HUFq0gYUeotuCiI1878pXklMI6ZEyYdiivdZwOIs8FoA\" group-title=\"TV\",Allgäu TV (1080p)",
+      "url": "https://stream01.welocal.stream/stream/fhd-allgaeutv_25679/ngrp:stream_all/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ARDalpha.de@SD\" tvg-name=\"ARD-alpha (720p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/ibkUqJFFcPBaSQTzhuhX41nip8_JlA0oHTYR0xemgAApB7-7GQXqxxtxpOqz0iN5at5bPLwGD7kORwqQXlqf5n3fSussc-7vYCiBx-2_4r-zTGE\" group-title=\"TV\",ARD-alpha (720p) [Not 24/7]",
+      "url": "https://brlive-lh.akamaihd.net/i/bralpha_germany@119899/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AugsburgTV.de@SD\" tvg-name=\"Augsburg TV (1080p)\" group-title=\"TV\",Augsburg TV (1080p)",
+      "url": "https://stream02.welocal.stream/stream/fhd-augsburgtv_104951/ngrp:stream_all/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AutenticHistory.de@SD\" tvg-name=\"Autentic History (1080p)\" group-title=\"TV\",Autentic History (1080p)",
+      "url": "https://9e754fa707344ccca6d84955c8fcaf36.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/RlaxxTV-eu_AutenticHistory/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AutenticTravel.de@SD\" tvg-name=\"Autentic Travel (1080p)\" group-title=\"TV\",Autentic Travel (1080p)",
+      "url": "https://cb0c87cc605942ff9766a4e6744bbadc.mediatailor.us-east-1.amazonaws.com/v1/master/44f73ba4d03e9607dcd9bebdcb8494d86964f1d8/RlaxxTV-eu_AutenticTravel/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BibelTV.de@SD\" tvg-name=\"Bibel TV (720p)\" tvg-logo=\"https://iptv-epg.org/images/BCNPXLPGw9WT8f04Bk_0wSIAX8vNDzKVoZUnc2yiv_rxIwD4TDJExIxf8Gi3SfeBHHEvxQ8IL0Cg0-bXRRuhdEjSMfyljQ4e3DE8wbBhvJ55\" group-title=\"TV\",Bibel TV (720p)",
+      "url": "https://bibint01.iptv-playoutcenter.de/bibint01/bibint01.stream_all/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BibelTVImpuls.de@SD\" tvg-name=\"Bibel TV Impuls (720p)\" group-title=\"TV\",Bibel TV Impuls (720p)",
+      "url": "https://bibeltv02.iptv-playoutcenter.de/bibeltv02/bibeltv02.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BibelTVMusik.de@SD\" tvg-name=\"Bibel TV Musik (720p)\" group-title=\"TV\",Bibel TV Musik (720p)",
+      "url": "https://bibeltv03.iptv-playoutcenter.de/bibeltv03/bibeltv03.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BRFernsehen.de@Nord\" tvg-name=\"BR Fernsehen Nord (720p)\" tvg-logo=\"https://iptv-epg.org/images/uOwTH_ZH2G204dizXey7rP_vijgFLDmFIPtzjSpCB6OJ7VmRViScuocNvxDO1tfRxSVSHjn94MbhCh--PsCxpMoSv7UrBEmYuSAIPr2GkImigeEmLiCQzpg\" group-title=\"TV\",BR Fernsehen Nord (720p)",
+      "url": "https://mcdn.br.de/br/fs/bfs_nord/hls/de/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BRFernsehen.de@Sud\" tvg-name=\"BR Fernsehen Sud (1080p)\" tvg-logo=\"https://iptv-epg.org/images/Vwpp5GYx9Yd-aw43wQeLFLVX_sC47UOlRQU-rMRrNk4wSVjce04TmKCA6vOk8Tz5ItHpumgJG-CFbLgv7wle4PfvXMRy3qUpK6P1dLyRkGxgjQxauWM7Lw\" group-title=\"TV\",BR Fernsehen Sud (1080p)",
+      "url": "https://mcdn.br.de/br/fs/bfs_sued/hls/de/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SachsenFernsehenChemnitz.de@SD\" tvg-name=\"Chemnitz Fernsehen (1080p)\" tvg-logo=\"https://iptv-epg.org/images/UjVaVREuvGWlmTq-Cy4F1tA2QxC2rmEltXUvRH3NoEBA3TJc-hzwVjOOtkhz85e0_S1AXHI0D9tcV37cyeIDh89K8ljRgKO2cuUGDQzznkx-VTC6wa-Fq8XSEQ\" group-title=\"TV\",Chemnitz Fernsehen (1080p)",
+      "url": "https://chemnitz.iptv-playoutcenter.de/chemnitz/chemnitzfernsehen.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"CiraTV.de@SD\" tvg-name=\"Cira TV (1080p)\" group-title=\"TV\",Cira TV (1080p)",
+      "url": "https://hlspackager.akamaized.net/live/DB/CIRA_TV/HLS/CIRA_TV.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DasErste.de@HD\" tvg-name=\"Das Erste HD (1080p)\" tvg-logo=\"https://iptv-epg.org/images/dS5ZQaKZmRRsARybVTzcicDoAMtc2aFi5n3bw0JgjkEW-RY1mP9WM2jCQvF6c5B6rDqrKOzW_cvWwjjEvpBcCq9ItPtsKoh5Fp-YrRYUVF2Pjg\" group-title=\"TV\",Das Erste HD (1080p)",
+      "url": "https://daserste-live.ard-mcdn.de/daserste/live/hls/int/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DASDING908.de@SD\" tvg-name=\"DASDING 90.8 (720p)\" group-title=\"TV\",DASDING 90.8 (720p)",
+      "url": "https://swrdasdingvr-hls.akamaized.net/hls/live/2018681/dasdingvr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DeluxeDance.de@SD\" tvg-name=\"Deluxe Dance (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/deluxe-dance-de.png\" group-title=\"TV\",Deluxe Dance (1080p)",
+      "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/64733/64733_264_live.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DeluxeLounge.de@SD\" tvg-name=\"Deluxe Lounge (720p)\" tvg-logo=\"https://iptv-epg.org/images/McWS13QgRr-ilyvSmGVtH3__o65jEQSwod95W3odTRy1bGASjnvj4Sz6_Dhnaf24crPpOb9pviFAY6zty6cpm_y_dQSmRMU9Q0zIc_hzkkjbS0rougs\" group-title=\"TV\",Deluxe Lounge (720p)",
+      "url": "https://jmp2.uk/stvp-CHAJ0500413A"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DeluxeMusic.de@SD\" tvg-name=\"Deluxe Music (720p)\" tvg-logo=\"https://iptv-epg.org/images/6FPx9qio6FX3R0bA9Y2OWhUHDj_BkVton83YQCusuuu1jEA-HGWh45WmQfvIuqkfGLpKQGHMLcgp4f4ozS20Mz4yXOKKH9Lk9_rs-08iOnOLFQFlng\" group-title=\"TV\",Deluxe Music (720p)",
+      "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/13456/13456_264_live.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DeluxeRap.de@SD\" tvg-name=\"Deluxe Rap (1080p)\" tvg-logo=\"https://iptv-epg.org/images/ueKsr3PQYCjZQTBNFE72PPSanfNXPT9Af6UE3VQ7Ecj_B0_sHzdI0Dc7TNiK4mehXqcmxWmJPtauRd_iRkh3raOlh225CzhW5Qnh3Fwtc1IhL3Q\" group-title=\"TV\",Deluxe Rap (1080p)",
+      "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/65183/65183_264_live.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DMF.de@SD\" tvg-name=\"DMF (1080p) [Not 24/7]\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/dmf-de.png\" group-title=\"TV\",DMF (1080p) [Not 24/7]",
+      "url": "https://d-m-f.iptv-playoutcenter.de/dmf/dmf1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Dokusat.de@SD\" tvg-name=\"Dokusat (1080p)\" tvg-logo=\"https://iptv-epg.org/images/I-sb-TTGbDid7fZAcSSGIeoqyOCcy6HpRvpDVgLGilq7f8nzG6Aa2bZ0XcVy4AvetK6mtZckrVQ27QrqAx1GmUL73IJUbB9XdA16s_PGvAJY\" group-title=\"TV\",Dokusat (1080p)",
+      "url": "https://muc3.iptv-playoutcenter.de/dokusat/dokusat1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SachsenFernsehenDresden.de@SD\" tvg-name=\"Dresden Fernsehen (1080p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/c3Mpq4avy8IAzVf8AIKPtjpA-FHxfMJLyDoMEfrR5KaobyU_QmDigWRbTIyK2NTrOvyStFQdVdd8g-6iD1OyrCr6rPYrcOg_zlVQ636dXsEUgSLvJJwjbIY7\" group-title=\"TV\",Dresden Fernsehen (1080p) [Not 24/7]",
+      "url": "https://dresden.iptv-playoutcenter.de/dresden/dresdenfernsehen.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DW.de@Arabic\" tvg-name=\"DW Arabic (1080p)\" group-title=\"TV\",DW Arabic (1080p)",
+      "url": "https://dwamdstream103.akamaized.net/hls/live/2015526/dwstream103/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DW.de@English\" tvg-name=\"DW English (1080p)\" group-title=\"TV\",DW English (1080p)",
+      "url": "https://amg01644-amg01644c1-amgplt0343.playout.now3.amagi.tv/ts-eu-w1-n2/playlist/amg01644-amg01644c1-amgplt0343/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DW.de@Espanol\" tvg-name=\"DW Espanol (1080p)\" group-title=\"TV\",DW Espanol (1080p)",
+      "url": "https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DW.de@Russian\" tvg-name=\"DW Russian (1080p)\" group-title=\"TV\",DW Russian (1080p)",
+      "url": "https://dwamdstream110.akamaized.net/hls/live/2017971/dwstream110/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"EchtJetztTV.de@SD\" tvg-name=\"EchtJetzt TV (720p)\" group-title=\"TV\",EchtJetzt TV (720p)",
+      "url": "https://bibeltv03.iptv-playoutcenter.de/bibeltv03/bibeltv03.stream_all/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ErzTVStollberg.de@SD\" tvg-name=\"Erz-TV Stollberg (576p)\" group-title=\"TV\",Erz-TV Stollberg (576p)",
+      "url": "https://5acade5fc0c29.streamlock.net/kabeljournal/live2020.stream/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Filstalwelle.de@SD\" tvg-name=\"Filstalwelle (1080p)\" group-title=\"TV\",Filstalwelle (1080p)",
+      "url": "https://h055.video-stream-hosting.de/filstalwelle-live/_definst_/mp4:livestream/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"FolxMusicTelevision.de@SD\" tvg-name=\"Folx Music Television\" tvg-logo=\"https://iptv-epg.org/images/h17cU6TGVOyMl1t5TYPVze6za6hW8KE7M7Vxy5RiVinYdsvXxQZq-qh-rYX2Mm1DpJf76xzIPGwFQERvNfibENwpWREsdw8YxxvrqcI34HIGCevKzk14SQg5QY2X\" group-title=\"TV\",Folx Music Television",
+      "url": "https://folxapp.b-cdn.net/1080p/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"FrankenFernsehen.de@SD\" tvg-name=\"Franken Fernsehen (Nürnberg) (1080p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/91Fu50DfcuEEb_2lLg14R2MKK_Pcy8PWwzSfybaRfOYUx37MNmUz5EWlChG2xQRdwILyHUKm7L3LwP5q3RF2Cfuw5LSfXhqpl9JlBKKBcXCJHqczEpbcV5Z3\" group-title=\"TV\",Franken Fernsehen (Nürnberg) (1080p) [Not 24/7]",
+      "url": "https://frankentv.iptv-playoutcenter.de/frankentv/frankentv.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"FrankenPlus (1080p)\" group-title=\"TV\",FrankenPlus (1080p)",
+      "url": "https://stream01.welocal.stream/stream/fhd-frankenplus_119/ngrp:stream_all/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Handystar.de@SD\" tvg-name=\"Handystar (404p) [Not 24/7]\" group-title=\"TV\",Handystar (404p) [Not 24/7]",
+      "url": "https://sparhandytv.cdn.ses-ps.com/live/channel01/hls/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"hrfernsehen.de@SD\" tvg-name=\"hr-fernsehen (1080p)\" group-title=\"TV\",hr-fernsehen (1080p)",
+      "url": "https://hrhls.akamaized.net/hls/live/2024525/hrhls/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HSE.de@SD\" tvg-name=\"HSE (1080p)\" tvg-logo=\"https://iptv-epg.org/images/N0mHgpcyxnjDYk65re2ZwxwVk3BIQI54jcRQ6SRdwCxnD-Rsap9lIdSjhLCo_32xCgCqXyipV7u9n9dei59CwSMwBucWIXXaxADbMXk\" group-title=\"TV\",HSE (1080p)",
+      "url": "https://hse24.akamaized.net/hls/live/2006663/hse24/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HSEExtra.de@SD\" tvg-name=\"HSE24 Extra (1080p)\" group-title=\"TV\",HSE24 Extra (1080p)",
+      "url": "https://hse24extra.akamaized.net/hls/live/2006596/hse24extra/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HSETrend.de@SD\" tvg-name=\"HSE24 Trend (576p)\" group-title=\"TV\",HSE24 Trend (576p)",
+      "url": "https://hse24trend.akamaized.net/hls/live/2006597/hse24trend/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"iSTUFF.de@SD\" tvg-name=\"iSTUFF (720p) [Not 24/7]\" group-title=\"TV\",iSTUFF (720p) [Not 24/7]",
+      "url": "https://relay2.cdn.fem-net.de/hls/loop/istuff_live/istuff_live-720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Juwelo.de@SD\" tvg-name=\"Juwelo (720p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/italy/juwelo-it.png\" group-title=\"TV\",Juwelo (720p)",
+      "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/7441/7441_264_live.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KaufBeiTV.de@SD\" tvg-name=\"KaufBei TV (576p)\" group-title=\"TV\",KaufBei TV (576p)",
+      "url": "https://api.alpaca.t62a.com/hls/9103/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KiKA.de@SD\" tvg-name=\"KiKA (1080p) [Geo-blocked]\" tvg-logo=\"https://iptv-epg.org/images/iavyDxWeYALh2puv4fl20wLE9AeVLIGdfYka9TGqIzFT0rmbwnVzm_RuCSfuITSBTb9WkMRwzV4vcO9PEOodXmVyGJyIp_IEUi2IY7c_\" group-title=\"TV\",KiKA (1080p) [Geo-blocked]",
+      "url": "https://kikageohls.akamaized.net/hls/live/2022693/livetvkika_de/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KulturMD.de@SD\" tvg-name=\"KulturMD (1080p)\" group-title=\"TV\",KulturMD (1080p)",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/kulturmd_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Lausitzwelle.de@SD\" tvg-name=\"Lausitzwelle (1080p)\" tvg-logo=\"https://iptv-epg.org/images/whlVq2fVJo9Rn1y6BbvA-zGXngahzjwFdrZROd0Jy-Zmf59jc4WTkOKhwXg05pQb_wwn-9Qm6QDWVuWbuDtfJ43zyPVLDVjbVG7l4qxKIW4kev843bk\" group-title=\"TV\",Lausitzwelle (1080p)",
+      "url": "https://h056.video-stream-hosting.de/easycast11-live/_definst_/mp4:livestreamhd2/playlist.m3u8?ref="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SachsenFernsehenLeipzig.de@SD\" tvg-name=\"Leipzig Fernsehen (1080p)\" tvg-logo=\"https://iptv-epg.org/images/iUJMe7Nz0Yo-RrEAVNiWRTau8jlEqSt4cPFADKmOELGl_95Z7l_cvYdy_LUhtDaFLFgCOstFhVRnaXYs2w7wtBFwGwE3vpcvr8aekLUniYS4uIyGhzW_bLeD\" group-title=\"TV\",Leipzig Fernsehen (1080p)",
+      "url": "https://leipzig.iptv-playoutcenter.de/leipzig/leipzigfernsehen.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"LightChannel.de@SD\" tvg-name=\"Light Channel (576p) [Not 24/7]\" group-title=\"TV\",Light Channel (576p) [Not 24/7]",
+      "url": "http://streamer1.streamhost.org:1935/salive/lctvde/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MDF1.de@SD\" tvg-name=\"MDF.1 (1080p)\" group-title=\"TV\",MDF.1 (1080p)",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/mdf1_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MoreThanSportsTV.de@SD\" tvg-name=\"More Than Sports TV (1080p)\" tvg-logo=\"https://iptv-epg.org/images/sPF1fGml9prpWqom-eeRRuV9_K2Qhk95kT8Nv9l6tn3T68KOFlD7nxZ0JYcy7GnrNT8WvEK5K5xs5xLxwMDYYJoRigx-dN548CeVKQBV4uxhHLD91158c_IM\" group-title=\"TV\",More Than Sports TV (1080p)",
+      "url": "https://mts1.iptv-playoutcenter.de/mts/mts-web/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Motorvision.de@SD\" tvg-name=\"Motorvision TV (720p)\" tvg-logo=\"https://iptv-epg.org/images/IRo3TDotQBkxGmjXOZyUthMOMg0Dlwwm43Wm7BSNtYpXoNhL92hWUjlO35_4VTuxHrM4yna0zLnxTQ2yw-08N_By8debabvtr-BIp9sxj9mHKuG_omUv\" group-title=\"TV\",Motorvision TV (720p)",
+      "url": "https://stream.ads.ottera.tv/playlist.m3u8?network_id=535"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MunchenTV.de@SD\" tvg-name=\"München TV (1080p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/-n3h5WYHar9qYeudFrMPIvbxH4dtIjuHCez9M3NZhJ9LUjk_mLr9icplEBHKFGwk8wKAXxScmJHL6wq_0jit9JAMHSX5DDPnbSdulMh06zi7fUQ\" group-title=\"TV\",München TV (1080p) [Not 24/7]",
+      "url": "https://muenchentv.iptv-playoutcenter.de/muenchentv/muenchentv.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Nachrichten360.de@HD\" tvg-name=\"Nachrichten 360 (1080p) [Geo-blocked]\" group-title=\"TV\",Nachrichten 360 (1080p) [Geo-blocked]",
+      "url": "https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01821-lovetvfast-nachrichten360-samsungde/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NDRFernsehenInternational.de@SD\" tvg-name=\"NDR Fernsehen International (720p)\" group-title=\"TV\",NDR Fernsehen International (720p)",
+      "url": "https://ndrint.akamaized.net/hls/live/2020766/ndr_int/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NDRFernsehen.de@Hamburg\" tvg-name=\"NDR Hamburg (720p)\" tvg-logo=\"https://iptv-epg.org/images/8CAev9egkHwH4mlLhFzm6vSVI_pVwIoyb011o1GuJBI5dPAxdEQznae4lxWyMOw8G-F_ifIfzOohHvsp_bmdwF55m_B767kwrT_axGvudRXHZLHG\" group-title=\"TV\",NDR Hamburg (720p)",
+      "url": "https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_hh/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NDRFernsehen.de@MecklenburgVorpommern\" tvg-name=\"NDR Mecklenburg-Vorpommern (720p)\" tvg-logo=\"https://iptv-epg.org/images/3GdOzp-9z5V5wa3KRi3fvCPKTHGPtVxdjnQ-Tinv8c-2R9ChO0W54SbAMpqmL9rCcVVJFkeW22rzO8B75-tlhvq2yiDWkjWKDZhkobbUSt-SOPLa60XFWxUhJVUTBh6svy1D\" group-title=\"TV\",NDR Mecklenburg-Vorpommern (720p)",
+      "url": "https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_mv/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NDRFernsehen.de@SchleswigHolstein\" tvg-name=\"NDR Schleswig-Holstein (720p)\" tvg-logo=\"https://iptv-epg.org/images/MTlvaX632-aA9Ewwwg8ZscNJ1P__lm-bugp5VjAY3Up50Axt66pXR2IU85WUl3OvFwXruA3S77cBf4TdneP_SVARNyBKQoy3bwtXxETW0efFgqtNAwpX7U4GLNHX7-E\" group-title=\"TV\",NDR Schleswig-Holstein (720p)",
+      "url": "https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_sh/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Nickelodeon.de@SD\" tvg-name=\"Nickelodeon\" tvg-logo=\"https://iptv-epg.org/images/mXvXs_OJbJjNMci0SUc6rckhUvf2aefucsLk2evsbZvg3oecHC743rLr4_-XbEMaVDGyGcY3RB9gEczvnrjciYwLKMeyLKuRxTWDJbKx5PK8NdP_\" group-title=\"TV\",Nickelodeon",
+      "url": "https://ma.anixa.tv/clips/stream/nickelodeon/playlist.php"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NiederbayernTV.de@SD\" tvg-name=\"Niederbayern TV (720p)\" group-title=\"TV\",Niederbayern TV (720p)",
+      "url": "https://stream03.welocal.stream/stream/sat-nby/ngrp:sat-nby.stream_all/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NiederbayernTVDeggendorfStraubing.de@SD\" tvg-name=\"Niederbayern TV Deggendorf & Straubing (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/niederbayern-tv-deggendorf-straubing-de.png\" group-title=\"TV\",Niederbayern TV Deggendorf & Straubing (1080p)",
+      "url": "https://stream03.welocal.stream/stream/fhd-nbydeggendorf_99148/ngrp:stream_all/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NiederbayernTVLandshut.de@SD\" tvg-name=\"Niederbayern TV Landshut (1080p) [Not 24/7]\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/niederbayern-tv-landshut-de.png\" group-title=\"TV\",Niederbayern TV Landshut (1080p) [Not 24/7]",
+      "url": "https://isar-tv.iptv-playoutcenter.de/isar-tv/isar-tv.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NiederbayernTVPassau.de@SD\" tvg-name=\"Niederbayern TV Passau (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/niederbayern-tv-passau-de.png\" group-title=\"TV\",Niederbayern TV Passau (1080p)",
+      "url": "https://stream03.welocal.stream/stream/fhd-nbypassau_49171/ngrp:stream_all/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"noa4Hamburg.de@SD\" tvg-name=\"Noa 4 Hamburg (1080p)\" group-title=\"TV\",Noa 4 Hamburg (1080p)",
+      "url": "https://hls1.wtnet.de/noa4hh/apple/wifi6500.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"noa4Norderstedt.de@SD\" tvg-name=\"Noa 4 Norderstedt (1080p)\" group-title=\"TV\",Noa 4 Norderstedt (1080p)",
+      "url": "https://hls1.wtnet.de/noa4/apple/wifi6500.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"NRWision.de@SD\" tvg-name=\"NRWision (1080p)\" tvg-logo=\"https://iptv-epg.org/images/92RdefHbbgyVlUrnRvKbAbT2ken1_1RN4U19GXjMOJ8ZqoKUowIhHE4bJmxYeyqVjY1vfQbYFj8R4VFiM04DR9ncdmxT3OE2z74n3PWfNi4hKw\" group-title=\"TV\",NRWision (1080p)",
+      "url": "https://fms.nrwision.de/live/ngrp:livestreamHD.stream/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OberpfalzTV.de@SD\" tvg-name=\"Oberpfalz TV (1080p)\" tvg-logo=\"https://iptv-epg.org/images/ks0-8qLqsoamzhdZHb8OoNcfp8DhrWetRuhSXy_O28CcEGHklTqmS3qkq4x6DqAK2bYw0oTCeb9_1rxs0mc4bE4iz81JLUpaGLT3C__Ul-ksieKCIA\" group-title=\"TV\",Oberpfalz TV (1080p)",
+      "url": "https://oberpfalztv.iptv-playoutcenter.de/oberpfalztv/oberpfalztv.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKDessau.de@SD\" tvg-name=\"OK Dessau (1080p) [Not 24/7]\" group-title=\"TV\",OK Dessau (1080p) [Not 24/7]",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-dessau_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKFlensburg.de@SD\" tvg-name=\"OK Flensburg (576p)\" group-title=\"TV\",OK Flensburg (576p)",
+      "url": "https://live-cdn.oksh.de/play/hls/flensburgtv/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKKiel.de@SD\" tvg-name=\"OK Kiel (576p)\" group-title=\"TV\",OK Kiel (576p)",
+      "url": "https://live-cdn.oksh.de/play/hls/kieltv/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKMagdeburg.de@SD\" tvg-name=\"OK Magdeburg (1080p)\" group-title=\"TV\",OK Magdeburg (1080p)",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-magdeburg_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKMerseburgQuerfurt.de@SD\" tvg-name=\"OK Merseburg-Querfurt (1080p) [Not 24/7]\" group-title=\"TV\",OK Merseburg-Querfurt (1080p) [Not 24/7]",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-merseburg_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKSalzwedel.de@SD\" tvg-name=\"OK Salzwedel (1080p) [Not 24/7]\" group-title=\"TV\",OK Salzwedel (1080p) [Not 24/7]",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/ok-salzwedel_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKStendal.de@SD\" tvg-name=\"OK Stendal (1080p) [Not 24/7]\" group-title=\"TV\",OK Stendal (1080p) [Not 24/7]",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/mp4:ok-stendal_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OKWernigerode.de@SD\" tvg-name=\"OK Wernigerode (1080p)\" group-title=\"TV\",OK Wernigerode (1080p)",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/mp4:ok-wernigerode_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OneAdria.de@SD\" tvg-name=\"One Adria\" group-title=\"TV\",One Adria",
+      "url": "https://oneadriaapp.b-cdn.net/1080p/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OneMusicTelevision.de@SD\" tvg-name=\"One Music Television\" tvg-logo=\"https://iptv-epg.org/images/N9y-ca_pCdCL6LYXMo5olOv0LnhuGbtWnSZQeDxMbtuZQ9Ib3UYEMagVpMszV76gIyX8XvSIty7KfaFIun30ULQ-FF_dnxJFnuX9BDSJqY8-eRuj8itCK__tl1A\" group-title=\"TV\",One Music Television",
+      "url": "https://oneapp.b-cdn.net/1080p/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"OstWest24.de@SD\" tvg-name=\"Ost West 24 (1080p)\" group-title=\"TV\",Ost West 24 (1080p)",
+      "url": "http://stream.mcquack.net/455/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"PUNKTumFernsehen.de@SD\" tvg-name=\"PUNKTum Fernsehen (1080p) [Not 24/7]\" group-title=\"TV\",PUNKTum Fernsehen (1080p) [Not 24/7]",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/punktum_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"QVCZwei.de@SD\" tvg-name=\"QVC 2 Germany (540p)\" group-title=\"TV\",QVC 2 Germany (540p)",
+      "url": "https://qvcde-live.akamaized.net/hls/live/2097104/qps/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"QVC.de@SD\" tvg-name=\"QVC Germany (720p)\" tvg-logo=\"https://iptv-epg.org/images/fTZIkP5ko11rAf-v28NTmNv6JSq9YQa44KH5B9PF_kVYsezOBorSn_PG--UCo3EDk25O_wFcriasfMLh8FJNQ6XFkxSqSLV-sCAr_3w\" group-title=\"TV\",QVC Germany (720p)",
+      "url": "https://qvcde-live.akamaized.net/hls/live/2097104/qvc/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"QVCStyle.de@SD\" tvg-name=\"QVC Style Germany (540p)\" group-title=\"TV\",QVC Style Germany (540p)",
+      "url": "https://qvcde-live.akamaized.net/hls/live/2097104/qby/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RadioWeserTVBremen.de@SD\" tvg-name=\"Radio Weser TV Bremen (576p)\" group-title=\"TV\",Radio Weser TV Bremen (576p)",
+      "url": "https://5857499ee635b.streamlock.net/radiowesertv-live/_definst_/mp4:livestreamTV/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RAN1.de@SD\" tvg-name=\"RAN1 (1080p)\" group-title=\"TV\",RAN1 (1080p)",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/ran1_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RBW.de@SD\" tvg-name=\"RBW (1080p)\" group-title=\"TV\",RBW (1080p)",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/rbw_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RegioTVBodensee.de@SD\" tvg-name=\"Regio TV Bodensee (1080p)\" group-title=\"TV\",Regio TV Bodensee (1080p)",
+      "url": "https://regiotv-b.iptv-playoutcenter.de/regiotv-b/regiotv-b.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RegioTVStuttgart.de@SD\" tvg-name=\"Regio TV Stuttgart (1080p)\" group-title=\"TV\",Regio TV Stuttgart (1080p)",
+      "url": "https://regiotv-s.iptv-playoutcenter.de/regiotv-s/regiotv-s.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RFH.de@SD\" tvg-name=\"RFH (1080p)\" group-title=\"TV\",RFH (1080p)",
+      "url": "http://58bd5b7a98e04.streamlock.net/medienasa-live/RFH_high/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RiC.de@SD\" tvg-name=\"RiC (1080p)\" tvg-logo=\"https://iptv-epg.org/images/z92rqWGM8oNoI7OrezWaGVRKK4R14C23F42pSa1zDURV1XvKZ-zooerDEUO7KTMHJGKD6oYzgI478JLepXsdPCw7bZCX70W-wEi9PTY\" group-title=\"TV\",RiC (1080p)",
+      "url": "https://rictv.iptv-playoutcenter.de/rictv/rictv-web/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RockAntenne.de@SD\" tvg-name=\"Rock Antenne [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/YdsbNMchiBaNNiI_rO11YaKmWTxbIvPhd_B5sz7UYLeb2f1EBRiRGQfSg2znO8-yaN48jbeukwprXN713orpfSPZejcWRnPjHNWYKru6AsYZOagspg\" group-title=\"TV\",Rock Antenne [Not 24/7]",
+      "url": "https://stream.rockantenne.de/rockantenne/stream/mp3"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RTDE.de@SD\" tvg-name=\"RT DE (1080p) [Not 24/7]\" group-title=\"TV\",RT DE (1080p) [Not 24/7]",
+      "url": "https://rt-ger.rttv.com/dvr/rtdeutsch/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SaarlandFernsehen1.de@SD\" tvg-name=\"Saarland Fernsehen 1 (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/saarland-fernsehen-1-de.png\" group-title=\"TV\",Saarland Fernsehen 1 (1080p)",
+      "url": "https://saarland1.iptv-playoutcenter.de/saarland1/saarland1.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SaarlandFernsehen2.de@SD\" tvg-name=\"Saarland Fernsehen 2 (720p) [Not 24/7]\" group-title=\"TV\",Saarland Fernsehen 2 (720p) [Not 24/7]",
+      "url": "https://saarland2.iptv-playoutcenter.de/saarland2/saarland2.stream_2/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SachsenEins.de@SD\" tvg-name=\"Sachsen Eins (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/sachsen-eins-de.png\" group-title=\"TV\",Sachsen Eins (1080p)",
+      "url": "https://sachsen1.iptv-playoutcenter.de/sachsen1/sachsen1.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Seenluft24.de@SD\" tvg-name=\"Seenluft24 (1080p)\" group-title=\"TV\",Seenluft24 (1080p)",
+      "url": "https://h056.video-stream-hosting.de/easycast7-live/_definst_/mp4:livestreamhd20/playlist.m3u8?ref="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SenderNeuJerusalem.de@SD\" tvg-name=\"Sender Neu Jerusalem (576p)\" group-title=\"TV\",Sender Neu Jerusalem (576p)",
+      "url": "https://bild-und-ton.stream/snj-de/snj-de.smil/.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SonnenklarTV.de@SD\" tvg-name=\"Sonnenklar TV (1080p)\" tvg-logo=\"https://iptv-epg.org/images/7AeLX-6N5V1bYIuPljYhjCSoFxIYgRoBovIY8gCplXTpjhcatQnZQA1qm9KMoMletyh831Ntx8sn1d-0a8kxoC6FpST-d-DS0aiKumsigDBw46XiU8w\" group-title=\"TV\",Sonnenklar TV (1080p)",
+      "url": "http://euvia.cdn.ses-ps.com/HLS-Live/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SophiaTV.de@SD\" tvg-name=\"Sophia TV (720p)\" group-title=\"TV\",Sophia TV (720p)",
+      "url": "https://bild-und-ton.stream/sophiatv-en/smil:sophia-tv-en.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SophiaTVEspanol.de@SD\" tvg-name=\"Sophia TV Español (720p)\" group-title=\"TV\",Sophia TV Español (720p)",
+      "url": "https://bild-und-ton.stream/sophiatv-es/smil:sophia-tv-es.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SophiaTVFrancais.de@SD\" tvg-name=\"Sophia TV Français (720p)\" group-title=\"TV\",Sophia TV Français (720p)",
+      "url": "https://bild-und-ton.stream/sophiatv-fr/smil:sophia-tv-fr.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SophiaTV.it@SD\" tvg-name=\"Sophia TV Italy (720p)\" group-title=\"TV\",Sophia TV Italy (720p)",
+      "url": "https://bild-und-ton.stream/sophiatv-it/smil:sophia-tv-it.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SRFernsehen.de@SD\" tvg-name=\"SR Fernsehen (720p)\" tvg-logo=\"https://iptv-epg.org/images/QbKo9mtKNLuFJyj1rr9ULns5VtxncT1blo6XPHznliNroHIDQKgh6nitH5NAGqgUn2gGLPC4nbm3_s9ixirWwz5hTnlqzZ_7uzaPXvh-Rs9hWhHApQ\" group-title=\"TV\",SR Fernsehen (720p)",
+      "url": "https://srfs.akamaized.net/hls/live/689649/srfsgeo/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SWR3VisualRadio.de@SD\" tvg-name=\"SWR 3 Visual Radio (720p)\" group-title=\"TV\",SWR 3 Visual Radio (720p)",
+      "url": "https://swrswr3vr-hls.akamaized.net/hls/live/2018683/swr3vr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"tagesschau24.de@SD\" tvg-name=\"Tagesschau 24 (720p)\" tvg-logo=\"https://iptv-epg.org/images/nCBfOVYit0-apkjv1mbPXJejmh1BzJED3nGVZxo_eJwd6ei_1NDPnfgkduH8nF5C3jRXIP1STT9chhMjLOGfb9DA1YhBC6Y4w9dIYEJc-qujWYeuI-E\" group-title=\"TV\",Tagesschau 24 (720p)",
+      "url": "https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"teltOwkanal.de@SD\" tvg-name=\"teltOwkanal (1080p)\" group-title=\"TV\",teltOwkanal (1080p)",
+      "url": "https://h056.video-stream-hosting.de/easycast8-live/_definst_/mp4:livestreamhd8/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TerraMaterWILD.de@German\" tvg-name=\"Terra Mater WILD (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/terra-mater-wild-de.png\" group-title=\"TV\",Terra Mater WILD (1080p)",
+      "url": "https://53ff3982.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmxheHhUVi1ldV9UZXJyYU1hdGVyV2lsZF9ITFM/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TerraMaterWILD.de@English\" tvg-name=\"Terra Mater WILD English (1080p)\" group-title=\"TV\",Terra Mater WILD English (1080p)",
+      "url": "https://amg01775-amg01775c1-amgplt0343.playout.now3.amagi.tv/playlist/amg01775-amg01775c1-amgplt0343/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TV38SudostNiedersachen.de@SD\" tvg-name=\"TV38 Südost-Niedersachen (1080p)\" group-title=\"TV\",TV38 Südost-Niedersachen (1080p)",
+      "url": "https://h057.video-stream-hosting.de/tv38-live/_definst_/smil:livestream.smil/playlist.m3u8?ref="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TVIngolstadt.de@SD\" tvg-name=\"TV Ingolstadt (1080p)\" tvg-logo=\"https://iptv-epg.org/images/d5OoEuID8qX5pZQPO9LGSaeueEGXYnVEDelary41ABYAX9o53exuZDMcNTordNg0IVosAJ5qANlOBQSeBoRU0m6hYUKLC8oGtKnlOcOq4buTYCyRZak\" group-title=\"TV\",TV Ingolstadt (1080p)",
+      "url": "https://stream01.welocal.stream/stream/fhd-tvingolstadt_44349/ngrp:stream_all/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TVMainfranken.de@SD\" tvg-name=\"TV Mainfranken (1080p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/uzkplUvQvxYj_OqSDC3KsLDuhLmS9x2vFN3cS2Ys8HYUA_SYJVnMtjlf83LmKE9jwdB2W7JElMrKAbq1IxMiG9aQrQQUAhHoRRLoseYpOWDDdBn2-xs4\" group-title=\"TV\",TV Mainfranken (1080p) [Not 24/7]",
+      "url": "https://tvtouringw.iptv-playoutcenter.de/tvtouringw/tvtouringw.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TVOberfranken.de@SD\" tvg-name=\"TV Oberfranken (TVO) (1080p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/_6KdPVzNTX-92kxFv3BMPn_XRvbQYUvVfzOhTXccNxSFvSf8ocRd4dKdQdnXX3fk281zcKT0-YEmNMvLFD9CBLRs72PQflMM4yKO9A3yFyjBdqDBTd-k\" group-title=\"TV\",TV Oberfranken (TVO) (1080p) [Not 24/7]",
+      "url": "https://tvoberfranken.iptv-playoutcenter.de/tvoberfranken/tvoberfranken.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TVA.de@SD\" tvg-name=\"TVA (1080p) [Not 24/7]\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/tva-de.png\" group-title=\"TV\",TVA (1080p) [Not 24/7]",
+      "url": "https://tvaktuellr.iptv-playoutcenter.de/tvaktuellr/tvaktuellr.stream_1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"VolksmusikTV.de@SD\" tvg-name=\"Volksmusik TV (1080p)\" tvg-logo=\"https://iptv-epg.org/images/bHT9D7NhwfYkaAUqz1tGA4M8LO3m7EBJsAVjL4tU5WxlmxF3b5Pz6r3LCnd6E4oLtZ-RN7BEhugK0zhJk-WYjk7MH98_qWXQWOaBL5rOINByItmgyoU\" group-title=\"TV\",Volksmusik TV (1080p)",
+      "url": "https://vmtv.iptv-playoutcenter.de/vmtv/vmtv1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDR1Live.de@SD\" tvg-name=\"WDR 1 Live (720p)\" group-title=\"TV\",WDR 1 Live (720p)",
+      "url": "https://wdrfs247.akamaized.net/hls/live/681509/wdr_msl4_fs247/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Koln\" tvg-name=\"WDR Fernsehen (720p)\" group-title=\"TV\",WDR Fernsehen (720p)",
+      "url": "https://wdr-live.ard-mcdn.de/wdr/live/hls/de/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Aachen\" tvg-name=\"WDR Fernsehen Aachen (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Aachen (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018019-b/wdrlz_aachen/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Bielefeld\" tvg-name=\"WDR Fernsehen Bielefeld (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Bielefeld (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018026-b/wdrlz_bielefeld/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Bonn\" tvg-name=\"WDR Fernsehen Bonn (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Bonn (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018021-b/wdrlz_bonn/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Dortmund\" tvg-name=\"WDR Fernsehen Dortmund (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Dortmund (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018022-b/wdrlz_dortmund/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Duisburg\" tvg-name=\"WDR Fernsehen Duisburg (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Duisburg (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018024-b/wdrlz_duisburg/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Dusseldorf\" tvg-name=\"WDR Fernsehen Düsseldorf (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Düsseldorf (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018023-b/wdrlz_duesseldorf/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Essen\" tvg-name=\"WDR Fernsehen Essen (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Essen (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018027-b/wdrlz_essen/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Koln\" tvg-name=\"WDR Fernsehen Köln (720p) [Geo-blocked]\" tvg-logo=\"https://iptv-epg.org/images/nL-Y05xPF3QbXHxnBUNSuMVuUz7hl_C-ib0otEjocT8hTHxgJLcFhzo3Xv8QHJQqTTX7t-svk4kRzitDBTD05YCT8hwHkLq6tk0E5UOCqENBk2klrcoY3KwUk_uInso\" group-title=\"TV\",WDR Fernsehen Köln (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2023550-b/wdrlz_koeln/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Munster\" tvg-name=\"WDR Fernsehen Münster (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Münster (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018025-b/wdrlz_muensterland/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Siegen\" tvg-name=\"WDR Fernsehen Siegen (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Siegen (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018020-b/wdrlz_siegen/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WDRFernsehen.de@Wuppertal\" tvg-name=\"WDR Fernsehen Wuppertal (720p) [Geo-blocked]\" group-title=\"TV\",WDR Fernsehen Wuppertal (720p) [Geo-blocked]",
+      "url": "https://wdrlokalzeit.akamaized.net/hls/live/2018028-b/wdrlz_wuppertal/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WeltderWunderTV.de@SD\" tvg-name=\"Welt der Wunder TV (576p)\" group-title=\"TV\",Welt der Wunder TV (576p)",
+      "url": "https://wdw.iptv-playoutcenter.de/wdw/wdw1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"YOLTV.de@SD\" tvg-name=\"YOL TV\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/yol-tv-tr.png\" group-title=\"TV\",YOL TV",
+      "url": "https://live.yoltv.com/hls/stream.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ZweiMusicTelevision.de@SD\" tvg-name=\"Zwei Music Television\" tvg-logo=\"https://iptv-epg.org/images/nctGlCcx9NiLaWb-ORFkxAN75BV6t7RF1cJ16FjPIYBnFLj1fi2EYzdiDGkV0dMSw1pLpSog_bfRXzcytG6ndKbJO3UiKT-y0BC63VWtH6y9Jrmd1sXmz2XgVAU2\" group-title=\"TV\",Zwei Music Television",
+      "url": "https://zweiapp.b-cdn.net/1080p/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MTV.de@SD\" tvg-name=\"MTV\" tvg-logo=\"https://iptv-epg.org/images/c0t7Hd9hDHRsw7xKyIVmzBIBd9EmlPYGIKE8Pf8i4mOFWpzaERMELSkJoGnMvogZbJZtO0Yqean5RdA_l0nJ_RchtQ5dTHHqz4WKu08b3tcw\" group-title=\"TV\",MTV",
+      "url": "https://ma.anixa.tv/clips/stream/mtv/playlist.php"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ComedyCentral.de@SD\" tvg-name=\"Comedy Central\" tvg-logo=\"https://iptv-epg.org/images/eK6fZbvWvllDVuP_pdYf0gO94PbxJhEIEF0BEYlgdRZ6WskPO5V3STm_yA_0gCazkE1eFH6cAsJuIFefxnN95IG8cbyUq3IuJerFB4gZaaJHlw3E67V5\" group-title=\"TV\",Comedy Central",
+      "url": "https://ma.anixa.tv/clips/stream/comedy_central/playlist.php"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RTL.de@SD\" tvg-name=\"RTL\" tvg-logo=\"https://iptv-epg.org/images/IbiSXYKPCEpcGMAazpL1vxGaVVBBy2ACnFZlwCkhPEAbLr4Zsp6QcvISgVx4NCkV98D0xkt0ujCSn5UcjFHa19VaT-1ZD0JeodrTRa1ZISE\" group-title=\"TV\",RTL",
+      "url": "https://dash4.antik.sk/live/test_rtl_ger_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SWRFernsehenHD.de@SD\" tvg-name=\"SWR Fernsehen HD\" group-title=\"TV\",SWR Fernsehen HD",
+      "url": "https://dash4.antik.sk/live/test_swr_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ntv.de@SD\" tvg-name=\"n-tv\" tvg-logo=\"https://iptv-epg.org/images/BMkWNalovsX8yOwnqm1AwQZNFjRAZTufhUx0q_hC5NR6mhrjbUNXuDX-2uWSEAQoHkK1uoXCn_DGdT4u5D3gRApviSYRXx-ZN8NNkg\" group-title=\"TV\",n-tv",
+      "url": "https://dash4.antik.sk/live/test_ntv_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RTLSuper.de@SD\" tvg-name=\"RTL Super\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/germany/rtl-super-de.png\" group-title=\"TV\",RTL Super",
+      "url": "https://dash4.antik.sk/live/test_super_rtl_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"VOX.de@SD\" tvg-name=\"VOX\" tvg-logo=\"https://iptv-epg.org/images/TPRKoHn47x34bJqPGYdnXjeqv6_SgyaaA6S9W5mMfNlUAUaa7Blfevv1mggIPlwgaNsbHTQeWHDBmA13__AOMvC1ddqVYy5Pl2TkVF0\" group-title=\"TV\",VOX",
+      "url": "https://dash4.antik.sk/live/test_vox_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"RTLZwei.de@SD\" tvg-name=\"RTL Zwei\" tvg-logo=\"https://iptv-epg.org/images/1o_q-lzCEBjwgID2IMRLaESWm2L1hVwj0TdWxdfLsBeT3XJRjldcAJpxoOB-60lyTStDWPg5v0a5xQV46kW0RO1yVEGmTkRDcc59mGhPF8zE\" group-title=\"TV\",RTL Zwei",
+      "url": "https://dash4.antik.sk/live/test_rtl_zwei_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"WELT.de@SD\" tvg-name=\"WELT\" tvg-logo=\"https://iptv-epg.org/images/rYm_cJ6eMehcpm1XwZcnOD50M3Zbg8yA8XDzrfjuwfACZy4o27OcF19WXg9LcL87B9Oi601UZiokFYYSTp-Zv-KWgYP6oRL_uFhT-5pI\" group-title=\"TV\",WELT",
+      "url": "https://dash4.antik.sk/live/test_welt_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Nitro.de@SD\" tvg-name=\"Nitro\" tvg-logo=\"https://iptv-epg.org/images/gtCU3b2O9IPZSi7qEb9u2OmlZ5ZezHQxg0jlgWRZGorSv2_gevIqNQAW9jjHyhyukjZYTgxrRvUPs_AV3A3-qoe_wHh17ew97TMXc73XLQ\" group-title=\"TV\",Nitro",
+      "url": "https://dash4.antik.sk/live/test_rtl_nitro_tizen/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"4UTV.tr@SD\" tvg-name=\"4U TV (720p)\" group-title=\"TV\",4U TV (720p)",
+      "url": "https://hls.4utv.live/hls/stream.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AfroturkTV.tr@SD\" tvg-name=\"Afroturk TV (1080p)\" group-title=\"TV\",Afroturk TV (1080p)",
+      "url": "https://edge.socialsmart.tv/naturaltv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AlanyaPostaTV.tr@SD\" tvg-name=\"Alanya Posta TV (1080p)\" group-title=\"TV\",Alanya Posta TV (1080p)",
+      "url": "https://api-tv3.yayin.com.tr/postatv/postatv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AlmahriahTV.tr@SD\" tvg-name=\"Almahriah TV (576p)\" group-title=\"TV\",Almahriah TV (576p)",
+      "url": "https://starmenajo.com/hls/almahriah/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"AltasTV.tr@SD\" tvg-name=\"Altas TV (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/altas-tv-tr.png\" group-title=\"TV\",Altas TV (1080p)",
+      "url": "https://edge1.socialsmart.tv/altastv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ATVAlanya.tr@SD\" tvg-name=\"ATV Alanya (1080p)\" group-title=\"TV\",ATV Alanya (1080p)",
+      "url": "https://cdn-alanyatv.yayin.com.tr/alanyatv/alanyatv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BloombergHT.tr@SD\" tvg-name=\"Bloomberg HT (720p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/S7FXBCGnqjsaZEkkZKwWDggpjw7WO85Ui3COaLbpBPvkmGzd09XPzFtm0RYEBHpC-my-0U1ol4sW-UHM1bIogT4GnysfTdkENxwny2c5tbOgD7XK\" group-title=\"TV\",Bloomberg HT (720p) [Not 24/7]",
+      "url": "https://tv.ensonhaber.com/bloomberght/bloomberght.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ASTV.tr@SD\" tvg-name=\"Bursa AS TV (900p)\" group-title=\"TV\",Bursa AS TV (900p)",
+      "url": "https://live.artidijitalmedya.com/artidijital_astv/astv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DHA.tr@SD\" tvg-name=\"DHA (720p) [Not 24/7]\" group-title=\"TV\",DHA (720p) [Not 24/7]",
+      "url": "https://603c568fccdf5.streamlock.net/live/dhaweb1_C5efC/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"DiyarTV.tr@SD\" tvg-name=\"Diyar TV (720p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/diyar-tv-tr.png\" group-title=\"TV\",Diyar TV (720p)",
+      "url": "https://live.artidijitalmedya.com/artidijital_diyartv/diyartv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"EdessaTV.tr@SD\" tvg-name=\"Edessa TV (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/edessa-tv-tr.png\" group-title=\"TV\",Edessa TV (1080p)",
+      "url": "https://canli.edessatv.com/hls/stream.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ErzurumWebTV.tr@SD\" tvg-name=\"Erzurum Web TV (720p)\" group-title=\"TV\",Erzurum Web TV (720p)",
+      "url": "https://win29.yayin.com.tr/erzurumwebtv/erzurumwebtv/iptvdelisi.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"FBTV.tr@SD\" tvg-name=\"FB TV\" tvg-logo=\"https://iptv-epg.org/images/by2ysv0cKd3rvYOuKwKmI0R_Px5JuK61NIT1nrLcCPRBYhHMxTs7S_EtGpN3SMDJwmlH_TEXnNynsxTmDBbeATnkrhP5QBIg6GxXxv4\" group-title=\"TV\",FB TV",
+      "url": "http://1hskrdto.rocketcdn.com/fenerbahcetv.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"FinansTurkTV.tr@SD\" tvg-name=\"Finans Turk TV (720p)\" group-title=\"TV\",Finans Turk TV (720p)",
+      "url": "https://yayin30.haber100.com/live/finansturk/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"FlashHaberTV.tr@SD\" tvg-name=\"Flash Haber TV\" tvg-logo=\"https://iptv-epg.org/images/Ookj9wVl4_Y14qXZlfsZThSMRQXZ8eED73SugRW-jYZKIg2AVqF-zdMYQTCqBkqOBi0dzZ_1r5Wi8l-fH4NvCmyo3aYJ7Pb63MlbfnEWbO_uuElXFg\" group-title=\"TV\",Flash Haber TV",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtyycglqauzjhlive/broadcast_67c053c48829f.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"FortunaTV.tr@HD\" tvg-name=\"Fortuna TV (1080p)\" group-title=\"TV\",Fortuna TV (1080p)",
+      "url": "https://edge.taksimbilisim.com/ftvturk/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"GZT.tr@SD\" tvg-name=\"GZT (1080p)\" group-title=\"TV\",GZT (1080p)",
+      "url": "https://gzttv-live.lg.mncdn.com/gzttv/gzttv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Haber61TV.tr@SD\" tvg-name=\"Haber61 TV (720p) [Not 24/7]\" group-title=\"TV\",Haber61 TV (720p) [Not 24/7]",
+      "url": "https://cdn-haber61tv.yayin.com.tr/haber61tv/smil:haber61tv.smil/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HaberGlobal.tr@SD\" tvg-name=\"Haber Global (720p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/dYOOa8X3fp73RJkx8V4c4IdUlyPYL423iBvXKye3drfK3rR67yP4ABm48FwIV19V9eFMIICbga7fan0mGh7-iZuEI1HiPF7qNSOwxOeACb8kdVxO\" group-title=\"TV\",Haber Global (720p) [Not 24/7]",
+      "url": "https://tv.ensonhaber.com/haberglobal/haberglobal.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"HaberturkTV.tr@SD\" tvg-name=\"Habertürk TV (720p) [Not 24/7]\" group-title=\"TV\",Habertürk TV (720p) [Not 24/7]",
+      "url": "https://tv.ensonhaber.com/haberturk/haberturk.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"IlkeTV.tr@HD\" tvg-name=\"Ilke TV (1080p)\" group-title=\"TV\",Ilke TV (1080p)",
+      "url": "https://stream.ilketv.com.tr/hls/ilkecanli.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KanalDDrama.tr@SD\" tvg-name=\"Kanal D Drama (1080p)\" group-title=\"TV\",Kanal D Drama (1080p)",
+      "url": "http://190.93.224.42/KANAL-D-DRAMA/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KanalHayat.tr@SD\" tvg-name=\"Kanal Hayat (1080p)\" group-title=\"TV\",Kanal Hayat (1080p)",
+      "url": "https://tbn02a.ltnschedule.com/hls/nx21i.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KanalV.tr@SD\" tvg-name=\"Kanal V (720p) [Not 24/7]\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/kanal-v-tr.png\" group-title=\"TV\",Kanal V (720p) [Not 24/7]",
+      "url": "https://live.artidijitalmedya.com/artidijital_kanalv/kanalv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KentTurk.tr@SD\" tvg-name=\"Kent Türk TV (1080p) [Not 24/7]\" group-title=\"TV\",Kent Türk TV (1080p) [Not 24/7]",
+      "url": "https://live.artidijitalmedya.com/artidijital_kentturktv/kentturktv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"KralPopTV.tr@SD\" tvg-name=\"KRAL Pop TV (720p)\" group-title=\"TV\",KRAL Pop TV (720p)",
+      "url": "https://dogus-live.daioncdn.net/kralpoptv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"LineTV.tr@SD\" tvg-name=\"Line TV (720p) [Not 24/7]\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/line-tv-tr.png\" group-title=\"TV\",Line TV (720p) [Not 24/7]",
+      "url": "https://edge1.socialsmart.tv/linetv/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"LuysTV.tr@SD\" tvg-name=\"Luys TV (1080p)\" group-title=\"TV\",Luys TV (1080p)",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtpayqrfkgirxelive/broadcast_5e91c5ac96898.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MedMuzik.tr@SD\" tvg-name=\"Med Muzik (1080p)\" group-title=\"TV\",Med Muzik (1080p)",
+      "url": "http://54.36.110.140/live3/live3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MekameleenTV.tr@SD\" tvg-name=\"Mekameleen TV (1080p)\" group-title=\"TV\",Mekameleen TV (1080p)",
+      "url": "https://mn-nl.mncdn.com/mekameleen/smil:mekameleentv.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MinikaCocuk.tr@SD\" tvg-name=\"Minika Cocuk (576p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/minika-cocuk-tr.png\" group-title=\"TV\",Minika Cocuk (576p)",
+      "url": "http://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago_cocuk/minikago_cocuk.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MinikaGo.tr@SD\" tvg-name=\"Minika Go (576p)\" tvg-logo=\"https://iptv-epg.org/images/kZbLmu-myOCf5ycIiy4zTfrcesK41xBIpSoMPIWkhmlPBd4NSwdoHV2dO7Dnmp4bkNSQg7gjaDBdSWNOn6y3t6Q8VdHMh-mZSGEMw_7rqY-A\" group-title=\"TV\",Minika Go (576p)",
+      "url": "http://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago/minikago.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"MTurkTV.tr@SD\" tvg-name=\"MTürk TV (1080p)\" group-title=\"TV\",MTürk TV (1080p)",
+      "url": "https://edge1.socialsmart.tv/muglaturk/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Number1TV.tr@SD\" tvg-name=\"Number 1 TV (720p)\" group-title=\"TV\",Number 1 TV (720p)",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtkgeuihrlfwlive/broadcast_5c9e17cd59e8b.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"PowerTurkAkustik.tr@SD\" tvg-name=\"Power Türk Akustik (1080p)\" group-title=\"TV\",Power Türk Akustik (1080p)",
+      "url": "https://livetv.powerapp.com.tr/pturkakustik/akustik.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"PowerTV.tr@SD\" tvg-name=\"Power TV (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/power-tv-hd-tr.png\" group-title=\"TV\",Power TV (1080p)",
+      "url": "https://livetv.powerapp.com.tr/powerTV/powerhd.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Sat7Turk.cy@SD\" tvg-name=\"Sat7 Türk (1080p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/sat7-turk-tr.png\" group-title=\"TV\",Sat7 Türk (1080p)",
+      "url": "https://live.artidijitalmedya.com/artidijital_sat7turk/sat7turk/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BricveSatrancTV.tr@SD\" tvg-name=\"Satranç TV (480p) [Not 24/7]\" group-title=\"TV\",Satranç TV (480p) [Not 24/7]",
+      "url": "http://139.162.182.79/live/test/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"SercemTV.tr@HD\" tvg-name=\"Sercem TV (1080p)\" group-title=\"TV\",Sercem TV (1080p)",
+      "url": "https://canli.sercemtv.com.tr/hls/0/stream.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"StarTV.tr@SD\" tvg-name=\"Star TV (720p)\" tvg-logo=\"https://iptv-epg.org/images/geyq1jI7yXrmUJ9AlOPsDFHs6TOgfD6FsiQ3gkt4uWXBji9wX-5lebxP_32CmfGxMgOz9X-o1OtfSR1LKiS0dK-ZExXXCyrrx4YS2JtPXA\" group-title=\"TV\",Star TV (720p)",
+      "url": "https://dogus.daioncdn.net/startv/startv_720p.m3u8?app=a20ac41e-bdc3-4aa1-934d-26b484480ac9&ce=3&sid=8l4w3lst4co5"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TBMMTV.tr@SD\" tvg-name=\"TBMM TV (720p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/tbmm-tv-tr.png\" group-title=\"TV\",TBMM TV (720p)",
+      "url": "https://meclistv-live.ercdn.net/meclistv/meclistv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TGRTBelgesel.tr@SD\" tvg-name=\"TGRT Belgesel TV (576p) [Not 24/7]\" group-title=\"TV\",TGRT Belgesel TV (576p) [Not 24/7]",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtsxxkzwwuqtglive/broadcast_5fe462afc6a0e.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TGRTHaber.tr@SD\" tvg-name=\"TGRT Haber (360p) [Not 24/7]\" tvg-logo=\"https://iptv-epg.org/images/WkdXn-4AOKxHkuMKVQyhXlh1STWBsWh7-rk-Ep8RjXT9xAcd9lC7u3WhTngDj-qdmbB6wVh4Cid8ABLwME83bDsn6M-gkeSTJbOyeuhOVaP8FA\" group-title=\"TV\",TGRT Haber (360p) [Not 24/7]",
+      "url": "https://b01c02nl.mediatriple.net/videoonlylive/mtsxxkzwwuqtglive/broadcast_5fe4598be8e5d.smil/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"24TV.tr@SD\" tvg-name=\"TR24 TV (720p) [Not 24/7]\" group-title=\"TV\",TR24 TV (720p) [Not 24/7]",
+      "url": "https://tv.ensonhaber.com/tv24/tv24.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRT3.tr@SD\" tvg-name=\"TRT 3 (720p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/trt-3-tr.png\" group-title=\"TV\",TRT 3 (720p)",
+      "url": "https://tv-trt3.live.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTEBAIlkokul.tr@SD\" tvg-name=\"TRT EBA Ilkokul (720p)\" group-title=\"TV\",TRT EBA Ilkokul (720p)",
+      "url": "https://tv-e-okul00.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTEBALise.tr@SD\" tvg-name=\"TRT EBA Lise (720p)\" group-title=\"TV\",TRT EBA Lise (720p)",
+      "url": "https://tv-e-okul02.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTMuzik.tr@SD\" tvg-name=\"TRT Muzik\" tvg-logo=\"https://iptv-epg.org/images/vFK8919BU3rccbnJiwpWKcVyjVRMuLo9AU6cKsgRPaVmYzYTqeaZb6jYT27ENf3NegIdkp8Aal9WfFVQj_xIey780nRy4xJUI3hLhE472BObxanJmoU\" group-title=\"TV\",TRT Muzik",
+      "url": "https://stream8.cinerama.uz/1208/tracks-v1a1/mono.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTSporYildiz.tr@SD\" tvg-name=\"TRT Spor Yildiz (1440p) [Geo-blocked]\" tvg-logo=\"https://iptv-epg.org/images/L4ZlAyqtcHq_BndH7b7nNr5YOn60AIhjVMvf_S9xOiywRgvZ3l5G2uUGQ4AUHyXE0SM-u6vKCddkc42fyxvc7EQekLcIICl8TvcaisU_CUOuLpvMqBM\" group-title=\"TV\",TRT Spor Yildiz (1440p) [Geo-blocked]",
+      "url": "https://trt.daioncdn.net/trtspor-yildiz/master.m3u8?app=web&platform=trtspor"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TV1.tr@SD\" tvg-name=\"TV 1 (720p)\" group-title=\"TV\",TV 1 (720p)",
+      "url": "https://edge1.socialsmart.tv/tv1/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TVDen.tr@SD\" tvg-name=\"TV Den (576p) [Not 24/7]\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/tv-den-tr.png\" group-title=\"TV\",TV Den (576p) [Not 24/7]",
+      "url": "http://canli.tvden.com.tr/hls/live.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Van65TV.tr@SD\" tvg-name=\"Van 65 TV\" group-title=\"TV\",Van 65 TV",
+      "url": "https://live.artidijitalmedya.com/artidijital_van65/van65/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"VavTV.tr@SD\" tvg-name=\"Vav TV\" tvg-logo=\"https://iptv-epg.org/images/CxG7KskmNCdoLbNmK5P3HZCHnj2asYBhRrR4fUGYVIv_qwdO4br7UkOQpQpYbYMJuppH_G01UI_bKpBl9yBEDNpMQn737BelIPbftr71\" group-title=\"TV\",Vav TV",
+      "url": "https://playlist.fasttvcdn.com/pl/rfrk9821hdy9dayo8wfyha/kltr-sanat-tv/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ViasatHistory.tr@SD\" tvg-name=\"Viasat History (720p)\" group-title=\"TV\",Viasat History (720p)",
+      "url": "https://nord.ayakkabiparti.lol/viasathistory/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beINMoviesStars.tr@SD\" tvg-name=\"beIN Movies Stars\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/bein-movies-stars-hd-tr.png\" group-title=\"Film\",beIN Movies Stars",
+      "url": "https://nord.ayakkabiparti.lol/bsaction1/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beINMoviesTurk.tr@SD\" tvg-name=\"beIN Movies Turk\" tvg-logo=\"https://iptv-epg.org/images/9W2clcRfAU1RlR-2OLqbRPPP1Y0QGsAJ6hyLY-LtzmJBsmlBlzrMmTGG2uoHX646pBYCGkg2mA_p_VmduZLHfOjF2a5M5JgxO_NilsHoNljKAnnGS4dfrg\" group-title=\"Film\",beIN Movies Turk",
+      "url": "https://nord.ayakkabiparti.lol/bsturk/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beINBoxOffice1.tr@SD\" tvg-name=\"beIN Box Office 1\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/bein-box-office-1-tr.png\" group-title=\"TV\",beIN Box Office 1",
+      "url": "https://nord.ayakkabiparti.lol/box1/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beINBoxOffice2.tr@SD\" tvg-name=\"beIN Box Office 2\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/bein-box-office-2-tr.png\" group-title=\"TV\",beIN Box Office 2",
+      "url": "https://nord.ayakkabiparti.lol/box2/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beINBoxOffice3.tr@SD\" tvg-name=\"beIN Box Office 3\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/bein-box-office-3-tr.png\" group-title=\"TV\",beIN Box Office 3",
+      "url": "https://nord.ayakkabiparti.lol/box3/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"Ekoturk.tr@SD\" tvg-name=\"Ekoturk (720p)\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/turkey/ekoturk-tr.png\" group-title=\"TV\",Ekoturk (720p)",
+      "url": "https://cdn.ekoturk.net/hls/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TRTWorld.tr@SD\" tvg-name=\"TRT World (720p)\" tvg-logo=\"https://iptv-epg.org/images/I-7Vf7NP4c82PzHsBtGc-9pBiMBg2xdc2u_RbGySNzrADp_wPmQnefX6fZw_C4Sg6dWKAfSL-tvR1PbJ5KiQcDWmPDjwvsC9cc-cKszv4Y3w\" group-title=\"TV\",TRT World (720p)",
+      "url": "https://mumbai-edge.smartplaytv.in/TRTWorld/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"💫BEİNSPORTS 1 RAW💫\" tvg-logo=\"https://i.hizliresim.com/l6muq8p.png\" group-title=\"💫BEİNSPORTS DERBİ ÖZEL💫\",💫BEİNSPORTS 1 RAW💫",
+      "url": "http://nexusconnects.org:80/play/live.php?mac=00:1B:79:47:72:00&stream=988867&extension=ts&play_token=a34h1OJXxe"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Atv HD\" tvg-name=\"TR:Atv HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/33b10329-faa9-4247-aa46-92a305ed5a92.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Atv HD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/atv/atv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Kanal D HD\" tvg-name=\"TR:Kanal D HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/500/500/channels/logos/d7c5d3d5-2942-4715-872f-73be070dc201.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Kanal D HD",
+      "url": "http://live.duhnet.tv/S2/HLS_LIVE/kanalddainp/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Show TV HD\" tvg-name=\"TR:Show TV HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/500/500/channels/logos/04fb743d-4a72-4907-8c54-f53b72c3600a.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Show TV HD",
+      "url": "https://ciner.daioncdn.net/showtv/showtv.m3u8?app=showtv_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Star  HD\" tvg-name=\"TR:Star  HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/500/500/channels/logos/4a7901e4-dbc5-491d-b014-6da6fa236e99.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Star  HD",
+      "url": "https://dogus.daioncdn.net/startv/startv.m3u8?app=startv_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Now HD\" tvg-name=\"TR:Now HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/25c7c620-dfe4-4c78-9d9b-185d8a91885f.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Now HD",
+      "url": "https://uycyyuuzyh.turknet.ercdn.net/nphindgytw/nowtv/nowtv_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Tv 8 HD\" tvg-name=\"TR:Tv 8 HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/ab41b407-70c4-4634-8ed4-bf9be8cf81e2.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tv 8 HD",
+      "url": "https://tv8.daioncdn.net/tv8/tv8_1080p.m3u8?app=tv8_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:TV 8 Buçuk HD\" tvg-name=\"TR:TV 8 Buçuk HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/812f4ba5-846e-4ae9-90fc-8f9f481156b5.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:TV 8 Buçuk HD",
+      "url": "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk_1080p.m3u8?app=tv8bucuk_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Teve 2 HD\" tvg-name=\"TR:Teve 2 HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/500/500/channels/logos/8373a6d8-d5c5-4990-8fe6-14bcde706ecd.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Teve 2 HD",
+      "url": "https://live.duhnet.tv/S2/HLS_LIVE/teve2np/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Tlc HD\" tvg-name=\"TR:Tlc HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/500/500/channels/logos/0de9fa25-120c-4b52-b460-e078531f6988.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tlc HD",
+      "url": "https://dogus.daioncdn.net/tlc/tlc.m3u8?app=tlc_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Dmax  HD\" tvg-name=\"TR:Dmax  HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/500/500/channels/logos/6a63a310-1f7d-4d5c-b377-1e497f5b3610.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Dmax  HD",
+      "url": "https://dogus.daioncdn.net/dmax/dmax.m3u8?app=dmax_web"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Cnn Türk HD\" tvg-name=\"TR:Cnn Türk HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/3686a1f5-9c4d-401f-9c7b-031ca66454a0.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Cnn Türk HD",
+      "url": "https://sweet-truth-729d.han686314.workers.dev/?url=https://helga.iptv2022.com/cnn_turk/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:24 Tv HD\" tvg-name=\"TR:24 Tv HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/216cade3-b4a7-4c8b-8d62-aab7a3431a89.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:24 Tv HD",
+      "url": "https://turkmedya-live.ercdn.net/tv24/tv24_1080p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Brt 1 HD\" tvg-name=\"TR:Brt 1 HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/1f260af7-37dd-4368-8c9a-2d4c28fa5fd1.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Brt 1 HD",
+      "url": "https://edge.kuzeykibrissmart.tv/brt1hd/bant1/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Ekol Sport TV HD\" tvg-name=\"TR:Ekol Sport TV HD\" tvg-logo=\"https://i.hizliresim.com/99egc5v.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Ekol Sport TV HD",
+      "url": "https://ekoltv-live.ercdn.net/ekolsport/ekolsport.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Szc Tv HD\" tvg-name=\"TR:Szc Tv HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/2fdd6eb0-bd9e-44ef-ad0e-7f2c4cf3a8a7.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Szc Tv HD",
+      "url": "https://sweet-truth-729d.han686314.workers.dev/?url=https://helga.iptv2022.com/szc_tv/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Tv 5  HD\" tvg-name=\"TR:Tv 5  HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/043eff4d-bde2-493c-9c7d-c07a698bb0be.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tv 5  HD",
+      "url": "https://ip252.ozelip.com:1936/protv5/protv5/playlist.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Lider Haber HD\" tvg-name=\"TR:Lider Haber HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/ccf5746a-1eda-45ed-9afc-5e281fa7a704.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Lider Haber HD",
+      "url": "https://liderhaber.han686314.workers.dev/?url=https://lidertv.radyotelekom.com.tr/player/m3u8/9217b6e91d17c38f7d171eb2b3670349/chunklist_w1214941309.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Tivi 6 HD\" tvg-name=\"TR:Tivi 6 HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/999a12b9-6679-4621-8096-c88a76b33e92.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tivi 6 HD",
+      "url": "https://live.artidijitalmedya.com/artidijital_tivi6/tivi6/chunks.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Minika Çocuk HD\" tvg-name=\"TR:Minika Çocuk HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/12a9b581-f79c-41ba-b1e4-2f13f0087776.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Minika Çocuk HD",
+      "url": "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago_cocuk/minikago_cocuk_720p.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Trt Müzik HD\" tvg-name=\"TR:Trt Müzik HD\" tvg-logo=\"https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/81ac5eb4-6201-47ce-977e-736a4247da91.png\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Trt Müzik HD",
+      "url": "http://tv-trtmuzik.medya.trt.com.tr/master.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Sinema TV 2 HD\" tvg-name=\"TR:Sinema TV 2 HD\" tvg-logo=\"https://i.hizliresim.com/2qpuwst.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Sinema TV 2 HD",
+      "url": "https://mediaserver1.castpin.com/hls/filbox/1_2/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Sinema TV 4 HD\" tvg-name=\"TR:Sinema TV 4 HD\" tvg-logo=\"https://i.hizliresim.com/2qpuwst.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Sinema TV 4 HD",
+      "url": "https://raw.githubusercontent.com/Elvin4K/restream/refs/heads/pro4k/1siriustv.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR:Sinema TV 6 HD\" tvg-name=\"TR:Sinema TV 6 HD\" tvg-logo=\"https://i.hizliresim.com/2qpuwst.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Sinema TV 6 HD",
+      "url": "https://host.onlineradyotv.net:8081/cine5tv/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:beIN Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:beIN Sport 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivebiraz1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:beIN Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:beIN Sport 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivebs2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:beIN Sport 3 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:beIN Sport 3 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivebs3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:beIN Sport 4 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:beIN Sport 4 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivebs4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:beIN Sport 5 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:beIN Sport 5 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivebs5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:beIN Sport Max 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:beIN Sport Max 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivebsm1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:beIN Sport Max 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:beIN Sport Max 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivebsm2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:S Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:S Sport 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivess1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:S Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:S Sport 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivess2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tivibu Sport HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tivibu Sport HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivets.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tivibu Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tivibu Sport 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivets1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tivibu Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tivibu Sport 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivets2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tivibu Sport 3 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tivibu Sport 3 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivets3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tivibu Sport 4 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tivibu Sport 4 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivets4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Smart Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Smart Sport 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivesm1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Smart Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Smart Sport 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivesm2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Euro Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Euro Sport 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivees1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Euro Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Euro Sport 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivees2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 3 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 3 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 4 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 4 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 5 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 5 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 6 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 6 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb6.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 7 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 7 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb7.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Tabii 8 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Tabii 8 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamlivetb8.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 3 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 3 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 4 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 4 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 5 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 5 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 6 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 6 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn6.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 7 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 7 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn7.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"sport.tr\" tvg-name=\"TR:Exxen 8 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR:Exxen 8 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/androstreamliveexn8.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: BEINSPORTS1 HD\" tvg-name=\"TR: BEINSPORTS1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: BEINSPORTS1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukbeinsports1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: BEINSPORTS2 HD\" tvg-name=\"TR: BEINSPORTS2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: BEINSPORTS2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukbeinsports2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: BEINSPORTS3 HD\" tvg-name=\"TR: BEINSPORTS3 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: BEINSPORTS3 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukbeinsports3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: BEINSPORTS4 HD\" tvg-name=\"TR: BEINSPORTS4 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: BEINSPORTS4 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukbeinsports4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: BEINSPORTS5 HD\" tvg-name=\"TR: BEINSPORTS5 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: BEINSPORTS5 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukbeinsports5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: BEINSPORTSMAX1 HD\" tvg-name=\"TR: BEINSPORTSMAX1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: BEINSPORTSMAX1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukbeinsportsmax1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: BEINSPORTSMAX2 HD\" tvg-name=\"TR: BEINSPORTSMAX2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: BEINSPORTSMAX2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukbeinsportsmax2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: SSPORT HD\" tvg-name=\"TR: SSPORT HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: SSPORT HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukssport1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: SSPORT2 HD\" tvg-name=\"TR: SSPORT2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: SSPORT2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcukssport2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: SMARTSPOR HD\" tvg-name=\"TR: SMARTSPOR HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: SMARTSPOR HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuksmartspor1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: SMARTSPOR2 HD\" tvg-name=\"TR: SMARTSPOR2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: SMARTSPOR2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuksmartspor2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TIVIBUSPOR1 HD\" tvg-name=\"TR: TIVIBUSPOR1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TIVIBUSPOR1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktivibuspor1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TIVIBUSPOR2 HD\" tvg-name=\"TR: TIVIBUSPOR2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TIVIBUSPOR2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktivibuspor2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TIVIBUSPOR3 HD\" tvg-name=\"TR: TIVIBUSPOR3 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TIVIBUSPOR3 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktivibuspor3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TIVIBUSPOR4 HD\" tvg-name=\"TR: TIVIBUSPOR4 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TIVIBUSPOR4 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktivibuspor4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TABIISPOR1 HD\" tvg-name=\"TR: TABIISPOR1 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TABIISPOR1 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktabiispor1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TABIISPOR2 HD\" tvg-name=\"TR: TABIISPOR2 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TABIISPOR2 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktabiispor2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TABIISPOR3 HD\" tvg-name=\"TR: TABIISPOR3 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TABIISPOR3 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktabiispor3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TABIISPOR4 HD\" tvg-name=\"TR: TABIISPOR4 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TABIISPOR4 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktabiispor4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"TR: TABIISPOR5 HD\" tvg-name=\"TR: TABIISPOR5 HD\" tvg-logo=\"https://i.hizliresim.com/1opo3ah.jpg\" group-title=\"SONER BOZKURT YERLİ KANALLAR\",TR: TABIISPOR5 HD",
+      "url": "https://purple-fog-7608.han686314.workers.dev/selcuktabiispor5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:beIN Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:beIN Sport 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivebiraz1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:beIN Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:beIN Sport 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivebs2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:beIN Sport 3 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:beIN Sport 3 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivebs3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:beIN Sport 4 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:beIN Sport 4 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivebs4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:beIN Sport 5 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:beIN Sport 5 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivebs5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:beIN Sport Max 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:beIN Sport Max 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivebsm1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:beIN Sport Max 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:beIN Sport Max 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivebsm2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:S Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:S Sport 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivess1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:S Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:S Sport 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivess2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tivibu Sport HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tivibu Sport HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivets.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tivibu Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tivibu Sport 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivets1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tivibu Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tivibu Sport 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivets2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tivibu Sport 3 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tivibu Sport 3 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivets3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tivibu Sport 4 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tivibu Sport 4 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivets4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Smart Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Smart Sport 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivesm1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Smart Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Smart Sport 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivesm2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Euro Sport 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Euro Sport 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivees1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Euro Sport 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Euro Sport 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivees2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 3 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 3 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 4 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 4 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 5 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 5 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 6 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 6 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb6.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 7 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 7 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb7.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Tabii 8 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Tabii 8 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamlivetb8.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 1 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 1 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn1.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 2 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 2 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn2.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 3 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 3 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn3.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 4 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 4 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn4.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 5 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 5 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn5.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 6 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 6 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn6.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 7 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 7 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn7.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TR:Exxen 8 HD\" tvg-logo=\"https://i.hizliresim.com/8xzjgqv.jpg\" group-title=\"Andro-Panel\",TR:Exxen 8 HD",
+      "url": "https://andro.evrenesoglu65.lat/checklist/androstreamliveexn8.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"BİLGİLENDİRME\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Diğer\",BİLGİLENDİRME",
+      "url": "https://raw.githubusercontent.com/kadirsener1/avva/refs/heads/main/Bilgilendirme.mp4"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"beIN SPORTS 1 HD-Bit\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Diğer\",beIN SPORTS 1 HD-Bit",
+      "url": "http://cdn.bittv.ltd/ottplayer/bigteisti3/FAST_FUN_BOX_TR/czJyNHd4MGtpczp5eTN3OTk2bDh5/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"beIN SPORTS 2 HD-Bit\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Diğer\",beIN SPORTS 2 HD-Bit",
+      "url": "http://cdn.bittv.ltd/ottplayer/bigteisti3/FLASH_TV_HD_TR/czJyNHd4MGtpczp5eTN3OTk2bDh5/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"beIN SPORTS 3 HD-Bit\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Diğer\",beIN SPORTS 3 HD-Bit",
+      "url": "http://cdn.bittv.ltd/ottplayer/bigteisti3/AKILLI_TR/czJyNHd4MGtpczp5eTN3OTk2bDh5/index.m3u8"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"beIN SPORTS 1 HD-Avva\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",beIN SPORTS 1 HD-Avva",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/95f0000dd0e/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"beIN SPORTS 5 HD\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",beIN SPORTS 5 HD",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/bein5/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"S SPORT 1\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",S SPORT 1",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/ssport1/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"S SPORT 2 Avva\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",S SPORT 2 Avva",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/ssport2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"S SPORT PLUS\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",S SPORT PLUS",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/ssportplus/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TİVİBUSPOR\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",TİVİBUSPOR",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tivibuspor/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TİVİBUSPOR 2\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",TİVİBUSPOR 2",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tivibuspor2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TİVİBUSPOR 3\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",TİVİBUSPOR 3",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tivibuspor3/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TİVİBUSPOR 4\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",TİVİBUSPOR 4",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tivibuspor4/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SMART SPOR\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",SMART SPOR",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/smartsport1/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"SMART SPOR 2\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",SMART SPOR 2",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/smartsport2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TABİİ SPOR\" tvg-logo=\"https://avvasportshd1.com/uploads/logos/1777560420_779f4e29a25beed572ee.png\" group-title=\"Spor-Avva\",TABİİ SPOR",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tabiispor/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TABİİ SPOR 1\" tvg-logo=\"https://avvasportshd1.com/uploads/logos/1777560440_2bd5ca1791c72931a0dc.png\" group-title=\"Spor-Avva\",TABİİ SPOR 1",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tabiispor1a/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TABİİ SPOR 2\" tvg-logo=\"https://avvasportshd1.com/uploads/logos/1777560470_b7883c77ba2c0e7dbda9.png\" group-title=\"Spor-Avva\",TABİİ SPOR 2",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tabiispor2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TABİİ SPOR 3\" tvg-logo=\"https://avvasportshd1.com/uploads/logos/1777560492_09ed07a8bc4de1974219.png\" group-title=\"Spor-Avva\",TABİİ SPOR 3",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tabiispor3/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TABİİ SPOR 4\" tvg-logo=\"https://avvasportshd1.com/uploads/logos/1777560506_fcd2118838e07702ccbb.png\" group-title=\"Spor-Avva\",TABİİ SPOR 4",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tabiispor4/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"TABİİ SPOR 5\" tvg-logo=\"https://avvasportshd1.com/uploads/logos/1777560520_387804be766f5bac463b.png\" group-title=\"Spor-Avva\",TABİİ SPOR 5",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/tabiispor5/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"EXXEN 1\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",EXXEN 1",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/exxen1/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"EXXEN 2\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",EXXEN 2",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/exxen2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"EXXEN 3\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",EXXEN 3",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/exxen3/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"EXXEN 4\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",EXXEN 4",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/exxen4/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-name=\"EXXEN 5\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Avva\",EXXEN 5",
+      "url": "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/exxen5/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein_sport\" tvg-name=\"BeIN Sport 2 zeus\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Neon\",BeIN Sport 2 zeus",
+      "url": "https://zeus324232.cfd/b2/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein_sport\" tvg-name=\"BeIN Sport 1\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Neon\",BeIN Sport 3 zeus",
+      "url": "https://zeus324232.cfd/b3/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein_sport\" tvg-name=\"BeIN Sport 1\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Neon\",BeIN Sport 4 zeus",
+      "url": "https://zeus324232.cfd/b4/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein_sport\" tvg-name=\"BeIN Sport 1\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Neon\",BeIN Sport 5 zeus",
+      "url": "https://zeus324232.cfd/b5/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein_sport\" tvg-name=\"BeIN Sport MAX 1\" tvg-logo=\"https://i.hizliresim.com/k6ic0s7.jpg\" group-title=\"Spor-Neon\",BeIN Sport MAX 1",
+      "url": "https://zeus324232.cfd/b1max/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein_sport\" tvg-name=\"BeIN Sport MAX 2\" tvg-logo=\"https://i.hizliresim.com/6hd9e27.jpg\" group-title=\"Spor-Neon\",BeIN Sport MAX 2",
+      "url": "https://zeus324232.cfd/b2max/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ssport\" tvg-name=\"S Sport\" tvg-logo=\"https://i.hizliresim.com/azfgva3.png\" group-title=\"Spor-Neon\",S Sport 1",
+      "url": "https://zeus324232.cfd/s1/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"ssport\" tvg-name=\"S Sport 2\" tvg-logo=\"https://i.hizliresim.com/bcnszq0.png\" group-title=\"Spor-Neon\",S Sport 2",
+      "url": "https://zeus324232.cfd/s2/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"spor_smart\" tvg-name=\"Spor Smart 1\" tvg-logo=\"https://i.hizliresim.com/a8c6ywb.jpg\" group-title=\"Spor-Neon\",Spor Smart 1",
+      "url": "https://zeus324232.cfd/smart1/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"spor_smart\" tvg-name=\"Spor Smart 2\" tvg-logo=\"https://i.hizliresim.com/a8c6ywb.jpg\" group-title=\"Spor-Neon\",Spor Smart 2",
+      "url": "https://zeus324232.cfd/smart2/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"tivibu_spor\" tvg-name=\"Tivibu Spor\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/3/36/Tivibu_spor_logosu.jpg\" group-title=\"Spor-Neon\",Tivibu Spor",
+      "url": "https://zeus324232.cfd/tivibu/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"tivibu_spor\" tvg-name=\"Tivibu Spor 1\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/3/36/Tivibu_spor_logosu.jpg\" group-title=\"Spor-Neon\",Tivibu Spor 1",
+      "url": "https://zeus324232.cfd/tivibu1/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"tivibu_spor\" tvg-name=\"Tivibu Spor 2\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/3/36/Tivibu_spor_logosu.jpg\" group-title=\"Spor-Neon\",Tivibu Spor 2",
+      "url": "https://zeus324232.cfd/tivibu2/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"tivibu_spor\" tvg-name=\"Tivibu Spor 3\" tvg-logo=\"https://upload.wikimedia.org/wikipedia/tr/3/36/Tivibu_spor_logosu.jpg\" group-title=\"Spor-Neon\",Tivibu Spor 3",
+      "url": "https://zeus324232.cfd/tivibu3/index.txt"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein-sports-3-turkey\" tvg-name=\"beIN Sports 3 Turkey\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/tvmyeni/refs/heads/main/bg.JPG\" group-title=\"Spor-Daddy\",beIN Sports 3 Turkey",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI2NCIsInRzIjoxNzc5OTY4MDkxNjQ2fQ=="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BeinSports1.tr\" tvg-name=\"BEIN SPOTS1 SD\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN SPOTS1 SD",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/143239535a2e3c23c1d16"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BeinSports1.tr\" tvg-name=\"BEIN 1 FEED (720P)\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN 1 FEED (720P)",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/1363827223a1c98515d612"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BeinSports1.tr\" tvg-name=\"BEIN 1 SD (360P)\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN 1 SD (360P)",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/3692337241ec1b0872b06e"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BeinSports1.tr\" tvg-name=\"BEIN SPORTS 1 50 FPS\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN SPORTS 1 50 FPS",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/13524210538e192d878d20"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BeinSports1.tr\" tvg-name=\"BEIN SPORTS 1 FEED\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN SPORTS 1 FEED",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/2729088606df69156b1eda"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"BeinSports1.tr\" tvg-name=\"BEIN SPORTS 720P FEED\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN SPORTS 720P FEED",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/499485497d6131f47417d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportshaber.tr\" tvg-name=\"BEIN SPORTS HABER RAW\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN SPORTS HABER RAW",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/164663282518e6179f90af"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportsmax1.tr\" tvg-name=\"BEIN SPORTS MAX 1 FHD\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",BEIN SPORTS MAX 1 FHD",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/4071474743dbe8a60b9395"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportsmax2.tr\" tvg-name=\"TIVIBU SPOR RAW\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",TIVIBU SPOR RAW",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/1406262118fb4f653061f6"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportsmax2.tr\" tvg-name=\"TIVIBUSPOR SPOR HD\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",TIVIBUSPOR SPOR HD",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/36535158588fee46401238"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportsmax2.tr\" tvg-name=\"TIVIBUSPOR 1 FHD\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",TIVIBUSPOR 1 FHD",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/289665874444b8f4f2d451"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportsmax2.tr\" tvg-name=\"TIVIBUSPOR 2 FHD\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",TIVIBUSPOR 2 FHD",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/25026063331fd9c2bab71e"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportsmax2.tr\" tvg-name=\"TIVIBUSPOR 3 FHD\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",TIVIBUSPOR 3 FHD",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/21863899508f19a672f26d"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"beinsportsmax2.tr\" tvg-name=\"TIVIBU SPOR 4\" tvg-logo=\"https://raw.githubusercontent.com/kadirsener1/logolar/refs/heads/master/kanallogolari/beIN-SPORTS-1-HD.png\" group-title=\"Vavoo Spor\",TIVIBU SPOR 4",
+      "url": "https://vavooproxy.magnitude.workers.dev/resolve?url=https://vavoo.to/vavoo-iptv/play/1343303170fbfea75b9f15"
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"abc-usa\" tvg-name=\"ABC USA-US\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/united-states/abc-us.png\" group-title=\"World Sports\",ABC USA-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI1MSIsInRzIjoxNzgxNjg2NzE0MjkxfQ=="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"antenna-tv-usa\" tvg-name=\"Antenna TV USA-US\" group-title=\"World Sports\",Antenna TV USA-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIyODMiLCJ0cyI6MTc4MTY4NjcxNjI5Mn0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"amc-usa\" tvg-name=\"AMC USA-US\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/united-states/amc-us.png\" group-title=\"World Sports\",AMC USA-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIzMDMiLCJ0cyI6MTc4MTY4NjcxODI5Mn0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"animal-planet\" tvg-name=\"Animal Planet-US\" tvg-logo=\"https://iptv-epg.org/images/IE0lt-bEI_D4JzgWYB0IJnPtZkK88OObA_mSHXYJY_N8s7ldVqkPO11QLeI84LfELfp7fwLzHgTeoLM7UJFR5ZjlqiBvhOOcxnZLCHV0Z_DfBGHSYME\" group-title=\"World Sports\",Animal Planet-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIzMDQiLCJ0cyI6MTc4MTY4NjcxOTI5M30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"astro-supersport-1\" tvg-name=\"Astro SuperSport 1-MY\" group-title=\"World Sports\",Astro SuperSport 1-MY",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIxMjMiLCJ0cyI6MTc4MTY4NjcyMDI5M30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"astro-supersport-2\" tvg-name=\"Astro SuperSport 2-MY\" group-title=\"World Sports\",Astro SuperSport 2-MY",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIxMjQiLCJ0cyI6MTc4MTY4NjcyMTI5M30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"astro-supersport-3\" tvg-name=\"Astro SuperSport 3-MY\" group-title=\"World Sports\",Astro SuperSport 3-MY",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIxMjUiLCJ0cyI6MTc4MTY4NjcyMjI5M30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-1-premium\" tvg-name=\"Arena Sport 1 Premium-RS\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/serbia/arena-sport-1-rs.png\" group-title=\"World Sports\",Arena Sport 1 Premium-RS",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIxMzQiLCJ0cyI6MTc4MTY4NjcyNDI5NH0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-3-premium\" tvg-name=\"Arena Sport 3 Premium-RS\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/serbia/arena-sport-3-rs.png\" group-title=\"World Sports\",Arena Sport 3 Premium-RS",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIxMzkiLCJ0cyI6MTc4MTY4NjcyNjI5NX0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-2-serbia\" tvg-name=\"Arena Sport 2 Serbia-RS\" group-title=\"World Sports\",Arena Sport 2 Serbia-RS",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI0MzAiLCJ0cyI6MTc4MTY4NjcyODI5NX0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-3-serbia\" tvg-name=\"Arena Sport 3 Serbia-RS\" group-title=\"World Sports\",Arena Sport 3 Serbia-RS",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI0MzEiLCJ0cyI6MTc4MTY4NjcyOTI5NX0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-3-croatia\" tvg-name=\"Arena Sport 3 Croatia-HR\" group-title=\"World Sports\",Arena Sport 3 Croatia-HR",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI0MzQiLCJ0cyI6MTc4MTY4NjczMzI5N30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-4-croatia\" tvg-name=\"Arena Sport 4 Croatia-HR\" group-title=\"World Sports\",Arena Sport 4 Croatia-HR",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI1ODAiLCJ0cyI6MTc4MTY4NjczNDI5N30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"alkass-three\" tvg-name=\"Alkass Three-QA\" group-title=\"World Sports\",Alkass Three-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI3ODMiLCJ0cyI6MTc4MTY4NjczNzI5OH0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"alkass-four\" tvg-name=\"Alkass Four-QA\" group-title=\"World Sports\",Alkass Four-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI3ODQiLCJ0cyI6MTc4MTY4NjczODI5OH0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"abu-dhabi-sports-1-uae\" tvg-name=\"Abu Dhabi Sports 1 UAE-AE\" group-title=\"World Sports\",Abu Dhabi Sports 1 UAE-AE",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI2MDAiLCJ0cyI6MTc4MTY4Njc0MDI5OX0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"astro-cricket\" tvg-name=\"Astro Cricket-MY\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/malaysia/astro-cricket-my.png\" group-title=\"World Sports\",Astro Cricket-MY",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIzNzAiLCJ0cyI6MTc4MTY4Njc0NDMwMH0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sports-tenis-serbia\" tvg-name=\"Arena Sports Tenis Serbia-RS\" group-title=\"World Sports\",Arena Sports Tenis Serbia-RS",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI2MTIiLCJ0cyI6MTc4MTY4Njc0NjMwMH0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"acc-network-usa\" tvg-name=\"ACC Network USA-US\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/united-states/acc-network-us.png\" group-title=\"World Sports\",ACC Network USA-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI2NjQiLCJ0cyI6MTc4MTY4Njc0NzMwMX0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"adult-swim\" tvg-name=\"Adult Swim-US\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/united-states/adult-swim-us.png\" group-title=\"World Sports\",Adult Swim-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIyOTUiLCJ0cyI6MTc4MTY4Njc0ODMwMX0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"axn-movies-portugal\" tvg-name=\"AXN Movies Portugal-PT\" group-title=\"World Sports\",AXN Movies Portugal-PT",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI3MTciLCJ0cyI6MTc4MTY4Njc1MDMwMX0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"axs-tv-usa\" tvg-name=\"AXS TV USA-US\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/united-states/axs-tv-us.png\" group-title=\"World Sports\",AXS TV USA-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI3NDIiLCJ0cyI6MTc4MTY4Njc1MjMwMn0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"abc-ny-usa\" tvg-name=\"ABC NY USA-US\" group-title=\"World Sports\",ABC NY USA-US",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI3NjYiLCJ0cyI6MTc4MTY4Njc1MzMwMn0="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"azteca-uno-mx\" tvg-name=\"Azteca Uno MX-MX\" tvg-logo=\"https://raw.githubusercontent.com/bilo1975tr/tv-logos/main/countries/mexico/azteca-uno-mx.png\" group-title=\"World Sports\",Azteca Uno MX-MX",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5MzQiLCJ0cyI6MTc4MTY4Njc1NjMwM30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-5-serbia\" tvg-name=\"Arena Sport 5 Serbia-RS\" group-title=\"World Sports\",Arena Sport 5 Serbia-RS",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5NDAiLCJ0cyI6MTc4MTY4Njc1NzMwM30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"arena-sport-6-serbia\" tvg-name=\"Arena Sport 6 Serbia-RS\" group-title=\"World Sports\",Arena Sport 6 Serbia-RS",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5NDEiLCJ0cyI6MTc4MTY4Njc1ODMwM30="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein-sports-mena-english-1\" tvg-name=\"beIN Sports MENA English 1-QA\" group-title=\"World Sports\",beIN Sports MENA English 1-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI2MSIsInRzIjoxNzgxNjg2NzY3MzA2fQ=="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein-sports-mena-english-2\" tvg-name=\"beIN Sports MENA English 2-QA\" group-title=\"World Sports\",beIN Sports MENA English 2-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5MCIsInRzIjoxNzgxNjg2NzY4MzA2fQ=="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein-sports-1-arabic\" tvg-name=\"beIN Sports 1 Arabic-QA\" group-title=\"World Sports\",beIN Sports 1 Arabic-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5MSIsInRzIjoxNzgxNjg2NzY5MzA2fQ=="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein-sports-4-arabic\" tvg-name=\"beIN Sports 4 Arabic-QA\" group-title=\"World Sports\",beIN Sports 4 Arabic-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5NCIsInRzIjoxNzgxNjg2NzcyMzA3fQ=="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein-sports-6-arabic\" tvg-name=\"beIN Sports 6 Arabic-QA\" group-title=\"World Sports\",beIN Sports 6 Arabic-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5NiIsInRzIjoxNzgxNjg2Nzc0MzA4fQ=="
+    },
+    {
+      "extinf": "#EXTINF:-1 tvg-id=\"bein-sports-7-arabic\" tvg-name=\"beIN Sports 7 Arabic-QA\" group-title=\"World Sports\",beIN Sports 7 Arabic-QA",
+      "url": "https://chat.cfbu247.sbs/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5NyIsInRzIjoxNzgxNjg2Nzc1MzA4fQ=="
+    }
+  ],
+  "last_completed_at": 0,
+  "total_channels": 200064
+}
