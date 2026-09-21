@@ -240,12 +240,15 @@ namespace StreamMesh.UI.Views
 
                         if (proxySession != null && proxySession.Segments.Count > 0)
                         {
-                            double totalSec = proxySession.TotalDurationSeconds;
-                            long totalMsDvr = (long)(totalSec * 1000);
+                            var segments = proxySession.Segments;
+                            double earliestSec = segments.Count > 0 ? segments[0].StartTimeSeconds : 0;
+                            double latestSec = proxySession.TotalDurationSeconds;
+                            long earliestMs = (long)(earliestSec * 1000);
+                            long latestMs = (long)(latestSec * 1000);
 
                             TimeSlider.IsEnabled = true;
-                            TimeSlider.Minimum = 0;
-                            TimeSlider.Maximum = Math.Max(1000, totalMsDvr);
+                            TimeSlider.Minimum = earliestMs;
+                            TimeSlider.Maximum = Math.Max(earliestMs + 1000, latestMs);
 
                             long currentDvrPosMs;
                             if (_player.Status == Status.Paused && _pausedDvrPosMs > 0)
@@ -254,18 +257,18 @@ namespace StreamMesh.UI.Views
                             }
                             else if (_isTimeshiftMode)
                             {
-                                currentDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + timeMs, 0, totalMsDvr);
-                                long delayFromLive = totalMsDvr - currentDvrPosMs;
+                                currentDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + timeMs, earliestMs, latestMs);
+                                long delayFromLive = latestMs - currentDvrPosMs;
                                 if (delayFromLive <= 3000)
                                 {
                                     _isTimeshiftMode = false;
                                     _timeshiftStartDvrMs = 0;
-                                    currentDvrPosMs = totalMsDvr;
+                                    currentDvrPosMs = latestMs;
                                 }
                             }
                             else
                             {
-                                currentDvrPosMs = totalMsDvr;
+                                currentDvrPosMs = latestMs;
                             }
 
                             _effectivePositionMs = currentDvrPosMs;
@@ -274,8 +277,8 @@ namespace StreamMesh.UI.Views
                                 TimeSlider.Value = currentDvrPosMs;
                             }
 
-                            UpdateOsdTimeAndBadge(currentDvrPosMs, totalMsDvr, proxySession.StartWallClockTime);
-                            long offsetMs = Math.Max(0, totalMsDvr - currentDvrPosMs);
+                            UpdateOsdTimeAndBadge(currentDvrPosMs, latestMs, proxySession.StartWallClockTime);
+                            long offsetMs = Math.Max(0, latestMs - currentDvrPosMs);
                             TimeTotalText.Text = offsetMs > 3000 ? "GERİDEN YAYIN" : "CANLI YAYIN";
                         }
                         else
@@ -288,6 +291,8 @@ namespace StreamMesh.UI.Views
                             TimeTotalText.Text = "CANLI YAYIN";
                             if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
                             if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
+                            if (GoLiveBtn != null) GoLiveBtn.Background = LiveRedBrush;
+                            if (GoLiveText != null) GoLiveText.Text = "CANLI";
                             UpdateOsdEpgForTime(DateTime.Now);
                         }
                     }
@@ -359,6 +364,8 @@ namespace StreamMesh.UI.Views
                         ? $"-{delay:hh\\:mm\\:ss}" 
                         : $"-{delay:mm\\:ss}";
                 }
+                if (GoLiveBtn != null) GoLiveBtn.Background = DelayedAmberBrush;
+                if (GoLiveText != null) GoLiveText.Text = "⚡ CANLI";
                 UpdateOsdEpgForTime(airedTime);
             }
             else
@@ -366,6 +373,8 @@ namespace StreamMesh.UI.Views
                 TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
                 if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
                 if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
+                if (GoLiveBtn != null) GoLiveBtn.Background = LiveRedBrush;
+                if (GoLiveText != null) GoLiveText.Text = "CANLI";
                 UpdateOsdEpgForTime(DateTime.Now);
             }
         }
@@ -964,15 +973,20 @@ namespace StreamMesh.UI.Views
 
                     if (proxySession != null && proxySession.Segments.Count > 0)
                     {
-                        long totalMsDvr = (long)(proxySession.TotalDurationSeconds * 1000);
+                        var segments = proxySession.Segments;
+                        double earliestSec = segments.Count > 0 ? segments[0].StartTimeSeconds : 0;
+                        double latestSec = proxySession.TotalDurationSeconds;
+                        long earliestMs = (long)(earliestSec * 1000);
+                        long latestMs = (long)(latestSec * 1000);
+
                         if (_isTimeshiftMode)
                         {
                             long curMs = _player.CurTime / 10000;
-                            _pausedDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + curMs, 0, totalMsDvr);
+                            _pausedDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + curMs, earliestMs, latestMs);
                         }
                         else
                         {
-                            _pausedDvrPosMs = _effectivePositionMs > 0 ? _effectivePositionMs : totalMsDvr;
+                            _pausedDvrPosMs = _effectivePositionMs > 0 ? Math.Clamp(_effectivePositionMs, earliestMs, latestMs) : latestMs;
                         }
                     }
                 }
@@ -1085,9 +1099,14 @@ namespace StreamMesh.UI.Views
 
                 if (proxySession != null && proxySession.Segments.Count > 0)
                 {
-                    long totalMsDvr = (long)(proxySession.TotalDurationSeconds * 1000);
-                    targetMs = Math.Clamp(targetMs, 0, totalMsDvr);
-                    long offsetMs = totalMsDvr - targetMs;
+                    var segments = proxySession.Segments;
+                    double earliestSec = segments.Count > 0 ? segments[0].StartTimeSeconds : 0;
+                    double latestSec = proxySession.TotalDurationSeconds;
+                    long earliestMs = (long)(earliestSec * 1000);
+                    long latestMs = (long)(latestSec * 1000);
+
+                    targetMs = Math.Clamp(targetMs, earliestMs, latestMs);
+                    long offsetMs = latestMs - targetMs;
 
                     if (offsetMs <= 3000)
                     {
@@ -1111,7 +1130,7 @@ namespace StreamMesh.UI.Views
                         _player.Open(timeshiftUrl);
 
                         TimeSlider.Value = targetMs;
-                        UpdateOsdTimeAndBadge(targetMs, totalMsDvr, proxySession.StartWallClockTime);
+                        UpdateOsdTimeAndBadge(targetMs, latestMs, proxySession.StartWallClockTime);
                         TimeTotalText.Text = "GERİDEN YAYIN";
                         ShowOsdTemporary();
                         LogService.LogInfo($"Player: Seeked DVR buffer to {targetSec}s (offset: -{TimeSpan.FromMilliseconds(offsetMs):hh\\:mm\\:ss})");
@@ -1199,6 +1218,8 @@ namespace StreamMesh.UI.Views
                 TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
                 if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
                 if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
+                if (GoLiveBtn != null) GoLiveBtn.Background = LiveRedBrush;
+                if (GoLiveText != null) GoLiveText.Text = "CANLI";
                 TimeTotalText.Text = "CANLI YAYIN";
                 UpdateOsdEpgForTime(DateTime.Now);
 

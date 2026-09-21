@@ -72,16 +72,16 @@ namespace StreamMesh.Core.Media
             RaiseSyncStarted();
             DatabaseEngine.SuppressEvents = true;
             LogService.LogInfo("GitHubSyncEngine: Otomatik güncelleme başlatıldı.");
-            ReportProgress(2, "Temizlenmiş yayın listesi kontrol ediliyor (cleaned_playlist.m3u)...");
+            ReportProgress(2, "Temizlenmiş yayın listesi kontrol ediliyor (full_cleaned_playlist.m3u)...");
             try
             {
-                // 1. Önce GitHub Actions tarafından oluşturulan temizlenmiş master M3U listesini dene
-                string cleanM3uUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/out/cleaned_playlist.m3u";
+                // 1. Önce GitHub Actions tarafından oluşturulan derin doğrulanmış tam temizlenmiş master M3U listesini dene
+                string cleanM3uUrl = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/out/full_cleaned_playlist.m3u";
                 bool cleanM3uLoaded = false;
 
                 try
                 {
-                    using var cleanCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(3));
+                    using var cleanCts = new System.Threading.CancellationTokenSource(TimeSpan.FromMinutes(5));
                     var response = await _httpClient.GetAsync(cleanM3uUrl, cleanCts.Token);
                     if (response.IsSuccessStatusCode)
                     {

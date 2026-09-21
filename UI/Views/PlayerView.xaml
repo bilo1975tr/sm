@@ -147,10 +147,10 @@
 
                                 <Border Width="1" Height="30" Background="#44FFFFFF" Margin="6,0"/>
 
-                                <Button Style="{StaticResource PrimaryButtonStyle}" Width="85" Height="42" Background="#dc2626" Margin="6,0" Click="GoLive_Click" ToolTip="Canlı Yayına Dön">
+                                <Button x:Name="GoLiveBtn" Style="{StaticResource PrimaryButtonStyle}" Width="95" Height="42" Background="#dc2626" Margin="6,0" Click="GoLive_Click" ToolTip="Canlı Yayına Dön">
                                     <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="8" Height="8" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="CANLI" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                        <Ellipse x:Name="GoLiveDot" Width="8" Height="8" Fill="White" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="GoLiveText" Text="CANLI" FontSize="11" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
 

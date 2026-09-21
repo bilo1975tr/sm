@@ -57,7 +57,7 @@ namespace StreamMesh.Core.Media
     /// </summary>
     public class AceDvrBuffer
     {
-        private const int MaxSegments = 180; // ~7-10 minutes DVR window (bounded memory footprint)
+        private const int MaxSegments = 800; // ~35-40 minutes DVR window (bounded memory footprint)
         private const int TargetSegmentBytes = 1024 * 1024; // 1MB target (~2-3s @ standard bitrate)
         private readonly List<byte> _accumulator = new(TargetSegmentBytes + 65536);
         private readonly ConcurrentDictionary<int, AceDvrSegment> _segmentDict = new();
@@ -92,8 +92,29 @@ namespace StreamMesh.Core.Media
                 {
                     if (_accumulator.Count >= 188)
                     {
-                        // Align to 188-byte MPEG-TS packet boundary
+                        // Align to 188-byte MPEG-TS packet boundary and ensure start with 0x47 sync byte
+                        int startIndex = 0;
+                        while (startIndex + 188 <= _accumulator.Count)
+                        {
+                            if (_accumulator[startIndex] == 0x47)
+                                break;
+                            startIndex++;
+                        }
+
+                        if (startIndex > 0 && startIndex < _accumulator.Count)
+                        {
+                            // Drop leading non-sync bytes
+                            for (int d = 0; d < startIndex; d++)
+                                _accumulator.RemoveAt(0);
+                        }
+
                         int validBytes = (_accumulator.Count / 188) * 188;
+                        if (validBytes < 188)
+                        {
+                            // Not enough data yet
+                            return;
+                        }
+
                         byte[] segData = new byte[validBytes];
                         _accumulator.CopyTo(0, segData, 0, validBytes);
 

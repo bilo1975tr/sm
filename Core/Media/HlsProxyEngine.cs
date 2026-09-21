@@ -45,6 +45,9 @@ namespace StreamMesh.Core.Media
         public string? CustomCookie { get; set; }
         public string? CustomOrigin { get; set; }
         public Dictionary<string, string> CustomHeaders { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+        public int SeekAnchorIndex { get; set; } = -1;
+        public long SeekAnchorTicks { get; set; } = 0;
+        public double LastAnchorStartSec { get; set; } = -1;
     }
 
     /// <summary>
@@ -313,7 +316,11 @@ namespace StreamMesh.Core.Media
                 }
             }
             string sessionId = $"ace_{hash}";
-            return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={startSec}";
+            if (startSec >= 0)
+            {
+                return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={startSec}&t={DateTime.UtcNow.Ticks}";
+            }
+            return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start=-1";
         }
 
         private HlsProxyEngine()
@@ -676,12 +683,16 @@ namespace StreamMesh.Core.Media
                 if (match.Success)
                 {
                     string existingSession = Uri.UnescapeDataString(match.Groups[1].Value);
-                    return $"http://127.0.0.1:{_port}/playlist.m3u8?session={existingSession}&start={(int)startOffsetSeconds}";
+                    if (startOffsetSeconds >= 0)
+                        return $"http://127.0.0.1:{_port}/playlist.m3u8?session={existingSession}&start={(int)startOffsetSeconds}&t={DateTime.UtcNow.Ticks}";
+                    return $"http://127.0.0.1:{_port}/playlist.m3u8?session={existingSession}&start=-1";
                 }
             }
 
             string sessionId = Convert.ToBase64String(Encoding.UTF8.GetBytes(originalM3u8Url)).Replace("=", "").Replace("/", "_").Replace("+", "-");
-            return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={(int)startOffsetSeconds}";
+            if (startOffsetSeconds >= 0)
+                return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start={(int)startOffsetSeconds}&t={DateTime.UtcNow.Ticks}";
+            return $"http://127.0.0.1:{_port}/playlist.m3u8?session={sessionId}&start=-1";
         }
 
         private const int MaxMemoryCachedSegments = 320;
@@ -1013,6 +1024,10 @@ namespace StreamMesh.Core.Media
                     if (int.TryParse(query["start"], out int parsedStart))
                         startSec = parsedStart;
 
+                    long reqTicks = 0;
+                    if (long.TryParse(query["t"], out long parsedTicks))
+                        reqTicks = parsedTicks;
+
                     if (!_sessions.TryGetValue(sessionId, out var session))
                     {
                         if (sessionId.StartsWith("ace_"))
@@ -1044,14 +1059,14 @@ namespace StreamMesh.Core.Media
 
                     if (session != null)
                     {
-                        byte[] m3u8Bytes = GenerateManifest(session, startSec, out long firstSeq, out long lastSeq, out int servedCount);
+                        byte[] m3u8Bytes = GenerateManifest(session, startSec, reqTicks, out long firstSeq, out long lastSeq, out int servedCount);
                         context.Response.ContentType = "application/vnd.apple.mpegurl";
                         context.Response.StatusCode = 200;
                         context.Response.ContentLength64 = m3u8Bytes.Length;
                         await context.Response.OutputStream.WriteAsync(m3u8Bytes);
                         context.Response.Close();
 
-                        LogService.LogInfo($"[HLS MANIFEST] Served playlist -> media_seq={firstSeq}, count={servedCount}, range=[{firstSeq}..{lastSeq}], total_tracked={session.Segments.Count}, size={m3u8Bytes.Length}B");
+                        LogService.LogInfo($"[HLS MANIFEST] Served playlist (startSec={startSec}) -> media_seq={firstSeq}, count={servedCount}, range=[{firstSeq}..{lastSeq}], total_tracked={session.Segments.Count}, size={m3u8Bytes.Length}B");
                         return;
                     }
                     else
@@ -1112,7 +1127,7 @@ namespace StreamMesh.Core.Media
             }
         }
 
-        private byte[] GenerateManifest(HlsSessionInfo session, int startSec, out long firstSeq, out long lastSeq, out int servedCount)
+        private byte[] GenerateManifest(HlsSessionInfo session, int startSec, long reqTicks, out long firstSeq, out long lastSeq, out int servedCount)
         {
             var sb = new StringBuilder();
             sb.Append("#EXTM3U\r\n");
@@ -1123,7 +1138,7 @@ namespace StreamMesh.Core.Media
 
             lock (session.SyncLock)
             {
-                bool isTeleportMode = startSec >= 0;
+                bool isTeleportMode = startSec >= 0 && session.Segments.Count > 0;
 
                 if (!session.IsLive)
                 {
@@ -1132,20 +1147,54 @@ namespace StreamMesh.Core.Media
                 }
                 else if (isTeleportMode)
                 {
-                    sb.Append("#EXT-X-PLAYLIST-TYPE:EVENT\r\n");
-                    segmentsToServe = session.Segments
-                        .Where(s => s.EndTimeSeconds >= startSec)
-                        .Take(1000)
-                        .ToList();
+                    // Find segment index corresponding to requested startSec
+                    int targetIdx = -1;
+                    for (int i = 0; i < session.Segments.Count; i++)
+                    {
+                        if (session.Segments[i].EndTimeSeconds >= startSec)
+                        {
+                            targetIdx = i;
+                            break;
+                        }
+                    }
+
+                    if (targetIdx == -1)
+                    {
+                        targetIdx = Math.Max(0, session.Segments.Count - 1);
+                    }
+
+                    // Check if this is a new seek/teleport (startSec changed or anchor not set)
+                    if (session.SeekAnchorIndex == -1 || Math.Abs(session.LastAnchorStartSec - startSec) > 1.0)
+                    {
+                        session.SeekAnchorIndex = targetIdx;
+                        session.SeekAnchorTicks = DateTime.UtcNow.Ticks;
+                        session.LastAnchorStartSec = startSec;
+                    }
+
+                    // Calculate elapsed seconds since seek anchor
+                    double elapsed = Math.Max(0, (DateTime.UtcNow.Ticks - session.SeekAnchorTicks) / (double)TimeSpan.TicksPerSecond);
+                    // Gradually advance window start forward (~2 seconds per segment)
+                    int advancedOffset = (int)(elapsed / 2.0);
+                    int windowStart = Math.Min(session.Segments.Count - 1, session.SeekAnchorIndex + advancedOffset);
+
+                    // If we have caught up to within 4 segments of the live edge, reset anchor and return to live sliding window
+                    if (windowStart >= session.Segments.Count - 4 || windowStart < session.SeekAnchorIndex)
+                    {
+                        session.SeekAnchorIndex = -1;
+                        segmentsToServe = session.Segments.TakeLast(14).ToList();
+                    }
+                    else
+                    {
+                        int windowCount = Math.Min(16, session.Segments.Count - windowStart);
+                        segmentsToServe = session.Segments.Skip(windowStart).Take(Math.Max(1, windowCount)).ToList();
+                    }
 
                     if (segmentsToServe.Count == 0)
                         segmentsToServe = session.Segments.TakeLast(14).ToList();
-
-                    sb.Append("#EXT-X-START:TIME-OFFSET=0,PRECISE=YES\r\n");
                 }
                 else
                 {
-                    // Standard live sliding window
+                    // Standard live sliding window (last 14 segments)
                     segmentsToServe = session.Segments.TakeLast(14).ToList();
                 }
 
