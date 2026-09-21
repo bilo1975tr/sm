@@ -85,16 +85,34 @@ def canonical_gh_key(url: str):
         return (owner.lower(), repo.lower(), clean_path)
     return url.lower().strip()
 
+PLAYABLE_MEDIA_EXTS = (
+    '.m3u', '.m3u8',
+    '.mp4', '.mkv', '.avi', '.mov', '.m4v', '.ts', '.flv', '.webm', '.wmv', '.asf', '.3gp',
+    '.mp3', '.aac', '.wav', '.ogg', '.flac', '.m4a', '.wma'
+)
+DIRECT_MEDIA_EXTS = (
+    '.mp4', '.mkv', '.avi', '.mov', '.m4v', '.ts', '.flv', '.webm', '.wmv', '.asf', '.3gp',
+    '.mp3', '.aac', '.wav', '.ogg', '.flac', '.m4a', '.wma'
+)
+AUDIO_EXTS = (
+    '.mp3', '.aac', '.wav', '.ogg', '.flac', '.m4a', '.wma'
+)
+
 def classify_m3u_source(source_url: str, parsed_channels: list = None) -> str:
     """
-    Bir M3U kaynağının URL yolu, dosya adı ve içeriğindeki kanallara göre
+    Bir M3U veya medya kaynağının URL yolu, dosya adı ve içeriğindeki kanallara göre
     hangi ana kategoriye ('film', 'dizi', 'radyo', 'tv') ait olduğunu hassas olarak belirler.
     Tüm arşivler, bölümlü programlar, belgeseller ve diziler 'dizi' (VOD Dizi/Program/Arşiv) kategorisine yerleştirilir.
     """
     url_lower = unquote(source_url.lower())
     path_part = url_lower.split('?')[0]
     fname = os.path.basename(path_part)
-    for ext in ('.m3u8', '.m3u'):
+
+    # Ses / Ses efektleri / Radyo dosyaları
+    if any(path_part.endswith(ext) for ext in AUDIO_EXTS) or any(k in fname for k in ('radyo', 'radio', 'sfx')) or any(k in path_part for k in ('/radyo', '/radio', 'global_radyo', 'radiando')):
+        return 'radyo'
+
+    for ext in PLAYABLE_MEDIA_EXTS:
         if fname.endswith(ext):
             fname = fname[:-len(ext)]
             break
@@ -103,12 +121,8 @@ def classify_m3u_source(source_url: str, parsed_channels: list = None) -> str:
     if 'karma' in fname or 'karma' in path_part or ('film' in fname and 'dizi' in fname):
         return 'karma'
 
-    # Radyo istasyonları
-    if any(k in fname for k in ('radyo', 'radio')) or any(k in path_part for k in ('/radyo', '/radio', 'global_radyo')):
-        return 'radyo'
-
     # Film listeleri
-    film_keywords = ('film', 'movie', 'cinema', 'sinema', 'yeşilçam', 'yesilcam', 'filmografi', 'vod', 'power-cinema', 'filmando')
+    film_keywords = ('film', 'movie', 'cinema', 'sinema', 'yeşilçam', 'yesilcam', 'filmografi', 'vod', 'power-cinema', 'filmando', 'greekmovies', 'jesusmovies', 'kidsmovies', 'bollywood')
     if any(k in fname for k in film_keywords) or any(k in path_part for k in ('/filmler', '/movies', '/sinema', '/evde-sinema')):
         return 'film'
 
@@ -125,6 +139,10 @@ def classify_m3u_source(source_url: str, parsed_channels: list = None) -> str:
         'lists/video/sources/www-dmax-com-tr', 'lists/video/sources', 'videolar'
     )):
         return 'dizi'
+
+    # Doğrudan video dosyası (.mp4, .mkv, .avi vb.)
+    if any(path_part.endswith(ext) for ext in ('.mp4', '.mkv', '.avi', '.mov', '.m4v', '.ts', '.flv', '.webm', '.wmv')):
+        return 'film'
 
     # Canlı TV / Spor
     if any(k in fname for k in ('tv', 'iptv', 'canli', 'canlı', 'live', 'spor', 'sport', 'streams/')):
@@ -338,6 +356,47 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
             i = j
         else:
             i += 1
+
+    if not channels and content.strip():
+        # #EXTINF bulunmayan tek kanallı HLS (.m3u8), master playlist veya akış URL'si içeren dosyalar için fallback
+        stream_urls = []
+        for line in lines:
+            l_str = line.strip()
+            if l_str.startswith('http://') or l_str.startswith('https://'):
+                stream_urls.append(l_str)
+            m_uri = re.search(r'URI="([^"]+)"', l_str)
+            if m_uri:
+                u_val = m_uri.group(1)
+                if u_val.startswith('http://') or u_val.startswith('https://'):
+                    stream_urls.append(u_val)
+
+        fname = os.path.basename(source_url.split('?')[0])
+        for ext in ('.m3u8', '.m3u', '.mp4', '.mkv', '.avi', '.ts', '.mp3', '.wav'):
+            if fname.lower().endswith(ext):
+                fname = fname[:-len(ext)]
+                break
+        clean_name = unquote(fname).replace('_', ' ').replace('-', ' ').strip()
+        if not clean_name:
+            clean_name = "Kanal"
+
+        target_url = stream_urls[0] if stream_urls else source_url
+        if target_url:
+            cat = map_category(default_category, default_category, clean_name)
+            channel = {
+                'name': clean_name,
+                'tvg-id': None,
+                'tvg-name': clean_name,
+                'tvg-logo': None,
+                'group-title': default_category,
+                'category': cat,
+                'url': target_url,
+                'source': source_url,
+                'normalized_name': normalize_name(clean_name),
+                'canonical_name': canonical_channel_name(clean_name),
+                'directives': list(current_directives)
+            }
+            channels.append(channel)
+
     return channels
 
 def parse_epg_xml(xml_content: str):
@@ -559,14 +618,24 @@ KNOWN_REPO_DEFAULT_FILES = {
         'yt-diziler.m3u'
     ],
     ('hayatiptv', 'iptv'): [
-        'BDNLTR.m3u',
-        'index.m3u',
-        'TRDECesitlikanallar.m3u',
-        'SPORTV.m3u',
+        'Arnavutluk.m3u',
         'Azerbaycan.m3u',
+        'BDNLTR.m3u',
+        'Filistin.m3u',
+        'Fransa.m3u',
+        'Kazakistan.m3u',
         'Konusanlar Programı 4.SEZON Bölümleri.m3u',
         'Radyo.m3u',
         'RadyoSeytan.m3u',
+        'Romanya.m3u',
+        'RusyaFederasyon.m3u',
+        'SPORTV.m3u',
+        'TRDECesitlikanallar.m3u',
+        'TULIXTVTR.m3u',
+        'Turkmenistan.m3u',
+        'bos.m3u',
+        'index.m3u',
+        'iskandinavya.m3u',
         'radyo-01.m3u'
     ],
     ('iptv-org', 'iptv'): [
@@ -576,27 +645,116 @@ KNOWN_REPO_DEFAULT_FILES = {
         'streams/de_samsung.m3u',
         'streams/tr.m3u',
         'streams/tr_gem.m3u',
-        'streams/tr_onetv.m3u'
+        'streams/tr_onetv.m3u',
+        'streams/at.m3u',
+        'streams/at_samsung.m3u'
     ],
     ('hydrokin', 'M3U'): [
         'filmando.m3u',
         'ssiptvPHIPLIS.m3u',
-        'tvando.m3u'
+        'tvando.m3u',
+        'radiando.m3u',
+        'series.m3u'
     ],
     ('batuhansabri55', 'AkcagozTV_Film'): [
         'FilmDizi.m3u'
     ],
     ('koprulu555', 'global_radyo'): [
         'global_radio.m3u'
+    ],
+    ('kadirsener1', 'avva'): [
+        'Bilgilendirme.mp4',
+        'playlist.m3u'
+    ],
+    ('Efeisot', 'iptv'): [
+        'index.m3u',
+        'kanallar.m3u',
+        'yeni.m3u8'
+    ],
+    ('yasarfalkan', 'm3u-dosyam'): [
+        'YMBK.m3u8'
+    ],
+    ('don24crk', 'Don24crk-Repository'): [
+        '20 Χρόνια Δελφινάριο.m3u8',
+        'ANT1.m3u8',
+        'ATVAvrupa.m3u8',
+        'AlikiVougioklakiTenies.m3u',
+        'Bollywoodfilmizle.m3u',
+        'CNNTürk.m3u8',
+        'Cocukfilmizle.m3u',
+        'EUROSTAR.m3u8',
+        'Elena Sisters/sfx_damage.wav',
+        'Elena Sisters/sfx_defeat.wav',
+        'Elena Sisters/sfx_item.wav',
+        'Elena Sisters/sfx_jump.wav',
+        'German tv 1332.m3u',
+        'GermanTV By don24crk.m3u',
+        'GermanTV/3SAT.m3u8',
+        'GermanTV/ARD.m3u8',
+        'GermanTV/ARTE.m3u8',
+        'GermanTV/DISNEYCHANNEL.m3u8',
+        'GermanTV/DMAX.m3u8',
+        'GermanTV/KABEL1 DOKU.m3u8',
+        'GermanTV/KABEL1.m3u8',
+        'GermanTV/KIKA.m3u8',
+        'GermanTV/NTV.m3u8',
+        'GermanTV/PRO7.m3u8',
+        'GermanTV/PRO7MAXX.m3u8',
+        'GermanTV/RTL.m3u8',
+        'GermanTV/RTL2.m3u8',
+        'GermanTV/RTLNITRO.m3u8',
+        'GermanTV/RTLUP.m3u8',
+        'GermanTV/SAT1.m3u8',
+        'GermanTV/SAT1GOLD.m3u8',
+        'GermanTV/SIXX.m3u8',
+        'GermanTV/SUPERRTL.m3u8',
+        'GermanTV/TAGESSCHAU.m3u8',
+        'GermanTV/TELE5.m3u8',
+        'GermanTV/TLC.m3u8',
+        'GermanTV/VOX.m3u8',
+        'GermanTV/WDR.m3u8',
+        'GermanTV/WELTDERWUNDER.m3u8',
+        'GermanTV/ZDF.m3u8',
+        'GermanTV/ZEEONE.m3u8',
+        'GreekMovies.m3u',
+        'JESUSMOVIES.m3u',
+        'KIDSMOVIES.m3u',
+        'KemalSunal.m3u',
+        'Lampsi.m3u8',
+        'SEFLIX.m3u',
+        'SKAI.m3u8',
+        'SKAI1.m3u8',
+        'STAR.m3u8',
+        'SUPERMAMMI.m3u',
+        'Showtürk.m3u8',
+        'TVOPEN.m3u8',
+        'TurkTV.m3u',
+        'anacon.org.m3u',
+        'android.m3u',
+        'barney stinson LiveTV/es.m3u',
+        'barney stinson LiveTV/fr.m3u',
+        'barney stinson LiveTV/ger.m3u',
+        'barney stinson LiveTV/gr.m3u',
+        'barney stinson LiveTV/in.m3u',
+        'barney stinson LiveTV/it.m3u',
+        'barney stinson LiveTV/pl.m3u',
+        'barney stinson LiveTV/tr.m3u',
+        'barney stinson LiveTV/us.m3u',
+        'channels.m3u',
+        'in.m3u',
+        'madtv-playlist.m3u8',
+        'madtv.m3u',
+        'markos seferlis 20 xronia delfinario.m3u8',
+        'omegacy.m3u8',
+        'thesstv.m3u'
     ]
 }
 
-def discover_github_m3u_sources(github_token: str = None, existing_canonical_urls: set = None, max_candidates: int = 100, auto_json_data: dict = None) -> list:
+def discover_github_m3u_sources(github_token: str = None, existing_canonical_urls: set = None, max_candidates: int = 1500, auto_json_data: dict = None) -> list:
     """
-    1) GitHub Search API (/search/repositories) üzerinden yeni Türkçe ve Almanca IPTV/M3U depolarını arar.
-    2) auto_update.json içerisindeki kayıtlı GitHub depolarını ve bilinen küratör depolarını tarar.
-    3) Bulunan depolardaki M3U/M3U8 dosyalarını Tree API ve Raw probing ile çeker,
-       Türkçe (TR) ve Almanca (DE) içerik barındıran geçerli yeni listeleri keşfeder.
+    1) GitHub Search API ve Tree API üzerinden bilinen ve kayıtlı tüm depoları alt klasörleriyle (recursive) tarar.
+    2) don24crk/Don24crk-Repository dahil tüm depolardaki .m3u, .m3u8, .mkv, .avi, .mp4, .mp3, .wav vb. tüm medya ve playlist dosyalarını eksiksiz toplar.
+    3) Hiyerarşik alt klasörleri keşfeder ve oynatılabilir her içeriği listeye dahil eder.
     """
     if existing_canonical_urls is None:
         existing_canonical_urls = set()
@@ -618,14 +776,16 @@ def discover_github_m3u_sources(github_token: str = None, existing_canonical_url
     for cat, urls in auto_json_data.items():
         if isinstance(urls, list):
             for u in urls:
-                existing_canonical_keys.add(canonical_gh_key(u))
-                existing_canonical_urls.add(u)
+                if isinstance(u, str):
+                    existing_canonical_keys.add(canonical_gh_key(u))
+                    existing_canonical_urls.add(u)
 
-    # auto_update.json'daki tüm kategorilerden GitHub depolarını topla
     known_repos = set()
     for cat, urls in auto_json_data.items():
         if isinstance(urls, list):
             for u in urls:
+                if not isinstance(u, str):
+                    continue
                 if 'github.com' in u or 'raw.githubusercontent.com' in u:
                     try:
                         parts = u.split('/')
@@ -644,132 +804,89 @@ def discover_github_m3u_sources(github_token: str = None, existing_canonical_url
                     except Exception:
                         pass
 
-    # Ek standart popüler TR/DE kaynak depoları
-    known_repos.add(('iptv-org', 'iptv'))
-    known_repos.add(('hayatiptv', 'iptv'))
-    known_repos.add(('Zerk1903', 'zerkfilm'))
+    # Standart ve kullanıcı depolarını ekle
+    for pair in KNOWN_REPO_DEFAULT_FILES.keys():
+        known_repos.add(pair)
     known_repos.add(('UzunMuhalefet', 'Legal-IPTV'))
-    known_repos.add(('hydrokin', 'M3U'))
-    known_repos.add(('batuhansabri55', 'AkcagozTV_Film'))
-    known_repos.add(('koprulu555', 'global_radyo'))
 
-    # Dinamik GitHub Search: Yeni Türkçe ve Almanca depoları ara
-    search_queries = [
-        'iptv turkey m3u',
-        'iptv turkce m3u',
-        'iptv germany m3u',
-        'iptv deutsch m3u'
+    # Sıralama: Özel ve yerel depolar öncelikli
+    priority_order = [
+        ('don24crk', 'Don24crk-Repository'),
+        ('hayatiptv', 'iptv'),
+        ('Zerk1903', 'zerkfilm'),
+        ('kadirsener1', 'avva'),
+        ('Efeisot', 'iptv'),
+        ('hydrokin', 'M3U'),
+        ('batuhansabri55', 'AkcagozTV_Film'),
+        ('koprulu555', 'global_radyo'),
+        ('yasarfalkan', 'm3u-dosyam'),
+        ('iptv-org', 'iptv'),
+        ('UzunMuhalefet', 'Legal-IPTV')
     ]
-    print("[*] GitHub Arama Motoru (Worker/Search) ile yeni Türkçe & Almanca depolar taranıyor...")
-
-    has_gh_cli = shutil.which('gh') is not None
-    for q in search_queries:
-        found_any = False
-        if has_gh_cli:
-            try:
-                cmd = ['gh', 'search', 'repos', q, '--sort', 'updated', '--limit', '5', '--json', 'fullName']
-                p = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
-                if p.returncode == 0 and p.stdout:
-                    s_items = json.loads(p.stdout)
-                    for it in s_items:
-                        fn = it.get('fullName', '')
-                        if '/' in fn:
-                            ow, rp = fn.split('/', 1)
-                            known_repos.add((ow, rp))
-                            found_any = True
-            except Exception:
-                pass
-
-        if not found_any:
-            try:
-                search_url = f"https://api.github.com/search/repositories?q={quote(q)}&sort=updated&per_page=5"
-                req = Request(search_url, headers=headers)
-                with urlopen(req, timeout=6) as resp:
-                    if resp.status == 200:
-                        s_data = json.loads(resp.read().decode('utf-8'))
-                        for it in s_data.get('items', []):
-                            fn = it.get('full_name', '')
-                            if '/' in fn:
-                                ow, rp = fn.split('/', 1)
-                                known_repos.add((ow, rp))
-            except Exception:
-                pass
-
-    # Sıralamada iptv-org, hayatiptv ve Zerk1903'ü en başa al
-    ordered_repos = [('iptv-org', 'iptv'), ('Zerk1903', 'zerkfilm'), ('hayatiptv', 'iptv'), ('hydrokin', 'M3U')]
+    ordered_repos = []
+    for p in priority_order:
+        if p in known_repos and p not in ordered_repos:
+            ordered_repos.append(p)
     for r in sorted(list(known_repos)):
         if r not in ordered_repos:
             ordered_repos.append(r)
 
+    # Varsa yerel repo önbelleğini yükle
+    repo_cache = {}
+    cache_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.github_repo_cache.json')
+    if not os.path.exists(cache_path):
+        cache_path = '.github_repo_cache.json'
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, 'r', encoding='utf-8') as cf:
+                repo_cache = json.load(cf)
+        except Exception:
+            pass
+
     candidate_urls = []
 
-    # Standart probe dosya adları (Tree API 403 veya rate limit verirse doğrudan raw test edilir)
-    common_probes = [
-        'playlist.m3u', 'channels.m3u', 'tv.m3u', 'de.m3u', 'tr.m3u',
-        'turkce.m3u', 'deutsch.m3u', 'germany.m3u', 'turkey.m3u',
-        'playlist.m3u8', 'streams.m3u', 'iptv.m3u', 'index.m3u'
-    ]
-
     for owner, repo in ordered_repos:
-        if len(candidate_urls) >= max_candidates:
-            break
-
         repo_paths = []
-        # 1. Önce bilinen temel listeleri ekle
+        cache_key = f"{owner}/{repo}"
+
+        # 1. Önceden tanımlı dosya listesi
         default_files = KNOWN_REPO_DEFAULT_FILES.get((owner, repo), [])
         repo_paths.extend(default_files)
 
-        # 2. GitHub Tree API ile yeni/güncel dosyaları da tara
+        # 2. Önbellekteki dosyalar
+        if cache_key in repo_cache:
+            for cached_file in repo_cache[cache_key]:
+                if cached_file not in repo_paths:
+                    repo_paths.append(cached_file)
+
+        # 3. GitHub Tree API ile alt klasörler dahil TÜM dosyaları recursive tara
         tree_api = f"https://api.github.com/repos/{owner}/{repo}/git/trees/HEAD?recursive=1"
         try:
             req = Request(tree_api, headers=headers)
             with urlopen(req, timeout=10) as resp:
                 if resp.status == 200:
                     tree_data = json.loads(resp.read().decode('utf-8'))
-                    is_global_repo = (owner.lower() == 'iptv-org' or (repo.lower() == 'iptv' and owner.lower() != 'hayatiptv'))
+                    is_global_repo = (owner.lower() == 'iptv-org')
                     
                     for item in tree_data.get('tree', []):
                         path = item.get('path', '')
                         path_lower = path.lower()
-                        if not path_lower.endswith(('.m3u', '.m3u8')):
+                        if not path_lower.endswith(PLAYABLE_MEDIA_EXTS):
                             continue
                         if 'cameras' in path_lower:
                             continue
 
-                        fname = os.path.basename(path_lower)
-                        for ext in ('.m3u8', '.m3u'):
-                            if fname.endswith(ext):
-                                fname = fname[:-len(ext)]
-                                break
-
-                        if 'turkmen' in fname or fname in ('arnavutluk', 'filistin', 'fransa', 'romanya', 'rusyafederasyon', 'iskandinavya', 'bos'):
-                            continue
-
-                        # Global iptv-org deposu için SADECE streams/ altındaki TR ve DE dosyalarını al
                         if is_global_repo:
-                            if not path_lower.startswith('streams/'):
-                                continue
-                            if not (fname in ('tr', 'de', 'turk', 'deutsch') or fname.startswith(('tr_', 'de_', 'tr-', 'de-')) or fname.endswith(('_tr', '_de', '-tr', '-de'))):
-                                continue
+                            # iptv-org deposundan sadece Türkçe ve Almanca akışlar
+                            if path_lower.startswith('streams/') and ('tr' in path_lower or 'de' in path_lower or 'at' in path_lower):
+                                if path not in repo_paths:
+                                    repo_paths.append(path)
                         else:
-                            # Yerel/Türkçe depolar için TR/DE veya ilgili kategori listelerini al
-                            if not (
-                                fname in ('tr', 'de', 'turk', 'turkce', 'turkiye', 'deutsch', 'german') 
-                                or fname.startswith(('tr_', 'de_', 'tr-', 'de-')) 
-                                or fname.endswith(('_tr', '_de', '-tr', '-de')) 
-                                or any(k in fname for k in ('turk', 'türk', 'turkey', 'deutsch', 'german', 'film', 'dizi', 'sinema', 'yesilcam', 'yeşilçam', 'belgesel', 'ulusal', 'yerli', 'arsiv', 'program', 'radio', 'radyo', 'tv', 'playlist', 'index', 'cesitli', 'bdnl', 'ezel', 'kurtlar', 'jet', 'sosyete', 'kırmızı', 'kirmizi', 'muhteşem', 'muhtesem', 'vatanım', 'vatanim', 'sinner', 'love', 'netfly'))
-                            ):
-                                continue
-
-                        if path not in repo_paths:
-                            repo_paths.append(path)
-        except Exception as e:
-            # Rate limit veya network hatası durumunda devam et
+                            # Diğer tüm kullanıcı ve içerik depolarından alt klasörler dahil tümü
+                            if path not in repo_paths:
+                                repo_paths.append(path)
+        except Exception:
             pass
-
-        # Tree API boş döndüyse veya rate-limit (403) olduysa, yaygın standart TR/DE dosya isimlerini doğrudan raw dene
-        if not repo_paths:
-            repo_paths.extend(common_probes)
 
         for p in repo_paths:
             quoted_path = quote(p, safe='/')
@@ -780,28 +897,72 @@ def discover_github_m3u_sources(github_token: str = None, existing_canonical_url
             if gh_k not in existing_canonical_keys and raw_url not in candidate_urls:
                 candidate_urls.append(raw_url)
                 existing_canonical_keys.add(gh_k)
-                if len(candidate_urls) >= max_candidates:
-                    break
 
-    print(f"[*] GitHub depo taraması sonucu {len(candidate_urls)} yeni aday M3U kaynağı tespit edildi.")
+    print(f"[*] GitHub derin depo taraması sonucu toplam {len(candidate_urls)} aday medya/playlist kaynağı toplandı.")
 
     discovered_valid = []
 
     for url in candidate_urls:
-        content, ok, err = fetch_text_with_retry(url, max_retries=1, timeout=12)
-        if not ok or not content or ('#EXTM3U' not in content and '#EXTINF' not in content):
-            continue
+        url_lower = url.lower()
+        path_lower = url_lower.split('?')[0]
+        is_direct_media = any(path_lower.endswith(ext) for ext in DIRECT_MEDIA_EXTS)
 
-        parsed = parse_m3u(content, url, default_category="TV")
-        if not parsed or len(parsed) < 1:
-            continue
+        if is_direct_media:
+            fname = os.path.basename(path_lower)
+            for ext in DIRECT_MEDIA_EXTS:
+                if fname.endswith(ext):
+                    fname = fname[:-len(ext)]
+                    break
+            name_pretty = unquote(fname).replace('_', ' ').replace('-', ' ').strip().title()
+            best_cat = classify_m3u_source(url)
+            parsed = [{
+                'name': name_pretty,
+                'tvg-id': None,
+                'tvg-name': name_pretty,
+                'tvg-logo': None,
+                'group-title': best_cat.upper(),
+                'category': best_cat,
+                'url': url,
+                'source': url,
+                'normalized_name': normalize_name(name_pretty),
+                'canonical_name': canonical_channel_name(name_pretty),
+                'directives': []
+            }]
+            discovered_valid.append((best_cat, url, parsed))
+            print(f"  [+] Medya Dosyası Eklendi ({best_cat.upper()}): {url}")
+        else:
+            content, ok, err = fetch_text_with_retry(url, max_retries=1, timeout=12)
+            if not ok or not content:
+                continue
+            parsed = parse_m3u(content, url, default_category="TV")
+            if not parsed:
+                lines = content.splitlines()
+                sub_parsed = []
+                for idx, line in enumerate(lines):
+                    l_str = line.strip()
+                    if l_str and not l_str.startswith('#') and (l_str.startswith('http://') or l_str.startswith('https://')):
+                        item_name = f"Kanal {idx+1}"
+                        sub_parsed.append({
+                            'name': item_name,
+                            'tvg-id': None,
+                            'tvg-name': item_name,
+                            'tvg-logo': None,
+                            'group-title': 'TV',
+                            'category': 'tv',
+                            'url': l_str,
+                            'source': url,
+                            'normalized_name': normalize_name(item_name),
+                            'canonical_name': canonical_channel_name(item_name),
+                            'directives': []
+                        })
+                parsed = sub_parsed
 
-        if not is_tr_or_de_playlist(parsed, url):
-            continue
+            if not parsed or len(parsed) < 1:
+                continue
 
-        best_cat = classify_m3u_source(url, parsed)
-        discovered_valid.append((best_cat, url, parsed))
-        print(f"  [+] Keşfedildi ve Doğrulandı (TR/DE) ({best_cat.upper()}): {url} ({len(parsed)} içerik)")
+            best_cat = classify_m3u_source(url, parsed)
+            discovered_valid.append((best_cat, url, parsed))
+            print(f"  [+] Keşfedildi ve Doğrulandı ({best_cat.upper()}): {url} ({len(parsed)} içerik)")
 
     return discovered_valid
 
@@ -869,8 +1030,12 @@ def main():
     else:
         if os.path.exists(args.source):
             is_local_source = True
-            with open(args.source, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+            try:
+                with open(args.source, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except Exception as e:
+                print(f"[x] JSON parse hatası ({args.source}): {e}")
+                sys.exit(1)
         else:
             print(f"[x] Kaynak dosya bulunamadı: {args.source}")
             sys.exit(1)
@@ -905,21 +1070,22 @@ def main():
 
     github_token = args.github_token or os.environ.get("GITHUB_TOKEN")
     if args.discover_github:
-        print("[*] GitHub M3U Kaynak Keşfi başlatılıyor...")
+        print("[*] GitHub M3U ve Medya Kaynak Keşfi başlatılıyor...")
         new_discovered = discover_github_m3u_sources(
             github_token=github_token,
             existing_canonical_urls=existing_canonical_urls,
-            max_candidates=40,
+            max_candidates=1500,
             auto_json_data=data
         )
         for cat, new_url, parsed_ch in new_discovered:
             if cat not in data or not isinstance(data[cat], list):
                 data[cat] = []
-            data[cat].append(new_url)
+            if new_url not in data[cat]:
+                data[cat].append(new_url)
             m3u_urls.append((cat, new_url))
             print(f"  [+] auto_update.json içine yeni kaliteli kaynak eklendi: {new_url} ({cat})")
 
-    print("[*] M3U listeleri indiriliyor...")
+    print("[*] M3U listeleri ve medya dosyaları işleniyor...")
     m3u_channels = []
     failed_sources = []
     sources_summary = []
@@ -927,6 +1093,9 @@ def main():
 
     def fetch_m3u_task(item):
         cat, url = item
+        u_path = url.lower().split('?')[0]
+        if any(u_path.endswith(ext) for ext in DIRECT_MEDIA_EXTS):
+            return cat, url, None, True, ""
         content, ok, err = fetch_text_with_retry(url, max_retries=2, timeout=20)
         return cat, url, content, ok, err
 
@@ -934,12 +1103,45 @@ def main():
         m3u_results = list(executor.map(fetch_m3u_task, m3u_urls))
 
     for cat, u, content, ok, err in m3u_results:
-        if ok and content and ('#EXTM3U' in content or '#EXTINF' in content):
+        u_path = u.lower().split('?')[0]
+        if any(u_path.endswith(ext) for ext in DIRECT_MEDIA_EXTS):
+            fname = os.path.basename(u_path)
+            for ext in DIRECT_MEDIA_EXTS:
+                if fname.endswith(ext):
+                    fname = fname[:-len(ext)]
+                    break
+            name_pretty = unquote(fname).replace('_', ' ').replace('-', ' ').strip().title()
+            ch_item = {
+                'name': name_pretty,
+                'tvg-id': None,
+                'tvg-name': name_pretty,
+                'tvg-logo': None,
+                'group-title': cat.upper(),
+                'category': map_category(cat, cat, name_pretty),
+                'url': u,
+                'source': u,
+                'normalized_name': normalize_name(name_pretty),
+                'canonical_name': canonical_channel_name(name_pretty),
+                'directives': []
+            }
+            m3u_channels.append(ch_item)
+            source_channel_counts[u] = 1
+            sources_summary.append({'url': u, 'category': cat, 'status': 'success', 'channels_count': 1})
+            print(f"  [+] {cat.upper()} (Medya Dosyası): {u} -> 1 içerik")
+            continue
+
+        if ok and content:
             parsed = parse_m3u(content, u, default_category=cat)
-            m3u_channels.extend(parsed)
-            source_channel_counts[u] = len(parsed)
-            sources_summary.append({'url': u, 'category': cat, 'status': 'success', 'channels_count': len(parsed)})
-            print(f"  [+] {cat.upper()}: {u} -> {len(parsed)} içerik")
+            if parsed:
+                m3u_channels.extend(parsed)
+                source_channel_counts[u] = len(parsed)
+                sources_summary.append({'url': u, 'category': cat, 'status': 'success', 'channels_count': len(parsed)})
+                print(f"  [+] {cat.upper()}: {u} -> {len(parsed)} içerik")
+            else:
+                source_channel_counts[u] = 0
+                failed_sources.append({'url': u, 'category': cat, 'error': 'Boş veya çözümlenemeyen M3U'})
+                sources_summary.append({'url': u, 'category': cat, 'status': 'failed', 'error': 'Boş veya çözümlenemeyen M3U'})
+                print(f"  [-] İndirilemedi / Boş M3U: {u}")
         else:
             source_channel_counts[u] = 0
             failed_sources.append({'url': u, 'category': cat, 'error': err or 'Boş veya geçersiz M3U'})
