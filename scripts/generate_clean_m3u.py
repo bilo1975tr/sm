@@ -277,15 +277,44 @@ def map_category(cat_key: str, original_group: str, name: str) -> str:
 
     return "TV"
 
+def extract_series_name_from_source(source_url: str) -> str:
+    """
+    Kaynak URL'sinden veya dosya adından dizi/program ismini çıkarıp formatlar.
+    Örn: /diziler/kurtlar-vadisi-pusu.m3u -> Kurtlar Vadisi Pusu
+    """
+    if not source_url:
+        return ""
+    try:
+        path_part = unquote(source_url.split('?')[0].strip())
+        fname = os.path.basename(path_part)
+        for ext in ('.m3u8', '.m3u', '.ts', '.mp4'):
+            if fname.lower().endswith(ext):
+                fname = fname[:-len(ext)]
+                break
+
+        fname_lower = fname.lower()
+        if fname_lower in ('index', 'playlist', 'all', 'tv', 'channels', 'tr', 'de', 'streams', 'live'):
+            return ""
+
+        clean = fname.replace('-', ' ').replace('_', ' ').replace('.', ' ')
+        clean = re.sub(r'\s+', ' ', clean).strip()
+        # Kelimelerin baş harflerini büyüt
+        return clean.title()
+    except Exception:
+        return ""
+
 def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
     """
     M3U içeriğini parse eder.
     Metadata bilgilerini (group-title, tvg-name, tvg-logo, tvg-id) ve direktifleri korur.
     Film ve Dizi içeriklerini Canlı TV ile karıştırmadan orijinal grup/kategori bilgisini saklar.
+    Dizi/Program listelerinde eksik bölüm isimlerini kaynak dizi adıyla zenginleştirir.
     """
     channels = []
     if content.startswith('\ufeff'):
         content = content[1:]
+
+    series_title_from_src = extract_series_name_from_source(source_url)
 
     lines = content.splitlines()
     i = 0
@@ -336,19 +365,33 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
             if url:
                 orig_group = attrs.get('group-title', '')
                 cat = map_category(default_category, orig_group, name)
+
+                formatted_name = name
                 final_group = orig_group if orig_group else cat
 
+                # Dizi / Program içeriği ise ve kaynak dosyasından dizi adı türetilebiliyorsa
+                if series_title_from_src and (cat == 'Dizi' or 'dizi' in (default_category or '').lower()):
+                    cat = 'Dizi'
+                    # Eğer kanal adı sadece bölüm numarasından ibaretse
+                    is_just_ep = bool(re.match(r'^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$', name.strip()) or
+                                      re.match(r'^(?i)s\d+\s*e\d+$', name.strip()))
+                    if is_just_ep:
+                        formatted_name = f"{series_title_from_src} - {name.strip()}"
+
+                    if not orig_group or orig_group.lower() in ('dizi', 'genel', 'tv', 'series'):
+                        final_group = series_title_from_src
+
                 channel = {
-                    'name': name,
+                    'name': formatted_name,
                     'tvg-id': attrs.get('tvg-id') or attrs.get('tvg-name') or None,
-                    'tvg-name': attrs.get('tvg-name') or name,
+                    'tvg-name': attrs.get('tvg-name') or formatted_name,
                     'tvg-logo': attrs.get('tvg-logo') or None,
                     'group-title': final_group,
                     'category': cat,
                     'url': url,
                     'source': source_url,
-                    'normalized_name': normalize_name(name),
-                    'canonical_name': canonical_channel_name(name),
+                    'normalized_name': normalize_name(formatted_name),
+                    'canonical_name': canonical_channel_name(formatted_name),
                     'directives': list(current_directives)
                 }
                 channels.append(channel)

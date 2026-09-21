@@ -450,8 +450,8 @@ namespace StreamMesh.Models
             var yearMatch = Regex.Match(working, @"\((19\d{2}|20\d{2})\)");
             if (yearMatch.Success) { details.MovieYear = yearMatch.Groups[1].Value; working = working.Replace(yearMatch.Value, ""); }
 
-            // S01E01 or 1x01 pattern
-            var seriesMatch = Regex.Match(working, @"(?i)s(\d+)\s?e(\d+)|(\d+)x(\d+)");
+            // S01E01 or 1x01 pattern, or Turkish Sezon/Bölüm pattern (e.g. 1. Sezon 2. Bölüm or 1. Bölüm)
+            var seriesMatch = Regex.Match(working, @"(?i)s(\d+)\s?e(\d+)|(\d+)x(\d+)|(?:(\d+)\.\s*sezon\s*)?(\d+)\.\s*bölüm");
             if (seriesMatch.Success)
             {
                 if (!string.IsNullOrEmpty(seriesMatch.Groups[1].Value))
@@ -459,12 +459,36 @@ namespace StreamMesh.Models
                     int.TryParse(seriesMatch.Groups[1].Value, out int s); details.Season = s;
                     int.TryParse(seriesMatch.Groups[2].Value, out int e); details.Episode = e;
                 }
-                else
+                else if (!string.IsNullOrEmpty(seriesMatch.Groups[3].Value))
                 {
                     int.TryParse(seriesMatch.Groups[3].Value, out int s); details.Season = s;
                     int.TryParse(seriesMatch.Groups[4].Value, out int e); details.Episode = e;
                 }
-                details.SeriesTitle = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':', '\'', '"', '`', '’', '‘', '“', '”');
+                else
+                {
+                    if (!string.IsNullOrEmpty(seriesMatch.Groups[5].Value))
+                    {
+                        int.TryParse(seriesMatch.Groups[5].Value, out int s); details.Season = s;
+                    }
+                    else
+                    {
+                        details.Season = 1;
+                    }
+                    int.TryParse(seriesMatch.Groups[6].Value, out int e); details.Episode = e;
+                }
+                string prefix = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':', '\'', '"', '`', '’', '‘', '“', '”');
+                if (!string.IsNullOrWhiteSpace(prefix))
+                {
+                    details.SeriesTitle = prefix;
+                }
+                else if (!string.IsNullOrWhiteSpace(GroupTitle) && GroupTitle != "Dizi" && GroupTitle != "Genel" && GroupTitle != "TV")
+                {
+                    details.SeriesTitle = GroupTitle;
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(GroupTitle) && GroupTitle != "Dizi" && GroupTitle != "Genel" && GroupTitle != "TV" && string.Equals(Category, "Dizi", StringComparison.OrdinalIgnoreCase))
+            {
+                details.SeriesTitle = GroupTitle;
             }
 
             working = Regex.Replace(working, @"\s+", " ").Trim(' ', ':', '-', '(', ')', '\'', '"', '`', '’', '‘', '“', '”');

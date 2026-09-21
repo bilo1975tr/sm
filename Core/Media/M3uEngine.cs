@@ -305,6 +305,9 @@ namespace StreamMesh.Core.Media
                                 current.Id = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                             }
 
+                            // Dizi / Program / Arşiv isim ve grup tamamlama
+                            EnrichSeriesInfo(current, urlOrPath, categoryHint);
+
                             SmartNormalizationEngine.Instance.NormalizeChannel(current);
                             channels.Add(current);
                         }
@@ -395,6 +398,75 @@ namespace StreamMesh.Core.Media
         {
             try { return new Uri(url).Host + new Uri(url).AbsolutePath; }
             catch { return url; }
+        }
+
+        private void EnrichSeriesInfo(Channel channel, string sourceUrlOrPath, string categoryHint)
+        {
+            if (channel == null) return;
+
+            string cat = (channel.Category ?? categoryHint ?? "").ToLowerInvariant();
+            string grp = (channel.GroupTitle ?? "").ToLowerInvariant();
+            bool isDizi = cat == "dizi" || grp.Contains("dizi") || grp.Contains("series") || grp.Contains("sezon") || grp.Contains("bölüm") || grp.Contains("bolum");
+
+            // URL veya dosya yolundan dizi / program başlığını çıkar
+            string seriesNameFromSource = ExtractSeriesNameFromSource(sourceUrlOrPath);
+
+            if (!string.IsNullOrEmpty(seriesNameFromSource))
+            {
+                // Eğer kanal adı sadece bölüm numarasıysa (örn: "1. Bölüm", "Bölüm 1", "S01E01")
+                // dizi adını kanal adına ekle: "Kurtlar Vadisi - 1. Bölüm"
+                string currentName = (channel.Name ?? "").Trim();
+                bool isJustEpisode = System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$") ||
+                                     System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)s\d+\s*e\d+$");
+
+                if (isJustEpisode || !currentName.Contains(seriesNameFromSource, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (isJustEpisode)
+                    {
+                        channel.Name = $"{seriesNameFromSource} - {currentName}";
+                    }
+                }
+
+                // GroupTitle Genel veya boş ise dizi adını ata
+                if (string.IsNullOrWhiteSpace(channel.GroupTitle) || channel.GroupTitle == "Genel" || channel.GroupTitle == "Dizi" || channel.GroupTitle == "TV")
+                {
+                    channel.GroupTitle = seriesNameFromSource;
+                }
+
+                channel.Category = "Dizi";
+            }
+        }
+
+        private string ExtractSeriesNameFromSource(string sourceUrlOrPath)
+        {
+            if (string.IsNullOrWhiteSpace(sourceUrlOrPath)) return "";
+            try
+            {
+                string path = sourceUrlOrPath.Split('?')[0].Trim();
+                string fileName = Path.GetFileNameWithoutExtension(path);
+                if (string.IsNullOrEmpty(fileName)) return "";
+
+                // Standart karma veya tekil olmayan m3u dosya adlarını atla
+                string lower = fileName.ToLowerInvariant();
+                if (lower == "index" || lower == "playlist" || lower == "all" || lower == "tv" || lower == "channels" ||
+                    lower == "tr" || lower == "de" || lower == "streams" || lower == "live")
+                {
+                    return "";
+                }
+
+                // Tire, alt çizgi ve nokta karakterlerini boşluğa dönüştür
+                string clean = fileName.Replace("-", " ").Replace("_", " ").Replace(".", " ");
+                clean = System.Text.RegularExpressions.Regex.Replace(clean, @"\s+", " ").Trim();
+
+                // İlk harfleri büyük yap (Title Case)
+                var culture = System.Globalization.CultureInfo.GetCultureInfo("tr-TR");
+                var textInfo = culture.TextInfo;
+                return textInfo.ToTitleCase(clean.ToLower(culture));
+            }
+            catch
+            {
+                return "";
+            }
         }
     }
 }

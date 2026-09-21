@@ -219,37 +219,57 @@ namespace StreamMesh.Core.Media
 
         private async Task ProcessListWithProgress(List<string> urls, string categoryLabel, int totalSources, Func<int> incrementCounter, bool forceCategory, List<Channel> collector)
         {
-            if (urls == null) return;
-            for (int i = 0; i < urls.Count; i++)
-            {
-                string url = urls[i];
-                if (string.IsNullOrWhiteSpace(url)) continue;
+            if (urls == null || urls.Count == 0) return;
 
+            var validUrls = urls.Where(u => !string.IsNullOrWhiteSpace(u)).ToList();
+            if (validUrls.Count == 0) return;
+
+            // Çoklu indirme: Ağ bant genişliğini ve CPU'yu verimli kullanarak kaynakları paralel çek
+            int maxParallelism = Math.Min(12, Math.Max(4, Environment.ProcessorCount * 2));
+            using var semaphore = new System.Threading.SemaphoreSlim(maxParallelism, maxParallelism);
+            var lockObj = new object();
+
+            var tasks = validUrls.Select(async (url, i) =>
+            {
+                await semaphore.WaitAsync();
                 int currentIdx = incrementCounter();
                 double baseProgress = (double)(currentIdx - 1) / totalSources * 100.0;
                 double itemWeight = 100.0 / totalSources;
 
                 try
                 {
-                    _db.AddM3uSource(url);
+                    lock (lockObj)
+                    {
+                        _db.AddM3uSource(url);
+                    }
+
                     var channels = await _m3u.ParseM3uAsync(url, categoryLabel, forceCategory, (subMsg, subPct) =>
                     {
                         double overallPct = Math.Min(99.0, baseProgress + (subPct / 100.0) * itemWeight);
-                        ReportProgress((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {subMsg}");
+                        ReportProgress((int)overallPct, $"[{currentIdx}/{totalSources}] {categoryLabel}: {subMsg}");
                     });
 
                     if (channels != null && channels.Count > 0)
                     {
-                        collector.AddRange(channels);
+                        lock (lockObj)
+                        {
+                            collector.AddRange(channels);
+                        }
                         double finishedPct = Math.Min(99.0, baseProgress + itemWeight);
-                        ReportProgress((int)finishedPct, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}): {channels.Count} içerik çözümlendi.");
+                        ReportProgress((int)finishedPct, $"[{currentIdx}/{totalSources}] {categoryLabel}: {channels.Count} içerik çözümlendi.");
                     }
                 }
                 catch (Exception ex)
                 {
-                    ReportProgress((int)baseProgress, $"[{currentIdx}/{totalSources}] {categoryLabel} ({i + 1}/{urls.Count}) Hata: {ex.Message}");
+                    ReportProgress((int)baseProgress, $"[{currentIdx}/{totalSources}] {categoryLabel} Hata: {ex.Message}");
                 }
-            }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+
+            await Task.WhenAll(tasks);
         }
     }
 }

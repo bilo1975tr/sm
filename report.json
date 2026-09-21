@@ -2,37 +2,37 @@
   "failed_sources": [],
   "removed_sources": [],
   "preserved_failed_sources": [],
-  "source_success_count": 100,
+  "source_success_count": 194,
   "source_failure_count": 0,
-  "total_channels_parsed": 232019,
-  "unique_channels": 197489,
-  "duplicate_channels_removed": 34530,
-  "alive_channels": 197489,
+  "total_channels_parsed": 245545,
+  "unique_channels": 203929,
+  "duplicate_channels_removed": 41616,
+  "alive_channels": 203929,
   "dead_channels": 0,
   "hls_channels_checked": 0,
   "hls_channels_verified": 0,
-  "epg_matches_count": 1016,
-  "epg_unmatched_count": 196473,
-  "epg_match_rate_pct": 0.51,
+  "epg_matches_count": 1258,
+  "epg_unmatched_count": 202671,
+  "epg_match_rate_pct": 0.62,
   "epg_match_methods": {
-    "exact_tvg_id": 55,
-    "canonical_tvg_id": 758,
-    "exact_name": 6,
-    "canonical_name": 920,
-    "safe_alias": 78,
-    "none": 199027
+    "exact_tvg_id": 80,
+    "canonical_tvg_id": 906,
+    "exact_name": 49,
+    "canonical_name": 1294,
+    "safe_alias": 91,
+    "none": 207895
   },
-  "logos_existing_valid": 169573,
-  "logos_broken_replaced": 4,
-  "logos_from_epg": 511,
+  "logos_existing_valid": 172858,
+  "logos_broken_replaced": 5,
+  "logos_from_epg": 752,
   "logos_from_bilo1975tr": 0,
   "logos_from_fallback": 0,
-  "logos_unmatched": 30760,
+  "logos_unmatched": 36705,
   "categories": {
     "ULUSAL": 51,
     "SiNEMA": 17,
     "HABER": 16,
-    "TV": 2167,
+    "TV": 3926,
     "ÇOCUK": 3,
     "SPOR": 5,
     "MUZIK": 8,
@@ -40,7 +40,7 @@
     "Haber": 33,
     "Spor": 7,
     "Cocuk": 4,
-    "Film": 4074,
+    "Film": 4183,
     "TR-ULUSAL": 52,
     "TR-SPOR": 149,
     "TR-HABER": 50,
@@ -90,44 +90,44 @@
     "28. |EN-UK-US|🇬🇧🇺🇸 WORLDWIDE-INTL ℹ️🌐": 1,
     "29. |📡|👨‍💻👉GITHUB.COM/IPSTREET312": 2,
     "BELGESEL": 1,
-    "General": 1411,
-    "Undefined": 3789,
-    "Music": 507,
-    "News": 678,
+    "General": 1473,
+    "Undefined": 3808,
+    "Music": 534,
+    "News": 702,
     "Education": 82,
-    "Religious": 530,
-    "Entertainment": 370,
+    "Religious": 550,
+    "Entertainment": 395,
     "Entertainment;Kids": 1,
-    "Lifestyle": 72,
-    "Series": 152,
+    "Lifestyle": 76,
+    "Series": 177,
     "Lifestyle;Relax": 1,
-    "Comedy": 48,
-    "Kids": 144,
-    "Movies": 249,
+    "Comedy": 50,
+    "Kids": 154,
+    "Movies": 273,
     "Outdoor": 38,
-    "Business": 53,
+    "Business": 56,
     "Shop": 70,
     "Auto": 16,
     "Business;News": 2,
     "Classic": 42,
-    "Culture": 60,
+    "Culture": 69,
     "Education;Kids": 8,
     "Movies;Religious": 1,
-    "Sports": 185,
-    "Legislative": 157,
+    "Sports": 192,
+    "Legislative": 159,
     "Weather": 12,
-    "Animation": 32,
+    "Animation": 35,
     "Business;Legislative;News": 1,
     "Relax": 3,
     "Comedy;Series": 1,
     "Culture;Documentary;Entertainment;General;Movies;Music": 1,
-    "Movies;Series": 7,
+    "Movies;Series": 11,
     "Entertainment;General": 5,
     "Cooking": 23,
     "Family": 20,
     "Documentary;Travel": 1,
     "General;News": 7,
-    "Documentary": 48,
+    "Documentary": 54,
     "General;Religious": 3,
     "Science": 18,
     "Culture;Travel": 3,
@@ -139,7 +139,7 @@
     "Culture;Education": 8,
     "Culture;Music": 5,
     "Education;General": 2,
-    "Animation;Kids": 20,
+    "Animation;Kids": 24,
     "Entertainment;Travel": 1,
     "Family;Religious": 2,
     "Family;General": 2,
@@ -160,7 +160,7 @@
     "Documentary;Science": 3,
     "Movies;Music": 1,
     "Culture;News": 2,
-    "Music;Religious": 3,
+    "Music;Religious": 6,
     "Music;News": 3,
     "Culture;General;Music;News": 1,
     "Education;Religious": 2,
@@ -172,10 +172,10 @@
     "Animation;Classic": 1,
     "General;Music": 2,
     "Culture;Religious": 2,
-    "News;Sports": 1,
+    "News;Sports": 2,
     "General;Series": 1,
     "Culture;Family": 1,
-    "Culture;General": 1,
+    "Culture;General": 2,
     "Family;Movies;Series": 1,
     "Culture;Entertainment;News": 1,
     "Culture;Science": 1,
@@ -190,7 +190,7 @@
     "Culture;Entertainment": 1,
     "Entertainment;Series": 1,
     "Culture;Education;Lifestyle": 1,
-    "Comedy;Movies": 1,
+    "Comedy;Movies": 2,
     "Culture;Documentary;Education;Kids;Lifestyle;Science": 1,
     "Kids;Science": 1,
     "Education;Science": 1,
@@ -319,16 +319,148 @@
     "🇹🇷 [VOD] VoD ✦ YESILCAM": 149,
     "🇹🇷 [VOD] VoD ✦ KEMAL SUNAL-BOXSET": 63,
     "AZERBAYCAN YAYINLAR": 27,
+    ".🇹🇷 ULUSAL 🇹🇷 .COM/1.M3U ESKİ USUL": 11,
+    ".🇹🇷 HABER 🇹🇷 .COM/1.M3U ESKİ USUL": 11,
+    ".🇹🇷 SPOR 🇹🇷 .COM/1.M3U ESKİ USUL": 24,
+    ".🇹🇷 EKSTRA 🇹🇷 .COM/1.M3U ESKİ USUL": 11,
+    " TR | beIN SPORT ": 12,
+    " TR | S SPORT ": 11,
+    " TR | SPOR ": 17,
+    " TR | EXXEN SPOR ": 5,
+    ". Türk: Futbol:": 2,
+    ". Türk: Spor:": 20,
+    ". [03] TURK ULUSAL KANALLAR": 15,
+    ". [03] TURK HABER KANALLAR": 13,
+    ". [03] TURK BELGESEL KANALLAR": 39,
+    ". [03] TURK COCUK KANALLAR": 84,
+    ". [03] TURK MUZIK KANALLAR": 33,
+    ". [03] TURK DINI KANALLARI": 14,
+    ". [03] TURK YEREL KANALLAR": 63,
+    " 🎦 FİLM SUÇ TÜRÜ  ": 22,
+    " 🎦 FİLM MACERA TÜRÜ  ": 27,
+    " 🎦 FİLM AKSİYON TÜRÜ  ": 20,
+    " 🎦 FİLM KOMEDİ TÜRÜ  ": 30,
+    " 🎦 FİLM DRAM TÜRÜ  ": 25,
+    " 🎦 FİLM AİLE TÜRÜ  ": 26,
+    " 🎦 FİLM YERLİ TÜRÜ  ": 23,
+    " 🎦 FİLM GERİLİM TÜRÜ  ": 21,
+    " 🎦 FİLM GİZEM TÜRÜ  ": 21,
+    " 🎦 FİLM ANİMASYON TÜRÜ  ": 20,
+    " 🎦 FİLM BELGESELLER TÜRÜ  ": 20,
+    " 🎦 FİLM BİLİMKURGU TÜRÜ  ": 20,
+    " 🎦 FİLM BİYOGRAFİ TÜRÜ  ": 20,
+    " 🎦 FİLM FANTASTİK FİLMLER TÜRÜ  ": 20,
+    " 🎦 FİLM KORKU TÜRÜ  ": 20,
+    " 🎦 FİLM MUBİ TÜRÜ  ": 20,
+    " 🎦 FİLM MÜZİK FİLMLER TÜRÜ  ": 20,
+    " 🎦 FİLM ROMANTİK FİLMLER TÜRÜ  ": 20,
+    " 🎦 FİLM SAVAŞ TÜRÜ  ": 20,
+    " 🎦 FİLM SPOR TÜRÜ  ": 3,
+    " 🎦 FİLM TARİH TÜRÜ  ": 20,
+    " 🎦 FİLM WESTERN FİLMLER TÜRÜ  ": 3,
+    "🌍 NL : Nederland": 12,
+    "🌍 NL : Sport": 28,
+    "🌍 FR : France": 78,
+    "🌍 FR : Sport": 33,
+    "🌍 AR : Arabic": 204,
+    "🌍 AR : Sport": 24,
+    "🌍 UK : English": 75,
+    "🌍 UK : Sport": 22,
+    "🌍 PT : Portugal": 67,
+    "🌍 PT : Sport": 20,
+    "🌍 IT : Italia": 52,
+    "🌍 IT : Sport": 21,
+    "🌍 RU : Rossiya": 146,
+    "🌍 UKR: Ukraine": 32,
+    "🌍 PL : Polska": 169,
+    "🌍 RO : Romania": 99,
+    "🌍 BG : Bulgaria": 126,
+    "🌍 GR : Greece": 43,
+    "🌍 IR : Iran": 72,
+    "🌍 PK : Pakistan": 20,
+    "🌍 AF : Afghanistan": 18,
+    "🌍 AZ : Azerbaycan": 16,
+    "🌍 SC : Scandinavie": 196,
+    "🌍 AU : Austria": 15,
+    "🌍 CH : Switzerland": 22,
+    "🌍 BH : Bosna": 21,
+    "🌍 HR : Hrvatska": 42,
+    "🌍 ES : Spain": 41,
+    "🌍 HU : Hungary": 33,
+    "tv": 5,
+    "DE ✦ DEUTSCHLAND": 25,
+    "DE ✦ RAW & HEVC": 23,
+    "DE ✦ NACHRICHTEN": 11,
+    "DE ✦ REGIONAL": 19,
+    "DE ✦ DOKU": 39,
+    "DE ✦ KINDER": 33,
+    "DE ✦ SKY BUNDESLIGA": 22,
+    "DE ✦ SKY SPORT": 17,
+    "DE ✦ DAZN SPORT": 15,
+    "DE ✦ DAZN EXKLUSIV": 67,
+    "DE ✦ DAZN UEFA ARENA": 11,
+    "DE ✦ RTL+ SPORT ( EVENT TIME )": 18,
+    "DE ✦ SPORT ARENA": 13,
+    "DE ✦ SPORTDEUTSCHLAND": 28,
+    "DE ✦ DYN SPORT": 9,
+    "DE ✦ MAGENTA SPORT": 22,
+    "DE ✦ MUSIK": 14,
+    "DE ✦ SKY ENTERTAINMENT": 38,
+    "DE ✦ 24/7  SKY BOX": 25,
+    "DE ✦ 24/7  KINO DOLBY": 40,
+    "DE ✦ 24/7 KINO ZOREXTV": 75,
+    "DE ✦ 24/7  KINO BOXSET": 76,
+    "DE ✦ 24/7  BOXSET STUDIO": 24,
+    "DE ✦ 24/7  CINESTARS": 43,
+    "DE ✦ 24/7 STARZ  STUDIO": 32,
+    "DE ✦ 24/7 MARVEL & WESTERN ST.": 5,
+    "DE ✦ 24/7  NETFLIX STORE": 18,
+    "DE ✦ 24/7  SERIEN STORE": 100,
+    "DE ✦ 24/7  KINDER KINO": 18,
+    "DE ✦ 24/7  KINDER STORE": 22,
+    "AT ✦ ÖSTERREICH NATIONAL": 38,
+    "AT ✦ ÖSTERREICH PRIVAT": 17,
+    "AT ✦ SPORT ARENA": 29,
+    "AT ✦ 24/7 KINDER": 30,
+    "kemalsunal": 38,
+    "Dizi": 1879,
+    "ΠΑΝΕΛΛΑΔΙΚΑ": 15,
+    "ΠΑΓΚΥΠΡΙΑ": 9,
+    "ΠΑΙΔΙΚΑ": 4,
+    "ΑΝ.ΜΑΚ θΡΑΚΗ": 12,
+    "ΚΕΝΤΡ. ΜΑΚΕΔΟΝΙΑ": 10,
+    "ΔΥΤ. ΜΑΚΕΔΟΝΙΑ": 3,
+    "ΔΥΤ. ΕΛΛΑΔΑ": 6,
+    "ΠΕΛΟΠΟΝΝΗΣΟΥ": 11,
+    "ΘΕΣΣΑΛΙΑ": 5,
+    "ΣΤΕΡΕΑ ΕΛΛΑΔΑ": 3,
+    "ΑΤΤΙΚΗ": 12,
+    "ΚΡΗΤΗ": 10,
+    "ΔΩΔΕΚΑΝΗΣΟΥ ΣΑΜΟΥ": 6,
+    "ΚΥΚΛΑΔΕΣ": 1,
+    "Β.Α ΑΙΓΑΙΟΥ": 3,
+    "ΜΟΥΣΙΚΗ": 31,
+    "WEB TV": 57,
+    "HYBRID": 15,
+    "ΕΚΚΛΗΣΙΑΣΤΙΚΑ": 8,
+    "CINEMA": 5,
+    "Kids;Sports": 1,
+    "Kids;Series": 1,
+    "Cooking;Lifestyle": 2,
+    "Entertainment;Interactive": 1,
+    "Lifestyle;Travel": 1,
+    "ΔΙΕΘΝΗ ΔΙΚΤΥΑ": 1,
+    "EKKLISIA": 1,
     "✨ ANIMASYON  ✨COCUK✨": 311,
     "💢BELGESEL💢": 167,
     "✨BOLLYWOOD✨": 46,
     "✨IMDb Top Rated✨": 160,
-    "✨YERLI FILM✨": 305,
+    "✨YERLI FILM✨": 306,
     "✨KEMAL SUNAL✨": 60,
     "💥KORKU💥": 88,
     "✨WESTERN✨": 82,
     "✨YABANCI✨TR DB": 3144,
-    "🔥Yeni🔥Eklenenler": 89,
+    "🔥Yeni🔥Eklenenler": 92,
     "💎 2026 💎": 76,
     "✨ 2025 ✨": 394,
     "2023 ✨ 2024": 559,
@@ -713,7 +845,6 @@
     "MERAK: DÜNYANIN EN PİS ADAMI": 1,
     "MERAK: MAĞARA İNSANI": 2,
     "MERAK: YELLOWSTONE ULUSAL PARKI": 1,
-    "Dizi": 1865,
     "MIKE BREWER'IN ARABA DÜNYASI": 11,
     "MISIR'IN MEZARLARI: BÜYÜK GÖREV": 2,
     "MİLYON DOLARLIK ARABALAR": 6,
@@ -2174,7 +2305,7 @@
     "Afghanistan": 2,
     "Algeria": 10,
     "Antigua And Barbuda": 1,
-    "Bangladesh": 6,
+    "Bangladesh": 7,
     "Bolivia": 6,
     "Bosnia And Herzegovina": 2,
     "Cambodia": 1,
@@ -2219,7 +2350,7 @@
     "The United Kingdom Of Great Britain And Northern Ireland": 38,
     "The United States Of America": 94,
     "Togo": 1,
-    "Tunisia": 19,
+    "Tunisia": 18,
     "Uganda": 6,
     "United Republic Of Tanzania": 4,
     "Uruguay": 1,
@@ -2240,7 +2371,7 @@
     " YEREL": 26,
     " HABER": 6,
     " MÜZIK": 29,
-    " COCUK": 27,
+    " COCUK": 26,
     " TiviOne PLATFORM": 21,
     " SINEMA PLATFORM": 38,
     "┃TR┃ ULUSAL": 7,
@@ -2255,7 +2386,7 @@
     "SPOR KANALLARI": 3,
     "AVRUPA KANALLARI": 3,
     "YEREL KANALLAR": 39,
-    "ÇOCUK KANALLARI": 3,
+    "ÇOCUK KANALLARI": 2,
     "MÜZİK KANALLARI": 14,
     "BELGELSEL KANALLARI": 4,
     "DİNİ KANALLAR": 7,
@@ -2263,7 +2394,7 @@
     "AZERBAYCAN KANALLARI": 4,
     "YABANCI KANALLAR": 2,
     "RUSYA KANALLARI": 3,
-    "RADYO": 3,
+    "RADYO": 7,
     "DeaTHLesS-TV": 2,
     "TR| TÜRKIYE  TV": 45,
     "TR| ÇOCUKLAR ": 16,
@@ -2277,7 +2408,7 @@
     "TR| SPOR KANALI VIP": 32,
     "TR| SPOR KANALI LOCAL": 1,
     "TR| TABII SPORT ": 9,
-    "TR| BELGESEL ": 12,
+    "TR| BELGESEL ": 10,
     "TR| REDBOX 24/7 ": 19,
     "TR| TURKISH  NA": 13,
     " SINEMA YABANCI": 30,
@@ -2287,7 +2418,26 @@
     " TIVIBU SPOR": 4,
     " TABII SPOR": 6,
     " BELGESEL": 15,
-    " DINI": 10
+    " DINI": 10,
+    "ALBANIA TV": 17,
+    "Undefined;FRANCE": 1,
+    "General;FRANCE": 1,
+    "PALESTINE TV": 4,
+    "FRANCE TV": 59,
+    "KAZAKHSTAN TV": 4,
+    "ROMANIA TV": 148,
+    "ROMANIA SPOR TV": 9,
+    "Undefined;Кино": 2,
+    "Кино": 3,
+    "RUSSIAN FEDERATION TV": 40,
+    "RUSSIAN LOCAL TV": 7,
+    "RUSSIAN FEDERATION SPOR TV": 3,
+    "TURKMENISTAN TV": 10,
+    "DENMARK TV": 4,
+    "FINLAND TV": 2,
+    "NORWAY TV": 79,
+    "SWEDEN TV": 8,
+    "FILM": 1
   },
   "sources_summary": [
     {
@@ -2417,10 +2567,466 @@
       "channels_count": 61
     },
     {
+      "url": "https://raw.githubusercontent.com/Efeisot/iptv/HEAD/index.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 5010
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/f4435ac36aaa880254b2d87bced4b3f392991c17/GermanTV/ZEEONE.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/20%20%CE%A7%CF%81%CF%8C%CE%BD%CE%B9%CE%B1%20%CE%94%CE%B5%CE%BB%CF%86%CE%B9%CE%BD%CE%AC%CF%81%CE%B9%CE%BF.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/ANT1.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/ATVAvrupa.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/AlikiVougioklakiTenies.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 20
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/CNNT%C3%BCrk.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/EUROSTAR.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/German%20tv%201332.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1192
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV%20By%20don24crk.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 27
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/3SAT.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/ARD.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/ARTE.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/DISNEYCHANNEL.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/DMAX.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/KABEL1%20DOKU.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/KABEL1.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/KIKA.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/NTV.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/PRO7.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/PRO7MAXX.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/RTL.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/RTL2.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/RTLNITRO.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/RTLUP.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/SAT1.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/SAT1GOLD.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/SIXX.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/SUPERRTL.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/TAGESSCHAU.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/TELE5.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/TLC.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/VOX.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/WDR.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/WELTDERWUNDER.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GermanTV/ZDF.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/KemalSunal.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 39
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Lampsi.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/SEFLIX.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 22
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/STAR.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/SUPERMAMMI.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 6
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/TVOPEN.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/TurkTV.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 39
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/anacon.org.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 51
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/android.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 608
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/es.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 29
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/fr.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 530
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/ger.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 27
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/gr.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 51
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/in.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 885
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/it.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 324
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/pl.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 96
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/tr.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 260
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/barney%20stinson%20LiveTV/us.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1221
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/channels.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 51
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/in.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 885
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/madtv-playlist.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/madtv.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/markos%20seferlis%2020%20xronia%20delfinario.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 858
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/thesstv.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/ad.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/ae.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 45
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/af.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 15
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/ag.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/al.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 33
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/am.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 12
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/ao.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 3
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/ar.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 207
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/at.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 46
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/au.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 50
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/au_samsung.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 85
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/SKAI.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/SKAI1.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Showt%C3%BCrk.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/omegacy.m3u8",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/iptv-org/iptv/HEAD/streams/at_samsung.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 4
+    },
+    {
       "url": "https://tinyurl.com/power-cinema",
       "category": "film",
       "status": "success",
-      "channels_count": 9152
+      "channels_count": 9159
     },
     {
       "url": "https://raw.githubusercontent.com/Zerk1903/zerkfilm/refs/heads/main/Filmler.m3u",
@@ -2481,6 +3087,36 @@
       "category": "film",
       "status": "success",
       "channels_count": 36
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Bollywoodfilmizle.m3u",
+      "category": "film",
+      "status": "success",
+      "channels_count": 4
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Cocukfilmizle.m3u",
+      "category": "film",
+      "status": "success",
+      "channels_count": 6
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/GreekMovies.m3u",
+      "category": "film",
+      "status": "success",
+      "channels_count": 21
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/JESUSMOVIES.m3u",
+      "category": "film",
+      "status": "success",
+      "channels_count": 2
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/KIDSMOVIES.m3u",
+      "category": "film",
+      "status": "success",
+      "channels_count": 10
     },
     {
       "url": "https://raw.githubusercontent.com/UzunMuhalefet/Legal-IPTV/refs/heads/main/lists/video/sources/www-dmax-com-tr/all.m3u",
@@ -2889,6 +3525,84 @@
       "category": "karma",
       "status": "success",
       "channels_count": 1745
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Elena%20Sisters/sfx_damage.wav",
+      "category": "radyo",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Elena%20Sisters/sfx_defeat.wav",
+      "category": "radyo",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Elena%20Sisters/sfx_item.wav",
+      "category": "radyo",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/don24crk/Don24crk-Repository/HEAD/Elena%20Sisters/sfx_jump.wav",
+      "category": "radyo",
+      "status": "success",
+      "channels_count": 1
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Arnavutluk.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 25
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Filistin.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 5
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Fransa.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 97
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Kazakistan.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 8
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Romanya.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 248
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/RusyaFederasyon.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 169
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/Turkmenistan.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 21
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hayatiptv/iptv/HEAD/iskandinavya.m3u",
+      "category": "tv",
+      "status": "success",
+      "channels_count": 123
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kadirsener1/avva/HEAD/Bilgilendirme.mp4",
+      "category": "film",
+      "status": "success",
+      "channels_count": 1
     }
   ]
 }
