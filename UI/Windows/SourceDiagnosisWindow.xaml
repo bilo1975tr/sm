@@ -172,10 +172,12 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBox x:Name="TxtStreamUrl" IsReadOnly="True" Background="#0f172a" Foreground="#34d399" BorderBrush="#334155" BorderThickness="1" Padding="6,4" FontSize="11" TextWrapping="NoWrap"/>
                                     <Button Grid.Column="1" Content="📋" Margin="4,0,0,0" Padding="8,4" Style="{StaticResource ActionButtonStyle}" Click="CopyStreamUrl_Click" ToolTip="Akış adresini kopyala"/>
-                                    <Button Grid.Column="2" x:Name="BtnPurgeAccountDiag" Content="🗑️ Hesabı Sil" Margin="4,0,0,0" Padding="8,4" Background="#7f1d1d" Foreground="#ff8a8a" BorderBrush="#991b1b" BorderThickness="1" Click="PurgeAccountDiag_Click" ToolTip="Bu yayının ait olduğu IPTV hesabındaki tüm kanalları topluca sil" Visibility="Collapsed"/>
+                                    <Button Grid.Column="2" x:Name="BtnFetchFullAccountDiag" Content="⚡ Tüm Paketi Çek" Margin="4,0,0,0" Padding="8,4" Background="#065f46" Foreground="#a7f3d0" BorderBrush="#059669" BorderThickness="1" Click="FetchFullAccountDiag_Click" ToolTip="Bu IPTV hesabının sağlayıcısından tüm canlı kanalları, filmleri ve dizileri tam paket olarak indirir ve kütüphaneye ekler" Visibility="Collapsed"/>
+                                    <Button Grid.Column="3" x:Name="BtnPurgeAccountDiag" Content="🗑️ Hesabı Sil" Margin="4,0,0,0" Padding="8,4" Background="#7f1d1d" Foreground="#ff8a8a" BorderBrush="#991b1b" BorderThickness="1" Click="PurgeAccountDiag_Click" ToolTip="Bu yayının ait olduğu IPTV hesabındaki tüm kanalları topluca sil" Visibility="Collapsed"/>
                                 </Grid>
                             </StackPanel>
 

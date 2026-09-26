@@ -13,7 +13,26 @@ namespace StreamMesh.Models
         public SeriesGroup(string name, List<Channel> episodes)
         {
             this.Name = name;
-            this.Episodes = episodes.OrderBy(e => e.SeasonNumber).ThenBy(e => e.EpisodeNumber).ToList();
+
+            // Merge duplicate episodes (alternative streams for the same episode)
+            var mergedMap = new Dictionary<string, Channel>();
+            foreach (var ep in episodes)
+            {
+                int s = ep.SeasonNumber > 0 ? ep.SeasonNumber : 1;
+                int e = ep.EpisodeNumber > 0 ? ep.EpisodeNumber : 0;
+                string key = e > 0 ? $"S{s:D2}E{e:D2}" : (ep.CleanName?.ToLowerInvariant() ?? ep.Name.ToLowerInvariant());
+
+                if (mergedMap.TryGetValue(key, out var existing))
+                {
+                    existing.MergeWith(ep);
+                }
+                else
+                {
+                    mergedMap[key] = ep;
+                }
+            }
+
+            this.Episodes = mergedMap.Values.OrderBy(e => e.SeasonNumber).ThenBy(e => e.EpisodeNumber).ThenBy(e => e.Name).ToList();
             this.Category = "Dizi";
 
             var first = episodes.FirstOrDefault();

@@ -57,6 +57,36 @@
                 </StackPanel>
             </Grid>
 
+            <!-- Validation Progress Banner -->
+            <Border Grid.Row="1" Background="#881337" CornerRadius="10" Padding="16,12" Margin="0,0,0,18"
+                    BorderBrush="#f43f5e" BorderThickness="1"
+                    Visibility="{Binding IsValidatingChannels, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="140"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="⚡" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Kanal Canlılık Doğrulaması Yapılıyor" FontWeight="Bold" FontSize="14" Foreground="White"/>
+                        <TextBlock Text="{Binding ValidationStatusText}" FontSize="12" Foreground="#ffe4e6" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <ProgressBar Height="8" Width="130" Minimum="0" Maximum="100"
+                                     Value="{Binding ValidationProgressPercent}"
+                                     Foreground="#f43f5e" Background="#4c0519" BorderThickness="0"/>
+                        <TextBlock Text="{Binding ValidationProgressPercent, StringFormat='{}{0}%'}" FontSize="11" Foreground="#ffe4e6" HorizontalAlignment="Right" Margin="0,3,0,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="3" Content="✕ Durdur" Style="{StaticResource PrimaryButtonStyle}" Background="#be123c" Height="30" Padding="10,0" Margin="15,0,0,0" Click="CancelValidation_Click"/>
+                </Grid>
+            </Border>
+
             <!-- Sync / First Run Info Banner -->
             <Border Grid.Row="1" Background="#0f766e" CornerRadius="10" Padding="16,12" Margin="0,0,0,18"
                     BorderBrush="#14b8a6" BorderThickness="1"
@@ -102,7 +132,10 @@
                             <Button Content="Radyo" Tag="Radio" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Width="90" Background="#334155"/>
                         </StackPanel>
 
-                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Doğrula & Tüm Grubu Kapsa Kontrolleri -->
+                            <CheckBox Content="Tüm grubu kapsa" IsChecked="{Binding ValidateAllInGroup}" Foreground="#94a3b8" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11" ToolTip="İşaretlenirse sadece ekrandaki sayfayı değil, mevcut arama/kategori/grubun tamamını doğrular"/>
+                            <Button Content="⚡ Doğrula" Style="{StaticResource PrimaryButtonStyle}" Background="#e11d48" Foreground="White" FontWeight="Bold" Height="35" Padding="14,0" Margin="0,0,10,0" Click="ValidateChannels_Click" ToolTip="Kanalları test eder ve yayını olmayan ölü kanalları kalıcı olarak siler" Cursor="Hand"/>
                             <Button Content="🔄 Listeyi Yenile" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Height="35" Padding="12,0" Margin="0,0,10,0" Click="ManualSync_Click" ToolTip="Yayın listelerini internetten tekrar kontrol et"/>
                             <ComboBox Width="140" Height="35" x:Name="SortComboBox" SelectionChanged="Sort_SelectionChanged">
                                 <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True"/>

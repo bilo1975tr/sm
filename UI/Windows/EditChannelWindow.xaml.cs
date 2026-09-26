@@ -318,6 +318,101 @@ namespace StreamMesh.UI.Windows
         }
 
         private void AddUrl_Click(object sender, RoutedEventArgs e) => TempUrlList.Add(new ChannelSourceItem { Value = "", IsDefault = (TempUrlList.Count == 0) });
+
+        private async void SeparateSource_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
+            {
+                if (TempUrlList.Count <= 1)
+                {
+                    System.Windows.MessageBox.Show("Bu kanala ait sadece 1 adet yayın adresi var. Ayrılacak başka yayın adresi bulunmuyor.", "Tek Kaynak", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                string urlToSeparate = (item.Value ?? "").Trim();
+                if (string.IsNullOrEmpty(urlToSeparate)) return;
+
+                // URL'den veya mevcut kanal adından yeni kanal için mantıklı bir isim üret
+                string baseChannelName = _channel.PrimaryName;
+                string newChannelName = "";
+
+                try
+                {
+                    var uri = new Uri(urlToSeparate);
+                    string lastSegment = System.IO.Path.GetFileNameWithoutExtension(uri.AbsolutePath);
+                    if (!string.IsNullOrWhiteSpace(lastSegment) && lastSegment.Length > 2)
+                    {
+                        // Örn: sinema1001 -> Sinema 1001
+                        string cleanedSegment = Regex.Replace(lastSegment, @"(\D+)(\d+)", "$1 $2");
+                        cleanedSegment = cleanedSegment.Replace('_', ' ').Replace('-', ' ').Trim();
+                        var textInfo = System.Globalization.CultureInfo.GetCultureInfo("tr-TR").TextInfo;
+                        cleanedSegment = textInfo.ToTitleCase(cleanedSegment.ToLower());
+                        newChannelName = cleanedSegment;
+                    }
+                }
+                catch { }
+
+                if (string.IsNullOrWhiteSpace(newChannelName) || newChannelName.Equals(baseChannelName, StringComparison.OrdinalIgnoreCase))
+                {
+                    newChannelName = $"{baseChannelName} (Ayrılmış)";
+                }
+
+                var confirm = System.Windows.MessageBox.Show(
+                    $"Bu yayın akışını mevcut kanaldan ayırıp bağımsız yeni bir kanal oluşturmak istiyor musunuz?\n\n" +
+                    $"• Ayrılacak Yayın: {urlToSeparate}\n" +
+                    $"• Yeni Kanal Adı: {newChannelName}\n" +
+                    $"• Kategori: {_channel.Category ?? "TV"}\n\n" +
+                    $"Onaylarsanız bu yayın mevcut kanaldan çıkarılacak ve bağımsız bir kanal olarak kütüphanenize eklenecektir.",
+                    "Yayını Bağımsız Kanal Olarak Ayır",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (confirm != MessageBoxResult.Yes) return;
+
+                try
+                {
+                    // 1. Yeni bağımsız kanal oluştur
+                    var newCh = new Channel
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = newChannelName,
+                        Url = urlToSeparate,
+                        Category = _channel.Category ?? "TV",
+                        GroupTitle = _channel.GroupTitle ?? "TV",
+                        LogoUrl = _channel.LogoUrl ?? "",
+                        EpgId = _channel.EpgId ?? "",
+                        Language = _channel.Language ?? "tr",
+                        Notes = "Ayrılmış Yayın"
+                    };
+
+                    SmartNormalizationEngine.Instance.NormalizeChannel(newCh);
+                    await _db.SaveChannelAsync(newCh);
+
+                    // 2. Mevcut kanaldan URL'yi kaldır
+                    bool wasDefault = item.IsDefault;
+                    TempUrlList.Remove(item);
+                    if (wasDefault && TempUrlList.Count > 0)
+                    {
+                        TempUrlList[0].IsDefault = true;
+                    }
+
+                    _channel.Url = string.Join(",", TempUrlList.Select(u => u.Value.Trim()));
+                    await _db.SaveChannelAsync(_channel);
+
+                    System.Windows.MessageBox.Show(
+                        $"Yayın başarıyla bağımsız bir kanal olarak ayrıldı ve kütüphanenize eklendi:\n\n" +
+                        $"Kanal: {newChannelName}\nYayın: {urlToSeparate}",
+                        "Kanal Başarıyla Ayrıldı",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Kanal ayrılırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         private void RemoveUrl_Click(object sender, RoutedEventArgs e)
         {
             if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)

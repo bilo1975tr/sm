@@ -25,8 +25,8 @@ namespace StreamMesh
 
         private const int SW_RESTORE = 9;
 
-        public static MediaServer? Server { get; private set; }
-        public static SsdpService? Ssdp { get; private set; }
+        public static MediaServer? Server { get; set; }
+        public static SsdpService? Ssdp { get; set; }
 
         protected override async void OnStartup(System.Windows.StartupEventArgs e)
         {

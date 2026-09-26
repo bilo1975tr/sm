@@ -72,10 +72,12 @@ namespace StreamMesh.UI.Windows
             if (accInfo != null && !string.IsNullOrEmpty(accInfo.Username))
             {
                 BtnPurgeAccountDiag.Visibility = Visibility.Visible;
+                BtnFetchFullAccountDiag.Visibility = Visibility.Visible;
             }
             else
             {
                 BtnPurgeAccountDiag.Visibility = Visibility.Collapsed;
+                BtnFetchFullAccountDiag.Visibility = Visibility.Collapsed;
             }
 
             // EPG
@@ -374,6 +376,58 @@ namespace StreamMesh.UI.Windows
             catch (Exception ex)
             {
                 MessageBox.Show($"Temizleme hatası: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void FetchFullAccountDiag_Click(object sender, RoutedEventArgs e)
+        {
+            var acc = IptvAccountHelper.ParseAccountFromUrl(_channel.Url ?? "");
+            if (acc == null || string.IsNullOrWhiteSpace(acc.Username))
+            {
+                MessageBox.Show("Geçerli bir IPTV hesap bilgisi bulunamadı.", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string fullUrl = IptvAccountHelper.GenerateFullM3uUrl(acc);
+            string confirmMsg = $"IPTV SAĞLAYICISINDAN TAM PAKET ÇEKİLECEK:\n\n" +
+                               $"• Sağlayıcı / Host: {acc.HostWithPort}\n" +
+                               $"• Kullanıcı: {acc.Username}\n" +
+                               $"• İstek URL: {fullUrl}\n\n" +
+                               $"Bu işlem, bu hesaba ait eski parçalı kanalları temizleyip sağlayıcının sunduğu tüm güncel canlı TV, film ve dizi yayınlarını eksiksiz olarak kütüphanenize ekleyecektir.\n\n" +
+                               $"Başlatmak istiyor musunuz?";
+
+            var res = MessageBox.Show(confirmMsg, "Sağlayıcıdan Tam Paket İndir", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (res != MessageBoxResult.Yes) return;
+
+            BtnFetchFullAccountDiag.IsEnabled = false;
+            BtnFetchFullAccountDiag.Content = "⏳ İndiriliyor...";
+
+            try
+            {
+                var result = await Task.Run(() => IptvAccountHelper.FetchAndImportFullAccountAsync(acc));
+
+                if (result.success)
+                {
+                    MessageBox.Show(
+                        $"{result.message}\n\nKütüphaneniz güncellendi!",
+                        "Tam Paket Başarıyla Eklendi",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show(result.message, "Başarısız", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                BtnFetchFullAccountDiag.IsEnabled = true;
+                BtnFetchFullAccountDiag.Content = "⚡ Tüm Paketi Çek";
             }
         }
     }

@@ -49,17 +49,59 @@ namespace StreamMesh.Core.Network
             var list = new List<string>();
             try
             {
-                var host = Dns.GetHostEntry(Dns.GetHostName());
-                foreach (var ip in host.AddressList)
+                // 1. Prioritize active physical Ethernet and Wi-Fi adapters with a Default Gateway
+                var activeInterfaces = NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(ni => ni.OperationalStatus == OperationalStatus.Up &&
+                                 ni.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                                 ni.NetworkInterfaceType != NetworkInterfaceType.Tunnel)
+                    .OrderByDescending(ni => ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                    .ThenByDescending(ni => ni.GetIPProperties().GatewayAddresses.Count > 0)
+                    .ToList();
+
+                foreach (var ni in activeInterfaces)
                 {
-                    if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                    var props = ni.GetIPProperties();
+                    foreach (var addr in props.UnicastAddresses)
                     {
-                        list.Add(ip.ToString());
+                        if (addr.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(addr.Address))
+                        {
+                            string ipStr = addr.Address.ToString();
+                            if (!list.Contains(ipStr))
+                            {
+                                list.Add(ipStr);
+                            }
+                        }
+                    }
+                }
+
+                // 2. Fallback to DNS Host Entry if interface scan yielded nothing
+                if (list.Count == 0)
+                {
+                    var host = Dns.GetHostEntry(Dns.GetHostName());
+                    foreach (var ip in host.AddressList)
+                    {
+                        if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                        {
+                            string ipStr = ip.ToString();
+                            if (!list.Contains(ipStr))
+                            {
+                                list.Add(ipStr);
+                            }
+                        }
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"GetLocalIPv4Addresses error: {ex.Message}");
+            }
             return list;
+        }
+
+        public static string GetPrimaryLocalIPv4Address()
+        {
+            var ips = GetLocalIPv4Addresses();
+            return ips.FirstOrDefault() ?? "127.0.0.1";
         }
 
         public bool Start()
@@ -86,8 +128,27 @@ namespace StreamMesh.Core.Network
                     _listener.Prefixes.Add($"http://127.0.0.1:{_port}/");
                     LogService.LogInfo($"MediaServer: Registered localhost & 127.0.0.1 prefixes on port {_port}.");
 
-                    // Attempt LAN IP prefixes for local network accessibility (Android TV, TiviMate, etc.)
-                    if (tryLanBinding)
+                    // 1. Try binding Wildcard prefix so ANY incoming IP/host (including LAN, direct IP, mDNS) succeeds
+                    bool wildcardAdded = false;
+                    try
+                    {
+                        _listener.Prefixes.Add($"http://*:{_port}/");
+                        wildcardAdded = true;
+                        LogService.LogInfo($"MediaServer: Registered wildcard prefix http://*:{_port}/");
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            _listener.Prefixes.Add($"http://+:{_port}/");
+                            wildcardAdded = true;
+                            LogService.LogInfo($"MediaServer: Registered plus-wildcard prefix http://+:{_port}/");
+                        }
+                        catch { }
+                    }
+
+                    // 2. Also register specific detected LAN IPs if wildcard wasn't accepted
+                    if (!wildcardAdded && tryLanBinding)
                     {
                         foreach (var ip in localIps)
                         {
@@ -103,14 +164,49 @@ namespace StreamMesh.Core.Network
                     _listener.Start();
                     _isRunning = true;
                     Task.Run(ListenLoop);
-                    LogService.LogInfo($"MediaServer: Started successfully on Port: {_port} [Bound to: localhost, 127.0.0.1{(tryLanBinding ? $", {string.Join(", ", localIps)}" : "")}]");
+                    LogService.LogInfo($"MediaServer: Started successfully on Port: {_port} [Bound to: localhost, 127.0.0.1{(wildcardAdded ? ", *" : (tryLanBinding ? $", {string.Join(", ", localIps)}" : ""))}]");
                     return true;
                 }
                 catch (HttpListenerException ex) when (ex.ErrorCode == 5 || ex.NativeErrorCode == 5)
                 {
-                    // Access Denied (Win32 Error 5 / ERROR_ACCESS_DENIED) -> URL ACL restriction for LAN IP
-                    LogService.LogWarning($"MediaServer: LAN IP prefix binding failed due to Windows HTTP.sys URL ACL restrictions (Win32 Error 5: Access Denied). Falling back to localhost/127.0.0.1 binding on port {_port}...");
+                    // Access Denied (Win32 Error 5 / ERROR_ACCESS_DENIED) -> URL ACL restriction for wildcard / LAN IP
+                    LogService.LogWarning($"MediaServer: Wildcard/LAN prefix binding hit Windows HTTP.sys URL ACL restrictions (Win32 Error 5: Access Denied). Attempting explicit LAN IPs or localhost fallback on port {_port}...");
 
+                    // Attempt 2: Try with only explicit detected LAN IPs (without wildcard)
+                    if (tryLanBinding)
+                    {
+                        try
+                        {
+                            if (_listener != null)
+                            {
+                                try { _listener.Close(); } catch { }
+                            }
+
+                            _listener = new HttpListener();
+                            _listener.Prefixes.Add($"http://localhost:{_port}/");
+                            _listener.Prefixes.Add($"http://127.0.0.1:{_port}/");
+                            foreach (var ip in localIps)
+                            {
+                                try
+                                {
+                                    _listener.Prefixes.Add($"http://{ip}:{_port}/");
+                                }
+                                catch { }
+                            }
+                            _listener.Start();
+                            _isRunning = true;
+                            Task.Run(ListenLoop);
+                            LogService.LogInfo($"MediaServer: Started successfully with LAN IPs on Port: {_port} [Bound to: {string.Join(", ", localIps)}]");
+                            return true;
+                        }
+                        catch (HttpListenerException lanEx) when (lanEx.ErrorCode == 5 || lanEx.NativeErrorCode == 5)
+                        {
+                            LogService.LogWarning($"MediaServer: Explicit LAN IPs also restricted by URL ACL. Falling back to localhost/127.0.0.1.");
+                        }
+                        catch { }
+                    }
+
+                    // Attempt 3: Localhost fallback
                     try
                     {
                         if (_listener != null)
@@ -125,7 +221,7 @@ namespace StreamMesh.Core.Network
                         _listener.Start();
                         _isRunning = true;
                         Task.Run(ListenLoop);
-                        LogService.LogInfo($"MediaServer: Started successfully in fallback mode on Port: {_port} [Bound to: localhost, 127.0.0.1]. Note: Direct LAN IP access requires Administrator or 'netsh http add urlacl' configuration.");
+                        LogService.LogInfo($"MediaServer: Started in fallback mode on Port: {_port} [Bound to: localhost, 127.0.0.1]. Note: Direct LAN IP access requires Administrator or 'netsh http add urlacl' configuration.");
                         return true;
                     }
                     catch (HttpListenerException fallbackEx) when (fallbackEx.ErrorCode == 183 || fallbackEx.ErrorCode == 32 || fallbackEx.ErrorCode == 48 || fallbackEx.NativeErrorCode == 183 || fallbackEx.NativeErrorCode == 32 || fallbackEx.NativeErrorCode == 48)

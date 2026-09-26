@@ -363,23 +363,36 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
                 j += 1
 
             if url:
-                orig_group = attrs.get('group-title', '')
+                orig_group = attrs.get('group-title', '').strip()
                 cat = map_category(default_category, orig_group, name)
 
                 formatted_name = name
                 final_group = orig_group if orig_group else cat
 
-                # Dizi / Program içeriği ise ve kaynak dosyasından dizi adı türetilebiliyorsa
-                if series_title_from_src and (cat == 'Dizi' or 'dizi' in (default_category or '').lower()):
-                    cat = 'Dizi'
-                    # Eğer kanal adı sadece bölüm numarasından ibaretse
-                    is_just_ep = bool(re.match(r'^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$', name.strip()) or
-                                      re.match(r'^(?i)s\d+\s*e\d+$', name.strip()))
-                    if is_just_ep:
-                        formatted_name = f"{series_title_from_src} - {name.strip()}"
+                # Sadece gerçek Dizi/Arşiv içerikleri için dizi başlığı ve bölüm biçimlendirmesi yap
+                is_series_content = (cat == 'Dizi' or 'dizi' in (default_category or '').lower() or
+                                     bool(re.search(r'(?i)\bs\d+\s?e\d+\b|\b\d+x\d+\b|(?:sezon\s*\d+.*)?(?:bölüm|bolum)\s*\d+', name)))
 
-                    if not orig_group or orig_group.lower() in ('dizi', 'genel', 'tv', 'series'):
-                        final_group = series_title_from_src
+                if is_series_content and cat != 'Film' and cat != 'Radyo':
+                    cat = 'Dizi'
+                    generic_groups = ('dizi', 'genel', 'tv', 'series', '1 bölüm / parça', '1 bolum / parca', 'filmler', 'movies', '')
+                    series_title = ''
+                    if orig_group and orig_group.lower() not in generic_groups:
+                        series_title = orig_group
+                    elif series_title_from_src:
+                        series_title = series_title_from_src
+                    else:
+                        series_title = "Dizi"
+
+                    is_just_ep = bool(re.match(r'^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\bpart\b)\s*\d+\.?$', name.strip()) or
+                                      re.match(r'^(?i)s\d+\s*e\d+$', name.strip()))
+                    if is_just_ep and series_title.lower() not in generic_groups:
+                        formatted_name = f"{series_title} - {name.strip()}"
+
+                    if not orig_group or orig_group.lower() in generic_groups:
+                        final_group = series_title
+                    else:
+                        final_group = orig_group
 
                 channel = {
                     'name': formatted_name,

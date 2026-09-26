@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using StreamMesh.Models;
 using StreamMesh.Core.Network;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
 {
@@ -92,6 +93,7 @@ namespace StreamMesh.Core.Media
 
                 var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
                 Channel? current = null;
+                var discoveredAccounts = new Dictionary<string, IptvAccountInfo>(StringComparer.OrdinalIgnoreCase);
                 int currentLineNumber = 0;
                 int extinfLineNumber = 0;
                 string rawExtinf = "";
@@ -142,11 +144,16 @@ namespace StreamMesh.Core.Media
                         if (epgMatch.Success) current.EpgId = epgMatch.Groups[1].Value;
 
                         // tvg-name
+                        string explicitTvgName = "";
                         var tvgNameMatch = System.Text.RegularExpressions.Regex.Match(line, @"tvg-name=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                         if (tvgNameMatch.Success)
                         {
                             string tvgName = tvgNameMatch.Groups[1].Value.Trim();
-                            if (!string.IsNullOrEmpty(tvgName)) current.AddAlternativeName(tvgName);
+                            if (!string.IsNullOrEmpty(tvgName))
+                            {
+                                explicitTvgName = tvgName;
+                                current.AddAlternativeName(tvgName);
+                            }
                         }
 
                         // Group Title
@@ -175,6 +182,20 @@ namespace StreamMesh.Core.Media
                         {
                             current.Name = line.Substring(nameIdx + 1).Trim();
                             if (string.IsNullOrEmpty(current.Name)) current.Name = "İsimsiz Kanal";
+                        }
+
+                        // Eğer satır sonundaki isim grup adı ile aynıysa (örn: TR-SINEMA) veya generic ise,
+                        // ancak tvg-name özgül bir kanal adı içeriyorsa (örn: TR: beIN Movies Action), tvg-name'i birincil isim yap
+                        if (!string.IsNullOrEmpty(explicitTvgName))
+                        {
+                            if (string.IsNullOrWhiteSpace(current.Name) ||
+                                current.Name.Equals(current.GroupTitle, StringComparison.OrdinalIgnoreCase) ||
+                                current.Name.Equals("İsimsiz Kanal", StringComparison.OrdinalIgnoreCase) ||
+                                (explicitTvgName.Length > current.Name.Length && explicitTvgName.Contains(current.Name, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                if (!string.IsNullOrWhiteSpace(current.Name)) current.AddAlternativeName(current.Name);
+                                current.Name = explicitTvgName;
+                            }
                         }
                     }
                     else if (line.StartsWith("#EXTVLCOPT:", StringComparison.OrdinalIgnoreCase))
@@ -310,6 +331,16 @@ namespace StreamMesh.Core.Media
 
                             SmartNormalizationEngine.Instance.NormalizeChannel(current);
                             channels.Add(current);
+
+                            // Otomatik IPTV / Xtream hesap keşfi
+                            if (!string.IsNullOrWhiteSpace(rawUrl) && !rawUrl.Contains("get.php?"))
+                            {
+                                var acc = IptvAccountHelper.ParseAccountFromUrl(rawUrl);
+                                if (acc != null && !string.IsNullOrWhiteSpace(acc.Username) && !discoveredAccounts.ContainsKey(acc.SignatureKey))
+                                {
+                                    discoveredAccounts[acc.SignatureKey] = acc;
+                                }
+                            }
                         }
                         current = null;
                         rawExtinf = "";
@@ -318,6 +349,27 @@ namespace StreamMesh.Core.Media
                 }
 
                 progressCallback?.Invoke($"Ayrıştırma tamamlandı: {channels.Count} kanal bulundu.", 100);
+
+                // Keşfedilen IPTV hesaplarının orijinal tam M3U ve VOD film/dizi indekslerini arka planda çek
+                if (discoveredAccounts.Count > 0 && !urlOrPath.Contains("get.php?"))
+                {
+                    LogService.LogInfo($"[M3uEngine] {discoveredAccounts.Count} adet IPTV hesabı keşfedildi. Sağlayıcı orijinal tam listeleri ve VOD arşivi arka planda entegre ediliyor...");
+                    _ = Task.Run(async () =>
+                    {
+                        foreach (var acc in discoveredAccounts.Values)
+                        {
+                            try
+                            {
+                                LogService.LogInfo($"[AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: {acc.DisplaySummary}");
+                                await IptvAccountHelper.FetchAndImportFullAccountAsync(acc).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                LogService.LogError($"[AutoIptv] Otomatik paket çekme hatası: {acc.DisplaySummary}", ex);
+                            }
+                        }
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -405,35 +457,56 @@ namespace StreamMesh.Core.Media
             if (channel == null) return;
 
             string cat = (channel.Category ?? categoryHint ?? "").ToLowerInvariant();
-            string grp = (channel.GroupTitle ?? "").ToLowerInvariant();
-            bool isDizi = cat == "dizi" || grp.Contains("dizi") || grp.Contains("series") || grp.Contains("sezon") || grp.Contains("bölüm") || grp.Contains("bolum");
+            string origGroup = (channel.GroupTitle ?? "").Trim();
+            string currentName = (channel.Name ?? "").Trim();
 
-            // URL veya dosya yolundan dizi / program başlığını çıkar
-            string seriesNameFromSource = ExtractSeriesNameFromSource(sourceUrlOrPath);
+            bool isExplicitEpisode = System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$") ||
+                                     System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)s\d+\s*e\d+");
 
-            if (!string.IsNullOrEmpty(seriesNameFromSource))
+            bool isSeriesCategory = cat.Contains("dizi") || cat.Contains("series") ||
+                                    (!string.IsNullOrEmpty(origGroup) && (origGroup.IndexOf("dizi", StringComparison.OrdinalIgnoreCase) >= 0 || origGroup.IndexOf("series", StringComparison.OrdinalIgnoreCase) >= 0));
+
+            // Sadece açıkça dizi olan veya bölüm formatına uyan içeriklerde dizi zenginleştirmesi yap
+            if (!isSeriesCategory && !isExplicitEpisode)
             {
-                // Eğer kanal adı sadece bölüm numarasıysa (örn: "1. Bölüm", "Bölüm 1", "S01E01")
-                // dizi adını kanal adına ekle: "Kurtlar Vadisi - 1. Bölüm"
-                string currentName = (channel.Name ?? "").Trim();
-                bool isJustEpisode = System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$") ||
-                                     System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)s\d+\s*e\d+$");
+                return;
+            }
 
-                if (isJustEpisode || !currentName.Contains(seriesNameFromSource, StringComparison.OrdinalIgnoreCase))
+            // TV kanalı, Film veya Radyo ise ezme
+            if (!isExplicitEpisode && (cat == "tv" || cat == "film" || cat == "movie" || cat == "radyo" || cat == "radio"))
+            {
+                return;
+            }
+
+            string[] genericGroups = { "dizi", "genel", "tv", "series", "1 bölüm / parça", "1 bolum / parca", "filmler", "movies" };
+            string seriesName = "";
+
+            if (!string.IsNullOrEmpty(origGroup) && !genericGroups.Contains(origGroup.ToLowerInvariant()))
+            {
+                seriesName = origGroup;
+            }
+            else
+            {
+                string seriesNameFromSource = ExtractSeriesNameFromSource(sourceUrlOrPath);
+                if (!string.IsNullOrEmpty(seriesNameFromSource))
                 {
-                    if (isJustEpisode)
-                    {
-                        channel.Name = $"{seriesNameFromSource} - {currentName}";
-                    }
+                    seriesName = seriesNameFromSource;
                 }
+            }
 
-                // GroupTitle Genel veya boş ise dizi adını ata
-                if (string.IsNullOrWhiteSpace(channel.GroupTitle) || channel.GroupTitle == "Genel" || channel.GroupTitle == "Dizi" || channel.GroupTitle == "TV")
-                {
-                    channel.GroupTitle = seriesNameFromSource;
-                }
-
+            if (!string.IsNullOrEmpty(seriesName))
+            {
                 channel.Category = "Dizi";
+
+                if (isExplicitEpisode && !genericGroups.Contains(seriesName.ToLowerInvariant()))
+                {
+                    channel.Name = $"{seriesName} - {currentName}";
+                }
+
+                if (string.IsNullOrWhiteSpace(channel.GroupTitle) || genericGroups.Contains(channel.GroupTitle.ToLowerInvariant()))
+                {
+                    channel.GroupTitle = seriesName;
+                }
             }
         }
 

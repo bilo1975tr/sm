@@ -30,14 +30,15 @@ namespace StreamMesh.Core.Media
             string cat = (channel.Category ?? "").ToUpperInvariant();
             string name = (channel.Name ?? "").ToUpperInvariant();
 
-            // Check GroupTitle or Category
+            // Standart 4 ana kategoriye eşleme [TV, Film, Dizi, Radyo]
             if (groupTitle == "DIZI" || groupTitle.Contains("DIZI") || groupTitle.Contains("SERIES") || groupTitle.Contains("SEZON") || groupTitle.Contains("EPISODE") ||
                 cat == "DIZI" || cat.Contains("DIZI") || cat.Contains("SERIES"))
             {
                 channel.Category = "Dizi";
             }
             else if (groupTitle == "FILM" || groupTitle.Contains("FILM") || groupTitle.Contains("MOVIE") || groupTitle.Contains("SINEMA") || groupTitle.Contains("VOD") ||
-                     cat == "FILM" || cat.Contains("FILM") || cat.Contains("MOVIE") || cat.Contains("SINEMA"))
+                     groupTitle.Contains("AKSIYON") || groupTitle.Contains("KOMEDI") || groupTitle.Contains("KORKU") || groupTitle.Contains("GERILIM") || groupTitle.Contains("YESILCAM") ||
+                     cat == "FILM" || cat.Contains("FILM") || cat.Contains("MOVIE") || cat.Contains("SINEMA") || cat.Contains("VOD"))
             {
                 channel.Category = "Film";
             }
@@ -46,19 +47,14 @@ namespace StreamMesh.Core.Media
             {
                 channel.Category = "Radyo";
             }
-            else if (groupTitle == "TV" || groupTitle.Contains("TV") || groupTitle.Contains("CANLI") || groupTitle.Contains("LIVE") ||
-                     cat == "TV" || cat.Contains("TV") || cat.Contains("CANLI") || cat.Contains("LIVE"))
+            else
             {
+                // Canlı TV (Ulusal, Haber, Spor, Belgesel, Çocuk, Müzik vb. tüm canlı yayınlar)
                 channel.Category = "TV";
             }
-            else if (!string.IsNullOrEmpty(groupTitle))
-            {
-                // If groupTitle is set to something custom, preserve it or fallback
-                channel.Category = groupTitle;
-            }
 
-            // Series detection fallback based on name patterns S01E01, etc.
-            if (channel.SeasonNumber > 0 || channel.EpisodeNumber > 0 || System.Text.RegularExpressions.Regex.IsMatch(name, @"(?i)s\d+\s?e\d+|\d+x\d+"))
+            // Dizi fallback (bölüm veya sezon formatı varsa kesin Dizi'dir)
+            if (channel.SeasonNumber > 0 || channel.EpisodeNumber > 0 || System.Text.RegularExpressions.Regex.IsMatch(name, @"(?i)\bs\d+\s?e\d+|\d+x\d+"))
             {
                 channel.Category = "Dizi";
             }

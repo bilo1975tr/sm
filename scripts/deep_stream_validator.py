@@ -162,15 +162,36 @@ def validate_stream(url, timeout=5, custom_directives=None):
         with urllib.request.urlopen(req, timeout=timeout, context=SSL_CONTEXT) as resp:
             status = getattr(resp, "status", 200)
             if status in (200, 206):
-                chunk = resp.read(1024)
-                if len(chunk) > 0:
-                    return True
-                cl = resp.headers.get("Content-Length")
-                if cl and int(cl) > 0:
-                    return True
+                chunk = resp.read(2048)
+                if not chunk:
+                    return False
+
+                # 1. HTML Hata Sayfası kontrolü
+                try:
+                    chunk_text = chunk.decode("utf-8", errors="ignore").lower()
+                    if "<html" in chunk_text or "<!doctype" in chunk_text or "<head" in chunk_text or "<body" in chunk_text or "google analytics" in chunk_text:
+                        return False
+                except Exception:
+                    pass
+
+                # 2. HLS / m3u8 akışları için #EXTM3U şartı
                 ct = resp.headers.get("Content-Type", "").lower()
-                if any(t in ct for t in ("mpegurl", "video", "audio", "octet-stream")):
+                is_hls = ".m3u8" in clean_url.lower() or "mpegurl" in ct
+                if is_hls:
+                    try:
+                        chunk_text = chunk.decode("utf-8", errors="ignore")
+                        return "#EXTM3U" in chunk_text and ("#EXTINF" in chunk_text or "#EXT-X" in chunk_text)
+                    except Exception:
+                        return False
+
+                # 3. Diğer medya akışları (video, audio, ts)
+                if any(t in ct for t in ("video", "audio", "octet-stream")):
                     return True
+
+                if chunk[0] == 0x47 or (len(chunk) > 188 and chunk[188] == 0x47):
+                    return True
+
+                return len(chunk) > 64
     except urllib.error.HTTPError as e:
         # Range başlığını kabul etmeyen bazı sunucular 416 döner, başlıksız kısa GET dene
         if e.code == 416:

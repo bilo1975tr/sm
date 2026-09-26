@@ -107,8 +107,15 @@ namespace StreamMesh.UI.Views
                 int port = int.TryParse(ServerPortBox.Text, out int p) ? p : 8080;
                 ViewModel.ServerPort = port.ToString();
                 _db.SetSetting("ServerPort", port.ToString());
-                StreamMesh.App.Server?.Start();
-                _isServerRunning = true;
+
+                if (StreamMesh.App.Server == null || StreamMesh.App.Server.Port != port)
+                {
+                    StreamMesh.App.Server?.Stop();
+                    StreamMesh.App.Server = new StreamMesh.Core.Network.MediaServer(port);
+                }
+
+                bool started = StreamMesh.App.Server != null && StreamMesh.App.Server.Start();
+                _isServerRunning = started && (StreamMesh.App.Server?.IsRunning == true);
             }
             else
             {
@@ -121,12 +128,27 @@ namespace StreamMesh.UI.Views
         private void UpdateServerStatusUI()
         {
             if (ServerControlBtn == null) return;
+
+            if (StreamMesh.App.Server != null)
+            {
+                _isServerRunning = StreamMesh.App.Server.IsRunning;
+            }
+
             ServerControlBtn.Content = _isServerRunning ? "Sunucuyu Durdur" : "Sunucuyu Başlat";
-            string ip = "127.0.0.1";
-            string port = ViewModel.ServerPort;
-            if (M3uServerLink != null) M3uServerLink.Text = $"http://{ip}:{port}/playlist.m3u";
-            if (M3uDirectServerLink != null) M3uDirectServerLink.Text = $"http://{ip}:{port}/direct.m3u";
-            if (WebServerLink != null) WebServerLink.Text = $"http://{ip}:{port}/web";
+
+            // Resolve real LAN IP (Ethernet/Wi-Fi with Gateway priority, fallback to 127.0.0.1)
+            string lanIp = StreamMesh.Core.Network.MediaServer.GetPrimaryLocalIPv4Address();
+            int currentPort = StreamMesh.App.Server?.Port ?? (int.TryParse(ServerPortBox?.Text, out int p) ? p : 8080);
+            string portStr = currentPort.ToString();
+
+            if (ServerPortBox != null && ServerPortBox.Text != portStr)
+            {
+                ServerPortBox.Text = portStr;
+            }
+
+            if (M3uServerLink != null) M3uServerLink.Text = $"http://{lanIp}:{portStr}/playlist.m3u";
+            if (M3uDirectServerLink != null) M3uDirectServerLink.Text = $"http://{lanIp}:{portStr}/direct.m3u";
+            if (WebServerLink != null) WebServerLink.Text = $"http://{lanIp}:{portStr}/web";
         }
 
         private void EditSource_Click(object sender, RoutedEventArgs e)
