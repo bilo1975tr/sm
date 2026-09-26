@@ -450,8 +450,8 @@ namespace StreamMesh.Models
             var yearMatch = Regex.Match(working, @"\((19\d{2}|20\d{2})\)");
             if (yearMatch.Success) { details.MovieYear = yearMatch.Groups[1].Value; working = working.Replace(yearMatch.Value, ""); }
 
-            // S01E01 or 1x01 pattern, or Turkish Sezon/Bölüm pattern (e.g. 1. Sezon 2. Bölüm or 1. Bölüm)
-            var seriesMatch = Regex.Match(working, @"(?i)s(\d+)\s?e(\d+)|(\d+)x(\d+)|(?:(\d+)\.\s*sezon\s*)?(\d+)\.\s*bölüm");
+            // S01E01, 1x01, 1. Sezon 78. Bölüm, 78. Bölüm, 78.Bolum, Bolum 78, vb.
+            var seriesMatch = Regex.Match(working, @"(?i)s(\d+)\s?e(\d+)|(\d+)x(\d+)|(?:(\d+)\.\s*sezon\s*)?(?:bölüm|bolum|\bep\b)?\s*(\d+)|(?:bölüm|bolum|\bep\b)\s*(\d+)");
             if (seriesMatch.Success)
             {
                 if (!string.IsNullOrEmpty(seriesMatch.Groups[1].Value))
@@ -474,7 +474,15 @@ namespace StreamMesh.Models
                     {
                         details.Season = 1;
                     }
-                    int.TryParse(seriesMatch.Groups[6].Value, out int e); details.Episode = e;
+
+                    if (!string.IsNullOrEmpty(seriesMatch.Groups[7].Value))
+                    {
+                        int.TryParse(seriesMatch.Groups[7].Value, out int e); details.Episode = e;
+                    }
+                    else
+                    {
+                        int.TryParse(seriesMatch.Groups[6].Value, out int e); details.Episode = e;
+                    }
                 }
                 string prefix = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':', '\'', '"', '`', '’', '‘', '“', '”');
                 if (!string.IsNullOrWhiteSpace(prefix))

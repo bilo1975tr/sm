@@ -405,35 +405,56 @@ namespace StreamMesh.Core.Media
             if (channel == null) return;
 
             string cat = (channel.Category ?? categoryHint ?? "").ToLowerInvariant();
-            string grp = (channel.GroupTitle ?? "").ToLowerInvariant();
-            bool isDizi = cat == "dizi" || grp.Contains("dizi") || grp.Contains("series") || grp.Contains("sezon") || grp.Contains("bölüm") || grp.Contains("bolum");
+            string origGroup = (channel.GroupTitle ?? "").Trim();
+            string currentName = (channel.Name ?? "").Trim();
 
-            // URL veya dosya yolundan dizi / program başlığını çıkar
-            string seriesNameFromSource = ExtractSeriesNameFromSource(sourceUrlOrPath);
+            bool isExplicitEpisode = System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$") ||
+                                     System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)s\d+\s*e\d+");
 
-            if (!string.IsNullOrEmpty(seriesNameFromSource))
+            bool isSeriesCategory = cat.Contains("dizi") || cat.Contains("series") ||
+                                    (!string.IsNullOrEmpty(origGroup) && (origGroup.IndexOf("dizi", StringComparison.OrdinalIgnoreCase) >= 0 || origGroup.IndexOf("series", StringComparison.OrdinalIgnoreCase) >= 0));
+
+            // Sadece açıkça dizi olan veya bölüm formatına uyan içeriklerde dizi zenginleştirmesi yap
+            if (!isSeriesCategory && !isExplicitEpisode)
             {
-                // Eğer kanal adı sadece bölüm numarasıysa (örn: "1. Bölüm", "Bölüm 1", "S01E01")
-                // dizi adını kanal adına ekle: "Kurtlar Vadisi - 1. Bölüm"
-                string currentName = (channel.Name ?? "").Trim();
-                bool isJustEpisode = System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$") ||
-                                     System.Text.RegularExpressions.Regex.IsMatch(currentName, @"^(?i)s\d+\s*e\d+$");
+                return;
+            }
 
-                if (isJustEpisode || !currentName.Contains(seriesNameFromSource, StringComparison.OrdinalIgnoreCase))
+            // TV kanalı, Film veya Radyo ise ezme
+            if (!isExplicitEpisode && (cat == "tv" || cat == "film" || cat == "movie" || cat == "radyo" || cat == "radio"))
+            {
+                return;
+            }
+
+            string[] genericGroups = { "dizi", "genel", "tv", "series", "1 bölüm / parça", "1 bolum / parca", "filmler", "movies" };
+            string seriesName = "";
+
+            if (!string.IsNullOrEmpty(origGroup) && !genericGroups.Contains(origGroup.ToLowerInvariant()))
+            {
+                seriesName = origGroup;
+            }
+            else
+            {
+                string seriesNameFromSource = ExtractSeriesNameFromSource(sourceUrlOrPath);
+                if (!string.IsNullOrEmpty(seriesNameFromSource))
                 {
-                    if (isJustEpisode)
-                    {
-                        channel.Name = $"{seriesNameFromSource} - {currentName}";
-                    }
+                    seriesName = seriesNameFromSource;
                 }
+            }
 
-                // GroupTitle Genel veya boş ise dizi adını ata
-                if (string.IsNullOrWhiteSpace(channel.GroupTitle) || channel.GroupTitle == "Genel" || channel.GroupTitle == "Dizi" || channel.GroupTitle == "TV")
-                {
-                    channel.GroupTitle = seriesNameFromSource;
-                }
-
+            if (!string.IsNullOrEmpty(seriesName))
+            {
                 channel.Category = "Dizi";
+
+                if (isExplicitEpisode && !genericGroups.Contains(seriesName.ToLowerInvariant()))
+                {
+                    channel.Name = $"{seriesName} - {currentName}";
+                }
+
+                if (string.IsNullOrWhiteSpace(channel.GroupTitle) || genericGroups.Contains(channel.GroupTitle.ToLowerInvariant()))
+                {
+                    channel.GroupTitle = seriesName;
+                }
             }
         }
 
