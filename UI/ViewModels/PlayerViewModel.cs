@@ -62,6 +62,29 @@ namespace StreamMesh.UI.ViewModels
                 rawUrls = new List<string> { channel.Url.Trim() };
             }
 
+            // Duhnet.tv ve CDN VOD akışları için akıllı alternatif adres türetme
+            var expandedUrls = new List<string>();
+            foreach (var u in rawUrls)
+            {
+                if (!expandedUrls.Contains(u, StringComparer.OrdinalIgnoreCase))
+                {
+                    expandedUrls.Add(u);
+                }
+
+                if (VodSmartResolver.IsVodCdnUrl(u))
+                {
+                    var vodCandidates = VodSmartResolver.GenerateVodCandidates(u);
+                    foreach (var vc in vodCandidates)
+                    {
+                        if (!expandedUrls.Contains(vc, StringComparer.OrdinalIgnoreCase))
+                        {
+                            expandedUrls.Add(vc);
+                        }
+                    }
+                }
+            }
+            rawUrls = expandedUrls;
+
             if (rawUrls.Count <= 1)
             {
                 return rawUrls;

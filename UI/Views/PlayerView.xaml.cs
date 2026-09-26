@@ -816,6 +816,41 @@ namespace StreamMesh.UI.Views
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
 
+                if (_config != null)
+                {
+                    // 1. Channel User-Agent (örn: Firefox, VLC, Chrome vb.)
+                    string ua = !string.IsNullOrWhiteSpace(channel.HttpUserAgent)
+                        ? channel.HttpUserAgent
+                        : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+                    _config.Demuxer.FormatOpt["user_agent"] = ua;
+
+                    // 2. Channel HTTP Headers (Referer, Cookie, Origin vb.)
+                    var customHeaders = new System.Text.StringBuilder();
+                    if (!string.IsNullOrWhiteSpace(channel.HttpReferer))
+                        customHeaders.Append($"Referer: {channel.HttpReferer}\r\n");
+                    if (!string.IsNullOrWhiteSpace(channel.HttpCookie))
+                        customHeaders.Append($"Cookie: {channel.HttpCookie}\r\n");
+                    if (!string.IsNullOrWhiteSpace(channel.HttpOrigin))
+                        customHeaders.Append($"Origin: {channel.HttpOrigin}\r\n");
+                    if (channel.CustomHeaders != null)
+                    {
+                        foreach (var kv in channel.CustomHeaders)
+                        {
+                            if (!string.IsNullOrWhiteSpace(kv.Key) && !string.IsNullOrWhiteSpace(kv.Value))
+                                customHeaders.Append($"{kv.Key}: {kv.Value}\r\n");
+                        }
+                    }
+
+                    if (customHeaders.Length > 0)
+                    {
+                        _config.Demuxer.FormatOpt["headers"] = customHeaders.ToString();
+                    }
+                    else
+                    {
+                        _config.Demuxer.FormatOpt.Remove("headers");
+                    }
+                }
+
                 var openTask = Task.Run(() =>
                 {
                     try

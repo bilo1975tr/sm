@@ -214,5 +214,15 @@ namespace StreamMesh.UI.Views
                 }
             }
         }
+
+        private void ValidateChannels_Click(object sender, RoutedEventArgs e)
+        {
+            _ = _vm.StartValidationAsync();
+        }
+
+        private void CancelValidation_Click(object sender, RoutedEventArgs e)
+        {
+            _vm.CancelValidation();
+        }
     }
 }

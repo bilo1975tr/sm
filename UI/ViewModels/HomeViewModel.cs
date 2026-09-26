@@ -131,6 +131,179 @@ namespace StreamMesh.UI.ViewModels
 
         public bool HasNoChannels => DisplayedChannels.Count == 0 && !IsSyncing;
 
+        private bool _validateAllInGroup;
+        public bool ValidateAllInGroup
+        {
+            get => _validateAllInGroup;
+            set { _validateAllInGroup = value; OnPropertyChanged(); }
+        }
+
+        private bool _isValidatingChannels;
+        public bool IsValidatingChannels
+        {
+            get => _isValidatingChannels;
+            set { _isValidatingChannels = value; OnPropertyChanged(); }
+        }
+
+        private string _validationStatusText = "";
+        public string ValidationStatusText
+        {
+            get => _validationStatusText;
+            set { _validationStatusText = value; OnPropertyChanged(); }
+        }
+
+        private int _validationProgressPercent;
+        public int ValidationProgressPercent
+        {
+            get => _validationProgressPercent;
+            set { _validationProgressPercent = value; OnPropertyChanged(); }
+        }
+
+        private System.Threading.CancellationTokenSource? _validationCts;
+
+        public void CancelValidation()
+        {
+            _validationCts?.Cancel();
+        }
+
+        public async Task StartValidationAsync()
+        {
+            if (IsValidatingChannels) return;
+
+            List<Channel> targetChannels;
+            string scopeDescription;
+
+            if (ValidateAllInGroup)
+            {
+                lock (_filteredChannels)
+                {
+                    targetChannels = _filteredChannels.ToList();
+                }
+                scopeDescription = $"seçili filtrenin/grubun tamamındaki ({targetChannels.Count} içerik)";
+            }
+            else
+            {
+                targetChannels = DisplayedChannels.ToList();
+                scopeDescription = $"ekrandaki sayfada görüntülenen ({targetChannels.Count} içerik)";
+            }
+
+            if (targetChannels.Count == 0)
+            {
+                System.Windows.MessageBox.Show("Doğrulanacak herhangi bir kanal bulunamadı.", "Kanal Yok", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return;
+            }
+
+            var confirm = System.Windows.MessageBox.Show(
+                $"Kanal Canlılık Doğrulaması Başlatılsın mı?\n\n" +
+                $"• Kapsam: {scopeDescription}\n" +
+                $"• Kural: Yayın akışı açılmayan veya çökmüş ölü kanallar kütüphaneden kalıcı olarak SİLİNECEKTİR.\n" +
+                $"• Yalnızca aktif, canlı kanallar kalacaktır.\n\n" +
+                $"Devam etmek istiyor musunuz?",
+                "Doğrulama Onayı",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+
+            if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+            _validationCts?.Cancel();
+            _validationCts = new System.Threading.CancellationTokenSource();
+            var token = _validationCts.Token;
+
+            IsValidatingChannels = true;
+            ValidationProgressPercent = 0;
+            ValidationStatusText = $"{targetChannels.Count} kanal taranıyor...";
+
+            int total = targetChannels.Count;
+            int tested = 0;
+            int aliveCount = 0;
+            int deadCount = 0;
+
+            var deadChannelIds = new System.Collections.Concurrent.ConcurrentBag<string>();
+            var validator = new StreamValidator();
+
+            try
+            {
+                using var semaphore = new System.Threading.SemaphoreSlim(8);
+
+                var tasks = targetChannels.Select(async ch =>
+                {
+                    await semaphore.WaitAsync(token);
+                    try
+                    {
+                        if (token.IsCancellationRequested) return;
+
+                        var res = await validator.ValidateAsync(ch, ValidationLevel.Fast, null, token);
+                        if (res.IsOnline)
+                        {
+                            System.Threading.Interlocked.Increment(ref aliveCount);
+                        }
+                        else
+                        {
+                            deadChannelIds.Add(ch.Id);
+                            System.Threading.Interlocked.Increment(ref deadCount);
+                        }
+                    }
+                    catch (OperationCanceledException) { }
+                    catch
+                    {
+                        deadChannelIds.Add(ch.Id);
+                        System.Threading.Interlocked.Increment(ref deadCount);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                        int currentTested = System.Threading.Interlocked.Increment(ref tested);
+                        int pct = (int)((double)currentTested / total * 100);
+
+                        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            ValidationProgressPercent = pct;
+                            ValidationStatusText = $"{currentTested} / {total} test edildi (Aktif: {aliveCount}, Silinecek: {deadCount})";
+                        });
+                    }
+                });
+
+                await Task.WhenAll(tasks);
+
+                if (deadChannelIds.Count > 0)
+                {
+                    ValidationStatusText = $"{deadChannelIds.Count} ölü kanal kütüphaneden temizleniyor...";
+                    foreach (var id in deadChannelIds)
+                    {
+                        _db.DeleteChannelById(id);
+                    }
+                }
+
+                await LoadDataAsync();
+
+                System.Windows.MessageBox.Show(
+                    $"Kanal Doğrulama Tamamlandı!\n\n" +
+                    $"• Test Edilen: {tested}\n" +
+                    $"• Aktif Kalan: {aliveCount}\n" +
+                    $"• Temizlenen / Silinen: {deadCount}",
+                    "Doğrulama Bitti",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information);
+            }
+            catch (OperationCanceledException)
+            {
+                System.Windows.MessageBox.Show("Doğrulama işlemi durduruldu.", "İptal Edildi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("HomeViewModel.StartValidationAsync failed", ex);
+                System.Windows.MessageBox.Show($"Doğrulama sırasında hata oluştu: {ex.Message}", "Hata", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+            finally
+            {
+                validator.Dispose();
+                IsValidatingChannels = false;
+                ValidationProgressPercent = 0;
+                ValidationStatusText = "";
+            }
+        }
+
         public string CurrentPageText => $"Sayfa {_currentPage} / {_totalPages}";
 
         private readonly System.Threading.SemaphoreSlim _loadSemaphore = new System.Threading.SemaphoreSlim(1, 1);
@@ -413,7 +586,12 @@ namespace StreamMesh.UI.ViewModels
                 var groups = seriesItems.GroupBy(s => !string.IsNullOrWhiteSpace(s.SeriesBaseName) ? s.SeriesBaseName : s.CleanName).ToList();
                 foreach (var g in groups)
                 {
-                    if (string.IsNullOrWhiteSpace(g.Key))
+                    // YALNIZCA GERÇEKTEN BÖLÜM NUMARASI VEYA SEZON OLAN İÇERİKLERİ SeriesGroup YAP!
+                    // Eğer bölüm numarası yoksa, bunlar bağımsız film veya canlı kanallardır; ASLA tek bir karta birleştirilmemelidir!
+                    bool isRealSeriesWithEpisodes = g.Count() > 1 && g.Any(ep => ep.SeasonNumber > 0 || ep.EpisodeNumber > 0 ||
+                        System.Text.RegularExpressions.Regex.IsMatch(ep.Name ?? "", @"(?i)\b(s\d+\s*e\d+|bölüm|bolum|sezon)\b"));
+
+                    if (string.IsNullOrWhiteSpace(g.Key) || !isRealSeriesWithEpisodes)
                     {
                         finalItems.AddRange(g);
                     }

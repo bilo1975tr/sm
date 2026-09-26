@@ -371,7 +371,7 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
 
                 # Sadece gerçek Dizi/Arşiv içerikleri için dizi başlığı ve bölüm biçimlendirmesi yap
                 is_series_content = (cat == 'Dizi' or 'dizi' in (default_category or '').lower() or
-                                     bool(re.search(r'(?i)\bs\d+\s?e\d+\b|\b\d+x\d+\b|\bbölüm\b|\bbolum\b', name)))
+                                     bool(re.search(r'(?i)\bs\d+\s?e\d+\b|\b\d+x\d+\b|(?:sezon\s*\d+.*)?(?:bölüm|bolum)\s*\d+', name)))
 
                 if is_series_content and cat != 'Film' and cat != 'Radyo':
                     cat = 'Dizi'
@@ -384,7 +384,7 @@ def parse_m3u(content: str, source_url: str, default_category: str = "TV"):
                     else:
                         series_title = "Dizi"
 
-                    is_just_ep = bool(re.match(r'^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$', name.strip()) or
+                    is_just_ep = bool(re.match(r'^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\bpart\b)\s*\d+\.?$', name.strip()) or
                                       re.match(r'^(?i)s\d+\s*e\d+$', name.strip()))
                     if is_just_ep and series_title.lower() not in generic_groups:
                         formatted_name = f"{series_title} - {name.strip()}"

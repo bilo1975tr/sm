@@ -51,75 +51,119 @@ namespace StreamMesh.Core.Utils
 
             try
             {
-                logger?.Report($"[{channel.PrimaryName}] Hızlı kontrol yapılıyor: {url}");
+                logger?.Report($"[{channel.PrimaryName}] Doğrulama yapılıyor: {url}");
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                int timeoutMs = (level == ValidationLevel.Fast) ? 2500 : 4000;
+                int timeoutMs = (level == ValidationLevel.Fast) ? 3500 : 5000;
                 cts.CancelAfter(timeoutMs);
 
-                bool headSuccess = false;
-                try
+                // Asla sadece HEAD isteğine güvenme! Cloudflare/Worker'lar sahte 200 döner.
+                // Gerçek GET ile manifest veya medya akışının başını doğrula.
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                
+                // Bazı IPTV/Cloudflare sunucuları tarayıcı yerine medya oynatıcı User-Agent bekler
+                request.Headers.TryAddWithoutValidation("User-Agent", "VLC/3.0.20 LibVLC/3.0.20");
+                request.Headers.TryAddWithoutValidation("Accept", "*/*");
+
+                using var getResponse = await MediaHttpClient.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+
+                if (!getResponse.IsSuccessStatusCode)
                 {
-                    using var headRequest = new HttpRequestMessage(HttpMethod.Head, url);
-                    using var headResponse = await MediaHttpClient.Client.SendAsync(headRequest, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
-                    if (headResponse.IsSuccessStatusCode)
-                    {
-                        headSuccess = true;
-                        result.IsOnline = true;
-                        result.Status = "Erişilebilir";
-                    }
+                    result.IsOnline = false;
+                    result.Status = $"Sunucu Hatası: {(int)getResponse.StatusCode} {getResponse.StatusCode}";
+                    return result;
                 }
-                catch { }
 
-                if (!headSuccess)
+                // İlk 2048 baytı oku ve doğrula
+                using var stream = await getResponse.Content.ReadAsStreamAsync(cts.Token).ConfigureAwait(false);
+                byte[] buffer = new byte[2048];
+                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token).ConfigureAwait(false);
+
+                if (bytesRead == 0)
                 {
-                    using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                    using var getResponse = await MediaHttpClient.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
-                    
-                    if (getResponse.IsSuccessStatusCode)
+                    result.IsOnline = false;
+                    result.Status = "Boş Yanıt (0 Bayt)";
+                    return result;
+                }
+
+                string headerText = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                // 1. HTML HATA SAYFASI / BOT ENGELİ KONTROLÜ (Örn: Cloudflare, 404 sayfaları, JS engelleri)
+                if (headerText.Contains("<html", StringComparison.OrdinalIgnoreCase) ||
+                    headerText.Contains("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) ||
+                    headerText.Contains("<head", StringComparison.OrdinalIgnoreCase) ||
+                    headerText.Contains("<body", StringComparison.OrdinalIgnoreCase) ||
+                    headerText.Contains("Google Analytics", StringComparison.OrdinalIgnoreCase) ||
+                    headerText.Contains("cf-browser-verification", StringComparison.OrdinalIgnoreCase) ||
+                    headerText.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase) && headerText.Contains("Error", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.IsOnline = false;
+                    result.Status = "Geçersiz Akış (HTML Web Sayfası)";
+                    return result;
+                }
+
+                // 2. HLS / M3U8 AKIŞLARI İÇİN SIKI MANIFEST KONTROLÜ
+                bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) ||
+                             (getResponse.Content.Headers.ContentType?.MediaType?.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) ?? false);
+
+                if (isHls)
+                {
+                    // Geçerli bir HLS manifesti MUTLAKA #EXTM3U ile başlamalı veya içermelidir
+                    if (headerText.Contains("#EXTM3U", StringComparison.OrdinalIgnoreCase))
                     {
-                    // Check HLS content if it's an m3u8 or video stream
-                    bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || 
-                                 (getResponse.Content.Headers.ContentType?.MediaType?.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) ?? false);
-
-                    if (isHls)
-                    {
-                        using var stream = await getResponse.Content.ReadAsStreamAsync(cts.Token).ConfigureAwait(false);
-                        byte[] buffer = new byte[1024];
-                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token).ConfigureAwait(false);
-                        string headerText = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-
-                        // If it's returning HTML error page with 200 OK (e.g. <!DOCTYPE html> or <html>)
-                        if (headerText.Contains("<html", StringComparison.OrdinalIgnoreCase) || headerText.Contains("<!DOCTYPE", StringComparison.OrdinalIgnoreCase))
-                        {
-                            result.IsOnline = false;
-                            result.Status = "Geçersiz Yanıt (HTML Hata Sayfası)";
-                            return result;
-                        }
-
-                        // Must contain valid HLS tag
-                        if (headerText.Contains("#EXTM3U", StringComparison.OrdinalIgnoreCase))
+                        // Alt segment veya akış etiketlerini de ara (#EXTINF, #EXT-X-STREAM-INF, #EXT-X-TARGETDURATION vb.)
+                        if (headerText.Contains("#EXTINF", StringComparison.OrdinalIgnoreCase) ||
+                            headerText.Contains("#EXT-X-STREAM-INF", StringComparison.OrdinalIgnoreCase) ||
+                            headerText.Contains("#EXT-X-TARGETDURATION", StringComparison.OrdinalIgnoreCase) ||
+                            headerText.Contains("#EXT-X-MEDIA", StringComparison.OrdinalIgnoreCase))
                         {
                             result.IsOnline = true;
-                            result.Status = "Erişilebilir (HLS Canlı)";
+                            result.Status = "Aktif (HLS Canlı)";
+                            return result;
                         }
                         else
                         {
-                            // Some non-standard streams might still be media
-                            result.IsOnline = true;
-                            result.Status = "Erişilebilir";
+                            // Sadece #EXTM3U var ama segment yoksa veya boşsa
+                            result.IsOnline = false;
+                            result.Status = "Boş HLS Çalma Listesi";
+                            return result;
                         }
                     }
                     else
                     {
-                        result.IsOnline = true;
-                        result.Status = "Erişilebilir";
+                        // .m3u8 uzantılı ama #EXTM3U içermiyorsa bu bozuk/ölü bir akıştır
+                        result.IsOnline = false;
+                        result.Status = "Geçersiz HLS Manifesti";
+                        return result;
                     }
+                }
+
+                // 3. DOĞRUDAN BİNARY VİDEO / TS / MP4 / RADYO AKIŞLARI
+                var contentType = getResponse.Content.Headers.ContentType?.MediaType?.ToLowerInvariant() ?? "";
+                if (contentType.StartsWith("video/") || contentType.StartsWith("audio/") || contentType == "application/octet-stream")
+                {
+                    result.IsOnline = true;
+                    result.Status = "Aktif (Medya Akışı)";
+                    return result;
+                }
+
+                // TS akışı veya binary akış (MPEG-TS sync baytı 0x47 kontrolü)
+                if (buffer[0] == 0x47 || (bytesRead > 188 && buffer[188] == 0x47))
+                {
+                    result.IsOnline = true;
+                    result.Status = "Aktif (MPEG-TS Yayını)";
+                    return result;
+                }
+
+                // Diğer durumlar
+                if (bytesRead > 64 && !headerText.Contains("<") && !headerText.Contains("error", StringComparison.OrdinalIgnoreCase))
+                {
+                    result.IsOnline = true;
+                    result.Status = "Aktif";
                 }
                 else
                 {
                     result.IsOnline = false;
-                    result.Status = $"Hata: {(int)getResponse.StatusCode} {getResponse.StatusCode}";
-                }
+                    result.Status = "Bilinmeyen / Geçersiz Medya Biçimi";
                 }
             }
             catch (OperationCanceledException)

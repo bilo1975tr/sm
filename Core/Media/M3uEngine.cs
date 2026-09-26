@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using StreamMesh.Models;
 using StreamMesh.Core.Network;
+using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
 {
@@ -92,6 +93,7 @@ namespace StreamMesh.Core.Media
 
                 var lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
                 Channel? current = null;
+                var discoveredAccounts = new Dictionary<string, IptvAccountInfo>(StringComparer.OrdinalIgnoreCase);
                 int currentLineNumber = 0;
                 int extinfLineNumber = 0;
                 string rawExtinf = "";
@@ -142,11 +144,16 @@ namespace StreamMesh.Core.Media
                         if (epgMatch.Success) current.EpgId = epgMatch.Groups[1].Value;
 
                         // tvg-name
+                        string explicitTvgName = "";
                         var tvgNameMatch = System.Text.RegularExpressions.Regex.Match(line, @"tvg-name=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                         if (tvgNameMatch.Success)
                         {
                             string tvgName = tvgNameMatch.Groups[1].Value.Trim();
-                            if (!string.IsNullOrEmpty(tvgName)) current.AddAlternativeName(tvgName);
+                            if (!string.IsNullOrEmpty(tvgName))
+                            {
+                                explicitTvgName = tvgName;
+                                current.AddAlternativeName(tvgName);
+                            }
                         }
 
                         // Group Title
@@ -175,6 +182,20 @@ namespace StreamMesh.Core.Media
                         {
                             current.Name = line.Substring(nameIdx + 1).Trim();
                             if (string.IsNullOrEmpty(current.Name)) current.Name = "İsimsiz Kanal";
+                        }
+
+                        // Eğer satır sonundaki isim grup adı ile aynıysa (örn: TR-SINEMA) veya generic ise,
+                        // ancak tvg-name özgül bir kanal adı içeriyorsa (örn: TR: beIN Movies Action), tvg-name'i birincil isim yap
+                        if (!string.IsNullOrEmpty(explicitTvgName))
+                        {
+                            if (string.IsNullOrWhiteSpace(current.Name) ||
+                                current.Name.Equals(current.GroupTitle, StringComparison.OrdinalIgnoreCase) ||
+                                current.Name.Equals("İsimsiz Kanal", StringComparison.OrdinalIgnoreCase) ||
+                                (explicitTvgName.Length > current.Name.Length && explicitTvgName.Contains(current.Name, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                if (!string.IsNullOrWhiteSpace(current.Name)) current.AddAlternativeName(current.Name);
+                                current.Name = explicitTvgName;
+                            }
                         }
                     }
                     else if (line.StartsWith("#EXTVLCOPT:", StringComparison.OrdinalIgnoreCase))
@@ -310,6 +331,16 @@ namespace StreamMesh.Core.Media
 
                             SmartNormalizationEngine.Instance.NormalizeChannel(current);
                             channels.Add(current);
+
+                            // Otomatik IPTV / Xtream hesap keşfi
+                            if (!string.IsNullOrWhiteSpace(rawUrl) && !rawUrl.Contains("get.php?"))
+                            {
+                                var acc = IptvAccountHelper.ParseAccountFromUrl(rawUrl);
+                                if (acc != null && !string.IsNullOrWhiteSpace(acc.Username) && !discoveredAccounts.ContainsKey(acc.SignatureKey))
+                                {
+                                    discoveredAccounts[acc.SignatureKey] = acc;
+                                }
+                            }
                         }
                         current = null;
                         rawExtinf = "";
@@ -318,6 +349,27 @@ namespace StreamMesh.Core.Media
                 }
 
                 progressCallback?.Invoke($"Ayrıştırma tamamlandı: {channels.Count} kanal bulundu.", 100);
+
+                // Keşfedilen IPTV hesaplarının orijinal tam M3U ve VOD film/dizi indekslerini arka planda çek
+                if (discoveredAccounts.Count > 0 && !urlOrPath.Contains("get.php?"))
+                {
+                    LogService.LogInfo($"[M3uEngine] {discoveredAccounts.Count} adet IPTV hesabı keşfedildi. Sağlayıcı orijinal tam listeleri ve VOD arşivi arka planda entegre ediliyor...");
+                    _ = Task.Run(async () =>
+                    {
+                        foreach (var acc in discoveredAccounts.Values)
+                        {
+                            try
+                            {
+                                LogService.LogInfo($"[AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: {acc.DisplaySummary}");
+                                await IptvAccountHelper.FetchAndImportFullAccountAsync(acc).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                LogService.LogError($"[AutoIptv] Otomatik paket çekme hatası: {acc.DisplaySummary}", ex);
+                            }
+                        }
+                    });
+                }
             }
             catch (Exception ex)
             {

@@ -167,6 +167,7 @@
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                                                 <Button Content="🗑️ Bu Hesabı Temizle" ToolTip="Bu IPTV hesabına ait tüm kanalları/bölümleri kütüphaneden topluca sil" Margin="0,0,6,0" Padding="10,6" Click="PurgeAccountFromUrl_Click" Background="#475569" Foreground="#f8fafc" BorderThickness="0" Height="35" Visibility="{Binding PurgeAccountButtonVisibility}"/>
+                                                <Button Content="✂️ Ayrı Kanal Yap" ToolTip="Bu yayını bu kanaldan ayırıp bağımsız yeni bir kanal olarak kaydet" Margin="0,0,6,0" Padding="10,6" Click="SeparateSource_Click" Background="#0f766e" Foreground="#5eead4" BorderThickness="0" Height="35" Cursor="Hand"/>
                                                 <Button Content="⭐ Varsayılan Yap" ToolTip="Bu yayını varsayılan / birincil kaynak yap" Margin="0,0,4,0" Padding="12,6" Click="SetPrimaryUrl_Click" Background="#0284c7" Foreground="White" BorderThickness="0" Height="35" Visibility="{Binding MakeDefaultButtonVisibility}"/>
                                             </StackPanel>
                                             <Button Grid.Column="2" Content="✕" ToolTip="Bu kaynağı kaldır" Width="35" Height="35" Click="RemoveUrl_Click" Background="#7f1d1d" BorderThickness="0" Foreground="#ff8a8a" VerticalAlignment="Center" Margin="4,0,0,0"/>
