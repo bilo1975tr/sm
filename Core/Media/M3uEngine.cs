@@ -156,6 +156,10 @@ namespace StreamMesh.Core.Media
                             }
                         }
 
+                        // tvg-language
+                        var langMatch = System.Text.RegularExpressions.Regex.Match(line, @"(?:tvg-language|tvg-lang|language)=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (langMatch.Success) current.Language = langMatch.Groups[1].Value.Trim();
+
                         // Group Title
                         var groupMatch = System.Text.RegularExpressions.Regex.Match(line, @"group-title=[""']([^""']+)[""']", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                         if (groupMatch.Success)
@@ -180,7 +184,14 @@ namespace StreamMesh.Core.Media
                         int nameIdx = line.LastIndexOf(',');
                         if (nameIdx != -1)
                         {
-                            current.Name = line.Substring(nameIdx + 1).Trim();
+                            string rawExtinfName = line.Substring(nameIdx + 1).Trim();
+                            // Temizlik: Kanal adının içine sızmış tırnak veya tvg- niteliklerini soy
+                            if (rawExtinfName.Contains("tvg-") || rawExtinfName.Contains("group-title="))
+                            {
+                                rawExtinfName = System.Text.RegularExpressions.Regex.Replace(rawExtinfName, @"[a-zA-Z0-9_\-]+=[""'][^""']*[""']", "").Trim();
+                            }
+                            rawExtinfName = rawExtinfName.Trim(' ', '"', '\'', ',');
+                            current.Name = rawExtinfName;
                             if (string.IsNullOrEmpty(current.Name)) current.Name = "İsimsiz Kanal";
                         }
 
@@ -320,9 +331,12 @@ namespace StreamMesh.Core.Media
                         {
                             current.Url = rawUrl;
 
+                            // URL Temizliği ve Kimliklendirme: URL'deki port :80 veya geçici session/token parametrelerini soyup tekilleştir
+                            string cleanUrlForHash = CleanStreamUrlForIdentity(rawUrl);
+
                             using (var sha1 = System.Security.Cryptography.SHA1.Create())
                             {
-                                byte[] hash = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawUrl));
+                                byte[] hash = sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(cleanUrlForHash));
                                 current.Id = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                             }
 
@@ -444,6 +458,28 @@ namespace StreamMesh.Core.Media
             if (File.Exists(url)) return true;
 
             return false;
+        }
+
+        public static string CleanStreamUrlForIdentity(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return "";
+            try
+            {
+                // AceStream hash
+                if (url.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(url, "^[a-fA-F0-9]{40}$"))
+                    return url.ToLowerInvariant();
+
+                if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    var uri = new Uri(url);
+                    // Host + Path (Port :80 ve :443 standart olduğundan yoksay, query param'ları token vb. temizle)
+                    string host = uri.Host.ToLowerInvariant();
+                    string path = uri.AbsolutePath.TrimEnd('/');
+                    return $"{host}{path}";
+                }
+            }
+            catch { }
+            return url.Trim().ToLowerInvariant();
         }
 
         private string GetShortUrl(string url)

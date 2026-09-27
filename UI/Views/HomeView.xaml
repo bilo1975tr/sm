@@ -120,9 +120,62 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0">
+                    <!-- Row 0: Kaynak / Xtream Hesap Butonları (Yalnızca Xtream veya birden fazla kaynak varsa görünür) -->
+                    <Border Grid.Row="0" Margin="0,0,0,10" Padding="0,0,0,8" BorderBrush="#334155" BorderThickness="0,0,0,1"
+                            Visibility="{Binding HasMultipleSources, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding SourceFilters}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Margin="0,0,8,0" Padding="14,6" Height="34" FontSize="12" FontWeight="Bold"
+                                                Click="SourceChip_Click" Tag="{Binding Id}" Cursor="Hand">
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Background" Value="#0f172a"/>
+                                                    <Setter Property="Foreground" Value="#94a3b8"/>
+                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="Button">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                                                        CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="Background" Value="#0284c7"/>
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Setter Property="BorderBrush" Value="#38bdf8"/>
+                                                        </DataTrigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="BorderBrush" Value="#38bdf8"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <TextBlock Text="{Binding DisplayName}"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Grid Grid.Row="1">
                         <StackPanel x:Name="CategoryPanel" Orientation="Horizontal">
                             <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="90"/>
                             <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="110" Background="#334155"/>
@@ -147,7 +200,7 @@
                     </Grid>
 
                     <!-- Group / Category Title Filter Bar -->
-                    <Border Grid.Row="1" Margin="0,10,0,0" Padding="0,8,0,0" BorderBrush="#334155" BorderThickness="0,1,0,0"
+                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="0,8,0,0" BorderBrush="#334155" BorderThickness="0,1,0,0"
                             Visibility="{Binding HasGroupCategories, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                             <ItemsControl ItemsSource="{Binding GroupCategories}">

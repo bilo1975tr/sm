@@ -42,6 +42,7 @@ namespace StreamMesh.UI.Views
                     });
                 }
             };
+            this.Loaded += (s, e) => LoadSettings();
             LoadSettings();
         }
 
@@ -72,23 +73,53 @@ namespace StreamMesh.UI.Views
 
         private async void AddIptvAccount_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(XtreamUrlBox.Text)) return;
+            string url = XtreamUrlBox.Text?.Trim() ?? "";
+            string user = XtreamUserBox.Text?.Trim() ?? "";
+            string pass = XtreamPassBox.Text?.Trim() ?? "";
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                System.Windows.MessageBox.Show("Lütfen Sunucu URL adresini girin.", "Eksik Bilgi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                url = "http://" + url;
+            }
+
             try
             {
+                var uri = new Uri(url);
                 var acc = new IptvAccount {
-                    ServerUrl = XtreamUrlBox.Text,
-                    Username = XtreamUserBox.Text,
-                    Password = XtreamPassBox.Text,
-                    Name = new Uri(XtreamUrlBox.Text).Host
+                    ServerUrl = url,
+                    Username = user,
+                    Password = pass,
+                    Name = uri.Host
                 };
                 acc.Status = "Bağlanıyor...";
                 _db.SaveIptvAccount(acc);
                 RefreshIptvList();
+
                 bool success = await _xtream.SyncAccountAsync(acc);
                 RefreshIptvList();
-                if (success) System.Windows.MessageBox.Show("IPTV Hesabı başarıyla eklendi.");
+
+                if (success)
+                {
+                    System.Windows.MessageBox.Show($"IPTV Hesabı ({acc.Name}) başarıyla eklendi ve doğrulandı!", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+                    XtreamUrlBox.Clear();
+                    XtreamUserBox.Clear();
+                    XtreamPassBox.Clear();
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show($"Hesap eklendi ancak sunucuya bağlanılamadı veya giriş başarısız oldu.\nDurum: {acc.Status}", "Bağlantı Uyarısı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
-            catch (Exception ex) { System.Windows.MessageBox.Show("Hata: " + ex.Message); }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Hata: " + ex.Message, "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void RemoveIptv_Click(object sender, RoutedEventArgs e)
@@ -97,6 +128,39 @@ namespace StreamMesh.UI.Views
             {
                 _db.RemoveIptvAccount(id);
                 RefreshIptvList();
+            }
+        }
+
+        private async void RefreshIptvStats_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            if (btn != null)
+            {
+                btn.IsEnabled = false;
+                btn.Content = "⏳ Güncelleniyor...";
+            }
+
+            try
+            {
+                var accounts = _db.GetAllIptvAccounts();
+                foreach (var acc in accounts)
+                {
+                    try
+                    {
+                        await _xtream.SyncAccountAsync(acc);
+                    }
+                    catch { }
+                }
+                RefreshIptvList();
+                System.Windows.MessageBox.Show("Tüm IPTV hesaplarının kalan gün süreleri, eşzamanlı bağlantı limitleri ve kanal sayıları güncellendi!", "Güncelleme Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            finally
+            {
+                if (btn != null)
+                {
+                    btn.IsEnabled = true;
+                    btn.Content = "🔄 Bilgileri ve İstatistikleri Güncelle";
+                }
             }
         }
 

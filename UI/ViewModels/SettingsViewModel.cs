@@ -102,9 +102,50 @@ namespace StreamMesh.UI.ViewModels
 
         public void RefreshIptvAccounts()
         {
-            IptvAccounts.Clear();
             var list = _db.GetAllIptvAccounts();
+            IptvAccounts.Clear();
             foreach (var a in list) IptvAccounts.Add(a);
+
+            _ = Task.Run(async () =>
+            {
+                // Eğer hesap listesi boşsa veya eksikse mevcut kanalları tara ve hesapları otomatik keşfet
+                var discovered = await _db.DiscoverAndSyncAccountsFromChannelsAsync().ConfigureAwait(false);
+                if (discovered.Count > 0)
+                {
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        IptvAccounts.Clear();
+                        foreach (var a in discovered) IptvAccounts.Add(a);
+                    });
+                    list = discovered;
+                }
+
+                // Hesapların güncel bağlantı, kalan süre ve kanal istatistiklerini tara
+                var xtream = new StreamMesh.Core.Media.XtreamService();
+                bool anyUpdated = false;
+                foreach (var a in list)
+                {
+                    if ((DateTime.Now - a.LastChecked).TotalMinutes > 10 || a.TotalLiveStreams == 0)
+                    {
+                        try
+                        {
+                            bool ok = await xtream.SyncAccountAsync(a).ConfigureAwait(false);
+                            if (ok) anyUpdated = true;
+                        }
+                        catch { }
+                    }
+                }
+
+                if (anyUpdated)
+                {
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        var updatedList = _db.GetAllIptvAccounts();
+                        IptvAccounts.Clear();
+                        foreach (var a in updatedList) IptvAccounts.Add(a);
+                    });
+                }
+            });
         }
 
         public async Task StartCloudSyncAsync()

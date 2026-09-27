@@ -1,8 +1,10 @@
 @echo off
 setlocal enabledelayedexpansion
 title StreamMesh Hybrid (Rust+WPF) Motoru
+
 :: Calisma dizinini .bat dosyasinin bulundugu asil klasore sabitle
 cd /d "%~dp0"
+
 echo =====================================================================
 echo           StreamMesh Hybrid (Rust+WPF) Motoru Baslatiliyor...
 echo =====================================================================
@@ -24,6 +26,7 @@ if not exist "!PROJECT_FILE!" (
         exit /b 1
     )
 )
+
 :: 1. Mevcut .NET SDK Kontrolu
 where dotnet >nul 2>&1
 if %ERRORLEVEL% EQU 0 (

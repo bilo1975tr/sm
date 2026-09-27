@@ -36,17 +36,20 @@ namespace StreamMesh.Core.Media
             @"https?://(?<host>[^/]+)/.*?[?&](?:username|u)=(?<user>[^&#\s]+)&(?:password|p)=(?<pass>[^&#\s]+)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        // Bilinen resmi CDN ve VOD alan adları (Asla IPTV hesabı olarak algılanmamalıdır)
+        // Bilinen resmi CDN, açık playlist depoları ve web siteleri (Asla IPTV hesabı olarak algılanmamalıdır)
         private static readonly string[] NonIptvHosts = new[]
         {
             "duhnet.tv", "kanaldvod", "puhutv", "dogusdigital", "akamaized.net",
             "cloudfront.net", "fastly.net", "youtube.com", "googlevideo.com",
-            "dailymotion.com", "vimeo.com", "githubusercontent.com"
+            "dailymotion.com", "vimeo.com", "githubusercontent.com", "github.com",
+            "gitlab.com", "bitbucket.org", "pastebin.com", "onureroz.com",
+            "blogspot.com", "wordpress.com", "rawgit.com", "gitee.com"
         };
 
         private static readonly HashSet<string> NonIptvTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "hls_vod", "vod", "videos", "video", "segments", "stream", "live", "static", "media", "assets", "hls"
+            "hls_vod", "vod", "videos", "video", "segments", "stream", "live", "static", "media", "assets", "hls",
+            "master", "main", "refs", "heads", "blob", "raw", "playlist", "channels", "iptv", "m3u", "m3u8", "tv"
         };
 
         public static IptvAccountInfo? ParseAccountFromUrl(string url)
@@ -380,6 +383,30 @@ namespace StreamMesh.Core.Media
 
                 // 3. Bu tam M3U adresini kalıcı M3U kaynaklarına ekle
                 db.AddM3uSource(m3uUrl);
+
+                // 4. Bu hesabı resmi olarak IptvAccounts tablosuna kaydet (Ayarlar -> IPTV Hesapları'nda görünsün)
+                try
+                {
+                    string scheme = account.HostWithPort.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || 
+                                    account.HostWithPort.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ? "" : "http://";
+                    string serverUrl = $"{scheme}{account.HostWithPort.TrimEnd('/')}";
+
+                    var iptvAcc = new IptvAccount
+                    {
+                        Name = $"{account.Username} ({account.HostWithPort})",
+                        ServerUrl = serverUrl,
+                        Username = account.Username,
+                        Password = account.Password,
+                        Status = "Aktif",
+                        ExpiryDate = DateTime.Now.AddYears(1)
+                    };
+                    db.SaveIptvAccount(iptvAcc);
+                    LogService.LogInfo($"[IptvAccountHelper] Hesap IptvAccounts tablosuna başarıyla kaydedildi: {iptvAcc.Name}");
+                }
+                catch (Exception exAcc)
+                {
+                    LogService.LogWarning($"[IptvAccountHelper] IptvAccounts tablosuna kayıt hatası: {exAcc.Message}");
+                }
 
                 LogService.LogInfo($"[IptvAccountHelper] Sağlayıcıdan {allChannels.Count} kanal/film başarıyla içe aktarıldı ve kalıcı M3U kaynağı olarak eklendi.");
                 progress?.Invoke("Tamamlandı!", 100);

@@ -317,10 +317,16 @@ namespace StreamMesh.Models
             if (string.IsNullOrWhiteSpace(lang)) return "und";
             
             string lowerInput = lang.ToLowerInvariant();
-            if (lowerInput.Contains("[de]") || lowerInput.Contains("(de)") || lowerInput.Contains(" deutsch ") || lowerInput.EndsWith(" de")) return "de";
-            if (lowerInput.Contains("[tr]") || lowerInput.Contains("(tr)") || lowerInput.Contains(" türk ") || lowerInput.Contains(" turkey ")) return "tr";
-            if (lowerInput.Contains("[en]") || lowerInput.Contains("(en)") || lowerInput.Contains(" english ")) return "en";
-            if (lowerInput.Contains("[fr]") || lowerInput.Contains("(fr)") || lowerInput.Contains(" french ")) return "fr";
+            if (lowerInput.Contains("[de]") || lowerInput.Contains("(de)") || lowerInput.Contains(" deutsch ") || lowerInput.EndsWith(" de") || lowerInput.StartsWith("de ") || lowerInput.StartsWith("de•") || lowerInput.StartsWith("de-") || lowerInput.StartsWith("de:") || lowerInput.StartsWith("|de|")) return "de";
+            if (lowerInput.Contains("[tr]") || lowerInput.Contains("(tr)") || lowerInput.Contains(" türk ") || lowerInput.Contains(" turkey ") || lowerInput.EndsWith(" tr") || lowerInput.StartsWith("tr ") || lowerInput.StartsWith("tr•") || lowerInput.StartsWith("tr-") || lowerInput.StartsWith("tr:") || lowerInput.StartsWith("|tr|") || lowerInput.StartsWith("┃tr┃")) return "tr";
+            if (lowerInput.Contains("[en]") || lowerInput.Contains("(en)") || lowerInput.Contains(" english ") || lowerInput.EndsWith(" en") || lowerInput.StartsWith("en ") || lowerInput.StartsWith("en•") || lowerInput.StartsWith("en-") || lowerInput.StartsWith("en:") || lowerInput.StartsWith("|en|") || lowerInput.StartsWith("[us]") || lowerInput.StartsWith("[uk]")) return "en";
+            if (lowerInput.Contains("[fr]") || lowerInput.Contains("(fr)") || lowerInput.Contains(" french ") || lowerInput.EndsWith(" fr") || lowerInput.StartsWith("fr ") || lowerInput.StartsWith("fr•") || lowerInput.StartsWith("fr-") || lowerInput.StartsWith("fr:") || lowerInput.StartsWith("|fr|")) return "fr";
+            if (lowerInput.Contains("[es]") || lowerInput.Contains("(es)") || lowerInput.Contains(" spanish ") || lowerInput.Contains("españa") || lowerInput.EndsWith(" es") || lowerInput.StartsWith("es ") || lowerInput.StartsWith("es•") || lowerInput.StartsWith("es-") || lowerInput.StartsWith("es:") || lowerInput.StartsWith("|es|")) return "es";
+            if (lowerInput.Contains("[it]") || lowerInput.Contains("(it)") || lowerInput.Contains(" italian ") || lowerInput.Contains("italia") || lowerInput.EndsWith(" it") || lowerInput.StartsWith("it ") || lowerInput.StartsWith("it•") || lowerInput.StartsWith("it-") || lowerInput.StartsWith("it:") || lowerInput.StartsWith("|it|")) return "it";
+            if (lowerInput.Contains("[ru]") || lowerInput.Contains("(ru)") || lowerInput.Contains(" russian ") || lowerInput.Contains("rusya") || lowerInput.EndsWith(" ru") || lowerInput.StartsWith("ru ") || lowerInput.StartsWith("ru•") || lowerInput.StartsWith("ru-") || lowerInput.StartsWith("ru:") || lowerInput.StartsWith("|ru|")) return "ru";
+            if (lowerInput.Contains("[ar]") || lowerInput.Contains("(ar)") || lowerInput.Contains(" arabic ") || lowerInput.Contains("عربي") || lowerInput.EndsWith(" ar") || lowerInput.StartsWith("ar ") || lowerInput.StartsWith("ar•") || lowerInput.StartsWith("ar-") || lowerInput.StartsWith("ar:") || lowerInput.StartsWith("|ar|")) return "ar";
+            if (lowerInput.Contains("[nl]") || lowerInput.Contains("(nl)") || lowerInput.Contains(" dutch ") || lowerInput.Contains("nederland") || lowerInput.EndsWith(" nl") || lowerInput.StartsWith("nl ") || lowerInput.StartsWith("|nl|")) return "nl";
+            if (lowerInput.Contains("[pt]") || lowerInput.Contains("(pt)") || lowerInput.Contains(" portuguese ") || lowerInput.Contains("portugal") || lowerInput.EndsWith(" pt") || lowerInput.StartsWith("pt ") || lowerInput.StartsWith("|pt|")) return "pt";
 
             var parts = lang.Split(new[] { ',', ' ', '[', ']', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
             var normalizedParts = new List<string>();
@@ -330,6 +336,41 @@ namespace StreamMesh.Models
                 if (norm != "und" && !normalizedParts.Contains(norm)) normalizedParts.Add(norm);
             }
             return normalizedParts.Count > 0 ? string.Join(",", normalizedParts) : "und";
+        }
+
+        public static string ExtractLanguageFromText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return "und";
+            string t = text.Trim();
+
+            // Match patterns like: [TR], (TR), |TR|, ┃TR┃, DE•, DE:, TR:, EN:, ES:, FR:, IT:, RU:, AR:
+            var m = Regex.Match(t, @"^(?:(?:\d+\.|\*|✨|┃)?\s*)?[\[|\(┃]([a-zA-Z]{2})[\]|\)┃]", RegexOptions.IgnoreCase);
+            if (m.Success)
+            {
+                string code = NormalizeSingleLanguage(m.Groups[1].Value);
+                if (code != "und") return code;
+            }
+
+            var mPrefix = Regex.Match(t, @"^(?:(?:\d+\.|\*|✨|┃)?\s*)?([a-zA-Z]{2})\s*[\•\:\-\|]", RegexOptions.IgnoreCase);
+            if (mPrefix.Success)
+            {
+                string code = NormalizeSingleLanguage(mPrefix.Groups[1].Value);
+                if (code != "und") return code;
+            }
+
+            // Word checks
+            string lower = t.ToLowerInvariant();
+            if (lower.Contains("türk") || lower.Contains("turk")) return "tr";
+            if (lower.Contains("deutsch") || lower.Contains("germany") || lower.Contains("deutschland")) return "de";
+            if (lower.Contains("english") || lower.Contains("ingiliz")) return "en";
+            if (lower.Contains("españ") || lower.Contains("spain")) return "es";
+            if (lower.Contains("français") || lower.Contains("france") || lower.Contains("french")) return "fr";
+            if (lower.Contains("italy") || lower.Contains("italia") || lower.Contains("italiano")) return "it";
+            if (lower.Contains("russia") || lower.Contains("rusya")) return "ru";
+            if (lower.Contains("arabic") || lower.Contains("arapça") || lower.Contains("عربي")) return "ar";
+            if (lower.Contains("azerba") || lower.Contains("azer") || lower.Contains("azeri")) return "az";
+
+            return "und";
         }
 
         private static string NormalizeSingleLanguage(string lang)
@@ -636,6 +677,20 @@ namespace StreamMesh.Models
             }
         }
 
+        public void AddAlternativePlaylistUrl(string playlistUrl)
+        {
+            if (string.IsNullOrWhiteSpace(playlistUrl)) return;
+            var list = (PlaylistUrl ?? "").Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                          .Select(p => p.Trim())
+                                          .Where(p => !string.IsNullOrEmpty(p))
+                                          .ToList();
+            if (!list.Contains(playlistUrl.Trim(), StringComparer.OrdinalIgnoreCase))
+            {
+                list.Add(playlistUrl.Trim());
+                PlaylistUrl = string.Join(",", list);
+            }
+        }
+
         public void MergeWith(Channel other)
         {
             if (other == null) return;
@@ -655,6 +710,13 @@ namespace StreamMesh.Models
 
             // 4. Merge EPG IDs
             foreach (var e in other.GetEpgIdList()) AddAlternativeEpgId(e);
+
+            // 5. Merge Playlist Sources
+            if (!string.IsNullOrWhiteSpace(other.PlaylistUrl))
+            {
+                var otherSources = other.PlaylistUrl.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var s in otherSources) AddAlternativePlaylistUrl(s);
+            }
 
             // Restore / re-anchor preferred indices
             if (!string.IsNullOrEmpty(savedPrimaryName))

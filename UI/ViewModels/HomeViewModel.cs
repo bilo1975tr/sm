@@ -72,6 +72,34 @@ namespace StreamMesh.UI.ViewModels
 
         private string _activeCategory = "All";
         private string _selectedGroup = "All";
+        private string _selectedSourceId = "ALL";
+
+        public ObservableCollection<SourceFilterItem> SourceFilters { get; set; } = new ObservableCollection<SourceFilterItem>();
+        public bool HasMultipleSources => SourceFilters.Count > 1;
+
+        public string SelectedSourceId
+        {
+            get => _selectedSourceId;
+            set
+            {
+                if (_selectedSourceId != value)
+                {
+                    _selectedSourceId = value;
+                    OnPropertyChanged();
+                    UpdateSelectedSourceInList();
+                    _currentPage = 1;
+                    _ = RefreshDisplayAsync();
+                }
+            }
+        }
+
+        private void UpdateSelectedSourceInList()
+        {
+            foreach (var item in SourceFilters)
+            {
+                item.IsSelected = string.Equals(item.Id, _selectedSourceId, StringComparison.OrdinalIgnoreCase);
+            }
+        }
 
         public ObservableCollection<GroupCategoryItem> GroupCategories { get; set; } = new ObservableCollection<GroupCategoryItem>();
 
@@ -404,6 +432,105 @@ namespace StreamMesh.UI.ViewModels
                 LogService.LogInfo($"HomeViewModel: {channels.Count} kanal veritabanından okundu.");
 
                 _allChannels = channels;
+
+                // Dinamik Kaynak (Playlist / Xtream) Filtrelerini Hazırla:
+                // Sadece resmi veritabanındaki IptvAccounts kayıtları Xtream butonu olabilir.
+                // raw.githubusercontent.com, normal web siteleri veya genel M3U linkleri ASLA Xtream butonu olmaz.
+                var registeredIptvAccounts = _db.GetAllIptvAccounts();
+                var sourceList = new List<SourceFilterItem>();
+
+                if (registeredIptvAccounts.Count > 0)
+                {
+                    sourceList.Add(new SourceFilterItem
+                    {
+                        Id = "ALL",
+                        Name = "Tüm Liste",
+                        Icon = "📁",
+                        Count = channels.Count,
+                        IsSelected = string.Equals(_selectedSourceId, "ALL", StringComparison.OrdinalIgnoreCase)
+                    });
+
+                    // Her bir IPTV hesabı için kanal sayısını hesapla
+                    var accountMatchedChannelIds = new HashSet<string>();
+
+                    foreach (var acc in registeredIptvAccounts)
+                    {
+                        var accInfo = new IptvAccountInfo
+                        {
+                            HostWithPort = new Uri(acc.ServerUrl.StartsWith("http") ? acc.ServerUrl : "http://" + acc.ServerUrl).Authority,
+                            Username = acc.Username,
+                            Password = acc.Password
+                        };
+
+                        int accCount = 0;
+                        foreach (var ch in channels)
+                        {
+                            bool belongs = false;
+                            string pUrl = (ch.PlaylistUrl ?? "").Trim();
+                            if (!string.IsNullOrEmpty(pUrl) && (pUrl.Contains(accInfo.HostWithPort, StringComparison.OrdinalIgnoreCase) || pUrl.Contains(acc.ServerUrl, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                if (string.IsNullOrEmpty(acc.Username) || pUrl.Contains(acc.Username, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    belongs = true;
+                                }
+                            }
+
+                            if (!belongs)
+                            {
+                                foreach (var u in ch.GetUrlList())
+                                {
+                                    if (IptvAccountHelper.UrlBelongsToAccount(u, accInfo))
+                                    {
+                                        belongs = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (belongs)
+                            {
+                                accCount++;
+                                accountMatchedChannelIds.Add(ch.Id);
+                            }
+                        }
+
+                        if (accCount > 0)
+                        {
+                            string displayName = !string.IsNullOrWhiteSpace(acc.Name) ? acc.Name : $"{acc.Username} ({accInfo.HostWithPort})";
+                            sourceList.Add(new SourceFilterItem
+                            {
+                                Id = $"IPTV_{acc.Id}",
+                                Name = displayName,
+                                SourceUrl = acc.ServerUrl,
+                                Icon = "⚡",
+                                Count = accCount,
+                                IsSelected = string.Equals(_selectedSourceId, $"IPTV_{acc.Id}", StringComparison.OrdinalIgnoreCase)
+                            });
+                        }
+                    }
+
+                    int generalCount = channels.Count(c => !accountMatchedChannelIds.Contains(c.Id));
+                    if (generalCount > 0)
+                    {
+                        // "Genel Liste" butonunu Tüm Liste'nin hemen ardına ekle
+                        sourceList.Insert(1, new SourceFilterItem
+                        {
+                            Id = "GENERAL_M3U",
+                            Name = "Genel Liste",
+                            Icon = "🌐",
+                            Count = generalCount,
+                            IsSelected = string.Equals(_selectedSourceId, "GENERAL_M3U", StringComparison.OrdinalIgnoreCase)
+                        });
+                    }
+                }
+
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    SourceFilters.Clear();
+                    foreach (var s in sourceList) SourceFilters.Add(s);
+                    OnPropertyChanged(nameof(HasMultipleSources));
+                });
+
                 await RefreshDisplayAsync();
 
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
@@ -492,6 +619,11 @@ namespace StreamMesh.UI.ViewModels
             SelectedGroup = group;
         }
 
+        public void SetSource(string sourceId)
+        {
+            SelectedSourceId = sourceId;
+        }
+
         public void SetSort(int index)
         {
             _sortIndex = index;
@@ -508,6 +640,7 @@ namespace StreamMesh.UI.ViewModels
             var searchText = _searchText;
             var category = _activeCategory;
             var selectedGroup = _selectedGroup;
+            var selectedSourceId = _selectedSourceId;
             var sort = _sortIndex;
             var page = _currentPage;
             var pageSize = _pageSize;
@@ -515,7 +648,72 @@ namespace StreamMesh.UI.ViewModels
 
             await Task.Run(async () =>
             {
-                var baseCategoryFiltered = sourceChannels.AsEnumerable();
+                var baseSourceFiltered = sourceChannels.AsEnumerable();
+
+                // 1. Kaynak Filtresi (Tüm Liste, Genel M3U veya Xtream Hesabı)
+                if (!string.Equals(selectedSourceId, "ALL", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (string.Equals(selectedSourceId, "GENERAL_M3U", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var iptvAccs = _db.GetAllIptvAccounts();
+                        var allAccInfos = iptvAccs.Select(a => {
+                            string h = a.ServerUrl.StartsWith("http") ? a.ServerUrl : "http://" + a.ServerUrl;
+                            try { return new IptvAccountInfo { HostWithPort = new Uri(h).Authority, Username = a.Username, Password = a.Password }; }
+                            catch { return new IptvAccountInfo { HostWithPort = a.ServerUrl, Username = a.Username, Password = a.Password }; }
+                        }).ToList();
+
+                        baseSourceFiltered = baseSourceFiltered.Where(c =>
+                        {
+                            string pUrl = (c.PlaylistUrl ?? "").Trim();
+                            foreach (var info in allAccInfos)
+                            {
+                                if (!string.IsNullOrEmpty(pUrl) && pUrl.Contains(info.HostWithPort, StringComparison.OrdinalIgnoreCase) && pUrl.Contains(info.Username, StringComparison.OrdinalIgnoreCase))
+                                    return false;
+
+                                foreach (var u in c.GetUrlList())
+                                {
+                                    if (IptvAccountHelper.UrlBelongsToAccount(u, info))
+                                        return false;
+                                }
+                            }
+                            return true;
+                        });
+                    }
+                    else if (selectedSourceId.StartsWith("IPTV_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Belirli bir Xtream hesabı seçildi
+                        string targetAccId = selectedSourceId.Substring(5);
+                        var targetAcc = _db.GetAllIptvAccounts().FirstOrDefault(a => a.Id == targetAccId);
+                        if (targetAcc != null)
+                        {
+                            string h = targetAcc.ServerUrl.StartsWith("http") ? targetAcc.ServerUrl : "http://" + targetAcc.ServerUrl;
+                            string hostAuth;
+                            try { hostAuth = new Uri(h).Authority; } catch { hostAuth = targetAcc.ServerUrl; }
+                            var targetInfo = new IptvAccountInfo
+                            {
+                                HostWithPort = hostAuth,
+                                Username = targetAcc.Username,
+                                Password = targetAcc.Password
+                            };
+
+                            baseSourceFiltered = baseSourceFiltered.Where(c =>
+                            {
+                                string pUrl = (c.PlaylistUrl ?? "").Trim();
+                                if (!string.IsNullOrEmpty(pUrl) && pUrl.Contains(targetInfo.HostWithPort, StringComparison.OrdinalIgnoreCase) && pUrl.Contains(targetInfo.Username, StringComparison.OrdinalIgnoreCase))
+                                    return true;
+
+                                foreach (var u in c.GetUrlList())
+                                {
+                                    if (IptvAccountHelper.UrlBelongsToAccount(u, targetInfo))
+                                        return true;
+                                }
+                                return false;
+                            });
+                        }
+                    }
+                }
+
+                var baseCategoryFiltered = baseSourceFiltered;
 
                 if (category == "Favorites") baseCategoryFiltered = baseCategoryFiltered.Where(c => c.IsFavorite);
                 else if (category == "TV") baseCategoryFiltered = baseCategoryFiltered.Where(c => string.Equals(c.Category, "TV", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(c.Category));

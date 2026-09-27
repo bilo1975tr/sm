@@ -143,6 +143,14 @@ namespace StreamMesh.UI.Views
             }
         }
 
+        private void SourceChip_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.Tag is string sourceId)
+            {
+                _vm.SetSource(sourceId);
+            }
+        }
+
         private void DirectPlay_Click(object sender, RoutedEventArgs e)
         {
             e.Handled = true;

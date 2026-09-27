@@ -7,6 +7,7 @@ using Microsoft.Data.Sqlite;
 using StreamMesh.Models;
 using StreamMesh.Core.Utils;
 using StreamMesh.Core.Media;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Database.Repositories;
 
 namespace StreamMesh.Core.Database
@@ -268,7 +269,17 @@ namespace StreamMesh.Core.Database
                 // Other table column migrations
                 string[] otherCols = {
                     "ALTER TABLE EpgPrograms ADD COLUMN SourceUrl TEXT DEFAULT ''",
-                    "ALTER TABLE M3uSources ADD COLUMN IsDefault INTEGER DEFAULT 0"
+                    "ALTER TABLE M3uSources ADD COLUMN IsDefault INTEGER DEFAULT 0",
+                    "ALTER TABLE IptvAccounts ADD COLUMN MaxConnections INTEGER DEFAULT 1",
+                    "ALTER TABLE IptvAccounts ADD COLUMN ActiveConnections INTEGER DEFAULT 0",
+                    "ALTER TABLE IptvAccounts ADD COLUMN TotalLiveStreams INTEGER DEFAULT 0",
+                    "ALTER TABLE IptvAccounts ADD COLUMN TotalVodStreams INTEGER DEFAULT 0",
+                    "ALTER TABLE IptvAccounts ADD COLUMN TotalSeriesStreams INTEGER DEFAULT 0",
+                    "ALTER TABLE IptvAccounts ADD COLUMN ServerVersion TEXT DEFAULT ''",
+                    "ALTER TABLE IptvAccounts ADD COLUMN ServerTimezone TEXT DEFAULT ''",
+                    "ALTER TABLE IptvAccounts ADD COLUMN AllowedFormats TEXT DEFAULT ''",
+                    "ALTER TABLE IptvAccounts ADD COLUMN IsTrial INTEGER DEFAULT 0",
+                    "ALTER TABLE IptvAccounts ADD COLUMN LastChecked TEXT DEFAULT ''"
                 };
 
                 foreach (var sql in otherCols)
@@ -328,6 +339,130 @@ namespace StreamMesh.Core.Database
                 SetSetting("MigrationV2Done", "true");
             }
             catch { }
+
+            // V2.1: Otomatik Veritabanı Temizliği ve Normalizasyon Düzeltmesi (Mevcut TV'ye düşmüş filmleri ve dilleri düzelt)
+            try
+            {
+                if (GetSetting("FixTvMoviesAndLanguagesDone", "") != "true")
+                {
+                    using (var fixConn = new SqliteConnection(ConnectionString))
+                    {
+                        await fixConn.OpenAsync();
+                        using var fixCmd = fixConn.CreateCommand();
+                        // 1. URL'si .mkv, .mp4 olan veya /movie/ içeren tüm içerikleri Film yap
+                        fixCmd.CommandText = @"
+                            UPDATE Channels 
+                            SET Category = 'Film' 
+                            WHERE (Category = 'TV' OR Category IS NULL OR Category = '') 
+                              AND (Url LIKE '%.mkv%' OR Url LIKE '%.mp4%' OR Url LIKE '%/movie/%' OR Url LIKE '%/movies/%' OR Url LIKE '%/vod/%'
+                                   OR GroupTitle LIKE '%ACTION%' OR GroupTitle LIKE '%AKSIYON%' OR GroupTitle LIKE '%HORROR%' OR GroupTitle LIKE '%KORKU%'
+                                   OR GroupTitle LIKE '%KOMEDI%' OR GroupTitle LIKE '%COMEDY%' OR GroupTitle LIKE '%FILM%' OR GroupTitle LIKE '%MOVIE%'
+                                   OR GroupTitle LIKE '%SINEMA%' OR GroupTitle LIKE '%THRILLER%' OR GroupTitle LIKE '%DRAMA%' OR GroupTitle LIKE '%ABENTEUER%');
+                            
+                            -- 2. URL'si /series/ olan veya bölüm bilgisi taşıyanları Dizi yap
+                            UPDATE Channels 
+                            SET Category = 'Dizi' 
+                            WHERE Category = 'TV' AND (Url LIKE '%/series/%' OR GroupTitle LIKE '%DIZI%' OR GroupTitle LIKE '%SERIES%');
+
+                            -- 3. DE/TR/FR/EN önekli grupların dillerini güncelle
+                            UPDATE Channels SET Language = 'de' WHERE (Language = 'und' OR Language IS NULL) AND (GroupTitle LIKE 'DE•%' OR GroupTitle LIKE 'DE:%' OR GroupTitle LIKE 'DE -%' OR GroupTitle LIKE '%[DE]%' OR GroupTitle LIKE '%DEUTSCH%');
+                            UPDATE Channels SET Language = 'tr' WHERE (Language = 'und' OR Language IS NULL) AND (GroupTitle LIKE 'TR•%' OR GroupTitle LIKE 'TR:%' OR GroupTitle LIKE 'TR -%' OR GroupTitle LIKE '%[TR]%' OR GroupTitle LIKE '%TURK%');
+                            UPDATE Channels SET Language = 'en' WHERE (Language = 'und' OR Language IS NULL) AND (GroupTitle LIKE 'EN•%' OR GroupTitle LIKE 'EN:%' OR GroupTitle LIKE 'EN -%' OR GroupTitle LIKE '%[EN]%' OR GroupTitle LIKE '%ENGLISH%');
+                            UPDATE Channels SET Language = 'fr' WHERE (Language = 'und' OR Language IS NULL) AND (GroupTitle LIKE 'FR•%' OR GroupTitle LIKE 'FR:%' OR GroupTitle LIKE '%[FR]%' OR GroupTitle LIKE '%FRANCE%');
+                            UPDATE Channels SET Language = 'es' WHERE (Language = 'und' OR Language IS NULL) AND (GroupTitle LIKE 'ES•%' OR GroupTitle LIKE 'ES:%' OR GroupTitle LIKE '%[ES]%' OR GroupTitle LIKE '%SPAIN%');
+                        ";
+                        await fixCmd.ExecuteNonQueryAsync();
+                    }
+                    SetSetting("FixTvMoviesAndLanguagesDone", "true");
+                    LogService.LogInfo("DatabaseEngine: Kütüphane kategori ve dil normalizasyon düzeltmesi başarıyla tamamlandı.");
+                }
+            }
+            catch (Exception exFix)
+            {
+                LogService.LogWarning($"DatabaseEngine: Kategori düzeltme adımı atlandı: {exFix.Message}");
+            }
+
+            // V2.2: Mevcut veritabanında daha önceden bulunan gerçek Xtream/IPTV hesaplarını tara ve IptvAccounts tablosuna kaydet
+            try
+            {
+                _ = Task.Run(async () =>
+                {
+                    await DiscoverAndSyncAccountsFromChannelsAsync().ConfigureAwait(false);
+                });
+            }
+            catch { }
+        }
+
+        public async Task<List<IptvAccount>> DiscoverAndSyncAccountsFromChannelsAsync()
+        {
+            try
+            {
+                var existingAccs = GetAllIptvAccounts();
+                var existingKeys = new HashSet<string>(existingAccs.Select(a => $"{a.Username}@{a.ServerUrl}".ToLowerInvariant()));
+                var allCh = await GetAllChannelsAsync();
+                var discovered = new Dictionary<string, IptvAccountInfo>();
+
+                foreach (var ch in allCh)
+                {
+                    foreach (var u in ch.GetUrlList())
+                    {
+                        var acc = IptvAccountHelper.ParseAccountFromUrl(u);
+                        if (acc != null && !string.IsNullOrWhiteSpace(acc.Username) && !discovered.ContainsKey(acc.SignatureKey))
+                        {
+                            discovered[acc.SignatureKey] = acc;
+                        }
+                    }
+                }
+
+                bool addedAny = false;
+                foreach (var acc in discovered.Values)
+                {
+                    string scheme = acc.HostWithPort.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || 
+                                    acc.HostWithPort.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ? "" : "http://";
+                    string serverUrl = $"{scheme}{acc.HostWithPort.TrimEnd('/')}";
+                    string checkKey = $"{acc.Username}@{serverUrl}".ToLowerInvariant();
+
+                    if (!existingKeys.Contains(checkKey))
+                    {
+                        var newAcc = new IptvAccount
+                        {
+                            Name = $"{acc.Username} ({acc.HostWithPort})",
+                            ServerUrl = serverUrl,
+                            Username = acc.Username,
+                            Password = acc.Password,
+                            Status = "Aktif",
+                            ExpiryDate = DateTime.Now.AddYears(1)
+                        };
+                        SaveIptvAccount(newAcc);
+                        existingKeys.Add(checkKey);
+                        addedAny = true;
+                        LogService.LogInfo($"DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: {newAcc.Name}");
+
+                        // Detaylı sunucu ve kullanıcı istatistiklerini çek
+                        try
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                var xtr = new XtreamService();
+                                await xtr.SyncAccountAsync(newAcc).ConfigureAwait(false);
+                            });
+                        }
+                        catch { }
+                    }
+                }
+
+                if (addedAny)
+                {
+                    NotifyDatabaseUpdated();
+                }
+
+                return GetAllIptvAccounts();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("DatabaseEngine: DiscoverAndSyncAccountsFromChannelsAsync hatası", ex);
+                return GetAllIptvAccounts();
+            }
         }
 
         // Settings delegators

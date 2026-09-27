@@ -43,12 +43,26 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
-                // 2. Try matching by identical stream URL
+                // 2. Try matching by identical stream URL or cleaned identity
                 if (matched == null)
                 {
                     foreach (var u in urls)
                     {
                         if (urlMap.TryGetValue(u, out matched)) break;
+                        string cleanId = M3uEngine.CleanStreamUrlForIdentity(u);
+                        if (!string.IsNullOrEmpty(cleanId) && urlMap.TryGetValue(cleanId, out matched)) break;
+                    }
+                }
+
+                // Dizi ve Bölüm Güvencesi: Eğer kanal bir dizi bölümüyse ve matched kanalın sezon/bölümü farklıysa ASLA birleştirme!
+                if (matched != null)
+                {
+                    bool isSeriesMismatch = (ch.SeasonNumber > 0 && matched.SeasonNumber > 0 && (ch.SeasonNumber != matched.SeasonNumber || ch.EpisodeNumber != matched.EpisodeNumber)) ||
+                                            (ch.EpisodeNumber > 0 && matched.EpisodeNumber > 0 && ch.EpisodeNumber != matched.EpisodeNumber);
+
+                    if (isSeriesMismatch)
+                    {
+                        matched = null; // Ayrı kart olarak bırak
                     }
                 }
 
@@ -70,6 +84,9 @@ namespace StreamMesh.Core.Media
                 foreach (var u in matched.GetUrlList())
                 {
                     urlMap[u] = matched;
+                    string cleanId = M3uEngine.CleanStreamUrlForIdentity(u);
+                    if (!string.IsNullOrEmpty(cleanId)) urlMap[cleanId] = matched;
+
                     string h = aceEngine.ExtractHash(u);
                     if (!string.IsNullOrEmpty(h)) aceMap[h] = matched;
                 }

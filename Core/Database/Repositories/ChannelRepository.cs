@@ -361,12 +361,22 @@ namespace StreamMesh.Core.Database.Repositories
 
         public int GetChannelCountBySource(string url)
         {
+            if (string.IsNullOrWhiteSpace(url)) return 0;
             using (var connection = new SqliteConnection(_connectionString))
             {
                 connection.Open();
                 var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT COUNT(*) FROM Channels WHERE PlaylistUrl = @Url";
-                cmd.Parameters.AddWithValue("@Url", url);
+                string trimmed = url.Trim();
+                string fileName = System.IO.Path.GetFileName(trimmed.Split('?')[0]);
+                if (string.IsNullOrEmpty(fileName)) fileName = trimmed;
+
+                cmd.CommandText = @"SELECT COUNT(*) FROM Channels 
+                                    WHERE PlaylistUrl = @Url 
+                                       OR PlaylistUrl LIKE @LikeUrl 
+                                       OR PlaylistUrl LIKE @LikeFile";
+                cmd.Parameters.AddWithValue("@Url", trimmed);
+                cmd.Parameters.AddWithValue("@LikeUrl", "%" + trimmed + "%");
+                cmd.Parameters.AddWithValue("@LikeFile", "%" + fileName + "%");
                 return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
@@ -378,8 +388,17 @@ namespace StreamMesh.Core.Database.Repositories
             {
                 connection.Open();
                 var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT Id, Name, Url, LogoUrl, Category, Language FROM Channels WHERE PlaylistUrl = @Url";
-                cmd.Parameters.AddWithValue("@Url", url);
+                string trimmed = url.Trim();
+                string fileName = System.IO.Path.GetFileName(trimmed.Split('?')[0]);
+                if (string.IsNullOrEmpty(fileName)) fileName = trimmed;
+
+                cmd.CommandText = @"SELECT Id, Name, Url, LogoUrl, Category, Language FROM Channels 
+                                    WHERE PlaylistUrl = @Url 
+                                       OR PlaylistUrl LIKE @LikeUrl 
+                                       OR PlaylistUrl LIKE @LikeFile";
+                cmd.Parameters.AddWithValue("@Url", trimmed);
+                cmd.Parameters.AddWithValue("@LikeUrl", "%" + trimmed + "%");
+                cmd.Parameters.AddWithValue("@LikeFile", "%" + fileName + "%");
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
