@@ -14,7 +14,6 @@ namespace StreamMesh.Core.Media
 {
     public class LogoSyncService
     {
-        private static readonly HttpClient _client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
         private readonly DatabaseEngine _db = new DatabaseEngine();
 
         public async Task SyncIfNecessaryAsync()
@@ -110,9 +109,6 @@ namespace StreamMesh.Core.Media
 
                 LogService.LogInfo("[LogoSync] GitHub (tv-logos) üzerinden logo verileri güncelleniyor...");
 
-                _client.DefaultRequestHeaders.UserAgent.Clear();
-                _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
-
                 string[] countries = { "turkey", "germany", "united-kingdom", "united-states", "france", "italy", "spain", "azerbaijan", "netherlands" };
                 var allLogos = new List<(string key, string file)>();
 
@@ -121,7 +117,7 @@ namespace StreamMesh.Core.Media
                     try
                     {
                         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                        var response = await _client.GetStringAsync($"https://api.github.com/repos/tv-logo/tv-logos/contents/countries/{country}", cts.Token);
+                        var response = await Network.MediaHttpClient.GetStringAsync($"https://api.github.com/repos/tv-logo/tv-logos/contents/countries/{country}", 10, cts.Token);
                         var items = JArray.Parse(response);
                         foreach (var item in items)
                         {

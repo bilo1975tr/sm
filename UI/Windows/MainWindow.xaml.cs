@@ -29,7 +29,6 @@ namespace StreamMesh.UI.Windows
         private readonly UpdateService _updateService = new UpdateService();
         private DispatcherTimer _peerTimer;
         private DispatcherTimer _epgTimer;
-        private DispatcherTimer _metaTimer;
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
         private bool _isExplicitExit = false;
 
@@ -72,29 +71,22 @@ namespace StreamMesh.UI.Windows
 
             CheckForUpdatesAsync();
 
-            _peerTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
+            _peerTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
             _peerTimer.Tick += async (s, e) => {
                 await ViewModel.RefreshPeersAsync();
                 OnlinePeersText.Text = ViewModel.OnlinePeers.ToString();
             };
             _peerTimer.Start();
 
-            // 12-Hour Automatic EPG Sync Timer
+            // 12-Hour Automatic EPG Sync Timer (On-Demand / Lazy)
             _epgTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(12) };
             _epgTimer.Tick += async (s, e) => { await RunAutoEpgUpdateAsync(); };
             _epgTimer.Start();
-            _ = Task.Run(async () => { await Task.Delay(10000); await RunAutoEpgUpdateAsync(); });
-
-            // 30-Minute Film & Series Metadata Auto-Enricher Worker
-            _metaTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(30) };
-            _metaTimer.Tick += async (s, e) => { await RunAutoMetadataEnrichmentAsync(); };
-            _metaTimer.Start();
-            _ = Task.Run(async () => { await Task.Delay(20000); await RunAutoMetadataEnrichmentAsync(); });
 
             // Auto-detect local AI Engine (Ollama / LM Studio) in background
             _ = Task.Run(async () =>
             {
-                await Task.Delay(3000);
+                await Task.Delay(10000);
                 try
                 {
                     var ai = new AiEngine();

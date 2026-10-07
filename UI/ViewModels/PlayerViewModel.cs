@@ -15,7 +15,6 @@ namespace StreamMesh.UI.ViewModels
 {
     public class PlayerViewModel : INotifyPropertyChanged
     {
-        private readonly YoutubeEngine _yt = new YoutubeEngine();
         private readonly AceEngine _ace = new AceEngine();
         private readonly DatabaseEngine _db = new DatabaseEngine();
         private readonly EpgService _epgService = new EpgService();
@@ -240,12 +239,6 @@ namespace StreamMesh.UI.ViewModels
                         }
                         LogService.LogInfo($"[PLAYBACK] AceStream direct stream fallback -> {tryUrl}");
                     }
-                }
-                else if (tryUrl.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) || tryUrl.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
-                {
-                    onStatusUpdate?.Invoke("YouTube: Adres Çözülüyor...");
-                    tryUrl = await _yt.GetStreamUrlAsync(tryUrl).ConfigureAwait(false) ?? tryUrl;
-                    LogService.LogInfo($"[PLAYBACK] YouTube resolved -> {tryUrl}");
                 }
                 else if (!tryUrl.Contains(":6878/ace/") && !IsVod(channel))
                 {

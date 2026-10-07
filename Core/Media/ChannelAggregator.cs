@@ -18,10 +18,7 @@ namespace StreamMesh.Core.Media
 
             var aggregated = new List<Channel>();
             var urlMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
-            var epgMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
             var aceMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
-            var nameMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
-
             var aceEngine = new AceEngine();
 
             foreach (var ch in incomingChannels)
@@ -30,10 +27,7 @@ namespace StreamMesh.Core.Media
 
                 Channel? matched = null;
                 var urls = ch.GetUrlList();
-                var epgs = ch.GetEpgIdList();
-                var names = ch.GetNamesList();
 
-                // 1. Try matching by AceStream Hash (Strongest match for P2P)
                 foreach (var u in urls)
                 {
                     string hash = aceEngine.ExtractHash(u);
@@ -43,7 +37,6 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
-                // 2. Try matching by identical stream URL or cleaned identity
                 if (matched == null)
                 {
                     foreach (var u in urls)
@@ -54,7 +47,6 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
-                // Dizi ve Bölüm Güvencesi: Eğer kanal bir dizi bölümüyse ve matched kanalın sezon/bölümü farklıysa ASLA birleştirme!
                 if (matched != null)
                 {
                     bool isSeriesMismatch = (ch.SeasonNumber > 0 && matched.SeasonNumber > 0 && (ch.SeasonNumber != matched.SeasonNumber || ch.EpisodeNumber != matched.EpisodeNumber)) ||
@@ -62,13 +54,9 @@ namespace StreamMesh.Core.Media
 
                     if (isSeriesMismatch)
                     {
-                        matched = null; // Ayrı kart olarak bırak
+                        matched = null;
                     }
                 }
-
-                // NOTE: Automatic name-based channel aggregation has been strictly disabled.
-                // Channels with identical or similar names in different countries/languages (e.g. ATV TR vs ATV DE)
-                // must NEVER be auto-merged unless explicitly merged by the user via Manual Channel Merge.
 
                 if (matched != null)
                 {
@@ -80,7 +68,6 @@ namespace StreamMesh.Core.Media
                     aggregated.Add(matched);
                 }
 
-                // Re-index only strictly identical stream identifiers
                 foreach (var u in matched.GetUrlList())
                 {
                     urlMap[u] = matched;

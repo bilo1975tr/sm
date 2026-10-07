@@ -142,8 +142,20 @@ namespace StreamMesh.Core.Database
                         PreferredLogoIndex INTEGER DEFAULT 0,
                         PreferredEpgIndex INTEGER DEFAULT 0,
                         M3uLineNumber INTEGER DEFAULT 0,
-                        RawM3uBlock TEXT DEFAULT ''
+                        RawM3uBlock TEXT DEFAULT '',
+                        ChannelHash TEXT DEFAULT ''
                     );
+                    CREATE VIRTUAL TABLE IF NOT EXISTS Channels_FTS USING fts5(
+                        id,
+                        name,
+                        group_title,
+                        category
+                    );
+                    CREATE INDEX IF NOT EXISTS idx_channels_category ON Channels(Category);
+                    CREATE INDEX IF NOT EXISTS idx_channels_favorite ON Channels(IsFavorite);
+                    CREATE INDEX IF NOT EXISTS idx_channels_group ON Channels(GroupTitle);
+                    CREATE INDEX IF NOT EXISTS idx_channels_hash ON Channels(ChannelHash);
+                    CREATE INDEX IF NOT EXISTS idx_channels_playlisturl ON Channels(PlaylistUrl);
                     CREATE TABLE IF NOT EXISTS EpgPrograms (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
                         ChannelName TEXT,
@@ -382,15 +394,8 @@ namespace StreamMesh.Core.Database
                 LogService.LogWarning($"DatabaseEngine: Kategori düzeltme adımı atlandı: {exFix.Message}");
             }
 
-            // V2.2: Mevcut veritabanında daha önceden bulunan gerçek Xtream/IPTV hesaplarını tara ve IptvAccounts tablosuna kaydet
-            try
-            {
-                _ = Task.Run(async () =>
-                {
-                    await DiscoverAndSyncAccountsFromChannelsAsync().ConfigureAwait(false);
-                });
-            }
-            catch { }
+            // Note: Automatic 1M URL background account scanning disabled for 1M+ channel performance.
+            // Accounts are synchronized strictly on-demand when user adds or updates an IPTV account.
         }
 
         public async Task<List<IptvAccount>> DiscoverAndSyncAccountsFromChannelsAsync()
@@ -480,7 +485,8 @@ namespace StreamMesh.Core.Database
         public async Task SyncIncomingChannelsAsync(List<Channel> incoming) => await _channels.SyncIncomingChannelsAsync(incoming);
         public async Task<int> AutoAggregateDatabaseAsync() => await _channels.AutoAggregateDatabaseAsync();
         public async Task<int> GetTotalChannelCountAsync() => await _channels.GetTotalChannelCountAsync();
-        public int GetChannelCountBySource(string url) => _channels.GetChannelCountBySource(url);
+        public async Task<int> GetChannelCountBySourceAsync(string url) => await _channels.GetChannelCountBySourceAsync(url);
+        public async Task<List<GroupCategoryItem>> GetGroupCategoriesForCategoryAsync(string? category, string? sourceId) => await _channels.GetGroupCategoriesForCategoryAsync(category, sourceId);
         public List<Channel> GetChannelsBySource(string url) => _channels.GetChannelsBySource(url);
         public void DeleteChannelById(string channelId) { _channels.DeleteChannelById(channelId); NotifyDatabaseUpdated(); }
         public async Task DeleteChannelsAsync(List<string> ids) { await _channels.DeleteChannelsAsync(ids); NotifyDatabaseUpdated(); }
@@ -515,6 +521,8 @@ namespace StreamMesh.Core.Database
         public List<IptvAccount> GetAllIptvAccounts() => _iptv.GetAllIptvAccounts();
         public void SaveIptvAccount(IptvAccount acc) => _iptv.SaveIptvAccount(acc);
         public void RemoveIptvAccount(string id) => _iptv.RemoveIptvAccount(id);
+
+        public async Task<(List<Channel> channels, int totalCount)> GetPagedChannelsAsync(string? search, string? category, string? groupTitle, string? sourceId, int sortIndex, int page, int pageSize) => await _channels.GetPagedChannelsAsync(search, category, groupTitle, sourceId, sortIndex, page, pageSize);
 
         // Logo delegators
         public void UpdateLogoIndex(List<(string key, string file)> items) => _logo.UpdateLogoIndex(items);

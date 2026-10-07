@@ -22,7 +22,6 @@ ArchitecturesInstallIn64BitMode=x64
 UninstallDisplayIcon={app}\logos\StreamMesh_Icon.ico
 
 [Languages]
-Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]

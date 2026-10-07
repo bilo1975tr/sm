@@ -28,7 +28,7 @@ namespace StreamMesh
         public static MediaServer? Server { get; set; }
         public static SsdpService? Ssdp { get; set; }
 
-        protected override async void OnStartup(System.Windows.StartupEventArgs e)
+        protected override void OnStartup(System.Windows.StartupEventArgs e)
         {
             if (!EnsureSingleInstance()) return;
 
@@ -37,9 +37,10 @@ namespace StreamMesh
             LogService.ClearLogs();
             LogService.LogInfo($"App: Baslatiliyor. Process: {Process.GetCurrentProcess().MainModule?.FileName}");
 
-            await InitializeServicesAsync();
-
+            // Show MainWindow instantly with zero delay, initialize services in background
             base.OnStartup(e);
+
+            _ = InitializeServicesAsync();
         }
 
         private bool EnsureSingleInstance()
@@ -87,22 +88,19 @@ namespace StreamMesh
             try
             {
                 Server = new MediaServer();
-                Ssdp = new SsdpService();
-
                 if (Server.Start())
                 {
-                    Ssdp.Start(Server.Port);
-                    LogService.LogInfo($"[STARTUP] MediaServer and SSDP started on port {Server.Port}.");
+                    LogService.LogInfo($"[STARTUP] MediaServer started securely on port {Server.Port}.");
                 }
                 else
                 {
-                    LogService.LogError("[STARTUP] CRITICAL: MediaServer failed to start on all candidate ports (8080-8084).");
-                    System.Windows.MessageBox.Show("StreamMesh MediaServer başlatılamadı.\n\nSebep: 8080-8084 arasındaki tüm portlar kullanımda veya sistem erişimi engellendi.", "MediaServer Başlatma Hatası", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    LogService.LogError("[STARTUP] CRITICAL: MediaServer failed to start on candidate ports (8080-8084).");
+                    System.Windows.MessageBox.Show("StreamMesh MediaServer başlatılamadı.\n\nSebep: Portlar kullanımda veya erişim engellendi.", "MediaServer Başlatma Hatası", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                LogService.LogError("[STARTUP] CRITICAL: Exception during MediaServer/SSDP init", ex);
+                LogService.LogError("[STARTUP] CRITICAL: Exception during MediaServer init", ex);
             }
 
             // 2. Maintenance
@@ -145,8 +143,9 @@ namespace StreamMesh
 
         private void StartBackgroundTasks()
         {
-            // 1. Logo Sync (Sync local + online tv-logos if necessary)
+            // Stagger background tasks with staggered delays to prevent UI freeze and DB lock contention on startup
             Task.Run(async () => {
+                await Task.Delay(4000);
                 try
                 {
                     var logoSync = new LogoSyncService();
@@ -158,33 +157,39 @@ namespace StreamMesh
                 }
             });
 
-            // 2. AceStream Engine Check / Start
             Task.Run(async () => {
-                var ace = new AceEngine();
-                if (!ace.IsInstalled())
+                await Task.Delay(7000);
+                try
                 {
-                    await Current.Dispatcher.InvokeAsync(async () => {
-                        var result = System.Windows.MessageBox.Show("AceStream motoru yüklü değil. P2P içerikleri oynatabilmeniz için gerekli bileşenler şimdi indirilsin mi?\n\nNot: İndirme işlemi arka planda yapılacaktır.", "Eksik Bileşen", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                        if (result == MessageBoxResult.Yes)
-                        {
-                            bool success = await ace.DownloadAndExtractEngineAsync();
-                            if (success)
+                    var ace = new AceEngine();
+                    if (!ace.IsInstalled())
+                    {
+                        await Current.Dispatcher.InvokeAsync(async () => {
+                            var result = System.Windows.MessageBox.Show("AceStream motoru yüklü değil. P2P içerikleri oynatabilmeniz için gerekli bileşenler şimdi indirilsin mi?\n\nNot: İndirme işlemi arka planda yapılacaktır.", "Eksik Bileşen", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                            if (result == MessageBoxResult.Yes)
                             {
-                                await ace.StartEngineAsync();
-                                System.Windows.MessageBox.Show("AceStream başarıyla yüklendi ve başlatıldı.", "Kurulum Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+                                bool success = await ace.DownloadAndExtractEngineAsync();
+                                if (success)
+                                {
+                                    await ace.StartEngineAsync();
+                                    System.Windows.MessageBox.Show("AceStream başarıyla yüklendi ve başlatıldı.", "Kurulum Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
+                    else
+                    {
+                        await ace.StartEngineAsync();
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    await ace.StartEngineAsync();
+                    LogService.LogError("[STARTUP] AceEngine background task error", ex);
                 }
             });
 
-            // 3. GitHub Playlist Sync: Yalnızca veritabanında hiç kanal yokken (ilk kurulum veya liste boşaltılmışken) çalıştır.
-            // Kanal varsa her açılışta internetten tekrar çekilmez; uygulama doğrudan yerel SQLite verileriyle anında açılır.
             Task.Run(async () => {
+                await Task.Delay(2000);
                 try
                 {
                     var db = new DatabaseEngine();
@@ -192,7 +197,7 @@ namespace StreamMesh
                     if (count == 0)
                     {
                         LogService.LogInfo("[STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...");
-                        await Task.Delay(300);
+                        await Task.Delay(500);
                         var sync = new GitHubSyncEngine();
                         await sync.PullFromGitHubAsync();
                     }

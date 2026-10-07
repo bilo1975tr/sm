@@ -613,11 +613,16 @@ namespace StreamMesh.UI.Views
 
                 if (_player == null || token.IsCancellationRequested || sessionId != _playbackSessionId) return;
 
-                LogService.LogInfo("[PLAYBACK] Waiting for Play Semaphore...");
-                bool acquired = await _playSemaphore.WaitAsync(10000, token).ConfigureAwait(false);
+                LogService.LogInfo("[PLAYBACK] Acquiring Play Semaphore...");
+                bool acquired = await _playSemaphore.WaitAsync(500, token).ConfigureAwait(false);
+                if (!acquired)
+                {
+                    try { _playSemaphore.Release(); } catch { }
+                    acquired = await _playSemaphore.WaitAsync(1000, token).ConfigureAwait(false);
+                }
                 if (!acquired || token.IsCancellationRequested || sessionId != _playbackSessionId)
                 {
-                    LogService.LogWarning("[PLAYBACK] Play Semaphore Timeout or Cancelled");
+                    LogService.LogWarning("[PLAYBACK] Play Semaphore Acquire Failed or Cancelled");
                     return;
                 }
 

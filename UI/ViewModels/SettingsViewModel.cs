@@ -23,6 +23,8 @@ namespace StreamMesh.UI.ViewModels
         public ObservableCollection<M3uSourceDisplay> Sources { get; } = new ObservableCollection<M3uSourceDisplay>();
         public ObservableCollection<IptvAccount> IptvAccounts { get; } = new ObservableCollection<IptvAccount>();
         public ObservableCollection<string> ValidationLogs { get; } = new ObservableCollection<string>();
+        public ObservableCollection<string> AiLogs { get; } = new ObservableCollection<string>();
+        public ObservableCollection<AiBatchReportItem> AiBatchReports { get; } = new ObservableCollection<AiBatchReportItem>();
 
         private string _aiUrl = "";
         public string AiUrl { get => _aiUrl; set { _aiUrl = value; OnPropertyChanged(); } }
@@ -79,7 +81,6 @@ namespace StreamMesh.UI.ViewModels
             var list = _db.GetAllM3uSources();
             string? defaultUrl = _db.GetDefaultM3uSource();
 
-            // If no source is marked default yet but list is non-empty, default to the first one
             if (string.IsNullOrEmpty(defaultUrl) && list.Count > 0)
             {
                 defaultUrl = list[0].Url;
@@ -90,12 +91,19 @@ namespace StreamMesh.UI.ViewModels
                 bool isCloud = s.Url.Contains("github") || s.Url.Contains("raw.githubusercontent");
                 bool isDef = s.IsDefault || (defaultUrl != null && string.Equals(s.Url, defaultUrl, StringComparison.OrdinalIgnoreCase));
 
-                Sources.Add(new M3uSourceDisplay {
+                var display = new M3uSourceDisplay {
                     Url = s.Url,
                     Origin = isCloud ? "Bulut" : "Yerel",
                     Color = isDef ? "#059669" : (isCloud ? "#0369a1" : "#1e293b"),
-                    ChannelCount = _db.GetChannelCountBySource(s.Url),
+                    ChannelCount = 0,
                     IsDefault = isDef
+                };
+                Sources.Add(display);
+
+                _ = Task.Run(async () =>
+                {
+                    int count = await _db.GetChannelCountBySourceAsync(s.Url);
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() => display.ChannelCount = count);
                 });
             }
         }
@@ -105,47 +113,6 @@ namespace StreamMesh.UI.ViewModels
             var list = _db.GetAllIptvAccounts();
             IptvAccounts.Clear();
             foreach (var a in list) IptvAccounts.Add(a);
-
-            _ = Task.Run(async () =>
-            {
-                // Eğer hesap listesi boşsa veya eksikse mevcut kanalları tara ve hesapları otomatik keşfet
-                var discovered = await _db.DiscoverAndSyncAccountsFromChannelsAsync().ConfigureAwait(false);
-                if (discovered.Count > 0)
-                {
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                    {
-                        IptvAccounts.Clear();
-                        foreach (var a in discovered) IptvAccounts.Add(a);
-                    });
-                    list = discovered;
-                }
-
-                // Hesapların güncel bağlantı, kalan süre ve kanal istatistiklerini tara
-                var xtream = new StreamMesh.Core.Media.XtreamService();
-                bool anyUpdated = false;
-                foreach (var a in list)
-                {
-                    if ((DateTime.Now - a.LastChecked).TotalMinutes > 10 || a.TotalLiveStreams == 0)
-                    {
-                        try
-                        {
-                            bool ok = await xtream.SyncAccountAsync(a).ConfigureAwait(false);
-                            if (ok) anyUpdated = true;
-                        }
-                        catch { }
-                    }
-                }
-
-                if (anyUpdated)
-                {
-                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                    {
-                        var updatedList = _db.GetAllIptvAccounts();
-                        IptvAccounts.Clear();
-                        foreach (var a in updatedList) IptvAccounts.Add(a);
-                    });
-                }
-            });
         }
 
         public async Task StartCloudSyncAsync()
@@ -157,15 +124,25 @@ namespace StreamMesh.UI.ViewModels
         protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public class M3uSourceDisplay
+    public class M3uSourceDisplay : INotifyPropertyChanged
     {
         public string Url { get; set; } = "";
         public string Origin { get; set; } = "Yerel";
         public string Color { get; set; } = "#1e293b";
-        public int ChannelCount { get; set; } = 0;
+
+        private int _channelCount = 0;
+        public int ChannelCount
+        {
+            get => _channelCount;
+            set { _channelCount = value; OnPropertyChanged(); }
+        }
+
         public bool IsDefault { get; set; } = false;
 
         public Visibility DefaultBadgeVisibility => IsDefault ? Visibility.Visible : Visibility.Collapsed;
         public Visibility MakeDefaultButtonVisibility => IsDefault ? Visibility.Collapsed : Visibility.Visible;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

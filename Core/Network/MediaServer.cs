@@ -113,9 +113,6 @@ namespace StreamMesh.Core.Network
 
             while (attempts < 5)
             {
-                var localIps = GetLocalIPv4Addresses();
-                bool tryLanBinding = localIps.Count > 0;
-
                 try
                 {
                     if (_listener != null)
@@ -126,122 +123,19 @@ namespace StreamMesh.Core.Network
                     _listener = new HttpListener();
                     _listener.Prefixes.Add($"http://localhost:{_port}/");
                     _listener.Prefixes.Add($"http://127.0.0.1:{_port}/");
-                    LogService.LogInfo($"MediaServer: Registered localhost & 127.0.0.1 prefixes on port {_port}.");
-
-                    // 1. Try binding Wildcard prefix so ANY incoming IP/host (including LAN, direct IP, mDNS) succeeds
-                    bool wildcardAdded = false;
-                    try
-                    {
-                        _listener.Prefixes.Add($"http://*:{_port}/");
-                        wildcardAdded = true;
-                        LogService.LogInfo($"MediaServer: Registered wildcard prefix http://*:{_port}/");
-                    }
-                    catch
-                    {
-                        try
-                        {
-                            _listener.Prefixes.Add($"http://+:{_port}/");
-                            wildcardAdded = true;
-                            LogService.LogInfo($"MediaServer: Registered plus-wildcard prefix http://+:{_port}/");
-                        }
-                        catch { }
-                    }
-
-                    // 2. Also register specific detected LAN IPs if wildcard wasn't accepted
-                    if (!wildcardAdded && tryLanBinding)
-                    {
-                        foreach (var ip in localIps)
-                        {
-                            try
-                            {
-                                _listener.Prefixes.Add($"http://{ip}:{_port}/");
-                                LogService.LogInfo($"MediaServer: Registered LAN IP prefix: http://{ip}:{_port}/");
-                            }
-                            catch { }
-                        }
-                    }
+                    LogService.LogInfo($"MediaServer: Registered secure localhost & 127.0.0.1 prefixes on port {_port}.");
 
                     _listener.Start();
                     _isRunning = true;
                     Task.Run(ListenLoop);
-                    LogService.LogInfo($"MediaServer: Started successfully on Port: {_port} [Bound to: localhost, 127.0.0.1{(wildcardAdded ? ", *" : (tryLanBinding ? $", {string.Join(", ", localIps)}" : ""))}]");
+                    LogService.LogInfo($"MediaServer: Started securely on Port: {_port} [Bound strictly to: localhost, 127.0.0.1].");
                     return true;
                 }
-                catch (HttpListenerException ex) when (ex.ErrorCode == 5 || ex.NativeErrorCode == 5)
+                catch (HttpListenerException ex) when (ex.ErrorCode == 183 || ex.ErrorCode == 32 || ex.ErrorCode == 48 || ex.NativeErrorCode == 183 || ex.NativeErrorCode == 32 || ex.NativeErrorCode == 48 || ex.ErrorCode == 5 || ex.NativeErrorCode == 5)
                 {
-                    // Access Denied (Win32 Error 5 / ERROR_ACCESS_DENIED) -> URL ACL restriction for wildcard / LAN IP
-                    LogService.LogWarning($"MediaServer: Wildcard/LAN prefix binding hit Windows HTTP.sys URL ACL restrictions (Win32 Error 5: Access Denied). Attempting explicit LAN IPs or localhost fallback on port {_port}...");
-
-                    // Attempt 2: Try with only explicit detected LAN IPs (without wildcard)
-                    if (tryLanBinding)
-                    {
-                        try
-                        {
-                            if (_listener != null)
-                            {
-                                try { _listener.Close(); } catch { }
-                            }
-
-                            _listener = new HttpListener();
-                            _listener.Prefixes.Add($"http://localhost:{_port}/");
-                            _listener.Prefixes.Add($"http://127.0.0.1:{_port}/");
-                            foreach (var ip in localIps)
-                            {
-                                try
-                                {
-                                    _listener.Prefixes.Add($"http://{ip}:{_port}/");
-                                }
-                                catch { }
-                            }
-                            _listener.Start();
-                            _isRunning = true;
-                            Task.Run(ListenLoop);
-                            LogService.LogInfo($"MediaServer: Started successfully with LAN IPs on Port: {_port} [Bound to: {string.Join(", ", localIps)}]");
-                            return true;
-                        }
-                        catch (HttpListenerException lanEx) when (lanEx.ErrorCode == 5 || lanEx.NativeErrorCode == 5)
-                        {
-                            LogService.LogWarning($"MediaServer: Explicit LAN IPs also restricted by URL ACL. Falling back to localhost/127.0.0.1.");
-                        }
-                        catch { }
-                    }
-
-                    // Attempt 3: Localhost fallback
-                    try
-                    {
-                        if (_listener != null)
-                        {
-                            try { _listener.Close(); } catch { }
-                        }
-
-                        _listener = new HttpListener();
-                        _listener.Prefixes.Add($"http://localhost:{_port}/");
-                        _listener.Prefixes.Add($"http://127.0.0.1:{_port}/");
-
-                        _listener.Start();
-                        _isRunning = true;
-                        Task.Run(ListenLoop);
-                        LogService.LogInfo($"MediaServer: Started in fallback mode on Port: {_port} [Bound to: localhost, 127.0.0.1]. Note: Direct LAN IP access requires Administrator or 'netsh http add urlacl' configuration.");
-                        return true;
-                    }
-                    catch (HttpListenerException fallbackEx) when (fallbackEx.ErrorCode == 183 || fallbackEx.ErrorCode == 32 || fallbackEx.ErrorCode == 48 || fallbackEx.NativeErrorCode == 183 || fallbackEx.NativeErrorCode == 32 || fallbackEx.NativeErrorCode == 48)
-                    {
-                        attempts++;
-                        _port = basePort + attempts;
-                        LogService.LogWarning($"MediaServer: Port {_port - 1} in use, retrying on port {_port} (attempt {attempts}/5)...");
-                    }
-                    catch (Exception fallbackEx)
-                    {
-                        LogService.LogError($"MediaServer Start Localhost Fallback Error (Win32/Ex: {fallbackEx.Message})", fallbackEx);
-                        return false;
-                    }
-                }
-                catch (HttpListenerException ex) when (ex.ErrorCode == 183 || ex.ErrorCode == 32 || ex.ErrorCode == 48 || ex.NativeErrorCode == 183 || ex.NativeErrorCode == 32 || ex.NativeErrorCode == 48)
-                {
-                    // Port Conflict (183: ERROR_ALREADY_EXISTS, 32: ERROR_SHARING_VIOLATION, 48: EADDRINUSE)
                     attempts++;
                     _port = basePort + attempts;
-                    LogService.LogWarning($"MediaServer: Port {_port - 1} in use, retrying on port {_port} (attempt {attempts}/5)...");
+                    LogService.LogWarning($"MediaServer: Port {_port - 1} in use or restricted, retrying on port {_port} (attempt {attempts}/5)...");
                 }
                 catch (Exception ex)
                 {

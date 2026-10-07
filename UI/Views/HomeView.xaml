@@ -186,9 +186,6 @@
                         </StackPanel>
 
                         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                            <!-- Doğrula & Tüm Grubu Kapsa Kontrolleri -->
-                            <CheckBox Content="Tüm grubu kapsa" IsChecked="{Binding ValidateAllInGroup}" Foreground="#94a3b8" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11" ToolTip="İşaretlenirse sadece ekrandaki sayfayı değil, mevcut arama/kategori/grubun tamamını doğrular"/>
-                            <Button Content="⚡ Doğrula" Style="{StaticResource PrimaryButtonStyle}" Background="#e11d48" Foreground="White" FontWeight="Bold" Height="35" Padding="14,0" Margin="0,0,10,0" Click="ValidateChannels_Click" ToolTip="Kanalları test eder ve yayını olmayan ölü kanalları kalıcı olarak siler" Cursor="Hand"/>
                             <Button Content="🔄 Listeyi Yenile" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Height="35" Padding="12,0" Margin="0,0,10,0" Click="ManualSync_Click" ToolTip="Yayın listelerini internetten tekrar kontrol et"/>
                             <ComboBox Width="140" Height="35" x:Name="SortComboBox" SelectionChanged="Sort_SelectionChanged">
                                 <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True"/>
@@ -213,6 +210,12 @@
                                     <DataTemplate>
                                         <Button Margin="0,0,6,0" Padding="12,5" Height="30" FontSize="11" FontWeight="SemiBold"
                                                 Click="GroupChip_Click" Tag="{Binding Name}" Cursor="Hand">
+                                            <Button.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="🤖 Bu Grubu Yerel AI ile Temizle &amp; Doğrula" Click="AiEnrichGroupContext_Click" CommandParameter="{Binding}"/>
+                                                    <MenuItem Header="⚡ Bu Grubun Kanallarını Doğrula" Click="ValidateGroupContext_Click" CommandParameter="{Binding}"/>
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
                                             <Button.Style>
                                                 <Style TargetType="Button">
                                                     <Setter Property="Background" Value="#0f172a"/>
@@ -256,6 +259,9 @@
             <!-- Library Content -->
             <Grid Grid.Row="3">
                 <ListView x:Name="ChannelGrid" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          ScrollViewer.IsDeferredScrollingEnabled="True"
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListView.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/></ItemsPanelTemplate></ListView.ItemsPanel>
                     <ListView.ItemTemplate>
@@ -267,6 +273,9 @@
                                     <ContextMenu>
                                         <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
                                         <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
+                                        <MenuItem Header="Düzenle" Click="EditContext_Click" CommandParameter="{Binding}"/>
+                                        <Separator/>
+                                        <MenuItem Header="⚡ Kanalı Doğrula" Click="ValidateContext_Click" CommandParameter="{Binding}"/>
                                         <Separator/>
                                         <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
                                     </ContextMenu>

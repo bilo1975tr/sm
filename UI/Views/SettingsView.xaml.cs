@@ -32,6 +32,7 @@ namespace StreamMesh.UI.Views
             InitializeComponent();
             DataContext = ViewModel;
             if (ValidationLogsList != null) ValidationLogsList.ItemsSource = ViewModel.ValidationLogs;
+            if (AiLogsList != null) AiLogsList.ItemsSource = ViewModel.AiLogs;
 
             ViewModel.PropertyChanged += (s, e) => {
                 if (e.PropertyName == nameof(ViewModel.SyncStatus)) {
@@ -43,7 +44,6 @@ namespace StreamMesh.UI.Views
                 }
             };
             this.Loaded += (s, e) => LoadSettings();
-            LoadSettings();
         }
 
         private void LoadSettings()
@@ -51,6 +51,8 @@ namespace StreamMesh.UI.Views
             ViewModel.LoadSettings();
             if (CachingBox != null) CachingBox.Text = _db.GetSetting("FlyleafCache", "1000");
             if (HwAccelCheck != null) HwAccelCheck.IsChecked = _db.GetSetting("FlyleafHwAccel", "true") == "true";
+            if (AudioNormCheck != null) AudioNormCheck.IsChecked = _db.GetSetting("AudioNormEnabled", "true") == "true";
+            if (VideoSharpenCheck != null) VideoSharpenCheck.IsChecked = _db.GetSetting("VideoEnhanceEnabled", "false") == "true";
 
             UpdateQuotaUI();
             UpdateServerStatusUI();
@@ -265,7 +267,9 @@ namespace StreamMesh.UI.Views
             ViewModel.SaveSettings();
             _db.SetSetting("FlyleafCache", CachingBox.Text);
             _db.SetSetting("FlyleafHwAccel", HwAccelCheck.IsChecked == true ? "true" : "false");
-            System.Windows.MessageBox.Show("Ayarlar kaydedildi. (Uygulamayı yeniden başlatmanız gerekebilir)");
+            _db.SetSetting("AudioNormEnabled", AudioNormCheck?.IsChecked == true ? "true" : "false");
+            _db.SetSetting("VideoEnhanceEnabled", VideoSharpenCheck?.IsChecked == true ? "true" : "false");
+            System.Windows.MessageBox.Show("Ayarlar kaydedildi. (Oynatıcı filtresi anında güncellendi)");
         }
 
         private async void AddSource_Click(object sender, RoutedEventArgs e)
@@ -355,38 +359,14 @@ namespace StreamMesh.UI.Views
         {
             if (_validationCts != null) return;
 
-            var allChannels = await _db.GetAllChannelsAsync();
-            if (allChannels.Count == 0)
+            int totalToTest = await _db.GetTotalChannelCountAsync();
+            if (totalToTest == 0)
             {
                 System.Windows.MessageBox.Show("Test edilecek kanal bulunamadı.");
                 return;
             }
 
             bool onlyUnverified = CheckOnlyUnverified.IsChecked == true;
-            var channelsToTest = onlyUnverified ? allChannels.Where(c => !c.IsVerified).ToList() : allChannels;
-
-            if (channelsToTest.Count == 0)
-            {
-                System.Windows.MessageBox.Show("Test edilecek taranmamış kanal bulunamadı. (Tüm kanallar önceden taranmış ve doğrulanmış)");
-                return;
-            }
-
-            var groupedByHost = channelsToTest
-                .GroupBy(GetChannelHostKey)
-                .Select(g => new Queue<Channel>(g))
-                .ToList();
-
-            var interleavedChannels = new List<Channel>();
-            while (groupedByHost.Count > 0)
-            {
-                for (int i = groupedByHost.Count - 1; i >= 0; i--)
-                {
-                    var queue = groupedByHost[i];
-                    if (queue.Count > 0) interleavedChannels.Add(queue.Dequeue());
-                    if (queue.Count == 0) groupedByHost.RemoveAt(i);
-                }
-            }
-            channelsToTest = interleavedChannels;
 
             int concurrency = 5;
             if (ComboConcurrency.SelectedItem is ComboBoxItem comboItem && comboItem.Content != null)
@@ -398,7 +378,7 @@ namespace StreamMesh.UI.Views
 
             ViewModel.ValidationLogs.Clear();
             ValidationProgressBar.Value = 0;
-            ValidationProgressBar.Maximum = channelsToTest.Count;
+            ValidationProgressBar.Maximum = totalToTest;
             StartValidationBtn.IsEnabled = false;
             StopValidationBtn.Visibility = Visibility.Visible;
             _validationCts = new System.Threading.CancellationTokenSource();
@@ -409,22 +389,18 @@ namespace StreamMesh.UI.Views
             bool autoPurgeDeadAccounts = CheckFastDeadAccountPurge?.IsChecked == true;
 
             var startTime = DateTime.Now;
-            int totalToTest = channelsToTest.Count;
             int processed = 0;
             int online = 0;
             int deleted = 0;
             var deadChannelIds = new System.Collections.Concurrent.ConcurrentBag<string>();
             var updatedChannels = new System.Collections.Concurrent.ConcurrentBag<Channel>();
             var logQueue = new System.Collections.Concurrent.ConcurrentQueue<string>();
-
-            // Anında silme için thread-safe kuyruk
             var deleteQueue = new System.Collections.Concurrent.ConcurrentQueue<string>();
 
-            // Hesap bazlı ardışık hata takibi (Ölü paket erken tespiti)
             var accountFailureTracker = new System.Collections.Concurrent.ConcurrentDictionary<string, int>();
             var purgedAccountSignatures = new System.Collections.Concurrent.ConcurrentDictionary<string, byte>();
 
-            ViewModel.ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🚀 Test başlatıldı: {totalToTest} kanal ({concurrency} iş parçacığı)");
+            ViewModel.ValidationLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🚀 Test başlatıldı: Toplam {totalToTest} kanal ({concurrency} iş parçacığı - Batch/SQL Paged)");
 
             var token = _validationCts.Token;
 
@@ -464,7 +440,6 @@ namespace StreamMesh.UI.Views
                 }
             });
 
-            // Arka planda bozuk bulunan kanalları veri tabanından anında silen iş parçacığı
             var deleteWorkerTask = Task.Run(async () =>
             {
                 while (!uiCts.Token.IsCancellationRequested || !deleteQueue.IsEmpty)
@@ -506,100 +481,100 @@ namespace StreamMesh.UI.Views
                     var hostLocks = new System.Collections.Concurrent.ConcurrentDictionary<string, System.Threading.SemaphoreSlim>();
                     var urlCache = new System.Collections.Concurrent.ConcurrentDictionary<string, StreamMesh.Core.Utils.ValidationResult>();
 
-                    var tasks = channelsToTest.Select(async ch =>
+                    int page = 1;
+                    int batchChunkSize = 500;
+
+                    while (!token.IsCancellationRequested)
                     {
-                        if (token.IsCancellationRequested) return;
-                        string targetUrl = ch.GetOrderedUrlList().FirstOrDefault() ?? ch.GetUrlList().FirstOrDefault() ?? "";
-                        var accInfo = IptvAccountHelper.ParseAccountFromUrl(targetUrl);
+                        var (chunk, count) = await _db.GetPagedChannelsAsync(null, "All", null, null, 0, page, batchChunkSize).ConfigureAwait(false);
+                        if (chunk == null || chunk.Count == 0) break;
 
-                        // Eğer bu IPTV paketi zaten ölü olarak tespit edilip komple silindiyse, kanalı atla
-                        if (accInfo != null && purgedAccountSignatures.ContainsKey(accInfo.SignatureKey))
+                        var channelsToTest = onlyUnverified ? chunk.Where(c => !c.IsVerified).ToList() : chunk;
+
+                        if (channelsToTest.Count > 0)
                         {
-                            System.Threading.Interlocked.Increment(ref processed);
-                            return;
-                        }
-
-                        string hostKey = GetChannelHostKey(ch);
-                        var hostSemaphore = hostLocks.GetOrAdd(hostKey, _ => new System.Threading.SemaphoreSlim(1, 1));
-
-                        await globalSemaphore.WaitAsync(token).ConfigureAwait(false);
-                        try
-                        {
-                            if (token.IsCancellationRequested) return;
-
-                            if (accInfo != null && purgedAccountSignatures.ContainsKey(accInfo.SignatureKey))
+                            var tasks = channelsToTest.Select(async ch =>
                             {
-                                System.Threading.Interlocked.Increment(ref processed);
-                                return;
-                            }
+                                if (token.IsCancellationRequested) return;
+                                string targetUrl = ch.GetOrderedUrlList().FirstOrDefault() ?? ch.GetUrlList().FirstOrDefault() ?? "";
+                                var accInfo = IptvAccountHelper.ParseAccountFromUrl(targetUrl);
 
-                            StreamMesh.Core.Utils.ValidationResult result;
-                            if (!string.IsNullOrEmpty(targetUrl) && urlCache.TryGetValue(targetUrl, out var cachedResult))
-                            {
-                                result = cachedResult;
-                            }
-                            else
-                            {
-                                await hostSemaphore.WaitAsync(token).ConfigureAwait(false);
+                                if (accInfo != null && purgedAccountSignatures.ContainsKey(accInfo.SignatureKey))
+                                {
+                                    System.Threading.Interlocked.Increment(ref processed);
+                                    return;
+                                }
+
+                                string hostKey = GetChannelHostKey(ch);
+                                var hostSemaphore = hostLocks.GetOrAdd(hostKey, _ => new System.Threading.SemaphoreSlim(1, 1));
+
+                                await globalSemaphore.WaitAsync(token).ConfigureAwait(false);
                                 try
                                 {
                                     if (token.IsCancellationRequested) return;
-                                    using var validator = new StreamValidator();
-                                    result = await validator.ValidateAsync(ch, level, null, token).ConfigureAwait(false);
-                                    if (!string.IsNullOrEmpty(targetUrl)) urlCache[targetUrl] = result;
-                                }
-                                finally { hostSemaphore.Release(); }
-                            }
 
-                            if (result.IsOnline)
-                            {
-                                System.Threading.Interlocked.Increment(ref online);
-                                ch.IsVerified = true;
-                                updatedChannels.Add(ch);
-                                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} Sağlam ({result.Status})");
-
-                                // Başarılı olunca sayaç sıfırlansın
-                                if (accInfo != null) accountFailureTracker[accInfo.SignatureKey] = 0;
-                            }
-                            else
-                            {
-                                ch.IsVerified = false;
-                                deadChannelIds.Add(ch.Id);
-                                System.Threading.Interlocked.Increment(ref deleted);
-                                // Bozuk kanalı anında silinmek üzere kuyruğa ekle
-                                deleteQueue.Enqueue(ch.Id);
-                                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - 🗑️ {ch.PrimaryName} SİLİNDİ ({result.Status})");
-
-                                // Ölü Hesap / Paket Tespiti: Aynı hesap ardışık 3 kez başarısız olursa paketi komple sil
-                                if (autoPurgeDeadAccounts && accInfo != null && !string.IsNullOrEmpty(accInfo.Username))
-                                {
-                                    int failCount = accountFailureTracker.AddOrUpdate(accInfo.SignatureKey, 1, (_, count) => count + 1);
-                                    if (failCount >= 3 && purgedAccountSignatures.TryAdd(accInfo.SignatureKey, 1))
+                                    if (accInfo != null && purgedAccountSignatures.ContainsKey(accInfo.SignatureKey))
                                     {
-                                        logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ⚡ ÖLÜ HESAP TESPİT EDİLDİ: '{accInfo.Username}' (@{accInfo.HostWithPort}) ardışık {failCount} başarısız oldu. Kalan tüm kanalları tek seferde komple temizleniyor...");
-
-                                        _ = Task.Run(async () =>
-                                        {
-                                            try
-                                            {
-                                                var purgeRes = await IptvAccountHelper.PurgeAccountFromDatabaseAsync(accInfo, allChannels);
-                                                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - 🚀 ÖLÜ HESAP TEMİZLENDİ: '{accInfo.Username}' paketine ait {purgeRes.TotalUrlsRemoved} link ({purgeRes.ChannelsDeletedEntirely} kanal) tek tıkla komple silindi!");
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                LogService.LogWarning($"Auto-purge failed for account {accInfo.Username}: {ex.Message}");
-                                            }
-                                        });
+                                        System.Threading.Interlocked.Increment(ref processed);
+                                        return;
                                     }
+
+                                    StreamMesh.Core.Utils.ValidationResult result;
+                                    if (!string.IsNullOrEmpty(targetUrl) && urlCache.TryGetValue(targetUrl, out var cachedResult))
+                                    {
+                                        result = cachedResult;
+                                    }
+                                    else
+                                    {
+                                        await hostSemaphore.WaitAsync(token).ConfigureAwait(false);
+                                        try
+                                        {
+                                            if (token.IsCancellationRequested) return;
+                                            using var validator = new StreamValidator();
+                                            result = await validator.ValidateAsync(ch, level, null, token).ConfigureAwait(false);
+                                            if (!string.IsNullOrEmpty(targetUrl)) urlCache[targetUrl] = result;
+                                        }
+                                        finally { hostSemaphore.Release(); }
+                                    }
+
+                                    if (result.IsOnline)
+                                    {
+                                        System.Threading.Interlocked.Increment(ref online);
+                                        ch.IsVerified = true;
+                                        updatedChannels.Add(ch);
+                                        logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ✅ {ch.PrimaryName} Sağlam ({result.Status})");
+
+                                        if (accInfo != null) accountFailureTracker[accInfo.SignatureKey] = 0;
+                                    }
+                                    else
+                                    {
+                                        ch.IsVerified = false;
+                                        deadChannelIds.Add(ch.Id);
+                                        System.Threading.Interlocked.Increment(ref deleted);
+                                        deleteQueue.Enqueue(ch.Id);
+                                        logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - 🗑️ {ch.PrimaryName} SİLİNDİ ({result.Status})");
+
+                                        if (autoPurgeDeadAccounts && accInfo != null && !string.IsNullOrEmpty(accInfo.Username))
+                                        {
+                                            int failCount = accountFailureTracker.AddOrUpdate(accInfo.SignatureKey, 1, (_, count) => count + 1);
+                                            if (failCount >= 3 && purgedAccountSignatures.TryAdd(accInfo.SignatureKey, 1))
+                                            {
+                                                logQueue.Enqueue($"{DateTime.Now:HH:mm:ss} - ⚡ ÖLÜ HESAP TESPİT EDİLDİ: '{accInfo.Username}' (@{accInfo.HostWithPort}) ardışık {failCount} başarısız oldu.");
+                                            }
+                                        }
+                                    }
+                                    System.Threading.Interlocked.Increment(ref processed);
                                 }
-                            }
-                            System.Threading.Interlocked.Increment(ref processed);
+                                catch (OperationCanceledException) { }
+                                catch { }
+                                finally { globalSemaphore.Release(); }
+                            });
+
+                            await Task.WhenAll(tasks).ConfigureAwait(false);
                         }
-                        catch (OperationCanceledException) { }
-                        catch { }
-                        finally { globalSemaphore.Release(); }
-                    });
-                    await Task.WhenAll(tasks).ConfigureAwait(false);
+
+                        page++;
+                    }
                 });
             }
             finally
@@ -608,14 +583,12 @@ namespace StreamMesh.UI.Views
                 try { await uiUpdaterTask; } catch { }
                 try { await deleteWorkerTask; } catch { }
 
-                // Sağlam ve güncellenen kanalları kaydet
                 if (updatedChannels.Count > 0)
                 {
                     DatabaseEngine.SuppressEvents = true;
                     try { await _db.SaveChannelsBatchAsync(updatedChannels.ToList()); } finally { DatabaseEngine.SuppressEvents = false; }
                 }
 
-                // Arayüz listelerini tazelemek için veri tabanı güncellemesini bildir
                 DatabaseEngine.NotifyDatabaseUpdated();
 
                 Dispatcher.Invoke(() => {
@@ -632,6 +605,94 @@ namespace StreamMesh.UI.Views
         }
 
         private void StopValidation_Click(object sender, RoutedEventArgs e) => _validationCts?.Cancel();
+
+        private async void RunLocalAiNormalization_Click(object sender, RoutedEventArgs e)
+        {
+            var aiEngine = new LocalAiNormalizationEngine();
+            bool available = await aiEngine.IsLocalAiAvailableAsync();
+            if (!available)
+            {
+                System.Windows.MessageBox.Show("Yerel Yapay Zeka (Ollama veya LM Studio) aktif değil veya model yüklenmemiş.\nLütfen LM Studio'da bir model yükleyip Local Server'ı başlattığınızdan emin olun.", "Yapay Zeka Bağlantı Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = System.Windows.MessageBox.Show("Yerel Yapay Zeka kütüphanenizdeki kanalları temizlemeye ve kategorize etmeye başlayacak.\nBu işlem arka planda sürerken uygulama çalışmaya devam edecektir. Başlasın mı?", "Yerel AI Normalizasyonu", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                int totalChannels = await _db.GetTotalChannelCountAsync();
+                if (totalChannels == 0)
+                {
+                    System.Windows.MessageBox.Show("Kütüphanede düzenlenecek kanal bulunamadı.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                System.Windows.MessageBox.Show($"Kütüphanenizdeki {totalChannels} kanal Yerel Yapay Zeka kuyruğuna alındı. İşlem arka planda yürütülecektir.", "İşlem Başlatıldı", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                ViewModel.AiLogs.Clear();
+                ViewModel.AiBatchReports.Clear();
+                ViewModel.AiLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🤖 AI Optimizasyonu başlatıldı ({totalChannels} toplam kanal).");
+
+                _ = Task.Run(async () =>
+                {
+                    int page = 1;
+                    int batchSize = 500;
+                    while (true)
+                    {
+                        var (chunk, count) = await _db.GetPagedChannelsAsync(null, "All", null, null, 0, page, batchSize).ConfigureAwait(false);
+                        if (chunk == null || chunk.Count == 0) break;
+
+                        var originalStates = chunk.ToDictionary(c => c.Id, c => (name: c.Name, cat: c.Category));
+
+                        Dispatcher.Invoke(() => ViewModel.AiLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - Sayfa {page} işleniyor (500 kanal batch)..."));
+
+                        await aiEngine.NormalizeChannelsWithAiAsync(chunk, (msg, processed, total) =>
+                        {
+                            LogService.LogInfo($"[AI Normalization] {msg} ({processed}/{total})");
+                            Dispatcher.Invoke(() => ViewModel.AiLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - {msg} ({processed}/{total})"));
+                        });
+
+                        var batchReport = new AiBatchReportItem { PageNumber = page, Title = $"Sayfa {page} Batch" };
+                        foreach (var ch in chunk)
+                        {
+                            if (originalStates.TryGetValue(ch.Id, out var orig))
+                            {
+                                batchReport.Records.Add(new AiChangeRecord {
+                                    ChannelId = ch.Id,
+                                    OldName = orig.name,
+                                    NewName = ch.Name,
+                                    OldCategory = orig.cat,
+                                    NewCategory = ch.Category
+                                });
+                            }
+                        }
+
+                        Dispatcher.Invoke(() => ViewModel.AiBatchReports.Insert(0, batchReport));
+                        await _db.SaveChannelsBatchAsync(chunk);
+                        page++;
+                    }
+                    DatabaseEngine.NotifyDatabaseUpdated();
+                    Dispatcher.Invoke(() => ViewModel.AiLogs.Insert(0, $"{DateTime.Now:HH:mm:ss} - 🎉 AI Optimizasyonu başarıyla tamamlandı!"));
+                    LogService.LogInfo("[AI Normalization] Tüm kanallar Yapay Zeka ile güncellendi ve veritabanına kaydedildi!");
+                });
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("RunLocalAiNormalization_Click error", ex);
+                System.Windows.MessageBox.Show($"Hata: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void AiBatchItem_DoubleClicked(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (AiBatchesList.SelectedItem is AiBatchReportItem reportItem)
+            {
+                var win = new AiBatchDetailsWindow(reportItem);
+                win.Owner = Window.GetWindow(this);
+                win.ShowDialog();
+            }
+        }
 
         private static string GetChannelHostKey(Channel ch)
         {

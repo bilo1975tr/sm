@@ -232,5 +232,102 @@ namespace StreamMesh.UI.Views
         {
             _vm.CancelValidation();
         }
+
+        private async void AiEnrichContext_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
+            {
+                var aiEngine = new LocalAiNormalizationEngine();
+                bool available = await aiEngine.IsLocalAiAvailableAsync();
+                if (!available)
+                {
+                    System.Windows.MessageBox.Show("Yerel Yapay Zeka (Ollama veya LM Studio) aktif değil.", "AI Uyarısı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                System.Windows.MessageBox.Show($"'{ch.PrimaryName}' için Yapay Zeka & Web Arama (RAG) doğrulaması başlatılıyor...", "AI Doğrulama", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
+                if (ch is SeriesGroup sg && sg.Episodes.Count > 0)
+                {
+                    await aiEngine.NormalizeChannelsWithAiAsync(sg.Episodes, (msg, p, t) => { });
+                    foreach (var ep in sg.Episodes)
+                    {
+                        await db.SaveChannelAsync(ep);
+                    }
+                }
+                else
+                {
+                    await aiEngine.NormalizeChannelsWithAiAsync(new List<Channel> { ch }, (msg, p, t) => { });
+                    await db.SaveChannelAsync(ch);
+                }
+
+                StreamMesh.Core.Database.DatabaseEngine.NotifyDatabaseUpdated();
+                System.Windows.MessageBox.Show($"'{ch.PrimaryName}' başarıyla güncellendi!\nYeni Ad: {ch.Name}\nYeni Kategori: {ch.Category}\nDil: {ch.Language}", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private async void ValidateContext_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
+            {
+                using var validator = new StreamValidator();
+                var res = await validator.ValidateAsync(ch, ValidationLevel.Fast);
+                string status = res.IsOnline ? $"Sağlam ({res.Status})" : $"Bozuk / Çevrimdışı ({res.Status})";
+                System.Windows.MessageBox.Show($"Kanal Test Sonucu: {ch.PrimaryName}\nDurum: {status}", "Yayın Sağlık Testi", MessageBoxButton.OK, res.IsOnline ? MessageBoxImage.Information : MessageBoxImage.Warning);
+            }
+        }
+
+        private async void AiEnrichGroupContext_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem mi && mi.CommandParameter is GroupCategoryItem groupItem)
+            {
+                var aiEngine = new LocalAiNormalizationEngine();
+                bool available = await aiEngine.IsLocalAiAvailableAsync();
+                if (!available)
+                {
+                    System.Windows.MessageBox.Show("Yerel Yapay Zeka (Ollama veya LM Studio) aktif değil.", "AI Uyarısı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                System.Windows.MessageBox.Show($"'{groupItem.Name}' grubu için Yerel AI & RAG optimizasyonu başlatılıyor...", "Grup AI Optimizasyonu", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
+                int page = 1;
+                while (true)
+                {
+                    var (chunk, total) = await db.GetPagedChannelsAsync(null, "All", groupItem.Name, "ALL", 0, page, 500);
+                    if (chunk == null || chunk.Count == 0) break;
+
+                    await aiEngine.NormalizeChannelsWithAiAsync(chunk, (msg, p, t) => { });
+                    await db.SaveChannelsBatchAsync(chunk);
+                    if ((page * 500) >= total) break;
+                    page++;
+                }
+
+                StreamMesh.Core.Database.DatabaseEngine.NotifyDatabaseUpdated();
+                System.Windows.MessageBox.Show($"'{groupItem.Name}' grubundaki kanallar başarıyla optimize edildi!", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private async void ValidateGroupContext_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuItem mi && mi.CommandParameter is GroupCategoryItem groupItem)
+            {
+                System.Windows.MessageBox.Show($"'{groupItem.Name}' grubundaki kanalların sağlık taraması başlatılıyor...", "Grup Doğrulama", MessageBoxButton.OK, MessageBoxImage.Information);
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
+                var (chunk, total) = await db.GetPagedChannelsAsync(null, "All", groupItem.Name, "ALL", 0, 1, 100);
+
+                int online = 0;
+                int offline = 0;
+                using var validator = new StreamValidator();
+                foreach (var ch in chunk)
+                {
+                    var res = await validator.ValidateAsync(ch, ValidationLevel.Fast);
+                    if (res.IsOnline) online++; else offline++;
+                }
+                System.Windows.MessageBox.Show($"Grup Test Sonucu ('{groupItem.Name}'):\nSağlam: {online}\nBozuk/Çevrimdışı: {offline} (İlk 100 örnek test edildi)", "Grup Sağlık Raporu", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
     }
 }

@@ -20,8 +20,6 @@ namespace StreamMesh.Core.Media
 
     public static class LogoSearchEngine
     {
-        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-
         private static async Task<bool> IsUrlAccessibleAsync(string url)
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
@@ -33,14 +31,14 @@ namespace StreamMesh.Core.Media
                 using var req = new HttpRequestMessage(HttpMethod.Head, url);
                 req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(2000));
-                using var resp = await _http.SendAsync(req, cts.Token);
+                using var resp = await Network.MediaHttpClient.Client.SendAsync(req, cts.Token);
                 if (resp.IsSuccessStatusCode) return true;
 
                 // Fallback GET (headers only) if HEAD is forbidden or unsupported
                 using var reqGet = new HttpRequestMessage(HttpMethod.Get, url);
                 reqGet.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromMilliseconds(2500));
-                using var respGet = await _http.SendAsync(reqGet, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
+                using var respGet = await Network.MediaHttpClient.Client.SendAsync(reqGet, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
                 return respGet.IsSuccessStatusCode;
             }
             catch

@@ -11,7 +11,6 @@ namespace StreamMesh.Core.Media
 {
     public class XtreamService
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         private readonly DatabaseEngine _db = new DatabaseEngine();
 
         public async Task<bool> SyncAccountAsync(IptvAccount acc)
@@ -34,7 +33,7 @@ namespace StreamMesh.Core.Media
                     string loginUrl = $"{baseUrl}/player_api.php?username={Uri.EscapeDataString(acc.Username)}&password={Uri.EscapeDataString(acc.Password)}";
                     var req = new HttpRequestMessage(HttpMethod.Get, loginUrl);
                     req.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-                    var resp = await _httpClient.SendAsync(req);
+                    var resp = await Network.MediaHttpClient.Client.SendAsync(req);
                     
                     if (resp.IsSuccessStatusCode)
                     {
@@ -99,7 +98,7 @@ namespace StreamMesh.Core.Media
                         string m3uTestUrl = $"{baseUrl}/get.php?username={Uri.EscapeDataString(acc.Username)}&password={Uri.EscapeDataString(acc.Password)}&type=m3u_plus";
                         var req = new HttpRequestMessage(HttpMethod.Get, m3uTestUrl);
                         req.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-                        var resp = await _httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+                        var resp = await Network.MediaHttpClient.Client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
                         if (resp.IsSuccessStatusCode)
                         {
                             // En azından başlık başarılı döndü, içerik kontrolü
@@ -145,7 +144,7 @@ namespace StreamMesh.Core.Media
                         // Canlı yayın sayısı
                         try
                         {
-                            var liveResp = await _httpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_live_streams").ConfigureAwait(false);
+                            var liveResp = await Network.MediaHttpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_live_streams", 30).ConfigureAwait(false);
                             if (liveResp.TrimStart().StartsWith("["))
                             {
                                 var liveArr = JArray.Parse(liveResp);
@@ -158,7 +157,7 @@ namespace StreamMesh.Core.Media
                         // VOD Film sayısı
                         try
                         {
-                            var vodResp = await _httpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_vod_streams").ConfigureAwait(false);
+                            var vodResp = await Network.MediaHttpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_vod_streams", 30).ConfigureAwait(false);
                             if (vodResp.TrimStart().StartsWith("["))
                             {
                                 var vodArr = JArray.Parse(vodResp);
@@ -171,7 +170,7 @@ namespace StreamMesh.Core.Media
                         // Dizi sayısı
                         try
                         {
-                            var seriesResp = await _httpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_series").ConfigureAwait(false);
+                            var seriesResp = await Network.MediaHttpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_series", 30).ConfigureAwait(false);
                             if (seriesResp.TrimStart().StartsWith("["))
                             {
                                 var serArr = JArray.Parse(seriesResp);
@@ -191,7 +190,7 @@ namespace StreamMesh.Core.Media
                             string m3uIndexUrl = $"{baseUrl}/get.php?username={Uri.EscapeDataString(acc.Username)}&password={Uri.EscapeDataString(acc.Password)}&type=m3u_plus";
                             var req = new HttpRequestMessage(HttpMethod.Get, m3uIndexUrl);
                             req.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-                            using var resp = await _httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+                            using var resp = await Network.MediaHttpClient.Client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
                             if (resp.IsSuccessStatusCode)
                             {
                                 using var stream = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false);
@@ -291,7 +290,7 @@ namespace StreamMesh.Core.Media
         {
             try
             {
-                var response = await _httpClient.GetStringAsync(url);
+                var response = await Network.MediaHttpClient.GetStringAsync(url, 30);
                 var items = JArray.Parse(response);
                 var allItems = new List<Channel>();
 

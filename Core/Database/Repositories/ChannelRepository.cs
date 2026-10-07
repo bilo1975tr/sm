@@ -54,6 +54,172 @@ namespace StreamMesh.Core.Database.Repositories
             return list;
         }
 
+        public async Task<(List<Channel> channels, int totalCount)> GetPagedChannelsAsync(string? search, string? category, string? groupTitle, string? sourceId, int sortIndex, int page, int pageSize)
+        {
+            var channels = new List<Channel>();
+            int totalCount = 0;
+            try
+            {
+                await _dbLock.WaitAsync();
+                using (var connection = new SqliteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    var whereClauses = new List<string>();
+                    var parameters = new Dictionary<string, object>();
+
+                    if (!string.IsNullOrEmpty(category) && !category.Equals("All", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (category.Equals("Favorites", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("IsFavorite = 1");
+                        }
+                        else if (category.Equals("TV", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'TV' OR Category IS NULL OR Category = '')");
+                        }
+                        else if (category.Equals("Movies", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'Film' OR Category = 'Movie')");
+                        }
+                        else if (category.Equals("Series", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'Dizi' OR Category = 'Series')");
+                        }
+                        else if (category.Equals("Radio", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'Radyo' OR Category = 'Radio')");
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(groupTitle) && !groupTitle.Equals("All", StringComparison.OrdinalIgnoreCase))
+                    {
+                        whereClauses.Add("GroupTitle = @groupTitle");
+                        parameters.Add("@groupTitle", groupTitle);
+                    }
+
+                    if (!string.IsNullOrEmpty(search))
+                    {
+                        whereClauses.Add("Id IN (SELECT id FROM Channels_FTS WHERE Channels_FTS MATCH @search)");
+                        parameters.Add("@search", search.Trim().Replace("'", "''") + "*");
+                    }
+
+                    string whereSql = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
+
+                    string orderSql = sortIndex switch
+                    {
+                        1 => "ORDER BY Name DESC",
+                        2 => "ORDER BY AddedDate DESC, Id DESC",
+                        3 => "ORDER BY IsFavorite DESC, Name ASC",
+                        _ => "ORDER BY Name ASC"
+                    };
+
+                    using (var countCmd = connection.CreateCommand())
+                    {
+                        countCmd.CommandText = $"SELECT COUNT(*) FROM Channels {whereSql}";
+                        foreach (var p in parameters) countCmd.Parameters.AddWithValue(p.Key, p.Value);
+                        totalCount = Convert.ToInt32(await countCmd.ExecuteScalarAsync() ?? 0);
+                    }
+
+                    int offset = (page - 1) * pageSize;
+                    if (offset < 0) offset = 0;
+
+                    using (var cmd = connection.CreateCommand())
+                    {
+                        cmd.CommandText = $"SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock FROM Channels {whereSql} {orderSql} LIMIT @pageSize OFFSET @offset";
+                        cmd.Parameters.AddWithValue("@pageSize", pageSize);
+                        cmd.Parameters.AddWithValue("@offset", offset);
+                        foreach (var p in parameters) cmd.Parameters.AddWithValue(p.Key, p.Value);
+
+                        using var reader = await cmd.ExecuteReaderAsync();
+                        while (await reader.ReadAsync())
+                        {
+                            channels.Add(MapReaderToChannel(reader));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("ChannelRepository.GetPagedChannelsAsync failed", ex);
+            }
+            finally
+            {
+                _dbLock.Release();
+            }
+            return (channels, totalCount);
+        }
+
+        public async Task<List<GroupCategoryItem>> GetGroupCategoriesForCategoryAsync(string? category, string? sourceId)
+        {
+            var list = new List<GroupCategoryItem>();
+            try
+            {
+                await _dbLock.WaitAsync();
+                using (var connection = new SqliteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    var whereClauses = new List<string>();
+                    if (!string.IsNullOrEmpty(category) && !category.Equals("All", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (category.Equals("Favorites", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("IsFavorite = 1");
+                        }
+                        else if (category.Equals("TV", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'TV' OR Category IS NULL OR Category = '')");
+                        }
+                        else if (category.Equals("Movies", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'Film' OR Category = 'Movie')");
+                        }
+                        else if (category.Equals("Series", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'Dizi' OR Category = 'Series')");
+                        }
+                        else if (category.Equals("Radio", StringComparison.OrdinalIgnoreCase))
+                        {
+                            whereClauses.Add("(Category = 'Radyo' OR Category = 'Radio')");
+                        }
+                    }
+
+                    string whereSql = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
+
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = $"SELECT COALESCE(NULLIF(TRIM(GroupTitle), ''), 'Genel') as GName, COUNT(*) as Cnt FROM Channels {whereSql} GROUP BY GName ORDER BY Cnt DESC, GName ASC";
+
+                    using var reader = await cmd.ExecuteReaderAsync();
+
+                    int totalSum = 0;
+                    var counts = new List<(string name, int count)>();
+                    while (await reader.ReadAsync())
+                    {
+                        string gName = reader.IsDBNull(0) ? "Genel" : reader.GetString(0);
+                        int cnt = reader.GetInt32(1);
+                        counts.Add((gName, cnt));
+                        totalSum += cnt;
+                    }
+
+                    list.Add(new GroupCategoryItem { Name = "All", Count = totalSum });
+                    foreach (var c in counts)
+                    {
+                        list.Add(new GroupCategoryItem { Name = c.name, Count = c.count });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("ChannelRepository.GetGroupCategoriesForCategoryAsync failed", ex);
+            }
+            finally
+            {
+                _dbLock.Release();
+            }
+            return list;
+        }
+
         public async Task<Channel?> GetChannelByIdAsync(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return null;
@@ -118,13 +284,21 @@ namespace StreamMesh.Core.Database.Repositories
                     {
                         var clearCmd = connection.CreateCommand();
                         clearCmd.Transaction = tx;
-                        clearCmd.CommandText = "DELETE FROM Channels";
+                        clearCmd.CommandText = "DELETE FROM Channels; DELETE FROM Channels_FTS;";
                         await clearCmd.ExecuteNonQueryAsync();
                     }
 
                     var cmd = connection.CreateCommand();
                     cmd.Transaction = tx;
-                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pui, @Pli, @Pei, @Watched, @Verified, @Lp, @EpgL, @M3uLine, @RawM3u) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredUrlIndex=excluded.PreferredUrlIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified, LastPositionMs=excluded.LastPositionMs, IsEpgLocked=excluded.IsEpgLocked, M3uLineNumber=excluded.M3uLineNumber, RawM3uBlock=excluded.RawM3uBlock";
+                    cmd.CommandText = "INSERT INTO Channels (Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl, ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds, PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified, LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock, ChannelHash) VALUES (@Id, @Name, @Url, @Logo, @Group, @Cat, @Lang, @Fav, @Date, @Src, @Playlist, @Imdb, @Overview, @Backdrop, @Cast, @Pwc, @Vc, @EpgId, @EpgUrl, @Us, @Pni, @Pui, @Pli, @Pei, @Watched, @Verified, @Lp, @EpgL, @M3uLine, @RawM3u, @Hash) ON CONFLICT(Id) DO UPDATE SET Name=excluded.Name, Url=excluded.Url, LogoUrl=excluded.LogoUrl, GroupTitle=excluded.GroupTitle, Category=excluded.Category, Language=excluded.Language, IsFavorite=excluded.IsFavorite, ImdbId=excluded.ImdbId, Overview=excluded.Overview, BackdropUrl=excluded.BackdropUrl, [Cast]=excluded.Cast, PersonalWatchCount=excluded.PersonalWatchCount, ViewersCount=excluded.ViewersCount, EpgId=excluded.EpgId, EpgUrl=excluded.EpgUrl, UrlSpeeds=excluded.UrlSpeeds, PreferredNameIndex=excluded.PreferredNameIndex, PreferredUrlIndex=excluded.PreferredUrlIndex, PreferredLogoIndex=excluded.PreferredLogoIndex, PreferredEpgIndex=excluded.PreferredEpgIndex, IsWatched=excluded.IsWatched, IsVerified=excluded.IsVerified, LastPositionMs=excluded.LastPositionMs, IsEpgLocked=excluded.IsEpgLocked, M3uLineNumber=excluded.M3uLineNumber, RawM3uBlock=excluded.RawM3uBlock, ChannelHash=excluded.ChannelHash";
+
+                    var ftsCmd = connection.CreateCommand();
+                    ftsCmd.Transaction = tx;
+                    ftsCmd.CommandText = "INSERT INTO Channels_FTS (id, name, group_title, category) VALUES (@fId, @fName, @fGroup, @fCat)";
+                    var fId = ftsCmd.Parameters.Add("@fId", SqliteType.Text);
+                    var fName = ftsCmd.Parameters.Add("@fName", SqliteType.Text);
+                    var fGroup = ftsCmd.Parameters.Add("@fGroup", SqliteType.Text);
+                    var fCat = ftsCmd.Parameters.Add("@fCat", SqliteType.Text);
 
                     var pId = cmd.Parameters.Add("@Id", SqliteType.Text);
                     var pName = cmd.Parameters.Add("@Name", SqliteType.Text);
@@ -156,6 +330,7 @@ namespace StreamMesh.Core.Database.Repositories
                     var pEpgL = cmd.Parameters.Add("@EpgL", SqliteType.Integer);
                     var pM3uLine = cmd.Parameters.Add("@M3uLine", SqliteType.Integer);
                     var pRawM3u = cmd.Parameters.Add("@RawM3u", SqliteType.Text);
+                    var pHash = cmd.Parameters.Add("@Hash", SqliteType.Text);
 
                     foreach (var ch in channels)
                     {
@@ -193,7 +368,16 @@ namespace StreamMesh.Core.Database.Repositories
                         pM3uLine.Value = ch.M3uLineNumber;
                         pRawM3u.Value = ch.RawM3uBlock ?? "";
 
+                        string normName = ChannelUtils.ToNormalizedKey(ch.Name ?? "");
+                        pHash.Value = $"{normName}|{ch.Url}|{ch.SourceType}";
+
                         cmd.ExecuteNonQuery();
+
+                        fId.Value = pId.Value;
+                        fName.Value = pName.Value;
+                        fGroup.Value = pGroup.Value;
+                        fCat.Value = pCat.Value;
+                        ftsCmd.ExecuteNonQuery();
                     }
                     tx.Commit();
                     LogService.LogInfo($"SaveChannelsBatchAsync: COMMIT başarılı. {channels.Count} kanal kaydedildi (clearFirst={clearFirst}).");
@@ -359,26 +543,25 @@ namespace StreamMesh.Core.Database.Repositories
             }
         }
 
-        public int GetChannelCountBySource(string url)
+        public async Task<int> GetChannelCountBySourceAsync(string url)
         {
             if (string.IsNullOrWhiteSpace(url)) return 0;
-            using (var connection = new SqliteConnection(_connectionString))
+            try
             {
-                connection.Open();
-                var cmd = connection.CreateCommand();
-                string trimmed = url.Trim();
-                string fileName = System.IO.Path.GetFileName(trimmed.Split('?')[0]);
-                if (string.IsNullOrEmpty(fileName)) fileName = trimmed;
+                using (var connection = new SqliteConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    var cmd = connection.CreateCommand();
+                    string trimmed = url.Trim();
 
-                cmd.CommandText = @"SELECT COUNT(*) FROM Channels 
-                                    WHERE PlaylistUrl = @Url 
-                                       OR PlaylistUrl LIKE @LikeUrl 
-                                       OR PlaylistUrl LIKE @LikeFile";
-                cmd.Parameters.AddWithValue("@Url", trimmed);
-                cmd.Parameters.AddWithValue("@LikeUrl", "%" + trimmed + "%");
-                cmd.Parameters.AddWithValue("@LikeFile", "%" + fileName + "%");
-                return Convert.ToInt32(cmd.ExecuteScalar());
+                    cmd.CommandText = "SELECT COUNT(*) FROM Channels WHERE PlaylistUrl = @Url OR PlaylistUrl LIKE @LikeUrl";
+                    cmd.Parameters.AddWithValue("@Url", trimmed);
+                    cmd.Parameters.AddWithValue("@LikeUrl", trimmed + "%");
+                    var res = await cmd.ExecuteScalarAsync();
+                    return res != null ? Convert.ToInt32(res) : 0;
+                }
             }
+            catch { return 0; }
         }
 
         public List<Channel> GetChannelsBySource(string url)
