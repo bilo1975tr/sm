@@ -31,7 +31,7 @@ namespace StreamMesh.Core.Media
             }
 
             cleaned = Regex.Replace(cleaned, @"\b(fhd|hd|sd|4k|raw|1080p|720p|hevc|h265|h264)\b", "", RegexOptions.IgnoreCase).Trim();
-            cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim(' ', '-', '_', ':', '|', '.', '\'', '"', '`', '’', '‘', '“', '”');
+            cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim(' ', '-', '_', ':', '|', '.');
             return string.IsNullOrWhiteSpace(cleaned) ? rawName : cleaned;
         }
 
@@ -71,81 +71,28 @@ namespace StreamMesh.Core.Media
             return true;
         }
 
-        public static int CalculateSearchScore(Channel ch, string query)
-        {
-            if (ch == null || string.IsNullOrWhiteSpace(query)) return 0;
-            string q = query.Trim().ToLowerInvariant();
-            string rawName = (ch.Name ?? "").ToLowerInvariant();
-            string cleanName = (ch.CleanName ?? "").ToLowerInvariant();
-            string primaryName = (ch.PrimaryName ?? "").ToLowerInvariant();
-
-            int score = 0;
-
-            // 1. Direct exact or prefix match
-            if (rawName == q || cleanName == q || primaryName == q) score += 1000;
-            else if (rawName.StartsWith(q) || cleanName.StartsWith(q) || primaryName.StartsWith(q)) score += 500;
-            else if (rawName.Contains(q) || cleanName.Contains(q) || primaryName.Contains(q)) score += 300;
-
-            // 2. Tokenized search
-            var terms = q.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (terms.Length > 1)
-            {
-                bool allTermsMatch = true;
-                foreach (var t in terms)
-                {
-                    if (rawName.Contains(t) || cleanName.Contains(t) || primaryName.Contains(t))
-                    {
-                        score += 50;
-                    }
-                    else
-                    {
-                        allTermsMatch = false;
-                    }
-                }
-                if (allTermsMatch) score += 200;
-            }
-
-            return score;
-        }
-
         public static bool MatchesQueryFilter(Channel ch, string query)
         {
             if (ch == null) return false;
-            if (string.IsNullOrWhiteSpace(query)) return true;
             return MatchesQueryFilter(ch.Name, ch.Category, ch.GroupTitle, ch.Url, query, ch.Language, ch.SourceType);
         }
 
-        public static bool MatchesQueryFilter(string? channelName, string? category, string? groupTitle, string? url, string? query, string language = "", string sourceType = "")
+        public static bool MatchesQueryFilter(string channelName, string category, string groupTitle, string url, string query, string language = "", string sourceType = "")
         {
             if (string.IsNullOrWhiteSpace(query)) return true;
+            string rawLower = query.Trim().ToLowerInvariant();
+            string nameLower = (channelName ?? "").ToLowerInvariant();
 
-            string q = query.Trim().ToLowerInvariant();
-            string name = (channelName ?? "").ToLowerInvariant();
-            string cat = (category ?? "").ToLowerInvariant();
-            string group = (groupTitle ?? "").ToLowerInvariant();
-            string link = (url ?? "").ToLowerInvariant();
-
-            // Direct verbatim substring match (e.g. "[de]", "4k", "[tr]")
-            if (name.Contains(q) || cat.Contains(q) || group.Contains(q) || link.Contains(q))
+            if (rawLower.Contains("[") || rawLower.Contains("]"))
             {
-                return true;
+                return nameLower.Contains(rawLower) || (url ?? "").ToLowerInvariant().Contains(rawLower);
             }
 
-            // Word-by-word tokenized search (separated by spaces only to preserve [DE], [TR], etc.)
-            var terms = q.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (terms.Length <= 1) return false;
+            string clean = rawLower.Replace("[", " ").Replace("]", " ").Replace("(", " ").Replace(")", " ").Replace("-", " ").Replace("_", " ").Trim();
+            if (nameLower.Contains(rawLower)) return true;
 
-            foreach (var t in terms)
-            {
-                bool match = name.Contains(t) ||
-                             cat.Contains(t) ||
-                             group.Contains(t) ||
-                             link.Contains(t);
-
-                if (!match) return false;
-            }
-
-            return true;
+            var terms = clean.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            return terms.Length > 0 && terms.All(t => nameLower.Contains(t));
         }
     }
 
@@ -154,14 +101,6 @@ namespace StreamMesh.Core.Media
         private static Dictionary<string, string>? _globalLogoIndex;
         private static readonly object _lock = new object();
         private readonly DatabaseEngine _db = new DatabaseEngine();
-
-        public static void InvalidateLogoCache()
-        {
-            lock (_lock)
-            {
-                _globalLogoIndex = null;
-            }
-        }
 
         public static string? GetLogoFromIndex(string rawName)
         {
@@ -215,8 +154,6 @@ namespace StreamMesh.Core.Media
         public async Task EnrichChannelsAsync(List<Channel> channels)
         {
             if (channels == null || channels.Count == 0) return;
-            var updatedChannels = new List<Channel>();
-
             foreach (var ch in channels)
             {
                 if (string.IsNullOrWhiteSpace(ch.LogoUrl))
@@ -225,14 +162,9 @@ namespace StreamMesh.Core.Media
                     if (!string.IsNullOrEmpty(indexedLogo))
                     {
                         ch.LogoUrl = indexedLogo;
-                        updatedChannels.Add(ch);
+                        await _db.SaveChannelAsync(ch);
                     }
                 }
-            }
-
-            if (updatedChannels.Count > 0)
-            {
-                await _db.SaveChannelsBatchAsync(updatedChannels, clearFirst: false, notifyUpdated: false);
             }
         }
     }

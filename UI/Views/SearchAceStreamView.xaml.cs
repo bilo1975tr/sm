@@ -85,15 +85,7 @@ namespace StreamMesh.UI.Views
                 }
                 else
                 {
-                    // Check engine status if no results found
-                    var ace = new AceEngine();
-                    bool engineRunning = await ace.IsEngineRunningAsync();
-                    string msg = "Aranan kriterlere uygun kanal veya medya içeriği bulunamadı.";
-                    if (!engineRunning)
-                    {
-                        msg += "\n\nNot: AceStream motoru şu an çalışmıyor olabilir. Arama kalitesini artırmak için motorun aktif olduğundan emin olun.";
-                    }
-                    System.Windows.MessageBox.Show(msg, "Arama Sonucu", MessageBoxButton.OK, MessageBoxImage.Information);
+                    System.Windows.MessageBox.Show("Aranan kriterlere uygun kanal veya medya içeriği bulunamadı.", "Arama Sonucu", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
@@ -124,24 +116,18 @@ namespace StreamMesh.UI.Views
 
             try
             {
-                var channels = Results.Select(item =>
+                var channels = Results.Select(item => new Channel
                 {
-                    var ch = new Channel
-                    {
-                        Name = item.Name,
-                        Url = item.Url,
-                        Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
-                        GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Arama Sonuçları" : item.GroupTitle,
-                        LogoUrl = item.LogoUrl,
-                        Language = GetSelectedOrDetectedLanguage(item.Name),
-                        SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U",
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    SmartNormalizationEngine.Instance.NormalizeChannel(ch);
-                    return ch;
+                    Name = item.Name,
+                    Url = item.Url,
+                    Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
+                    GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Arama Sonuçları" : item.GroupTitle,
+                    LogoUrl = item.LogoUrl,
+                    Language = GetSelectedOrDetectedLanguage(item.Name),
+                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
                 }).ToList();
 
-                await _db.SaveChannelsBatchAsync(channels, clearFirst: false);
+                await _db.SyncIncomingChannelsAsync(channels);
                 DatabaseEngine.NotifyDatabaseUpdated();
                 System.Windows.MessageBox.Show($"{channels.Count} adet kanal ve medya akışı başarıyla kütüphanenize eklendi.", "Toplu Ekleme Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -163,10 +149,8 @@ namespace StreamMesh.UI.Views
                     GroupTitle = item.GroupTitle,
                     LogoUrl = item.LogoUrl,
                     Language = GetSelectedOrDetectedLanguage(item.Name),
-                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U",
-                    CreatedAt = DateTime.UtcNow
+                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
                 };
-                SmartNormalizationEngine.Instance.NormalizeChannel(ch);
                 MainWindow.Instance?.LoadChannelToPlayer(ch);
             }
         }
@@ -175,30 +159,20 @@ namespace StreamMesh.UI.Views
         {
             if (sender is System.Windows.Controls.Button btn && btn.CommandParameter is SearchResultItem item)
             {
-                try
+                var ch = new Channel
                 {
-                    var ch = new Channel
-                    {
-                        Name = item.Name,
-                        Url = item.Url,
-                        Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
-                        GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Eklenen Kanallar" : item.GroupTitle,
-                        LogoUrl = item.LogoUrl,
-                        Language = GetSelectedOrDetectedLanguage(item.Name),
-                        SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U",
-                        CreatedAt = DateTime.UtcNow
-                    };
+                    Name = item.Name,
+                    Url = item.Url,
+                    Category = string.IsNullOrWhiteSpace(item.Category) || item.Category == "Genel" || item.Category == "P2P Stream" ? "TV" : item.Category,
+                    GroupTitle = string.IsNullOrEmpty(item.GroupTitle) ? "Eklenen Kanallar" : item.GroupTitle,
+                    LogoUrl = item.LogoUrl,
+                    Language = GetSelectedOrDetectedLanguage(item.Name),
+                    SourceType = item.Source.Contains("AceStream") ? "ACESTREAM" : "M3U"
+                };
 
-                    SmartNormalizationEngine.Instance.NormalizeChannel(ch);
-
-                    await _db.SaveChannelAsync(ch);
-                    DatabaseEngine.NotifyDatabaseUpdated();
-                    System.Windows.MessageBox.Show($"'{ch.Name}' başarıyla kütüphanenize eklendi.", "Kütüphaneye Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show($"Kanal eklenirken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                await _db.SaveChannelAsync(ch);
+                DatabaseEngine.NotifyDatabaseUpdated();
+                System.Windows.MessageBox.Show($"'{ch.Name}' başarıyla kütüphanenize eklendi.", "Kütüphaneye Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
     }

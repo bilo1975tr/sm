@@ -4,7 +4,6 @@
         xmlns:conv="clr-namespace:StreamMesh.Converters"
         Title="Gelişmiş Kanal Düzenleyici" Height="680" Width="850"
         Background="#0f172a" Foreground="White" WindowStartupLocation="CenterOwner"
-        Icon="{StaticResource AppIconImage}"
         WindowStyle="None" AllowsTransparency="True">
 
     <Window.Resources>
@@ -63,8 +62,8 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="🔗 Kanal Birleştir" Width="160" Height="40"
-                            Style="{StaticResource PrimaryButtonStyle}" Click="OpenMergeDialog_Click" Background="#0284c7" Foreground="White" FontWeight="Bold" Margin="0,0,10,0"/>
+                    <Button Content="✨ Çift Kanalları Birleştir" Width="180" Height="40"
+                            Style="{StaticResource PrimaryButtonStyle}" Click="MergeDuplicates_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold" Margin="0,0,10,0"/>
                     <Button Content="🪄 Otomatik Veri Eşle" Width="160" Height="40"
                             Style="{StaticResource PrimaryButtonStyle}" Click="AutoMatch_Click" Background="#334155" Margin="0,0,15,0"/>
                     <Button Content="✕" Width="40" Height="40" Background="Transparent" Foreground="Gray" FontSize="20" BorderThickness="0" Click="Cancel_Click"/>
@@ -149,37 +148,22 @@
                         <ListBox x:Name="UrlList" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempUrlList}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{Binding CardBackground}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,8" Padding="8">
+                                    <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                                    <Border Background="#059669" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" Visibility="{Binding DefaultBadgeVisibility}">
-                                                        <TextBlock Text="⭐ VARSAYILAN KAYNAK" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                                                    </Border>
-                                                    <TextBlock Text="Yayın Akış URL Adresi" Foreground="#94a3b8" FontSize="10"/>
-                                                </StackPanel>
-                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="#0f172a" Foreground="White" BorderBrush="#334155" BorderThickness="1" Padding="8,4" VerticalContentAlignment="Center"/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                                                <Button Content="🗑️ Bu Hesabı Temizle" ToolTip="Bu IPTV hesabına ait tüm kanalları/bölümleri kütüphaneden topluca sil" Margin="0,0,6,0" Padding="10,6" Click="PurgeAccountFromUrl_Click" Background="#475569" Foreground="#f8fafc" BorderThickness="0" Height="35" Visibility="{Binding PurgeAccountButtonVisibility}"/>
-                                                <Button Content="✂️ Ayrı Kanal Yap" ToolTip="Bu yayını bu kanaldan ayırıp bağımsız yeni bir kanal olarak kaydet" Margin="0,0,6,0" Padding="10,6" Click="SeparateSource_Click" Background="#0f766e" Foreground="#5eead4" BorderThickness="0" Height="35" Cursor="Hand"/>
-                                                <Button Content="⭐ Varsayılan Yap" ToolTip="Bu yayını varsayılan / birincil kaynak yap" Margin="0,0,4,0" Padding="12,6" Click="SetPrimaryUrl_Click" Background="#0284c7" Foreground="White" BorderThickness="0" Height="35" Visibility="{Binding MakeDefaultButtonVisibility}"/>
-                                            </StackPanel>
-                                            <Button Grid.Column="2" Content="✕" ToolTip="Bu kaynağı kaldır" Width="35" Height="35" Click="RemoveUrl_Click" Background="#7f1d1d" BorderThickness="0" Foreground="#ff8a8a" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                            <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="⭐ Ana Kaynak Yap" ToolTip="Bu yayını birincil kaynak yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryUrl_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                            <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveUrl_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <StackPanel Grid.Row="1" Orientation="Horizontal">
-                            <Button Content="+ Yeni Yayın URL Ekle" HorizontalAlignment="Left" Width="200" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddUrl_Click" Background="#1e293b" Margin="0,0,10,0"/>
-                            <Button Content="🔍 M3U Kaynak Tanısı" Height="40" Padding="14,0" Style="{StaticResource PrimaryButtonStyle}" Background="#0f172a" BorderBrush="#38bdf8" BorderThickness="1" Foreground="#38bdf8" Click="M3uSourceInfo_Click" ToolTip="Bu kanalın M3U kaynağını, satır numarasını ve ham EXTINF metnini inceleyin"/>
-                        </StackPanel>
+                        <Button Grid.Row="1" Content="+ Yeni Yayın URL Ekle" HorizontalAlignment="Left" Width="200" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddUrl_Click" Background="#1e293b"/>
                     </Grid>
                 </TabItem>
 
@@ -274,7 +258,7 @@
                                 <TextBlock Text="Görsel Önizleme" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#94a3b8" FontWeight="SemiBold"/>
                                 <Border Background="#0f172a" Width="150" Height="150" CornerRadius="12" BorderBrush="#334155" BorderThickness="1">
                                     <Grid>
-                                        <Path Data="{StaticResource GeoTv}" Fill="White" Width="40" Height="40" Stretch="Uniform" Opacity="0.1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="🖼️" FontSize="40" Opacity="0.1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         <Image Source="{Binding SelectedLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="10"/>
                                     </Grid>
                                 </Border>
@@ -406,15 +390,10 @@
             </TabControl>
 
             <!-- Footer -->
-            <Grid Grid.Row="2" Margin="0,10,0,0">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                    <Button Content="🔍 M3U Kaynağı &amp; Tanı" Height="45" Padding="16,0" Style="{StaticResource PrimaryButtonStyle}" Background="#1e293b" BorderBrush="#38bdf8" BorderThickness="1.5" Foreground="#38bdf8" FontWeight="Bold" ToolTip="Bu kanalın hangi M3U dosyasından, kaçıncı satırdan ve hangi ham EXTINF satırıyla geldiğini detaylı inceleyin." Click="M3uSourceInfo_Click"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Vazgeç" Width="120" Height="45" Margin="0,0,15,0" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="Cancel_Click"/>
-                    <Button Content="Değişiklikleri Kaydet" Width="180" Height="45" Style="{StaticResource PrimaryButtonStyle}" Click="Save_Click"/>
-                </StackPanel>
-            </Grid>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <Button Content="Vazgeç" Width="120" Height="45" Margin="0,0,15,0" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="Cancel_Click"/>
+                <Button Content="Değişiklikleri Kaydet" Width="180" Height="45" Style="{StaticResource PrimaryButtonStyle}" Click="Save_Click"/>
+            </StackPanel>
         </Grid>
     </Border>
 </Window>

@@ -9,7 +9,6 @@ using StreamMesh.UI.ViewModels;
 using StreamMesh.UI.Windows;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
-using StreamMesh.Core.Utils;
 
 namespace StreamMesh.UI.Views
 {
@@ -24,6 +23,7 @@ namespace StreamMesh.UI.Views
             InitializeComponent();
             _vm = new HomeViewModel();
             DataContext = _vm;
+            Loaded += (s, e) => _vm.LoadData();
         }
 
         private void Card_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
@@ -38,47 +38,25 @@ namespace StreamMesh.UI.Views
 
         private void Card_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            try
+            if (sender is FrameworkElement fe && fe.DataContext is Channel item)
             {
-                if (sender is FrameworkElement fe && fe.DataContext is Channel item)
+                if (item is SeriesGroup series)
                 {
-                    if (item is SeriesGroup series)
-                    {
-                        var seriesWin = new SeriesDetailsWindow(series);
-                        seriesWin.Owner = Window.GetWindow(this);
-                        seriesWin.ShowDialog();
-                        return;
-                    }
-
-                    string cat = (item.Category ?? "").Trim().ToUpperInvariant();
-                    if (cat == "TV" || cat == "RADYO" || cat == "GENEL")
-                    {
-                        MainWindow.Instance?.LoadChannelToPlayer(item);
-                        return;
-                    }
-                    var details = new MediaDetailsWindow(item);
-                    details.Owner = Window.GetWindow(this);
-                    details.Show();
+                    var seriesWin = new SeriesDetailsWindow(series);
+                    seriesWin.Owner = Window.GetWindow(this);
+                    seriesWin.ShowDialog();
+                    return;
                 }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("HomeView.Card_Click error", ex);
-                System.Windows.MessageBox.Show($"İçerik açılırken bir hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
 
-        private async void ManualSync_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var sync = new GitHubSyncEngine();
-                await sync.PullFromGitHubAsync();
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("HomeView.ManualSync_Click error", ex);
-                System.Windows.MessageBox.Show($"Güncelleme başlatılırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
+                string cat = (item.Category ?? "").Trim().ToUpperInvariant();
+                if (cat == "TV" || cat == "RADYO" || cat == "GENEL")
+                {
+                    MainWindow.Instance?.LoadChannelToPlayer(item);
+                    return;
+                }
+                var details = new MediaDetailsWindow(item);
+                details.Owner = Window.GetWindow(this);
+                details.Show();
             }
         }
 
@@ -112,7 +90,18 @@ namespace StreamMesh.UI.Views
 
                 if (System.Windows.MessageBox.Show($"{source.Name} kanalını {target.Name} ile birleştirmek istiyor musunuz?\n\nBu işlem tüm yayın linklerini tek kartta toplar.", "Kanal Birleştir", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
-                    await _vm.MergeChannelsAsync(source, target);
+                    var existingUrls = target.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    var sourceUrls = source.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var u in sourceUrls)
+                    {
+                        if (!existingUrls.Contains(u.Trim())) existingUrls.Add(u.Trim());
+                    }
+
+                    target.Url = string.Join(",", existingUrls);
+                    await _db.SaveChannelAsync(target);
+                    _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{source.Id}'");
+                    _vm.LoadData();
                 }
             }
         }
@@ -135,40 +124,8 @@ namespace StreamMesh.UI.Views
             }
         }
 
-        private void GroupChip_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is FrameworkElement fe && fe.Tag is string groupName)
-            {
-                _vm.SetGroup(groupName);
-            }
-        }
-
-        private void SourceChip_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is FrameworkElement fe && fe.Tag is string sourceId)
-            {
-                _vm.SetSource(sourceId);
-            }
-        }
-
-        private void DirectPlay_Click(object sender, RoutedEventArgs e)
-        {
-            e.Handled = true;
-            if (sender is FrameworkElement fe && fe.DataContext is Channel channel)
-            {
-                if (channel is SeriesGroup series)
-                {
-                    var seriesWin = new SeriesDetailsWindow(series);
-                    seriesWin.Owner = Window.GetWindow(this);
-                    seriesWin.ShowDialog();
-                    return;
-                }
-                MainWindow.Instance?.LoadChannelToPlayer(channel);
-            }
-        }
-
         private void Sort_SelectionChanged(object sender, SelectionChangedEventArgs e) { _vm?.SetSort(SortComboBox.SelectedIndex); }
-        private void Refresh_Click(object sender, RoutedEventArgs e) { _ = _vm.LoadDataAsync(); }
+        private void Refresh_Click(object sender, RoutedEventArgs e) { _vm.LoadData(); }
         private void Prev_Click(object sender, RoutedEventArgs e) { _vm.PrevPage(); }
         private void Next_Click(object sender, RoutedEventArgs e) { _vm.NextPage(); }
 
@@ -196,7 +153,7 @@ namespace StreamMesh.UI.Views
             {
                 var editWin = new EditChannelWindow(ch);
                 editWin.Owner = Window.GetWindow(this);
-                if (editWin.ShowDialog() == true) _ = _vm.LoadDataAsync();
+                if (editWin.ShowDialog() == true) _vm.LoadData();
             }
         }
 
@@ -208,125 +165,21 @@ namespace StreamMesh.UI.Views
 
             if (ch != null)
             {
-                await _vm.ToggleFavoriteAsync(ch);
+                ch.IsFavorite = !ch.IsFavorite;
+                await _db.SaveChannelAsync(ch);
+                _vm.LoadData();
             }
         }
 
-        private async void DeleteContext_Click(object sender, RoutedEventArgs e)
+        private void DeleteContext_Click(object sender, RoutedEventArgs e)
         {
             if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
             {
                 if (System.Windows.MessageBox.Show($"{ch.Name} silinecek. Emin misiniz?", "Kanal Sil", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    await _vm.DeleteChannelAsync(ch);
+                    _db.ExecuteRawNonQuery($"DELETE FROM Channels WHERE Id='{ch.Id}'");
+                    _vm.LoadData();
                 }
-            }
-        }
-
-        private void ValidateChannels_Click(object sender, RoutedEventArgs e)
-        {
-            _ = _vm.StartValidationAsync();
-        }
-
-        private void CancelValidation_Click(object sender, RoutedEventArgs e)
-        {
-            _vm.CancelValidation();
-        }
-
-        private async void AiEnrichContext_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
-            {
-                var aiEngine = new LocalAiNormalizationEngine();
-                bool available = await aiEngine.IsLocalAiAvailableAsync();
-                if (!available)
-                {
-                    System.Windows.MessageBox.Show("Yerel Yapay Zeka (Ollama veya LM Studio) aktif değil.", "AI Uyarısı", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                System.Windows.MessageBox.Show($"'{ch.PrimaryName}' için Yapay Zeka & Web Arama (RAG) doğrulaması başlatılıyor...", "AI Doğrulama", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                var db = new StreamMesh.Core.Database.DatabaseEngine();
-                if (ch is SeriesGroup sg && sg.Episodes.Count > 0)
-                {
-                    await aiEngine.NormalizeChannelsWithAiAsync(sg.Episodes, (msg, p, t) => { });
-                    foreach (var ep in sg.Episodes)
-                    {
-                        await db.SaveChannelAsync(ep);
-                    }
-                }
-                else
-                {
-                    await aiEngine.NormalizeChannelsWithAiAsync(new List<Channel> { ch }, (msg, p, t) => { });
-                    await db.SaveChannelAsync(ch);
-                }
-
-                StreamMesh.Core.Database.DatabaseEngine.NotifyDatabaseUpdated();
-                System.Windows.MessageBox.Show($"'{ch.PrimaryName}' başarıyla güncellendi!\nYeni Ad: {ch.Name}\nYeni Kategori: {ch.Category}\nDil: {ch.Language}", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private async void ValidateContext_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
-            {
-                using var validator = new StreamValidator();
-                var res = await validator.ValidateAsync(ch, ValidationLevel.Fast);
-                string status = res.IsOnline ? $"Sağlam ({res.Status})" : $"Bozuk / Çevrimdışı ({res.Status})";
-                System.Windows.MessageBox.Show($"Kanal Test Sonucu: {ch.PrimaryName}\nDurum: {status}", "Yayın Sağlık Testi", MessageBoxButton.OK, res.IsOnline ? MessageBoxImage.Information : MessageBoxImage.Warning);
-            }
-        }
-
-        private async void AiEnrichGroupContext_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuItem mi && mi.CommandParameter is GroupCategoryItem groupItem)
-            {
-                var aiEngine = new LocalAiNormalizationEngine();
-                bool available = await aiEngine.IsLocalAiAvailableAsync();
-                if (!available)
-                {
-                    System.Windows.MessageBox.Show("Yerel Yapay Zeka (Ollama veya LM Studio) aktif değil.", "AI Uyarısı", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                System.Windows.MessageBox.Show($"'{groupItem.Name}' grubu için Yerel AI & RAG optimizasyonu başlatılıyor...", "Grup AI Optimizasyonu", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                var db = new StreamMesh.Core.Database.DatabaseEngine();
-                int page = 1;
-                while (true)
-                {
-                    var (chunk, total) = await db.GetPagedChannelsAsync(null, "All", groupItem.Name, "ALL", 0, page, 500);
-                    if (chunk == null || chunk.Count == 0) break;
-
-                    await aiEngine.NormalizeChannelsWithAiAsync(chunk, (msg, p, t) => { });
-                    await db.SaveChannelsBatchAsync(chunk);
-                    if ((page * 500) >= total) break;
-                    page++;
-                }
-
-                StreamMesh.Core.Database.DatabaseEngine.NotifyDatabaseUpdated();
-                System.Windows.MessageBox.Show($"'{groupItem.Name}' grubundaki kanallar başarıyla optimize edildi!", "Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-
-        private async void ValidateGroupContext_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is MenuItem mi && mi.CommandParameter is GroupCategoryItem groupItem)
-            {
-                System.Windows.MessageBox.Show($"'{groupItem.Name}' grubundaki kanalların sağlık taraması başlatılıyor...", "Grup Doğrulama", MessageBoxButton.OK, MessageBoxImage.Information);
-                var db = new StreamMesh.Core.Database.DatabaseEngine();
-                var (chunk, total) = await db.GetPagedChannelsAsync(null, "All", groupItem.Name, "ALL", 0, 1, 100);
-
-                int online = 0;
-                int offline = 0;
-                using var validator = new StreamValidator();
-                foreach (var ch in chunk)
-                {
-                    var res = await validator.ValidateAsync(ch, ValidationLevel.Fast);
-                    if (res.IsOnline) online++; else offline++;
-                }
-                System.Windows.MessageBox.Show($"Grup Test Sonucu ('{groupItem.Name}'):\nSağlam: {online}\nBozuk/Çevrimdışı: {offline} (İlk 100 örnek test edildi)", "Grup Sağlık Raporu", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
     }

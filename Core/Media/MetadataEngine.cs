@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using StreamMesh.Models;
 using StreamMesh.Core.Database;
-using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
 {
     public class MetadataEngine
     {
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
         private readonly DatabaseEngine _db = new DatabaseEngine();
 
         public async Task EnrichChannelAsync(Channel channel)
@@ -50,11 +50,7 @@ namespace StreamMesh.Core.Media
             if (stats.count >= 1000) return;
 
             // 4. Fetch from API (TMDB)
-            string apiKey = _db.GetSetting("TmdbApiKey", "");
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                return;
-            }
+            string apiKey = _db.GetSetting("TmdbApiKey", "3fd2be6f0c70a2a598f084dd23308883");
             bool isSeries = cat == "DIZI" || cat == "SERIES" || !string.IsNullOrWhiteSpace(channel.SeriesBaseName) || channel is SeriesGroup;
 
             string endpoint = isSeries ? "search/tv" : "search/multi";
@@ -62,14 +58,15 @@ namespace StreamMesh.Core.Media
 
             try
             {
-                var response = await MediaHttpClient.GetStringAsync(url);
+                var response = await _httpClient.GetStringAsync(url);
                 var json = JObject.Parse(response);
                 var results = json["results"] as JArray;
 
                 if ((results == null || results.Count == 0) && isSeries)
                 {
+                    // Fallback to multi search if TV search had no results
                     url = $"https://api.themoviedb.org/3/search/multi?api_key={apiKey}&query={Uri.EscapeDataString(query)}&language=tr-TR";
-                    response = await MediaHttpClient.GetStringAsync(url);
+                    response = await _httpClient.GetStringAsync(url);
                     json = JObject.Parse(response);
                     results = json["results"] as JArray;
                 }
@@ -111,7 +108,7 @@ namespace StreamMesh.Core.Media
                             {
                                 string mediaType = res.MediaType == "tv" ? "tv" : "movie";
                                 string creditsUrl = $"https://api.themoviedb.org/3/{mediaType}/{tmdbId}/credits?api_key={apiKey}&language=tr-TR";
-                                var creditsResp = await MediaHttpClient.GetStringAsync(creditsUrl);
+                                var creditsResp = await _httpClient.GetStringAsync(creditsUrl);
                                 var creditsJson = JObject.Parse(creditsResp);
                                 var castArray = creditsJson["cast"] as JArray;
                                 if (castArray != null && castArray.Count > 0)

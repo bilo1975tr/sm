@@ -116,12 +116,8 @@ namespace StreamMesh.Core.Media
                                 PeersOrDetails = res.Peers
                             });
                         }
-                        LogService.LogInfo($"GlobalSearch: AceStream combined search returned {aceItems.Count} items.");
                     }
-                    catch (Exception ex)
-                    {
-                        LogService.LogError("GlobalSearch: AceStream combined search failed", ex);
-                    }
+                    catch { }
                     return aceItems;
                 }));
             }
@@ -295,10 +291,7 @@ namespace StreamMesh.Core.Media
                     if (list.Count >= 300) break;
                 }
             }
-            catch (Exception ex)
-            {
-                LogService.LogWarning($"[GlobalSearch] IPTVcat arama hatası ('{query}'): {ex.Message}");
-            }
+            catch { }
 
             return list;
         }
@@ -367,10 +360,7 @@ namespace StreamMesh.Core.Media
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                LogService.LogWarning($"[GlobalSearch] FreeTuxTV web arama uyarısı ('{queryLower}'): {ex.Message}");
-            }
+            catch { }
 
             // Fallback & supplement with FreeTuxTV M3U repository
             try
@@ -398,10 +388,7 @@ namespace StreamMesh.Core.Media
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                LogService.LogWarning($"[GlobalSearch] FreeTuxTV M3U yedek liste uyarısı: {ex.Message}");
-            }
+            catch { }
 
             return list;
         }

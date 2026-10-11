@@ -20,6 +20,8 @@ namespace StreamMesh.Core.Media
 
     public static class LogoSearchEngine
     {
+        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+
         private static async Task<bool> IsUrlAccessibleAsync(string url)
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
@@ -31,14 +33,14 @@ namespace StreamMesh.Core.Media
                 using var req = new HttpRequestMessage(HttpMethod.Head, url);
                 req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(2000));
-                using var resp = await Network.MediaHttpClient.Client.SendAsync(req, cts.Token);
+                using var resp = await _http.SendAsync(req, cts.Token);
                 if (resp.IsSuccessStatusCode) return true;
 
                 // Fallback GET (headers only) if HEAD is forbidden or unsupported
                 using var reqGet = new HttpRequestMessage(HttpMethod.Get, url);
                 reqGet.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromMilliseconds(2500));
-                using var respGet = await Network.MediaHttpClient.Client.SendAsync(reqGet, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
+                using var respGet = await _http.SendAsync(reqGet, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
                 return respGet.IsSuccessStatusCode;
             }
             catch
@@ -55,50 +57,6 @@ namespace StreamMesh.Core.Media
             string rawQuery = query.Trim();
             string clean = ChannelUtils.GetCleanName(rawQuery);
             string normKey = ChannelUtils.ToNormalizedKey(clean);
-
-            // 0. Search local /logos directory and subdirectories directly
-            try
-            {
-                var baseDirs = new[]
-                {
-                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos"),
-                    System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "logos")
-                };
-
-                var validExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp"
-                };
-
-                foreach (var dir in baseDirs.Distinct())
-                {
-                    if (!System.IO.Directory.Exists(dir)) continue;
-                    var files = System.IO.Directory.GetFiles(dir, "*.*", System.IO.SearchOption.AllDirectories);
-                    foreach (var file in files)
-                    {
-                        string ext = System.IO.Path.GetExtension(file);
-                        if (!validExtensions.Contains(ext)) continue;
-
-                        string fn = System.IO.Path.GetFileNameWithoutExtension(file);
-                        if (fn.Contains(clean, StringComparison.OrdinalIgnoreCase) || 
-                            fn.Contains(rawQuery, StringComparison.OrdinalIgnoreCase) ||
-                            ChannelUtils.ToNormalizedKey(fn).Contains(normKey, StringComparison.OrdinalIgnoreCase))
-                        {
-                            string rel = "logos/" + System.IO.Path.GetRelativePath(dir, file).Replace("\\", "/");
-                            if (!results.Any(r => r.Url.Equals(rel, StringComparison.OrdinalIgnoreCase)))
-                            {
-                                results.Add(new LogoSearchResult
-                                {
-                                    Name = $"{fn} (Yerel Dosya)",
-                                    Url = rel,
-                                    Source = "Yerel Logo Klasörü"
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-            catch { }
 
             // 1. Check local indexed database (ChannelEnricher & LogoIndex table)
             string? indexedLogo = ChannelEnricher.GetLogoFromIndex(rawQuery);

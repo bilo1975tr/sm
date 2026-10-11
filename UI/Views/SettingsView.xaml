@@ -51,19 +51,14 @@
                             </Grid>
                             <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
                             <TextBlock Text="Aktif Yayın Kaynakları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,10,0,10" FontSize="18"/>
-                            <ListBox x:Name="M3uSourcesList" ItemsSource="{Binding Sources}" Height="300" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
+                            <ListBox x:Name="M3uSourcesList" Height="300" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,5" Padding="10">
                                             <Grid>
                                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                                                 <StackPanel>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Border Background="#059669" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" Visibility="{Binding DefaultBadgeVisibility}">
-                                                            <TextBlock Text="⭐ VARSAYILAN" Foreground="White" FontSize="10" FontWeight="Bold"/>
-                                                        </Border>
-                                                        <TextBlock Text="{Binding Url}" Foreground="White" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Url}" Foreground="White" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
                                                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                                                         <Border Background="{Binding Color}" CornerRadius="4" Padding="4,1" Margin="0,0,10,0">
                                                             <TextBlock Text="{Binding Origin}" Foreground="White" FontSize="10" FontWeight="Bold"/>
@@ -72,7 +67,6 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Button Content="⭐ Varsayılan Yap" Width="125" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Click="SetDefaultSource_Click" CommandParameter="{Binding Url}" Visibility="{Binding MakeDefaultButtonVisibility}"/>
                                                     <Button Content="⚙️ Düzenle" Width="90" Margin="0,0,8,0" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="EditSource_Click" CommandParameter="{Binding Url}"/>
                                                     <Button Content="🗑️ Kaldır" Background="#7f1d1d" Foreground="#ff8a8a" Width="80" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveSource_Click" CommandParameter="{Binding Url}"/>
                                                 </StackPanel>
@@ -103,112 +97,16 @@
                                 <StackPanel Grid.Column="2"><TextBlock Text="Şifre" Foreground="Gray" FontSize="10"/><TextBox x:Name="XtreamPassBox" Height="35"/></StackPanel>
                             </Grid>
                             <Button Content="+ Hesabı Ekle" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddIptvAccount_Click"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-                                <Button Content="🔄 Bilgileri ve İstatistikleri Güncelle" Background="#0284c7" Height="32" Padding="12,0" Style="{StaticResource PrimaryButtonStyle}" Click="RefreshIptvStats_Click"/>
-                            </StackPanel>
-                            <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
+                            <Rectangle Height="1" Fill="#334155" Margin="0,20"/>
                         </StackPanel>
-                        <ListBox Grid.Row="1" x:Name="IptvAccountsList" ItemsSource="{Binding IptvAccounts}" Background="Transparent" BorderThickness="0">
+                        <ListBox Grid.Row="1" x:Name="IptvAccountsList" Background="Transparent" BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="#0f172a" CornerRadius="12" Padding="18" Margin="0,0,0,14" BorderBrush="#1e293b" BorderThickness="1">
+                                    <Border Background="#0f172a" CornerRadius="10" Padding="15" Margin="0,0,0,10">
                                         <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-
-                                            <!-- 1. Başlık, Durum ve Silme Butonu -->
-                                            <Grid Grid.Row="0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" Foreground="White" FontSize="17" FontWeight="Bold" Margin="0,0,10,4"/>
-                                                    <Border Background="#0284c7" CornerRadius="4" Padding="8,3" Margin="0,0,6,4" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Status}" Foreground="White" FontSize="11" FontWeight="SemiBold"/>
-                                                    </Border>
-                                                    <Border Background="#854d0e" CornerRadius="4" Padding="6,2" Margin="0,0,6,4" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding DaysRemainingText}" Foreground="#fef08a" FontSize="11" FontWeight="Bold"/>
-                                                    </Border>
-                                                    <!-- İndeks Dosyası Durum Rozeti -->
-                                                    <Border Background="#064e3b" CornerRadius="4" Padding="8,3" Margin="0,0,6,4" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding IndexStatusText}" Foreground="#a7f3d0" FontSize="11" FontWeight="Bold"/>
-                                                    </Border>
-                                                </WrapPanel>
-                                                <Button Grid.Column="1" Content="Sil" Background="#7f1d1d" Foreground="#ff8a8a" Width="75" Height="34" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveIptv_Click" CommandParameter="{Binding Id}"/>
-                                            </Grid>
-
-                                            <!-- 2. Bağlantı ve İstatistik Rozetleri -->
-                                            <WrapPanel Grid.Row="1" Margin="0,12,0,10">
-                                                <!-- Eşzamanlı Kullanıcı / Bağlantı -->
-                                                <Border Background="#1e293b" CornerRadius="6" Padding="10,6" Margin="0,0,10,6">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="👥 Kullanıcı Sınırı: " Foreground="#94a3b8" FontSize="12"/>
-                                                        <TextBlock Text="{Binding ConnectionsText}" Foreground="#38bdf8" FontWeight="Bold" FontSize="12"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <!-- Bitiş Tarihi -->
-                                                <Border Background="#1e293b" CornerRadius="6" Padding="10,6" Margin="0,0,10,6">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="📅 Bitiş Tarihi: " Foreground="#94a3b8" FontSize="12"/>
-                                                        <TextBlock Text="{Binding ExpiryDateFormatted}" Foreground="#4ade80" FontWeight="Bold" FontSize="12"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <!-- Sunucu Ana İndeks Canlı Yayın Sayısı -->
-                                                <Border Background="#1e293b" CornerRadius="6" Padding="10,6" Margin="0,0,10,6">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="📺 Sunucu İndeksi (Canlı TV): " Foreground="#94a3b8" FontSize="12"/>
-                                                        <TextBlock Text="{Binding TotalLiveStreams, StringFormat='{}{0:N0} Kanal'}" Foreground="#facc15" FontWeight="Bold" FontSize="12"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <!-- Kütüphaneye Ekli Kanal Sayısı -->
-                                                <Border Background="#1e293b" CornerRadius="6" Padding="10,6" Margin="0,0,10,6">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="📥 Kütüphaneye Ekli: " Foreground="#94a3b8" FontSize="12"/>
-                                                        <TextBlock Text="{Binding LocalChannelsCount, StringFormat='{}{0:N0} Kanal'}" Foreground="#67e8f9" FontWeight="Bold" FontSize="12"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <!-- Film Sayısı -->
-                                                <Border Background="#1e293b" CornerRadius="6" Padding="10,6" Margin="0,0,10,6">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🎬 Film (VOD): " Foreground="#94a3b8" FontSize="12"/>
-                                                        <TextBlock Text="{Binding TotalVodStreams, StringFormat='{}{0:N0} Film'}" Foreground="#ec4899" FontWeight="Bold" FontSize="12"/>
-                                                    </StackPanel>
-                                                </Border>
-
-                                                <!-- Dizi Sayısı -->
-                                                <Border Background="#1e293b" CornerRadius="6" Padding="10,6" Margin="0,0,10,6">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="🍿 Dizi Arşivi: " Foreground="#94a3b8" FontSize="12"/>
-                                                        <TextBlock Text="{Binding TotalSeriesStreams, StringFormat='{}{0:N0} Dizi'}" Foreground="#a855f7" FontWeight="Bold" FontSize="12"/>
-                                                    </StackPanel>
-                                                </Border>
-                                            </WrapPanel>
-
-                                            <!-- 3. Teknik Bilgiler ve Sunucu Detayları -->
-                                            <Border Grid.Row="2" Background="#090d16" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding ServerUrl, StringFormat='🌐 Sunucu: {0}'}" Foreground="#64748b" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                                                        <TextBlock Text="{Binding Username, StringFormat='🔑 Kullanıcı Adı: {0}'}" Foreground="#64748b" FontSize="11" Margin="0,2,0,0"/>
-                                                    </StackPanel>
-                                                    <StackPanel Grid.Column="1">
-                                                        <TextBlock Text="{Binding ServerVersion, StringFormat='⚡ Sunucu Sürümü: {0}'}" Foreground="#64748b" FontSize="11"/>
-                                                        <TextBlock Text="{Binding ServerTimezone, StringFormat='🕒 Saat Dilimi: {0}'}" Foreground="#64748b" FontSize="11" Margin="0,2,0,0"/>
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Border>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel><TextBlock Text="{Binding Name}" Foreground="White" FontSize="16" FontWeight="Bold"/><TextBlock Text="{Binding ServerUrl}" Foreground="Gray" FontSize="11"/></StackPanel>
+                                            <Button Grid.Column="1" Content="Sil" Background="#7f1d1d" Width="60" Style="{StaticResource PrimaryButtonStyle}" Click="RemoveIptv_Click" CommandParameter="{Binding Id}"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -247,10 +145,9 @@
             <TabItem Header="Oynatıcı Ayarları">
                 <Border Background="#1e293b" Padding="25" CornerRadius="15">
                     <StackPanel>
-                <TextBlock Text="Oynatıcı Ayarları (Flyleaf)" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
-
-                <TextBlock Text="Arabellek (ms)" Foreground="#94a3b8" Margin="0,0,0,5"/>
-                <TextBox x:Name="CachingBox" Background="#1e293b" Foreground="White" BorderBrush="#334155" Padding="8" Margin="0,0,0,15"/>
+                        <TextBlock Text="VLC Ayarları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                        <TextBlock Text="Tampon Bellek" Foreground="Gray" Margin="0,0,0,5"/>
+                        <TextBox x:Name="CachingBox" Width="150" Height="35" HorizontalAlignment="Left" Margin="0,0,0,15"/>
                         <TextBlock Text="User-Agent" Foreground="Gray" Margin="0,0,0,5"/>
                         <TextBox x:Name="UserAgentBox" Height="35" Margin="0,0,0,15"/>
                         <CheckBox x:Name="HwAccelCheck" Content="GPU Hızlandırma" Foreground="White" Margin="0,10,0,10"/>
@@ -270,12 +167,7 @@
                             <StackPanel><TextBlock Text="Port" Foreground="Gray"/><TextBox x:Name="ServerPortBox" Text="8080" Width="80" HorizontalAlignment="Left"/></StackPanel>
                             <Button Grid.Column="1" x:Name="ServerControlBtn" Content="Sunucuyu Başlat" Width="150" Style="{StaticResource PrimaryButtonStyle}" Click="ToggleServer_Click"/>
                         </Grid>
-                        <TextBlock Text="Akıllı Yönlendirici M3U (StreamMesh Üzerinden, Yedek Korumalı):" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,4"/>
-                        <TextBox x:Name="M3uServerLink" IsReadOnly="True" Margin="0,0,0,12"/>
-                        <TextBlock Text="Doğrudan (Düz / Normal) M3U (Orijinal İnternet Linkleri):" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,4"/>
-                        <TextBox x:Name="M3uDirectServerLink" IsReadOnly="True" Margin="0,0,0,12"/>
-                        <TextBlock Text="Web Tarayıcı Arayüzü:" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,4"/>
-                        <TextBox x:Name="WebServerLink" IsReadOnly="True"/>
+                        <TextBox x:Name="M3uServerLink" IsReadOnly="True" Margin="0,0,0,10"/><TextBox x:Name="WebServerLink" IsReadOnly="True"/>
                     </StackPanel>
                 </Border>
             </TabItem>
@@ -289,67 +181,12 @@
                         </ComboBox>
                         <TextBox x:Name="AiUrlBox" Height="35" Margin="0,0,0,10"/>
                         <TextBox x:Name="AiModelBox" Height="35" Margin="0,0,0,10"/>
-                        <Button Content="🤖 Modelleri Listele / Getir" Height="40" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="FetchModels_Click" Margin="0,0,0,10"/>
-                        <Button Content="✨ Yerel AI ile Kütüphaneyi Temizle ve Düzenle" Height="40" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Click="RunLocalAiNormalization_Click" Margin="0,0,0,15"/>
+                        <Button Content="🤖 Modelleri Listele / Getir" Height="40" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="FetchModels_Click" Margin="0,0,0,15"/>
                         <TextBlock Text="TMDB API" Foreground="#38bdf8" Margin="0,10,0,5"/>
                         <TextBox x:Name="TmdbApiKeyBox" Height="35" Margin="0,0,0,10"/>
                         <TextBlock x:Name="TmdbQuotaText" Text="Kota" Foreground="White"/>
                         <Button Content="Kaydet" Width="150" Style="{StaticResource PrimaryButtonStyle}" Click="SaveSettings_Click"/>
                     </StackPanel>
-                </Border>
-            </TabItem>
-
-            <TabItem Header="AI Asistan &amp; Optimizasyon">
-                <Border Background="#1e293b" Padding="25" CornerRadius="15">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Row="0" Margin="0,0,0,15">
-                            <TextBlock Text="Yerel Yapay Zeka ile Akıllı Optimizasyon &amp; Öncesi/Sonrası İnceleme" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,5" FontSize="18"/>
-                            <TextBlock Text="Ollama veya LM Studio (Bionic) kullanarak bozuk kanal adlarını temizleyin. İşlenen batch'lere çift tıklayarak hangi verilerin değiştiğini Öncesi/Sonrası olarak inceleyebilirsiniz." Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,15"/>
-                            <Button Content="✨ AI Optimizasyonunu Şimdi Başlat" Height="40" Style="{StaticResource PrimaryButtonStyle}" Background="#0284c7" Click="RunLocalAiNormalization_Click"/>
-                        </StackPanel>
-
-                        <Grid Grid.Row="1">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Sol: Canlı Loglar -->
-                            <Grid Grid.Column="0" Margin="0,0,10,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Canlı İşlem Logları:" Foreground="#38bdf8" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <Border Grid.Row="1" Background="#0f172a" CornerRadius="8" BorderBrush="#334155" BorderThickness="1">
-                                    <ListBox x:Name="AiLogsList" Background="Transparent" Foreground="#e2e8f0" BorderThickness="0" Padding="10"/>
-                                </Border>
-                            </Grid>
-
-                            <!-- Sağ: İşlenen Batch Raporları (Çift tıklama ile Öncesi/Sonrası) -->
-                            <Grid Grid.Column="1" Margin="10,0,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="İşlenen Batch Raporları (Çift Tıklayıp Öncesi/Sonrası Gör):" Foreground="#38bdf8" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                <Border Grid.Row="1" Background="#0f172a" CornerRadius="8" BorderBrush="#334155" BorderThickness="1">
-                                    <ListBox x:Name="AiBatchesList" ItemsSource="{Binding AiBatchReports}" Background="Transparent" Foreground="#e2e8f0" BorderThickness="0" Padding="10" MouseDoubleClick="AiBatchItem_DoubleClicked">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding DisplaySummary}" Foreground="White" Cursor="Hand" Padding="4"/>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </Border>
-                            </Grid>
-                        </Grid>
-                    </Grid>
                 </Border>
             </TabItem>
 
@@ -374,7 +211,6 @@
 
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                                 <CheckBox x:Name="CheckOnlyUnverified" Content="Sadece Kontrol Edilmeyenleri (Taranmayanları) Tara" Foreground="#38bdf8" IsChecked="True" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,20,0"/>
-                                <CheckBox x:Name="CheckFastDeadAccountPurge" Content="⚡ Ölü Hesap Algılandığında Paketi Komple Sil (Hızlı Temizlik)" Foreground="#f43f5e" IsChecked="True" FontWeight="SemiBold" VerticalAlignment="Center" ToolTip="Bir IPTV hesabında üst üste 3 kanal hata verirse, kalan binlerce kanalı tek tek beklemek yerine hesaba ait tüm kanalları tek seferde komple siler." Margin="0,0,20,0"/>
                                 <TextBlock Text="Eşzamanlı İş Parçacığı:" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <ComboBox x:Name="ComboConcurrency" Width="70" Height="30" VerticalAlignment="Center" Background="#0f172a" Foreground="White">
                                     <ComboBoxItem Content="3 x" />
@@ -406,15 +242,13 @@
 
                         <StackPanel Grid.Row="2" Margin="0,15,0,0">
                             <Grid Margin="0,0,0,5">
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock x:Name="ValidationHealthyText" Text="✅ Sağlam: 0" Foreground="#4ade80" FontWeight="SemiBold" FontSize="13" Margin="0,0,16,0"/>
-                                    <TextBlock x:Name="ValidationDeletedText" Text="🗑️ Silinen (Bozuk): 0" Foreground="#f87171" FontWeight="SemiBold" FontSize="13" Margin="0,0,16,0"/>
-                                    <TextBlock x:Name="ValidationPendingText" Text="⏳ Kalan: 0" Foreground="#94a3b8" FontSize="13" Margin="0,0,16,0"/>
-                                    <TextBlock x:Name="ValidationTotalText" Text="(Toplam: 0)" Foreground="#64748b" FontSize="12"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="ValidationProgressText" Text="Bekliyor..." Foreground="Gray" FontSize="12" Margin="0,0,15,0"/>
+                                    <TextBlock x:Name="ValidationFailedText" Text="Hata: 0" Foreground="#f87171" FontSize="12" Visibility="Collapsed"/>
                                 </StackPanel>
-                                <TextBlock x:Name="ValidationTimeText" Text="--:--" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#94a3b8" FontSize="12"/>
+                                <TextBlock x:Name="ValidationTimeText" Text="--:--" HorizontalAlignment="Right" Foreground="Gray" FontSize="12"/>
                             </Grid>
-                            <ProgressBar x:Name="ValidationProgressBar" Height="10" Background="#0f172a" Foreground="#38bdf8" BorderThickness="0"/>
+                            <ProgressBar x:Name="ValidationProgressBar" Height="10" Background="#1e293b" Foreground="#38bdf8" BorderThickness="0"/>
                         </StackPanel>
                     </Grid>
                 </Border>

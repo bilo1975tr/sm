@@ -25,32 +25,19 @@ namespace StreamMesh
 
         private const int SW_RESTORE = 9;
 
-        public static MediaServer? Server { get; set; }
-        public static SsdpService? Ssdp { get; set; }
+        public static MediaServer? Server { get; private set; }
+        public static SsdpService? Ssdp { get; private set; }
 
         protected override void OnStartup(System.Windows.StartupEventArgs e)
         {
-            if (!EnsureSingleInstance()) return;
-
-            SetupExceptionHandling();
-
-            LogService.ClearLogs();
-            LogService.LogInfo($"App: Baslatiliyor. Process: {Process.GetCurrentProcess().MainModule?.FileName}");
-
-            // Show MainWindow instantly with zero delay, initialize services in background
-            base.OnStartup(e);
-
-            _ = InitializeServicesAsync();
-        }
-
-        private bool EnsureSingleInstance()
-        {
+            // 0. Single Instance Check (Prevent overlapping app instances & clean zombie processes)
             _appMutex = new Mutex(true, MUTEX_NAME, out bool createdNew);
             if (!createdNew)
             {
                 bool broughtToFront = BringExistingInstanceToForeground();
                 if (!broughtToFront)
                 {
+                    // Previous process was a zombie (hung in background without window). Terminate it cleanly.
                     KillGhostInstances();
                     _appMutex = new Mutex(true, MUTEX_NAME, out createdNew);
                 }
@@ -58,159 +45,44 @@ namespace StreamMesh
                 {
                     System.Windows.MessageBox.Show("StreamMesh zaten çalışıyor! Uygulama penceresi ön plana getirildi.", "StreamMesh", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     Shutdown();
-                    return false;
+                    return;
                 }
             }
-            return true;
-        }
 
-        private void SetupExceptionHandling()
-        {
             AppDomain.CurrentDomain.UnhandledException += (s, ev) =>
                 LogService.LogError("AppDomain UnhandledException", ev.ExceptionObject as Exception);
 
-            TaskScheduler.UnobservedTaskException += (s, ev) => {
-                LogService.LogError("UnobservedTaskException (Background Task)", ev.Exception);
-                ev.SetObserved();
-            };
-
             this.DispatcherUnhandledException += (s, ev) => {
-                LogService.LogError("DispatcherUnhandledException (UI Thread)", ev.Exception);
+                LogService.LogError("DispatcherUnhandledException", ev.Exception);
                 ev.Handled = true;
             };
-        }
 
-        private async Task InitializeServicesAsync()
-        {
-            LogService.LogInfo("[STARTUP] Initializing Services...");
+            LogService.LogInfo($"App: Baslatiliyor. Process: {Process.GetCurrentProcess().MainModule?.FileName}");
 
-            // 1. Media Server Init (HIGH PRIORITY - must start even if DB fails)
-            try
-            {
-                Server = new MediaServer();
-                if (Server.Start())
-                {
-                    LogService.LogInfo($"[STARTUP] MediaServer started securely on port {Server.Port}.");
-                }
-                else
-                {
-                    LogService.LogError("[STARTUP] CRITICAL: MediaServer failed to start on candidate ports (8080-8084).");
-                    System.Windows.MessageBox.Show("StreamMesh MediaServer başlatılamadı.\n\nSebep: Portlar kullanımda veya erişim engellendi.", "MediaServer Başlatma Hatası", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("[STARTUP] CRITICAL: Exception during MediaServer init", ex);
-            }
+            // 1. Maintenance
+            try { MaintenanceEngine.EnsureSelfInstallation(); }
+            catch (Exception ex) { LogService.LogError("App: Maintenance failed", ex); }
 
-            // 2. Maintenance
-            try
-            {
-                MaintenanceEngine.EnsureSelfInstallation();
-                LogService.LogInfo("[STARTUP] Maintenance check completed.");
-            }
-            catch (Exception ex) { LogService.LogError("[STARTUP] Maintenance failed", ex); }
+            // 2. Init DB
+            try { var db = new DatabaseEngine(); }
+            catch (Exception ex) { LogService.LogError("App: Database init failed", ex); }
 
-            // 3. Init DB (Awaited to ensure tables and migrations are ready before UI loads)
-            try
-            {
-                LogService.LogInfo("[STARTUP] Database initialization starting...");
-                var db = new DatabaseEngine();
+            // 4. Media Server Init
+            Server = new MediaServer();
+            Ssdp = new SsdpService();
+            Server.Start();
 
-                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-                var dbTask = db.InitializeAsync();
+            // 5. AceStream Engine Auto-Start
+            Task.Run(async () => await new AceEngine().StartEngineAsync());
 
-                if (await Task.WhenAny(dbTask, Task.Delay(-1, cts.Token)) == dbTask)
-                {
-                    await dbTask; // Propagate exceptions if any
-                    LogService.LogInfo("[STARTUP] Database initialized successfully.");
-                }
-                else
-                {
-                    LogService.LogWarning("[STARTUP] Database initialization TIMEOUT (20s). Background work might continue.");
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("[STARTUP] Database init failed", ex);
-            }
-
-            // 4. AceStream, Logo Sync & Cloud Sync (Arka planda devam etsinler)
-            StartBackgroundTasks();
-
-            LogService.LogInfo("[STARTUP] Service initialization sequence finished (DB may still be loading).");
-        }
-
-        private void StartBackgroundTasks()
-        {
-            // Stagger background tasks with staggered delays to prevent UI freeze and DB lock contention on startup
+            // 3. Background Cloud Sync (Delayed by 15s to allow fast startup)
             Task.Run(async () => {
-                await Task.Delay(4000);
-                try
-                {
-                    var logoSync = new LogoSyncService();
-                    await logoSync.SyncIfNecessaryAsync();
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogError("[STARTUP] LogoSync background task error", ex);
-                }
+                await Task.Delay(15000);
+                var sync = new GitHubSyncEngine();
+                await sync.PullFromGitHubAsync();
             });
 
-            Task.Run(async () => {
-                await Task.Delay(7000);
-                try
-                {
-                    var ace = new AceEngine();
-                    if (!ace.IsInstalled())
-                    {
-                        await Current.Dispatcher.InvokeAsync(async () => {
-                            var result = System.Windows.MessageBox.Show("AceStream motoru yüklü değil. P2P içerikleri oynatabilmeniz için gerekli bileşenler şimdi indirilsin mi?\n\nNot: İndirme işlemi arka planda yapılacaktır.", "Eksik Bileşen", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                            if (result == MessageBoxResult.Yes)
-                            {
-                                bool success = await ace.DownloadAndExtractEngineAsync();
-                                if (success)
-                                {
-                                    await ace.StartEngineAsync();
-                                    System.Windows.MessageBox.Show("AceStream başarıyla yüklendi ve başlatıldı.", "Kurulum Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
-                                }
-                            }
-                        });
-                    }
-                    else
-                    {
-                        await ace.StartEngineAsync();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogError("[STARTUP] AceEngine background task error", ex);
-                }
-            });
-
-            Task.Run(async () => {
-                await Task.Delay(2000);
-                try
-                {
-                    var db = new DatabaseEngine();
-                    int count = await db.GetTotalChannelCountAsync();
-                    if (count == 0)
-                    {
-                        LogService.LogInfo("[STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...");
-                        await Task.Delay(500);
-                        var sync = new GitHubSyncEngine();
-                        await sync.PullFromGitHubAsync();
-                    }
-                    else
-                    {
-                        LogService.LogInfo($"[STARTUP] Veritabanında {count} adet kanal mevcut. Açılışta otomatik internet indirmesi atlandı, yerel liste yüklendi.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogError("[STARTUP] GitHubSyncEngine background task error", ex);
-                }
-            });
+            base.OnStartup(e);
         }
 
         private static bool BringExistingInstanceToForeground()
@@ -254,18 +126,6 @@ namespace StreamMesh
         {
             try
             {
-                // Stop any active AceStream broadcasts on exit
-                new AceEngine().StopAllStreamsAsync().Wait(2000);
-
-                // Clean up spawned AceEngine processes
-                AceEngine.CleanupSpawnedProcesses();
-
-                // Stop HLS Local Proxy Server and pollers
-                HlsProxyEngine.Instance.Stop();
-
-                // Flush and shutdown logger
-                LogService.Shutdown();
-
                 if (_appMutex != null)
                 {
                     _appMutex.ReleaseMutex();

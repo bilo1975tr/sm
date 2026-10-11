@@ -24,28 +24,20 @@ namespace StreamMesh.Models
         private bool _isFavorite = false;
         private bool _isVerified = false;
         private bool _isLocked = false;
-        private bool _isEpgLocked = false;
         private bool _isPremium = false;
         private bool _isWatched = false;
         private string _notes = string.Empty;
         private DateTime _createdAt = DateTime.Now;
         private int _personalWatchCount = 0;
         private int _viewersCount = 0;
-        private long _lastPositionMs = 0;
         private string _urlSpeeds = ""; // JSON string for URL-speed mapping
-        private int _m3uLineNumber = 0;
-        private string _rawM3uBlock = string.Empty;
-
-        public long LastPositionMs { get => _lastPositionMs; set { _lastPositionMs = value; OnPropertyChanged(); } }
 
         private int _preferredNameIndex = 0;
-        private int _preferredUrlIndex = 0;
         private int _preferredLogoIndex = 0;
         private int _preferredEpgIndex = 0;
 
         public int PreferredNameIndex { get => _preferredNameIndex; set { _preferredNameIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); } }
-        public int PreferredUrlIndex { get => _preferredUrlIndex; set { _preferredUrlIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryUrl)); } }
-        public int PreferredLogoIndex { get => _preferredLogoIndex; set { _preferredLogoIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogoUrl)); OnPropertyChanged(nameof(PrimaryLogoUrl)); } }
+        public int PreferredLogoIndex { get => _preferredLogoIndex; set { _preferredLogoIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogoUrl)); } }
         public int PreferredEpgIndex { get => _preferredEpgIndex; set { _preferredEpgIndex = value; OnPropertyChanged(); OnPropertyChanged(nameof(EpgId)); } }
 
         public string UrlSpeeds { get => _urlSpeeds; set { _urlSpeeds = value; OnPropertyChanged(); } }
@@ -57,43 +49,6 @@ namespace StreamMesh.Models
         private string _overview = string.Empty;
         private string _backdropUrl = string.Empty;
         private string _cast = string.Empty;
-
-        // HTTP Headers & Metadata (M3U / IPTV)
-        private string _httpUserAgent = string.Empty;
-        private string _httpReferer = string.Empty;
-        private string _httpCookie = string.Empty;
-        private string _httpOrigin = string.Empty;
-        private Dictionary<string, string> _customHeaders = new(StringComparer.OrdinalIgnoreCase);
-
-        public string HttpUserAgent
-        {
-            get => _httpUserAgent;
-            set { if (_httpUserAgent != value) { _httpUserAgent = value; OnPropertyChanged(); } }
-        }
-
-        public string HttpReferer
-        {
-            get => _httpReferer;
-            set { if (_httpReferer != value) { _httpReferer = value; OnPropertyChanged(); } }
-        }
-
-        public string HttpCookie
-        {
-            get => _httpCookie;
-            set { if (_httpCookie != value) { _httpCookie = value; OnPropertyChanged(); } }
-        }
-
-        public string HttpOrigin
-        {
-            get => _httpOrigin;
-            set { if (_httpOrigin != value) { _httpOrigin = value; OnPropertyChanged(); } }
-        }
-
-        public Dictionary<string, string> CustomHeaders
-        {
-            get => _customHeaders;
-            set { if (_customHeaders != value) { _customHeaders = value; OnPropertyChanged(); } }
-        }
 
         public string ImdbId
         {
@@ -139,12 +94,6 @@ namespace StreamMesh.Models
             set { if (_isLocked != value) { _isLocked = value; OnPropertyChanged(); } }
         }
 
-        public bool IsEpgLocked
-        {
-            get => _isEpgLocked;
-            set { if (_isEpgLocked != value) { _isEpgLocked = value; OnPropertyChanged(); } }
-        }
-
         public bool IsWatched
         {
             get => _isWatched;
@@ -181,7 +130,7 @@ namespace StreamMesh.Models
         public string Name
         {
             get => _name;
-            set { if (_name != value) { _name = value; _cachedCleanName = null; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); OnPropertyChanged(nameof(CleanName)); OnPropertyChanged(nameof(NamesCount)); OnPropertyChanged(nameof(HasMultipleNames)); } }
+            set { if (_name != value) { _name = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryName)); OnPropertyChanged(nameof(CleanName)); OnPropertyChanged(nameof(NamesCount)); OnPropertyChanged(nameof(HasMultipleNames)); } }
         }
 
         public string PrimaryName
@@ -222,18 +171,7 @@ namespace StreamMesh.Models
         public string Url
         {
             get => _url;
-            set { if (_url != value) { _url = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryUrl)); OnPropertyChanged(nameof(SourcesCount)); OnPropertyChanged(nameof(HasMultipleSources)); } }
-        }
-
-        public string PrimaryUrl
-        {
-            get
-            {
-                var list = GetUrlList();
-                if (list.Count == 0) return Url ?? "";
-                if (PreferredUrlIndex >= 0 && PreferredUrlIndex < list.Count) return list[PreferredUrlIndex];
-                return list[0];
-            }
+            set { if (_url != value) { _url = value; OnPropertyChanged(); OnPropertyChanged(nameof(SourcesCount)); OnPropertyChanged(nameof(HasMultipleSources)); } }
         }
 
         public int SourcesCount => string.IsNullOrEmpty(_url) ? 0 : _url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -242,18 +180,7 @@ namespace StreamMesh.Models
         public string LogoUrl
         {
             get => _logoUrl;
-            set { if (_logoUrl != value) { _logoUrl = value; OnPropertyChanged(); OnPropertyChanged(nameof(PrimaryLogoUrl)); OnPropertyChanged(nameof(LogosCount)); OnPropertyChanged(nameof(HasMultipleLogos)); } }
-        }
-
-        public string PrimaryLogoUrl
-        {
-            get
-            {
-                var list = GetLogoList();
-                if (list.Count == 0) return LogoUrl ?? "";
-                if (PreferredLogoIndex >= 0 && PreferredLogoIndex < list.Count) return list[PreferredLogoIndex];
-                return list[0];
-            }
+            set { if (_logoUrl != value) { _logoUrl = value; OnPropertyChanged(); OnPropertyChanged(nameof(LogosCount)); OnPropertyChanged(nameof(HasMultipleLogos)); } }
         }
 
         public int LogosCount => GetLogoList().Count;
@@ -317,16 +244,10 @@ namespace StreamMesh.Models
             if (string.IsNullOrWhiteSpace(lang)) return "und";
             
             string lowerInput = lang.ToLowerInvariant();
-            if (lowerInput.Contains("[de]") || lowerInput.Contains("(de)") || lowerInput.Contains(" deutsch ") || lowerInput.EndsWith(" de") || lowerInput.StartsWith("de ") || lowerInput.StartsWith("de•") || lowerInput.StartsWith("de-") || lowerInput.StartsWith("de:") || lowerInput.StartsWith("|de|")) return "de";
-            if (lowerInput.Contains("[tr]") || lowerInput.Contains("(tr)") || lowerInput.Contains(" türk ") || lowerInput.Contains(" turkey ") || lowerInput.EndsWith(" tr") || lowerInput.StartsWith("tr ") || lowerInput.StartsWith("tr•") || lowerInput.StartsWith("tr-") || lowerInput.StartsWith("tr:") || lowerInput.StartsWith("|tr|") || lowerInput.StartsWith("┃tr┃")) return "tr";
-            if (lowerInput.Contains("[en]") || lowerInput.Contains("(en)") || lowerInput.Contains(" english ") || lowerInput.EndsWith(" en") || lowerInput.StartsWith("en ") || lowerInput.StartsWith("en•") || lowerInput.StartsWith("en-") || lowerInput.StartsWith("en:") || lowerInput.StartsWith("|en|") || lowerInput.StartsWith("[us]") || lowerInput.StartsWith("[uk]")) return "en";
-            if (lowerInput.Contains("[fr]") || lowerInput.Contains("(fr)") || lowerInput.Contains(" french ") || lowerInput.EndsWith(" fr") || lowerInput.StartsWith("fr ") || lowerInput.StartsWith("fr•") || lowerInput.StartsWith("fr-") || lowerInput.StartsWith("fr:") || lowerInput.StartsWith("|fr|")) return "fr";
-            if (lowerInput.Contains("[es]") || lowerInput.Contains("(es)") || lowerInput.Contains(" spanish ") || lowerInput.Contains("españa") || lowerInput.EndsWith(" es") || lowerInput.StartsWith("es ") || lowerInput.StartsWith("es•") || lowerInput.StartsWith("es-") || lowerInput.StartsWith("es:") || lowerInput.StartsWith("|es|")) return "es";
-            if (lowerInput.Contains("[it]") || lowerInput.Contains("(it)") || lowerInput.Contains(" italian ") || lowerInput.Contains("italia") || lowerInput.EndsWith(" it") || lowerInput.StartsWith("it ") || lowerInput.StartsWith("it•") || lowerInput.StartsWith("it-") || lowerInput.StartsWith("it:") || lowerInput.StartsWith("|it|")) return "it";
-            if (lowerInput.Contains("[ru]") || lowerInput.Contains("(ru)") || lowerInput.Contains(" russian ") || lowerInput.Contains("rusya") || lowerInput.EndsWith(" ru") || lowerInput.StartsWith("ru ") || lowerInput.StartsWith("ru•") || lowerInput.StartsWith("ru-") || lowerInput.StartsWith("ru:") || lowerInput.StartsWith("|ru|")) return "ru";
-            if (lowerInput.Contains("[ar]") || lowerInput.Contains("(ar)") || lowerInput.Contains(" arabic ") || lowerInput.Contains("عربي") || lowerInput.EndsWith(" ar") || lowerInput.StartsWith("ar ") || lowerInput.StartsWith("ar•") || lowerInput.StartsWith("ar-") || lowerInput.StartsWith("ar:") || lowerInput.StartsWith("|ar|")) return "ar";
-            if (lowerInput.Contains("[nl]") || lowerInput.Contains("(nl)") || lowerInput.Contains(" dutch ") || lowerInput.Contains("nederland") || lowerInput.EndsWith(" nl") || lowerInput.StartsWith("nl ") || lowerInput.StartsWith("|nl|")) return "nl";
-            if (lowerInput.Contains("[pt]") || lowerInput.Contains("(pt)") || lowerInput.Contains(" portuguese ") || lowerInput.Contains("portugal") || lowerInput.EndsWith(" pt") || lowerInput.StartsWith("pt ") || lowerInput.StartsWith("|pt|")) return "pt";
+            if (lowerInput.Contains("[de]") || lowerInput.Contains("(de)") || lowerInput.Contains(" deutsch ") || lowerInput.EndsWith(" de")) return "de";
+            if (lowerInput.Contains("[tr]") || lowerInput.Contains("(tr)") || lowerInput.Contains(" türk ") || lowerInput.Contains(" turkey ")) return "tr";
+            if (lowerInput.Contains("[en]") || lowerInput.Contains("(en)") || lowerInput.Contains(" english ")) return "en";
+            if (lowerInput.Contains("[fr]") || lowerInput.Contains("(fr)") || lowerInput.Contains(" french ")) return "fr";
 
             var parts = lang.Split(new[] { ',', ' ', '[', ']', '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
             var normalizedParts = new List<string>();
@@ -336,41 +257,6 @@ namespace StreamMesh.Models
                 if (norm != "und" && !normalizedParts.Contains(norm)) normalizedParts.Add(norm);
             }
             return normalizedParts.Count > 0 ? string.Join(",", normalizedParts) : "und";
-        }
-
-        public static string ExtractLanguageFromText(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return "und";
-            string t = text.Trim();
-
-            // Match patterns like: [TR], (TR), |TR|, ┃TR┃, DE•, DE:, TR:, EN:, ES:, FR:, IT:, RU:, AR:
-            var m = Regex.Match(t, @"^(?:(?:\d+\.|\*|✨|┃)?\s*)?[\[|\(┃]([a-zA-Z]{2})[\]|\)┃]", RegexOptions.IgnoreCase);
-            if (m.Success)
-            {
-                string code = NormalizeSingleLanguage(m.Groups[1].Value);
-                if (code != "und") return code;
-            }
-
-            var mPrefix = Regex.Match(t, @"^(?:(?:\d+\.|\*|✨|┃)?\s*)?([a-zA-Z]{2})\s*[\•\:\-\|]", RegexOptions.IgnoreCase);
-            if (mPrefix.Success)
-            {
-                string code = NormalizeSingleLanguage(mPrefix.Groups[1].Value);
-                if (code != "und") return code;
-            }
-
-            // Word checks
-            string lower = t.ToLowerInvariant();
-            if (lower.Contains("türk") || lower.Contains("turk")) return "tr";
-            if (lower.Contains("deutsch") || lower.Contains("germany") || lower.Contains("deutschland")) return "de";
-            if (lower.Contains("english") || lower.Contains("ingiliz")) return "en";
-            if (lower.Contains("españ") || lower.Contains("spain")) return "es";
-            if (lower.Contains("français") || lower.Contains("france") || lower.Contains("french")) return "fr";
-            if (lower.Contains("italy") || lower.Contains("italia") || lower.Contains("italiano")) return "it";
-            if (lower.Contains("russia") || lower.Contains("rusya")) return "ru";
-            if (lower.Contains("arabic") || lower.Contains("arapça") || lower.Contains("عربي")) return "ar";
-            if (lower.Contains("azerba") || lower.Contains("azer") || lower.Contains("azeri")) return "az";
-
-            return "und";
         }
 
         private static string NormalizeSingleLanguage(string lang)
@@ -403,18 +289,6 @@ namespace StreamMesh.Models
             set { if (_playlistUrl != value) { _playlistUrl = value; OnPropertyChanged(); } }
         }
 
-        public int M3uLineNumber
-        {
-            get => _m3uLineNumber;
-            set { if (_m3uLineNumber != value) { _m3uLineNumber = value; OnPropertyChanged(); } }
-        }
-
-        public string RawM3uBlock
-        {
-            get => _rawM3uBlock;
-            set { if (_rawM3uBlock != value) { _rawM3uBlock = value; OnPropertyChanged(); } }
-        }
-
         public string CurrentEpgTitle
         {
             get => _currentEpgTitle;
@@ -432,16 +306,7 @@ namespace StreamMesh.Models
         public bool HasMovieGenre => !string.IsNullOrEmpty(MovieGenre);
 
         // Smart Extraction Logic
-        private string? _cachedCleanName;
-        public string CleanName
-        {
-            get
-            {
-                if (_cachedCleanName != null) return _cachedCleanName;
-                _cachedCleanName = string.IsNullOrWhiteSpace(Name) ? "" : StreamMesh.Core.Media.ChannelUtils.GetCleanName(Name);
-                return _cachedCleanName;
-            }
-        }
+        public string CleanName => string.IsNullOrWhiteSpace(Name) ? "" : StreamMesh.Core.Media.ChannelUtils.GetCleanName(Name);
 
         public int SeasonNumber => ParsedMovieDetails.Season;
         public int EpisodeNumber => ParsedMovieDetails.Episode;
@@ -491,9 +356,8 @@ namespace StreamMesh.Models
             var yearMatch = Regex.Match(working, @"\((19\d{2}|20\d{2})\)");
             if (yearMatch.Success) { details.MovieYear = yearMatch.Groups[1].Value; working = working.Replace(yearMatch.Value, ""); }
 
-            // S01E01, 1x01, 1. Sezon 78. Bölüm, 78. Bölüm, 78.Bolum, Bolum 78, vb.
-            // Kritik: 'bölüm' veya 'sezon' ibaresi olmadan sadece tek başına geçen sayılar (Sinema 1001, Kanal 24 vb.) asla dizi bölümü sayılmaz!
-            var seriesMatch = Regex.Match(working, @"(?i)\bs(\d+)\s*e(\d+)\b|\b(\d+)x(\d+)\b|(?:(\d+)\.\s*sezon\s*)?(?:bölüm|bolum|\bep\b|\bpart\b)\s*(\d+)|(?:(\d+)\.\s*sezon)");
+            // S01E01 or 1x01 pattern
+            var seriesMatch = Regex.Match(working, @"(?i)s(\d+)\s?e(\d+)|(\d+)x(\d+)");
             if (seriesMatch.Success)
             {
                 if (!string.IsNullOrEmpty(seriesMatch.Groups[1].Value))
@@ -501,44 +365,15 @@ namespace StreamMesh.Models
                     int.TryParse(seriesMatch.Groups[1].Value, out int s); details.Season = s;
                     int.TryParse(seriesMatch.Groups[2].Value, out int e); details.Episode = e;
                 }
-                else if (!string.IsNullOrEmpty(seriesMatch.Groups[3].Value))
+                else
                 {
                     int.TryParse(seriesMatch.Groups[3].Value, out int s); details.Season = s;
                     int.TryParse(seriesMatch.Groups[4].Value, out int e); details.Episode = e;
                 }
-                else if (!string.IsNullOrEmpty(seriesMatch.Groups[6].Value))
-                {
-                    if (!string.IsNullOrEmpty(seriesMatch.Groups[5].Value))
-                    {
-                        int.TryParse(seriesMatch.Groups[5].Value, out int s); details.Season = s;
-                    }
-                    else
-                    {
-                        details.Season = 1;
-                    }
-                    int.TryParse(seriesMatch.Groups[6].Value, out int e); details.Episode = e;
-                }
-                else if (!string.IsNullOrEmpty(seriesMatch.Groups[7].Value))
-                {
-                    int.TryParse(seriesMatch.Groups[7].Value, out int s); details.Season = s;
-                    details.Episode = 1;
-                }
-                string prefix = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':', '\'', '"', '`', '’', '‘', '“', '”');
-                if (!string.IsNullOrWhiteSpace(prefix))
-                {
-                    details.SeriesTitle = prefix;
-                }
-                else if (!string.IsNullOrWhiteSpace(GroupTitle) && GroupTitle != "Dizi" && GroupTitle != "Genel" && GroupTitle != "TV")
-                {
-                    details.SeriesTitle = GroupTitle;
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(GroupTitle) && GroupTitle != "Dizi" && GroupTitle != "Genel" && GroupTitle != "TV" && string.Equals(Category, "Dizi", StringComparison.OrdinalIgnoreCase))
-            {
-                details.SeriesTitle = GroupTitle;
+                details.SeriesTitle = working.Substring(0, seriesMatch.Index).Trim(' ', '-', '_', ':');
             }
 
-            working = Regex.Replace(working, @"\s+", " ").Trim(' ', ':', '-', '(', ')', '\'', '"', '`', '’', '‘', '“', '”');
+            working = Regex.Replace(working, @"\s+", " ").Trim(' ', ':', '-', '(', ')');
             details.CleanName = string.IsNullOrWhiteSpace(working) ? rawName : working;
             return details;
         }
@@ -559,58 +394,11 @@ namespace StreamMesh.Models
         public List<string> GetUrlList()
         {
             if (string.IsNullOrWhiteSpace(Url)) return new List<string>();
-
-            if (Url.Contains("||"))
-            {
-                return Url.Split(new[] { "||" }, StringSplitOptions.RemoveEmptyEntries)
-                          .Select(u => u.Trim())
-                          .Where(u => !string.IsNullOrEmpty(u))
-                          .Distinct(StringComparer.OrdinalIgnoreCase)
-                          .ToList();
-            }
-
-            if (!Url.Contains(',')) return new List<string> { Url.Trim() };
-
-            var rawParts = Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            var result = new List<string>();
-            string current = "";
-
-            foreach (var part in rawParts)
-            {
-                string trimmed = part.Trim();
-                if (Regex.IsMatch(trimmed, @"^(https?://|acestream://|rtmp://|rtsp://|mms://|p2p://|[a-fA-F0-9]{40}$)", RegexOptions.IgnoreCase))
-                {
-                    if (!string.IsNullOrEmpty(current))
-                    {
-                        result.Add(current);
-                    }
-                    current = trimmed;
-                }
-                else
-                {
-                    if (string.IsNullOrEmpty(current)) current = trimmed;
-                    else current += "," + trimmed;
-                }
-            }
-            if (!string.IsNullOrEmpty(current)) result.Add(current);
-
-            return result.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        }
-
-        public List<string> GetOrderedUrlList()
-        {
-            var list = GetUrlList();
-            if (list.Count <= 1) return list;
-
-            int primaryIdx = (PreferredUrlIndex >= 0 && PreferredUrlIndex < list.Count) ? PreferredUrlIndex : 0;
-            if (primaryIdx == 0) return list;
-
-            var ordered = new List<string> { list[primaryIdx] };
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (i != primaryIdx) ordered.Add(list[i]);
-            }
-            return ordered;
+            return Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                      .Select(u => u.Trim())
+                      .Where(u => !string.IsNullOrEmpty(u))
+                      .Distinct(StringComparer.OrdinalIgnoreCase)
+                      .ToList();
         }
 
         public List<string> GetLogoList()
@@ -677,27 +465,9 @@ namespace StreamMesh.Models
             }
         }
 
-        public void AddAlternativePlaylistUrl(string playlistUrl)
-        {
-            if (string.IsNullOrWhiteSpace(playlistUrl)) return;
-            var list = (PlaylistUrl ?? "").Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
-                                          .Select(p => p.Trim())
-                                          .Where(p => !string.IsNullOrEmpty(p))
-                                          .ToList();
-            if (!list.Contains(playlistUrl.Trim(), StringComparer.OrdinalIgnoreCase))
-            {
-                list.Add(playlistUrl.Trim());
-                PlaylistUrl = string.Join(",", list);
-            }
-        }
-
         public void MergeWith(Channel other)
         {
             if (other == null) return;
-
-            string savedPrimaryName = PrimaryName;
-            string savedPrimaryUrl = PrimaryUrl;
-            string savedPrimaryLogo = PrimaryLogoUrl;
 
             // 1. Merge Names
             foreach (var n in other.GetNamesList()) AddAlternativeName(n);
@@ -711,41 +481,6 @@ namespace StreamMesh.Models
             // 4. Merge EPG IDs
             foreach (var e in other.GetEpgIdList()) AddAlternativeEpgId(e);
 
-            // 5. Merge Playlist Sources
-            if (!string.IsNullOrWhiteSpace(other.PlaylistUrl))
-            {
-                var otherSources = other.PlaylistUrl.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var s in otherSources) AddAlternativePlaylistUrl(s);
-            }
-
-            // Restore / re-anchor preferred indices
-            if (!string.IsNullOrEmpty(savedPrimaryName))
-            {
-                var names = GetNamesList();
-                int idx = names.FindIndex(x => string.Equals(x, savedPrimaryName, StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) PreferredNameIndex = idx;
-            }
-
-            if (!string.IsNullOrEmpty(savedPrimaryUrl))
-            {
-                var urls = GetUrlList();
-                int idx = urls.FindIndex(x => string.Equals(x, savedPrimaryUrl, StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) PreferredUrlIndex = idx;
-            }
-
-            if (!string.IsNullOrEmpty(savedPrimaryLogo))
-            {
-                var logos = GetLogoList();
-                int idx = logos.FindIndex(x => string.Equals(x, savedPrimaryLogo, StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) PreferredLogoIndex = idx;
-            }
-            else if (!string.IsNullOrWhiteSpace(other.PrimaryLogoUrl))
-            {
-                var logos = GetLogoList();
-                int idx = logos.FindIndex(x => string.Equals(x, other.PrimaryLogoUrl, StringComparison.OrdinalIgnoreCase));
-                if (idx >= 0) PreferredLogoIndex = idx;
-            }
-
             // 5. Merge Metadata if missing
             if (string.IsNullOrWhiteSpace(ImdbId) && !string.IsNullOrWhiteSpace(other.ImdbId)) ImdbId = other.ImdbId;
             if (string.IsNullOrWhiteSpace(Overview) && !string.IsNullOrWhiteSpace(other.Overview)) Overview = other.Overview;
@@ -753,38 +488,6 @@ namespace StreamMesh.Models
             if (string.IsNullOrWhiteSpace(Cast) && !string.IsNullOrWhiteSpace(other.Cast)) Cast = other.Cast;
             if ((string.IsNullOrWhiteSpace(Category) || Category == "TV") && !string.IsNullOrWhiteSpace(other.Category) && other.Category != "TV") Category = other.Category;
             if ((string.IsNullOrWhiteSpace(Language) || Language == "und") && !string.IsNullOrWhiteSpace(other.Language) && other.Language != "und") Language = other.Language;
-            if (string.IsNullOrWhiteSpace(GroupTitle) && !string.IsNullOrWhiteSpace(other.GroupTitle)) GroupTitle = other.GroupTitle;
-            if (string.IsNullOrWhiteSpace(HttpUserAgent) && !string.IsNullOrWhiteSpace(other.HttpUserAgent)) HttpUserAgent = other.HttpUserAgent;
-            if (string.IsNullOrWhiteSpace(HttpReferer) && !string.IsNullOrWhiteSpace(other.HttpReferer)) HttpReferer = other.HttpReferer;
-            if (string.IsNullOrWhiteSpace(HttpCookie) && !string.IsNullOrWhiteSpace(other.HttpCookie)) HttpCookie = other.HttpCookie;
-            if (string.IsNullOrWhiteSpace(HttpOrigin) && !string.IsNullOrWhiteSpace(other.HttpOrigin)) HttpOrigin = other.HttpOrigin;
-            if (string.IsNullOrWhiteSpace(Notes) && !string.IsNullOrWhiteSpace(other.Notes)) Notes = other.Notes;
-            if (other.CustomHeaders != null)
-            {
-                foreach (var kv in other.CustomHeaders)
-                {
-                    if (!CustomHeaders.ContainsKey(kv.Key)) CustomHeaders[kv.Key] = kv.Value;
-                }
-            }
-
-            // 6. Merge Lock States & User Data
-            if (other.IsEpgLocked) IsEpgLocked = true;
-            if (other.IsLocked) IsLocked = true;
-            if (other.IsFavorite) IsFavorite = true;
-            if (other.IsWatched) IsWatched = true;
-            if (other.IsVerified) IsVerified = true;
-            if (other.PersonalWatchCount > PersonalWatchCount) PersonalWatchCount = other.PersonalWatchCount;
-            if (other.LastPositionMs > LastPositionMs) LastPositionMs = other.LastPositionMs;
-
-            // 7. Merge Diagnostic & Source M3U Info
-            if (string.IsNullOrEmpty(PlaylistUrl) && !string.IsNullOrEmpty(other.PlaylistUrl))
-                PlaylistUrl = other.PlaylistUrl;
-            if (M3uLineNumber <= 0 && other.M3uLineNumber > 0)
-                M3uLineNumber = other.M3uLineNumber;
-            if (string.IsNullOrEmpty(RawM3uBlock) && !string.IsNullOrEmpty(other.RawM3uBlock))
-                RawM3uBlock = other.RawM3uBlock;
-            else if (!string.IsNullOrEmpty(other.RawM3uBlock) && !RawM3uBlock.Contains(other.RawM3uBlock))
-                RawM3uBlock = $"{RawM3uBlock}\n---\n{other.RawM3uBlock}";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

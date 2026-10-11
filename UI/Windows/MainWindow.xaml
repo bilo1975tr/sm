@@ -12,57 +12,39 @@
 
         <Border x:Name="SidebarBorder" Grid.Column="0" Background="#111" BorderBrush="#333" BorderThickness="0,0,1,0">
             <StackPanel Margin="0,20">
-                <!-- StreamMesh Vector Logo -->
-                <Viewbox Width="44" Height="44" Margin="0,0,0,40" Cursor="Hand" MouseLeftButtonDown="PeerCount_Click">
-                    <Canvas Width="256" Height="256">
-                        <Rectangle Width="256" Height="256" RadiusX="60" RadiusY="60" Fill="#0A0C10"/>
-                        <Ellipse Canvas.Left="58" Canvas.Top="58" Width="140" Height="140" Stroke="#38BDF8" StrokeThickness="4">
-                            <Ellipse.Fill>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#0284C7" Offset="0"/>
-                                    <GradientStop Color="#0F172A" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Ellipse.Fill>
-                        </Ellipse>
-                        <Polygon Points="110,95 110,161 160,128" Fill="White"/>
-                        <Ellipse Canvas.Left="45" Canvas.Top="45" Width="30" Height="30" Fill="#38BDF8"/>
-                        <Line X1="60" Y1="60" X2="90" Y2="90" Stroke="#38BDF8" StrokeThickness="4"/>
-                        <Ellipse Canvas.Left="181" Canvas.Top="45" Width="30" Height="30" Fill="#6366F1"/>
-                        <Line X1="196" Y1="60" X2="166" Y2="90" Stroke="#6366F1" StrokeThickness="4"/>
-                    </Canvas>
-                </Viewbox>
+                <Image Source="pack://application:,,,/logos/StreamMesh_logo.png" Width="40" Margin="0,0,0,40"/>
 
                 <RadioButton Style="{StaticResource NavButtonStyle}" IsChecked="True" Click="Nav_Click" Tag="Home" ToolTip="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[NavLibrary]}">
-                    <Path Data="{StaticResource GeoHome}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                    <TextBlock Text="🏠"/>
                 </RadioButton>
 
-                <RadioButton Style="{StaticResource NavButtonStyle}" Click="Nav_Click" Tag="AceSearch" ToolTip="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[GlobalSearch]}">
-                    <Path Data="{StaticResource GeoSearch}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                <RadioButton Style="{StaticResource NavButtonStyle}" Click="Nav_Click" Tag="AceSearch" ToolTip="Global Kanal Arama">
+                    <TextBlock Text="🔍"/>
                 </RadioButton>
 
                 <RadioButton Style="{StaticResource NavButtonStyle}" Click="Nav_Click" Tag="Player" ToolTip="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[NavPlayer]}">
-                    <Path Data="{StaticResource GeoPlay}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                    <TextBlock Text="▶"/>
                 </RadioButton>
 
                 <RadioButton Style="{StaticResource NavButtonStyle}" Click="Nav_Click" Tag="Stats" ToolTip="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[NavStats]}">
-                    <Path Data="{StaticResource GeoStats}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                    <TextBlock Text="📊"/>
                 </RadioButton>
 
                 <RadioButton Style="{StaticResource NavButtonStyle}" Click="Nav_Click" Tag="Settings" ToolTip="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[NavSettings]}">
-                    <Path Data="{StaticResource GeoSettings}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                    <TextBlock Text="⚙"/>
                 </RadioButton>
 
                 <RadioButton Style="{StaticResource NavButtonStyle}" Click="OpenChat_Click" ToolTip="AI Asistan">
-                    <Path Data="{StaticResource GeoChat}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                    <TextBlock Text="💬"/>
                 </RadioButton>
 
                 <RadioButton Style="{StaticResource NavButtonStyle}" Click="VIPButton_Click" ToolTip="Destek ve VIP">
-                    <Path Data="{StaticResource GeoGift}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                    <TextBlock Text="🎁"/>
                 </RadioButton>
 
                 <Border Height="40"/>
                 <StackPanel Orientation="Vertical" Cursor="Hand" MouseLeftButtonDown="PeerCount_Click" Background="Transparent" ToolTip="P2P Mesh Raporunu Görüntüle">
-                    <Path Data="{StaticResource GeoUsers}" Fill="#38BDF8" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,4"/>
+                    <TextBlock Text="👥" HorizontalAlignment="Center" FontSize="18"/>
                     <TextBlock x:Name="OnlinePeersText" Text="0" Foreground="#38BDF8" FontWeight="Bold" FontSize="11" HorizontalAlignment="Center"/>
                 </StackPanel>
             </StackPanel>
@@ -95,7 +77,7 @@
                 <Border Background="#1E1E1E" CornerRadius="12" Padding="10,5" BorderBrush="#333" BorderThickness="1" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="v" Foreground="#38BDF8" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock x:Name="CurrentVersionBadge" Text="0.1.0" Foreground="#CCC" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="CurrentVersionBadge" Text="0.0.1" Foreground="#CCC" FontSize="11" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Border>
             </StackPanel>

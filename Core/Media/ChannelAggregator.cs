@@ -18,7 +18,9 @@ namespace StreamMesh.Core.Media
 
             var aggregated = new List<Channel>();
             var urlMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+            var epgMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
             var aceMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+
             var aceEngine = new AceEngine();
 
             foreach (var ch in incomingChannels)
@@ -27,7 +29,9 @@ namespace StreamMesh.Core.Media
 
                 Channel? matched = null;
                 var urls = ch.GetUrlList();
+                var epgs = ch.GetEpgIdList();
 
+                // 1. Try matching by AceStream Hash (Strongest match for P2P)
                 foreach (var u in urls)
                 {
                     string hash = aceEngine.ExtractHash(u);
@@ -37,24 +41,22 @@ namespace StreamMesh.Core.Media
                     }
                 }
 
+                // 2. Try matching by URL
                 if (matched == null)
                 {
                     foreach (var u in urls)
                     {
                         if (urlMap.TryGetValue(u, out matched)) break;
-                        string cleanId = M3uEngine.CleanStreamUrlForIdentity(u);
-                        if (!string.IsNullOrEmpty(cleanId) && urlMap.TryGetValue(cleanId, out matched)) break;
                     }
                 }
 
-                if (matched != null)
+                // 3. Try matching by EPG ID
+                if (matched == null)
                 {
-                    bool isSeriesMismatch = (ch.SeasonNumber > 0 && matched.SeasonNumber > 0 && (ch.SeasonNumber != matched.SeasonNumber || ch.EpisodeNumber != matched.EpisodeNumber)) ||
-                                            (ch.EpisodeNumber > 0 && matched.EpisodeNumber > 0 && ch.EpisodeNumber != matched.EpisodeNumber);
-
-                    if (isSeriesMismatch)
+                    foreach (var e in epgs)
                     {
-                        matched = null;
+                        if (string.IsNullOrEmpty(e)) continue;
+                        if (epgMap.TryGetValue(e, out matched)) break;
                     }
                 }
 
@@ -68,14 +70,16 @@ namespace StreamMesh.Core.Media
                     aggregated.Add(matched);
                 }
 
+                // Re-index
                 foreach (var u in matched.GetUrlList())
                 {
                     urlMap[u] = matched;
-                    string cleanId = M3uEngine.CleanStreamUrlForIdentity(u);
-                    if (!string.IsNullOrEmpty(cleanId)) urlMap[cleanId] = matched;
-
                     string h = aceEngine.ExtractHash(u);
                     if (!string.IsNullOrEmpty(h)) aceMap[h] = matched;
+                }
+                foreach (var e in matched.GetEpgIdList())
+                {
+                    if (!string.IsNullOrEmpty(e)) epgMap[e] = matched;
                 }
             }
 

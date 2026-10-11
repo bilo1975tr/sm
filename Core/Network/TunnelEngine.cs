@@ -44,41 +44,30 @@ namespace StreamMesh.Core.Network
 
         private async Task<string?> GetIpFromStunAsync(string host, int port)
         {
-            try
+            var addresses = await Dns.GetHostAddressesAsync(host);
+            var targetAddr = addresses[0];
+            var ep = new IPEndPoint(targetAddr, port);
+
+            using (var client = new UdpClient(targetAddr.AddressFamily))
             {
-                var addresses = await Dns.GetHostAddressesAsync(host);
-                if (addresses == null || addresses.Length == 0) return null;
+                client.Client.SendTimeout = 2000;
+                client.Client.ReceiveTimeout = 2000;
+                byte[] request = new byte[20];
+                request[1] = 0x01; // Binding Request
+                Array.Copy(Guid.NewGuid().ToByteArray(), 0, request, 8, 12);
 
-                // Prefer IPv4 address for standard STUN mapped address binding
-                var targetAddr = addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork) ?? addresses[0];
-                var ep = new IPEndPoint(targetAddr, port);
+                await client.SendAsync(request, request.Length, ep);
+                var result = await client.ReceiveAsync();
 
-                using (var client = new UdpClient(targetAddr.AddressFamily))
+                // Simplified STUN parsing for MAPPED-ADDRESS (v4)
+                for (int i = 20; i < result.Buffer.Length - 8; i++)
                 {
-                    client.Client.SendTimeout = 2000;
-                    client.Client.ReceiveTimeout = 2000;
-                    byte[] request = new byte[20];
-                    request[1] = 0x01; // Binding Request
-                    Array.Copy(Guid.NewGuid().ToByteArray(), 0, request, 8, 12);
-
-                    using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(2000));
-                    await client.SendAsync(request, request.Length, ep);
-                    var result = await client.ReceiveAsync(cts.Token);
-
-                    // STUN parsing for MAPPED-ADDRESS (v4)
-                    if (result.Buffer != null && result.Buffer.Length > 28)
+                    if (result.Buffer[i] == 0x00 && result.Buffer[i + 1] == 0x01) // MAPPED-ADDRESS
                     {
-                        for (int i = 20; i < result.Buffer.Length - 8; i++)
-                        {
-                            if (result.Buffer[i] == 0x00 && result.Buffer[i + 1] == 0x01) // MAPPED-ADDRESS IPv4
-                            {
-                                return $"{result.Buffer[i + 8]}.{result.Buffer[i + 9]}.{result.Buffer[i + 10]}.{result.Buffer[i + 11]}";
-                            }
-                        }
+                        return $"{result.Buffer[i + 8]}.{result.Buffer[i + 9]}.{result.Buffer[i + 10]}.{result.Buffer[i + 11]}";
                     }
                 }
             }
-            catch { }
             return null;
         }
     }

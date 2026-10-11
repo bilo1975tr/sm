@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using StreamMesh.Models;
@@ -202,70 +200,54 @@ namespace StreamMesh.Core.Media
         private bool TryParseXmlTime(string time, string sourceUrl, out DateTime result)
         {
             result = DateTime.MinValue;
-            if (string.IsNullOrWhiteSpace(time)) return false;
-
+            if (string.IsNullOrEmpty(time)) return false;
             try
             {
+                // V1.9.8: Source-specific offset handling
+                // Special case for iptv-epg.org: They provide local time but mark it as +0000 UTC.
+                // We ignore the offset for this specific source.
+                bool ignoreOffset = sourceUrl.Contains("iptv-epg.org", StringComparison.OrdinalIgnoreCase);
+
+                // XMLTV format: yyyyMMddHHmmss [+-]HHmm
                 string cleanTime = time.Trim();
-
-                // 1. Try ISO 8601 and standard .NET formats first (Handles Z, +03:00, etc.)
-                if (DateTimeOffset.TryParse(cleanTime, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTimeOffset dto))
-                {
-                    result = dto.LocalDateTime;
-                    return true;
-                }
-
-                // 2. Handle XMLTV standard format: yyyyMMddHHmmss [+-]HHmm
-                // Example: 20231024153000 +0300
-                if (cleanTime.Length >= 14 && char.IsDigit(cleanTime[0]))
+                if (cleanTime.Length >= 14)
                 {
                     string datePart = cleanTime.Substring(0, 14);
-                    if (DateTime.TryParseExact(datePart, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dt))
-                    {
-                        if (cleanTime.Length > 14)
-                        {
-                            string offsetPart = cleanTime.Substring(14).Trim();
-                            // Handle both +HHmm and +HH:mm
-                            if (DateTimeOffset.TryParseExact(datePart + " " + offsetPart,
-                                new[] { "yyyyMMddHHmmss zzz", "yyyyMMddHHmmss zz", "yyyyMMddHHmmss z" },
-                                CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTimeOffset dtoXml))
-                            {
-                                result = dtoXml.LocalDateTime;
-                                return true;
-                            }
+                    DateTime dt = DateTime.ParseExact(datePart, "yyyyMMddHHmmss", null);
 
-                            // Manual parsing for cases like +0300 (standard XMLTV)
-                            var match = Regex.Match(offsetPart, @"^([+-])(\d{2}):?(\d{2})$");
-                            if (match.Success)
+                    if (!ignoreOffset && cleanTime.Length > 15)
+                    {
+                        string offsetPart = cleanTime.Substring(14).Trim();
+                        if (offsetPart.Length >= 5 && (offsetPart.StartsWith("+") || offsetPart.StartsWith("-")))
+                        {
+                            try
                             {
-                                int hours = int.Parse(match.Groups[2].Value);
-                                int mins = int.Parse(match.Groups[3].Value);
+                                int hours = int.Parse(offsetPart.Substring(1, 2));
+                                int mins = int.Parse(offsetPart.Substring(3, 2));
                                 TimeSpan offset = new TimeSpan(hours, mins, 0);
-                                if (match.Groups[1].Value == "-") offset = offset.Negate();
+                                if (offsetPart.StartsWith("-")) offset = offset.Negate();
 
                                 result = new DateTimeOffset(dt, offset).LocalDateTime;
                                 return true;
                             }
+                            catch { }
                         }
+                    }
 
-                        // Fallback: If no valid offset found but source is known to be local
-                        if (sourceUrl.Contains("iptv-epg.org", StringComparison.OrdinalIgnoreCase) ||
-                            sourceUrl.Contains("turk", StringComparison.OrdinalIgnoreCase))
-                        {
-                            result = DateTime.SpecifyKind(dt, DateTimeKind.Local);
-                            return true;
-                        }
-
-                        // Default to the parsed DateTime as is
-                        result = dt;
+                    if (ignoreOffset)
+                    {
+                        // Treat as direct local time
+                        result = DateTime.SpecifyKind(dt, DateTimeKind.Unspecified);
                         return true;
                     }
+
+                    // If no explicit offset and not ignored, assume UTC and convert to Local
+                    result = DateTime.SpecifyKind(dt, DateTimeKind.Utc).ToLocalTime();
+                    return true;
                 }
             }
             catch { }
-
-            // Final fallback to generic parser
-            return DateTime.TryParse(time, CultureInfo.InvariantCulture, DateTimeStyles.None, out result);
+            return DateTime.TryParse(time, out result);
         }
     }
 }

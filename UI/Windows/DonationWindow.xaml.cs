@@ -9,12 +9,22 @@ namespace StreamMesh.UI.Windows
             InitializeComponent();
         }
 
+        private void CopyIban_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Windows.Clipboard.SetText(IbanBox.Text);
+                System.Windows.MessageBox.Show("IBAN adresi panoya kopyalandı!", "Kopyalandı", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch { }
+        }
+
         private void CopyCrypto_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 System.Windows.Clipboard.SetText(CryptoBox.Text);
-                System.Windows.MessageBox.Show("USDT (BEP20) cüzdan adresi panoya kopyalandı!", "Kopyalandı", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("Kripto cüzdan adresi panoya kopyalandı!", "Kopyalandı", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch { }
         }

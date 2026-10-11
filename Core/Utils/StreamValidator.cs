@@ -1,22 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
-using FlyleafLib;
-using FlyleafLib.MediaPlayer;
+using LibVLCSharp.Shared;
 using StreamMesh.Models;
 using System.Linq;
-using System.IO;
-using StreamMesh.Core.Network;
 
 namespace StreamMesh.Core.Utils
 {
     public enum ValidationLevel
     {
-        Fast,
-        Detailed,
-        Full
+        Fast,       // HTTP HEAD/GET Check
+        Detailed,   // LibVLC Start Check
+        Full        // LibVLC Media Track Analysis (Codec/Resolution)
     }
 
     public class ValidationResult
@@ -31,16 +27,26 @@ namespace StreamMesh.Core.Utils
 
     public class StreamValidator : IDisposable
     {
+        private readonly LibVLC? _libVLC;
+        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+
         public StreamValidator()
         {
-            FlyleafHelper.SafeStart();
+            try
+            {
+                // Simple init, assuming core is already initialized by PlayerView or Maintenance
+                _libVLC = new LibVLC("--no-audio", "--no-video", "--no-osd");
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("StreamValidator: LibVLC init failed", ex);
+            }
         }
 
-        public async Task<ValidationResult> ValidateAsync(Channel channel, ValidationLevel level, IProgress<string>? logger = null, CancellationToken ct = default)
+        public async Task<ValidationResult> ValidateAsync(Channel channel, ValidationLevel level, IProgress<string>? logger = null)
         {
             var result = new ValidationResult();
-            // Test the preferred/default URL first
-            string url = channel.GetOrderedUrlList().FirstOrDefault() ?? channel.GetUrlList().FirstOrDefault() ?? "";
+            string url = channel.GetUrlList().FirstOrDefault() ?? "";
 
             if (string.IsNullOrEmpty(url))
             {
@@ -49,128 +55,42 @@ namespace StreamMesh.Core.Utils
                 return result;
             }
 
+            // AceStream URL handling
+            if (url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
+            {
+                string hash = url.Substring(12).Trim('/');
+                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
+            }
+            else if (url.StartsWith("PID:", StringComparison.OrdinalIgnoreCase))
+            {
+                string hash = url.Substring(4).Trim();
+                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
+            }
+            else if (url.StartsWith("PID=", StringComparison.OrdinalIgnoreCase))
+            {
+                string hash = url.Substring(4).Trim();
+                url = $"http://127.0.0.1:6878/ace/getstream?id={hash}";
+            }
+
+            // --- Fast Test ---
             try
             {
-                logger?.Report($"[{channel.PrimaryName}] Doğrulama yapılıyor: {url}");
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                int timeoutMs = (level == ValidationLevel.Fast) ? 3500 : 5000;
-                cts.CancelAfter(timeoutMs);
+                logger?.Report($"[{channel.PrimaryName}] Hızlı kontrol yapılıyor: {url}");
+                using var request = new HttpRequestMessage(HttpMethod.Head, url);
+                using var response = await _httpClient.SendAsync(request);
 
-                // Asla sadece HEAD isteğine güvenme! Cloudflare/Worker'lar sahte 200 döner.
-                // Gerçek GET ile manifest veya medya akışının başını doğrula.
-                using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                
-                // Bazı IPTV/Cloudflare sunucuları tarayıcı yerine medya oynatıcı User-Agent bekler
-                request.Headers.TryAddWithoutValidation("User-Agent", "VLC/3.0.20 LibVLC/3.0.20");
-                request.Headers.TryAddWithoutValidation("Accept", "*/*");
-
-                using var getResponse = await MediaHttpClient.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
-
-                if (!getResponse.IsSuccessStatusCode)
-                {
-                    result.IsOnline = false;
-                    result.Status = $"Sunucu Hatası: {(int)getResponse.StatusCode} {getResponse.StatusCode}";
-                    return result;
-                }
-
-                // İlk 2048 baytı oku ve doğrula
-                using var stream = await getResponse.Content.ReadAsStreamAsync(cts.Token).ConfigureAwait(false);
-                byte[] buffer = new byte[2048];
-                int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token).ConfigureAwait(false);
-
-                if (bytesRead == 0)
-                {
-                    result.IsOnline = false;
-                    result.Status = "Boş Yanıt (0 Bayt)";
-                    return result;
-                }
-
-                string headerText = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-
-                // 1. HTML HATA SAYFASI / BOT ENGELİ KONTROLÜ (Örn: Cloudflare, 404 sayfaları, JS engelleri)
-                if (headerText.Contains("<html", StringComparison.OrdinalIgnoreCase) ||
-                    headerText.Contains("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) ||
-                    headerText.Contains("<head", StringComparison.OrdinalIgnoreCase) ||
-                    headerText.Contains("<body", StringComparison.OrdinalIgnoreCase) ||
-                    headerText.Contains("Google Analytics", StringComparison.OrdinalIgnoreCase) ||
-                    headerText.Contains("cf-browser-verification", StringComparison.OrdinalIgnoreCase) ||
-                    headerText.Contains("Cloudflare", StringComparison.OrdinalIgnoreCase) && headerText.Contains("Error", StringComparison.OrdinalIgnoreCase))
-                {
-                    result.IsOnline = false;
-                    result.Status = "Geçersiz Akış (HTML Web Sayfası)";
-                    return result;
-                }
-
-                // 2. HLS / M3U8 AKIŞLARI İÇİN SIKI MANIFEST KONTROLÜ
-                bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) ||
-                             (getResponse.Content.Headers.ContentType?.MediaType?.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) ?? false);
-
-                if (isHls)
-                {
-                    // Geçerli bir HLS manifesti MUTLAKA #EXTM3U ile başlamalı veya içermelidir
-                    if (headerText.Contains("#EXTM3U", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Alt segment veya akış etiketlerini de ara (#EXTINF, #EXT-X-STREAM-INF, #EXT-X-TARGETDURATION vb.)
-                        if (headerText.Contains("#EXTINF", StringComparison.OrdinalIgnoreCase) ||
-                            headerText.Contains("#EXT-X-STREAM-INF", StringComparison.OrdinalIgnoreCase) ||
-                            headerText.Contains("#EXT-X-TARGETDURATION", StringComparison.OrdinalIgnoreCase) ||
-                            headerText.Contains("#EXT-X-MEDIA", StringComparison.OrdinalIgnoreCase))
-                        {
-                            result.IsOnline = true;
-                            result.Status = "Aktif (HLS Canlı)";
-                            return result;
-                        }
-                        else
-                        {
-                            // Sadece #EXTM3U var ama segment yoksa veya boşsa
-                            result.IsOnline = false;
-                            result.Status = "Boş HLS Çalma Listesi";
-                            return result;
-                        }
-                    }
-                    else
-                    {
-                        // .m3u8 uzantılı ama #EXTM3U içermiyorsa bu bozuk/ölü bir akıştır
-                        result.IsOnline = false;
-                        result.Status = "Geçersiz HLS Manifesti";
-                        return result;
-                    }
-                }
-
-                // 3. DOĞRUDAN BİNARY VİDEO / TS / MP4 / RADYO AKIŞLARI
-                var contentType = getResponse.Content.Headers.ContentType?.MediaType?.ToLowerInvariant() ?? "";
-                if (contentType.StartsWith("video/") || contentType.StartsWith("audio/") || contentType == "application/octet-stream")
+                if (response.IsSuccessStatusCode)
                 {
                     result.IsOnline = true;
-                    result.Status = "Aktif (Medya Akışı)";
-                    return result;
-                }
-
-                // TS akışı veya binary akış (MPEG-TS sync baytı 0x47 kontrolü)
-                if (buffer[0] == 0x47 || (bytesRead > 188 && buffer[188] == 0x47))
-                {
-                    result.IsOnline = true;
-                    result.Status = "Aktif (MPEG-TS Yayını)";
-                    return result;
-                }
-
-                // Diğer durumlar
-                if (bytesRead > 64 && !headerText.Contains("<") && !headerText.Contains("error", StringComparison.OrdinalIgnoreCase))
-                {
-                    result.IsOnline = true;
-                    result.Status = "Aktif";
+                    result.Status = "Erişilebilir";
                 }
                 else
                 {
-                    result.IsOnline = false;
-                    result.Status = "Bilinmeyen / Geçersiz Medya Biçimi";
+                    // Fallback to GET just in case HEAD is not allowed
+                    using var getResponse = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                    result.IsOnline = getResponse.IsSuccessStatusCode;
+                    result.Status = result.IsOnline ? "Erişilebilir (GET)" : $"Hata: {getResponse.StatusCode}";
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                result.IsOnline = false;
-                result.Status = ct.IsCancellationRequested ? "İptal Edildi" : "Zaman Aşımı (Timeout)";
-                result.Error = "İstek zaman aşımına uğradı.";
             }
             catch (Exception ex)
             {
@@ -179,68 +99,96 @@ namespace StreamMesh.Core.Utils
                 result.Error = ex.Message;
             }
 
-            if (level == ValidationLevel.Fast || !result.IsOnline || ct.IsCancellationRequested)
+            if (level == ValidationLevel.Fast || !result.IsOnline || _libVLC == null)
             {
                 return result;
             }
 
+            // --- Detailed & Full Test ---
             try
             {
-                logger?.Report($"[{channel.PrimaryName}] Flyleaf ile analiz yapılıyor...");
+                logger?.Report($"[{channel.PrimaryName}] {(level == ValidationLevel.Full ? "Tam" : "Detaylı")} analiz yapılıyor...");
+                using var media = new LibVLCSharp.Shared.Media(_libVLC, new Uri(url));
+                using var mediaPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVLC);
 
-                using var player = new Player();
-                player.Open(url);
+                mediaPlayer.Play(media);
 
+                // Wait for playback to start or fail
                 bool started = false;
-                // 100ms aralıklarla en fazla 5 saniye bekle; başladığı anda çık
-                for (int t = 0; t < 50; t++)
-                {
-                    if (ct.IsCancellationRequested) break;
-                    await Task.Delay(100, ct).ConfigureAwait(false);
+                int timeoutMs = level == ValidationLevel.Full ? 8000 : 5000;
+                int checkInterval = 500;
 
-                    if (player.Status == Status.Playing)
+                for (int t = 0; t < timeoutMs; t += checkInterval)
+                {
+                    await Task.Delay(checkInterval);
+                    if (mediaPlayer.IsPlaying)
                     {
                         started = true;
-                        if (level == ValidationLevel.Full && player.Video != null && player.Video.Width > 0)
-                        {
-                            break;
-                        }
-                        else if (level == ValidationLevel.Detailed)
-                        {
-                            break;
-                        }
-                    }
-                    else if (player.Status == Status.Failed || player.Status == Status.Ended)
-                    {
                         break;
                     }
+                    if (mediaPlayer.State == VLCState.Error) break;
                 }
 
                 if (started)
                 {
                     result.Status = "Oynatılabilir";
-                    if (level == ValidationLevel.Full && player.Video != null)
+
+                    if (level == ValidationLevel.Full)
                     {
-                        result.Resolution = $"{player.Video.Width}x{player.Video.Height}";
-                        result.VideoCodec = player.Video.Codec ?? "";
-                        result.AudioCodec = player.Audio?.Codec ?? "";
-                        result.Status = (string.IsNullOrWhiteSpace(result.Resolution) || result.Resolution == "0x0")
-                            ? "Oynatılabilir"
-                            : $"Analiz Tamam: {result.Resolution}";
+                        // Wait a bit more for metadata to populate
+                        await Task.Delay(2000);
+
+                        var tracks = media.Tracks;
+                        var vTracks = tracks.Where(t => t.TrackType == TrackType.Video).ToList();
+                        var aTracks = tracks.Where(t => t.TrackType == TrackType.Audio).ToList();
+
+                        if (vTracks.Count > 0)
+                        {
+                            var videoTrack = vTracks[0];
+                            result.VideoCodec = GetCodecName(videoTrack.Codec);
+                            result.Resolution = $"{videoTrack.Data.Video.Width}x{videoTrack.Data.Video.Height}";
+                        }
+
+                        if (aTracks.Count > 0)
+                        {
+                            var audioTrack = aTracks[0];
+                            result.AudioCodec = GetCodecName(audioTrack.Codec);
+                        }
+
+                        result.Status = $"Analiz Tamam: {result.Resolution} {result.VideoCodec}";
                     }
                 }
                 else
                 {
                     result.IsOnline = false;
-                    result.Status = "Yayın Başlatılamadı (Timeout)";
+                    result.Status = "Yayın Başlatılamadı (Timeout/Error)";
                 }
-                player.Stop();
+
+                mediaPlayer.Stop();
             }
-            catch (Exception ex) { result.Error = $"Flyleaf Hatası: {ex.Message}"; }
+            catch (Exception ex)
+            {
+                result.Error = $"VLC Hatası: {ex.Message}";
+            }
 
             return result;
         }
 
-        public void Dispose() { }
+        private string GetCodecName(uint fourcc)
+        {
+            byte[] bytes = BitConverter.GetBytes(fourcc);
+            // VLC uses Little Endian for FourCC usually, or we can just convert to string
+            char[] chars = new char[4];
+            for (int i = 0; i < 4; i++)
+            {
+                chars[i] = (char)bytes[i];
+            }
+            return new string(chars).Trim();
+        }
+
+        public void Dispose()
+        {
+            _libVLC?.Dispose();
+        }
     }
 }

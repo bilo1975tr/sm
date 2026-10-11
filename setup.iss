@@ -1,6 +1,6 @@
 ; Inno Setup Script for StreamMesh
 #ifndef AppVersion
-#define AppVersion "0.1.0"
+#define AppVersion "0.0"
 #endif
 
 [Setup]
@@ -11,7 +11,6 @@ AppPublisher=StreamMesh
 DefaultDirName={localappdata}\Programs\StreamMesh
 DefaultGroupName=StreamMesh
 OutputBaseFilename=StreamMesh-Setup-v{#AppVersion}
-SetupIconFile=logos\StreamMesh_Icon.ico
 OutputDir=.
 Compression=lzma2/max
 SolidCompression=yes
@@ -19,21 +18,21 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
 DisableProgramGroupPage=yes
 ArchitecturesInstallIn64BitMode=x64
-UninstallDisplayIcon={app}\logos\StreamMesh_Icon.ico
+UninstallDisplayIcon={app}\StreamMesh.exe
 
 [Languages]
+Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
 Source: "bin\Release\net8.0-windows\win-x64\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "logos\*"; DestDir: "{app}\logos"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\logos\StreamMesh_Icon.ico"
-Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; IconFilename: "{app}\logos\StreamMesh_Icon.ico"; Tasks: desktopicon
+Name: "{group}\StreamMesh"; Filename: "{app}\StreamMesh.exe"
+Name: "{userdesktop}\StreamMesh"; Filename: "{app}\StreamMesh.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\StreamMesh.exe"; Description: "{cm:LaunchProgram,StreamMesh}"; Flags: nowait postinstall skipifsilent
