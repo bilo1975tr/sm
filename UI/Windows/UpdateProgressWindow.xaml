@@ -1,0 +1,58 @@
+<Window x:Class="StreamMesh.UI.Windows.UpdateProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="StreamMesh Otomatik Güncelleyici" Height="260" Width="480"
+        WindowStartupLocation="CenterOwner" WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent" ResizeMode="NoResize" ShowInTaskbar="False">
+    <Border Background="#0F172A" BorderBrush="#38BDF8" BorderThickness="2" CornerRadius="16" Padding="24">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Color="#0284C7" Opacity="0.5"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                <Border Width="36" Height="36" Background="#1E293B" CornerRadius="10" Margin="0,0,12,0">
+                    <TextBlock Text="⚡" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleText" Text="StreamMesh Güncelleniyor" Foreground="White" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock x:Name="VersionText" Text="Yeni sürüm indiriliyor ve hazırlanıyor..." Foreground="#94A3B8" FontSize="12" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Progress Info & Bar -->
+            <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                <Grid Margin="0,0,0,8">
+                    <TextBlock x:Name="StatusMessageText" Text="Bağlantı kuruluyor..." Foreground="#E2E8F0" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="PercentText" Text="%0" Foreground="#38BDF8" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right"/>
+                </Grid>
+                <ProgressBar x:Name="DownloadProgressBar" Height="10" Minimum="0" Maximum="100" Value="0" Background="#1E293B" Foreground="#38BDF8" BorderThickness="0">
+                    <ProgressBar.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="5"/>
+                        </Style>
+                    </ProgressBar.Resources>
+                </ProgressBar>
+                <TextBlock x:Name="DetailText" Text="Lütfen bekleyin..." Foreground="#64748B" FontSize="11" Margin="0,8,0,0"/>
+            </StackPanel>
+
+            <!-- Footer Buttons (if error or cancel) -->
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <TextBlock Text="Güncelleme tamamlandığında uygulama yeniden başlatılacaktır." Foreground="#64748B" FontSize="11" VerticalAlignment="Center"/>
+                <Button x:Name="CloseButton" Content="Kapat" Width="80" Height="32" HorizontalAlignment="Right" Background="#334155" Foreground="White" BorderThickness="0" Cursor="Hand" Visibility="Collapsed" Click="CloseButton_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

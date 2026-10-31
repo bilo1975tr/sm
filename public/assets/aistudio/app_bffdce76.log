@@ -1,0 +1,204 @@
+﻿2026-10-23 10:49:56 [INFO] ======================================================================
+2026-10-23 10:49:56 [INFO] === StreamMesh Oturumu Başlatıldı (PID: 27284) ===
+2026-10-23 10:49:56 [INFO] ======================================================================
+2026-10-23 10:49:56 [INFO] App: Başlatılıyor. Process: C:\Users\Trakya Türk TV\Downloads\streammesh\bin\Release\net8.0-windows\StreamMesh.exe
+2026-10-23 10:49:57 [ERROR] SettingsRepository: Error getting setting 'AudioNormEnabled'
+[EXCEPTION] Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: AppSettings'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteScalar()
+   at StreamMesh.Core.Database.Repositories.SettingsRepository.GetSetting(String key, String defaultValue) in C:\Users\Trakya Türk TV\Downloads\streammesh\Core\Database\Repositories\SettingsRepository.cs:line 25
+2026-10-23 10:49:57 [ERROR] SettingsRepository: Error getting setting 'VideoEnhanceEnabled'
+[EXCEPTION] Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: AppSettings'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteScalar()
+   at StreamMesh.Core.Database.Repositories.SettingsRepository.GetSetting(String key, String defaultValue) in C:\Users\Trakya Türk TV\Downloads\streammesh\Core\Database\Repositories\SettingsRepository.cs:line 25
+2026-10-23 10:49:57 [INFO] [STARTUP] Arka planda AceStream motoru ön ısıtması başlatılıyor...
+2026-10-23 10:49:57 [INFO] [STARTUP] MainWindow başarıyla açıldı ve gösterildi.
+2026-10-23 10:49:57 [INFO] [STARTUP] Servisler başlatılıyor...
+2026-10-23 10:49:57 [INFO] [STARTUP] Veritabanı başlatılıyor...
+2026-10-23 10:49:57 [INFO] [STARTUP] Veritabanı başarıyla hazırlandı.
+2026-10-23 10:49:57 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-23 10:49:57 [INFO] HomeViewModel: 0 kanal veritabanından okundu.
+2026-10-23 10:49:57 [INFO] MediaServer: Registered localhost & 127.0.0.1 prefixes on port 8088.
+2026-10-23 10:49:57 [INFO] MediaServer: Registered plus-wildcard prefix http://+:8088/
+2026-10-23 10:49:57 [INFO] MediaServer: Started successfully on Port: 8088 [Bound to: localhost, 127.0.0.1, +]
+2026-10-23 10:49:57 [INFO] [STARTUP] MediaServer ve SSDP 8088 portunda başlatıldı.
+2026-10-23 10:49:57 [INFO] [STARTUP] Bakım kontrolü tamamlandı.
+2026-10-23 10:49:57 [INFO] [STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.
+2026-10-23 10:49:57 [INFO] [STARTUP] Servis başlatma sekansı tamamlandı.
+2026-10-23 10:49:57 [INFO] BAKIM: FFmpeg kütüphanesi eksik, indiriliyor...
+2026-10-23 10:49:57 [INFO] [FIREWALL] Güvenlik duvarı kuralları başarıyla denetlendi ve kaydedildi.
+2026-10-23 10:49:58 [INFO] BAKIM: FFmpeg paketi indirildi (yaklaşık 100MB), ayıklanıyor...
+2026-10-23 10:49:59 [INFO] BAKIM: FFmpeg motoru başarıyla kuruldu. (8 DLL yapılandırıldı)
+2026-10-23 10:50:01 [INFO] [STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...
+2026-10-23 10:50:01 [INFO] GitHubSyncEngine: Otomatik güncelleme başlatıldı.
+2026-10-23 10:50:02 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (goldvod.org:80)): hpgdisco @ goldvod.org
+2026-10-23 10:50:02 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (goldvod.org:80)): hpgdisco @ goldvod.org
+2026-10-23 10:50:02 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (goldvod.org:80)): hpgdisco @ goldvod.org
+2026-10-23 10:50:02 [INFO] [M3uEngine] 4 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:02 [INFO] [M3uEngine] 5 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): kastamonutv @ 51.91.118.139:8080
+2026-10-23 10:50:02 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): kastamonutv @ 51.91.118.139:8080
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (www.enterweb.tv:25463)): ssadtv @ www.enterweb.tv:25463
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (www.enterweb.tv:25463)): ssadtv @ www.enterweb.tv:25463
+2026-10-23 10:50:02 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (tbn-jw.cdn.vustreams.com:80)): tci @ tbn-jw.cdn.vustreams.com
+2026-10-23 10:50:02 [INFO] [M3uEngine] 6 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:03 [INFO] [M3uEngine] 9 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:03 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (www.enterweb.tv:25463)): ssadtv @ www.enterweb.tv:25463
+2026-10-23 10:50:03 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 503): 7cba1a3b-318a-4097-8492-374478370b91 @ rfdtv-jw.cdn.vustreams.com
+2026-10-23 10:50:03 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): rx1 @ z88.ubtvfans.com
+2026-10-23 10:50:04 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: littlespiked @ etvhosts.site:55337 -> http://etvhosts.site:55337/get.php?username=littlespiked&password=cam1gail2brian3&type=m3u_plus&output=ts
+2026-10-23 10:50:04 [INFO] [ACEENGINE] Starting AceStream engine executable once: C:\Users\Trakya Türk TV\AppData\Roaming\ACEStream\engine\ace_engine.exe
+2026-10-23 10:50:06 [INFO] [M3uEngine] 2 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:06 [INFO] [ACEENGINE] AceStream engine successfully started and ready.
+2026-10-23 10:50:07 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: catchuptv @ grevsen.dk -> http://grevsen.dk/get.php?username=catchuptv&password=catchuptv&type=m3u_plus&output=ts
+2026-10-23 10:50:08 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 24 kanal kaydedildi (clearFirst=False).
+2026-10-23 10:50:08 [INFO] [IptvAccountHelper] Hesap IptvAccounts tablosuna başarıyla kaydedildi: catchuptv (grevsen.dk)
+2026-10-23 10:50:08 [INFO] [IptvAccountHelper] Sağlayıcıdan 24 kanal/film başarıyla içe aktarıldı ve kalıcı M3U kaynağı olarak eklendi.
+2026-10-23 10:50:08 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (tbn-jw.cdn.vustreams.com:80)): tci @ tbn-jw.cdn.vustreams.com
+2026-10-23 10:50:08 [INFO] MediaServer: Request GET /desc.xml from 192.168.1.31:57276
+2026-10-23 10:50:09 [WARN] [ACEENGINE] AceStream Web endpoint https://api.acestream.org/search?q=syfy hatası: Hedef makine etkin olarak reddettiğinden bağlantı kurulamadı. (api.acestream.org:443)
+2026-10-23 10:50:13 [INFO] [PLAYBACK] CHANNEL SELECTED: Syfy HD [DE] (ID: beea9705-24dc-405e-9b23-35a30547ced9, Category: Canlı TV, Url: acestream://0a48b895ed0994a11fccf487aada3808446bb932)
+2026-10-23 10:50:14 [INFO] FlyleafHelper: Engine started successfully.
+2026-10-23 10:50:14 [INFO] Player: Flyleaf initialized successfully
+2026-10-23 10:50:14 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-23 10:50:14 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-23 10:50:14 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-23 10:50:14 [INFO] [SmartRouter] Channel='Syfy HD [DE]', probing 3 candidate URLs in parallel...
+2026-10-23 10:50:14 [INFO] [SmartRouter] Probe completed: Best candidate 'acestream://0a48b895ed0994a11fccf487aada3808446bb932' (Latency: 100ms). Valid: 3/3
+2026-10-23 10:50:14 [INFO] [SmartRouter] Trying candidate 1/3: 'acestream://0a48b895ed0994a11fccf487aada3808446bb932'
+2026-10-23 10:50:14 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?id=0a48b895ed0994a11fccf487aada3808446bb932
+2026-10-23 10:50:14 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:16 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-23 10:50:16 [INFO] [PLAYBACK] Player.Status changed: Failed (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:16 [INFO] [SmartRouter] Candidate response in 1526ms -> Success: False, Player.Status: Failed
+2026-10-23 10:50:16 [WARN] [SmartRouter] Candidate 1/3 failed (Status: Failed). Moving to next alternative...
+2026-10-23 10:50:16 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:16 [INFO] [SmartRouter] Trying candidate 2/3: 'http://127.0.0.1:6878/ace/getstream?id=0a48b895ed0994a11fccf487aada3808446bb932'
+2026-10-23 10:50:16 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?id=0a48b895ed0994a11fccf487aada3808446bb932
+2026-10-23 10:50:16 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:16 [INFO] [PLAYBACK CLOCK] Status=Opening CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-23 10:50:17 [INFO] GitHubSyncEngine: Erken TV gösterimi için 29848 TV kanalı SQLite'a kaydediliyor...
+2026-10-23 10:50:17 [INFO] SyncIncomingChannelsAsync: DB'de 24 mevcut kanal var, 29848 yeni kanal ekleniyor...
+2026-10-23 10:50:17 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-23 10:50:17 [INFO] [PLAYBACK] Player.Status changed: Failed (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:17 [INFO] [SmartRouter] Candidate response in 1389ms -> Success: False, Player.Status: Failed
+2026-10-23 10:50:17 [WARN] [SmartRouter] Candidate 2/3 failed (Status: Failed). Moving to next alternative...
+2026-10-23 10:50:17 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:17 [INFO] [SmartRouter] Trying candidate 3/3: 'http://127.0.0.1:6878/ace/getstream?content_id=0a48b895ed0994a11fccf487aada3808446bb932'
+2026-10-23 10:50:17 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?content_id=0a48b895ed0994a11fccf487aada3808446bb932
+2026-10-23 10:50:17 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:17 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 22102 kanal kaydedildi (clearFirst=True).
+2026-10-23 10:50:18 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-23 10:50:18 [INFO] [PLAYBACK CLOCK] Status=Opening CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-23 10:50:19 [INFO] HomeViewModel: 22102 kanal veritabanından okundu.
+2026-10-23 10:50:19 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-23 10:50:19 [INFO] [SmartRouter] Candidate response in 1342ms -> Success: False, Player.Status: Failed
+2026-10-23 10:50:19 [WARN] [SmartRouter] Candidate 3/3 failed (Status: Failed). Moving to next alternative...
+2026-10-23 10:50:19 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:19 [WARN] [SmartRouter] All 3 candidate URLs failed for channel 'Syfy HD [DE]'.
+2026-10-23 10:50:19 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-23 10:50:27 [INFO] DatabaseEngine: Kütüphane kategori ve dil normalizasyon düzeltmesi başarıyla tamamlandı.
+2026-10-23 10:50:27 [INFO] ChannelRepository: Global aggregation and cleanup starting...
+2026-10-23 10:50:27 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:27 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): air @ pub0101.101.ru:8000
+2026-10-23 10:50:27 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:50:28 [INFO] ChannelRepository: Global aggregation cleanup completed. Merged 0 channels into existing cards.
+2026-10-23 10:50:28 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 401): sevgul49 @ europe77.xyz:2095
+2026-10-23 10:50:28 [INFO] GitHubSyncEngine: Toplam 171832 kanal kaynaklardan çözümlendi. SQLite veritabanına senkronize ediliyor...
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: rx3 (z88.ubtvfans.com)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 0fc97608-6057-4db8-9af7-102c21ac18af (teleamazonas-live.cdn.vustreams.com)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: syriblue (live.syri.tv:6969)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: V7rA1feOk3 (ms.android-iptv.com)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: evavision (159.69.56.148:25461)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: rx1 (z88.ubtvfans.com)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: qt9k24wa (1a-1791.com)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 1368 (168.205.87.198:8555)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 74173747597177 (92.63.196.180:8080)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: testlivestream (tv.streambox.fr)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: littlespiked (etvhosts.site:55337)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 7cba1a3b-318a-4097-8492-374478370b91 (rfdtv-jw.cdn.vustreams.com)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: tci (tbn-jw.cdn.vustreams.com)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: bshorty (mains.services)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: discord.gg/civ3 (ott.udptv.org)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: n1info (best-str.umn.cdn.united.cloud)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: ssadtv (www.enterweb.tv:25463)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: kastamonutv (51.91.118.139:8080)
+2026-10-23 10:50:28 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: hpgdisco (goldvod.org)
+2026-10-23 10:50:28 [INFO] SyncIncomingChannelsAsync: DB'de 22102 mevcut kanal var, 171832 yeni kanal ekleniyor...
+2026-10-23 10:50:29 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-23 10:50:29 [INFO] HomeViewModel: 22102 kanal veritabanından okundu.
+2026-10-23 10:50:30 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): syriblue @ live.syri.tv:6969
+2026-10-23 10:50:31 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: littlespiked @ etvhosts.site:55337 -> http://etvhosts.site:55337/get.php?username=littlespiked&password=cam1gail2brian3&type=m3u_plus&output=ts
+2026-10-23 10:50:31 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): 1368 @ 168.205.87.198:8555
+2026-10-23 10:50:36 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 136433 kanal kaydedildi (clearFirst=True).
+2026-10-23 10:50:40 [INFO] [LogoSync] 20 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-23 10:50:40 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-23 10:50:40 [INFO] [LogoSync] GitHub (tv-logos) üzerinden logo verileri güncelleniyor...
+2026-10-23 10:50:43 [INFO] [LogoSync] 6241 adet yeni standart logo indeksi kaydedildi.
+2026-10-23 10:50:45 [INFO] [PLAYBACK] CHANNEL SELECTED: AceStream P2P (46d79efe06df...) (ID: 8e7f0024-719e-430f-b5ef-c08ae27bab9f, Category: TV, Url: acestream://46d79efe06df3307fec2ed5e760128619119eb11)
+2026-10-23 10:50:50 [INFO] GitHubSyncEngine: Senkronizasyon sonu SQLite veritabanında toplam 134761 kanal mevcut.
+2026-10-23 10:50:50 [INFO] GitHubSyncEngine: Güncelleme tamamlandı.
+2026-10-23 10:50:50 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-23 10:50:50 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-23 10:50:50 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-23 10:50:51 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-23 10:50:51 [INFO] [SmartRouter] Channel='AceStream P2P (46d79efe06df...)', probing 3 candidate URLs in parallel...
+2026-10-23 10:50:51 [INFO] [SmartRouter] Probe completed: Best candidate 'acestream://46d79efe06df3307fec2ed5e760128619119eb11' (Latency: 100ms). Valid: 3/3
+2026-10-23 10:50:51 [INFO] [SmartRouter] Trying candidate 1/3: 'acestream://46d79efe06df3307fec2ed5e760128619119eb11'
+2026-10-23 10:50:51 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?id=46d79efe06df3307fec2ed5e760128619119eb11
+2026-10-23 10:50:51 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:52 [INFO] [PLAYBACK] Player.Status changed: Playing (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:50:52 [INFO] [PLAYBACK] Playback started successfully (Status: Playing, CurTime: 0ms)
+2026-10-23 10:50:52 [INFO] [SmartRouter] Candidate response in 1186ms -> Success: True, Player.Status: Playing
+2026-10-23 10:50:52 [INFO] [SmartRouter] Playback started successfully on candidate 1/3 -> http://127.0.0.1:6878/ace/getstream?id=46d79efe06df3307fec2ed5e760128619119eb11
+2026-10-23 10:50:52 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-23 10:50:52 [INFO] [PLAYBACK] Player.OpenCompleted: Success=True, Error=None, Status=Playing
+2026-10-23 10:50:52 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-23 10:50:52 [INFO] [LogoSync] Son logo senkronizasyon tarihi: 2026-10-23. Periyodik tarama atlandı.
+2026-10-23 10:50:52 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=2040ms Duration=0ms Advancing=True (delta=2040ms/2s, IsVod=False)
+2026-10-23 10:50:54 [INFO] HomeViewModel: 134761 kanal veritabanından okundu.
+2026-10-23 10:50:54 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-23 10:50:55 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=3940ms Duration=0ms Advancing=True (delta=1900ms/2s, IsVod=False)
+2026-10-23 10:50:57 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=6000ms Duration=0ms Advancing=True (delta=2060ms/2s, IsVod=False)
+2026-10-23 10:50:57 [INFO] EpgRepository: 0 old EPG items cleaned.
+2026-10-23 10:50:57 [INFO] [AutoEPG] 12 saatlik otomatik EPG güncellemesi başlatılıyor...
+2026-10-23 10:50:57 [INFO] HomeViewModel: 134761 kanal veritabanından okundu.
+2026-10-23 10:50:59 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=8040ms Duration=0ms Advancing=True (delta=2040ms/2s, IsVod=False)
+2026-10-23 10:51:01 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=10020ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)
+2026-10-23 10:51:03 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=12020ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-23 10:51:04 [INFO] [PLAYBACK] Player.Status changed: Paused (CurTime: 13760ms, Duration: 0ms)
+2026-10-23 10:51:05 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=13760ms Duration=0ms Advancing=True (delta=1740ms/2s, IsVod=False)
+2026-10-23 10:51:07 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=13760ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-23 10:51:09 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=13760ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-23 10:51:11 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=13760ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-23 10:51:13 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=13760ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-23 10:51:13 [INFO] [PLAYBACK] Player.Status changed: Playing (CurTime: 13760ms, Duration: 0ms)
+2026-10-23 10:51:13 [INFO] [PLAYBACK] Playback started successfully (Status: Playing, CurTime: 13760ms)
+2026-10-23 10:51:15 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=15580ms Duration=0ms Advancing=True (delta=1820ms/2s, IsVod=False)
+2026-10-23 10:51:17 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=17600ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-23 10:51:19 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=19600ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-23 10:51:21 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=21580ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)
+2026-10-23 10:51:23 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=23600ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-23 10:51:25 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=25600ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-23 10:51:27 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=27580ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)
+2026-10-23 10:51:29 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=29580ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-23 10:51:31 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=31600ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-23 10:51:33 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=33600ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-23 10:51:35 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=35580ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)
+2026-10-23 10:51:37 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=37600ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-23 10:51:38 [INFO] [ACEENGINE] AceStream engine process terminated on application exit.

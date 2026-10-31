@@ -1,0 +1,393 @@
+2026-10-31 09:24:01 [INFO] [ACEENGINE] AceStream engine process terminated on application exit.
+2026-10-31 09:28:34 [INFO] ======================================================================
+2026-10-31 09:28:34 [INFO] === StreamMesh Oturumu Başlatıldı (PID: 20772) ===
+2026-10-31 09:28:34 [INFO] ======================================================================
+2026-10-31 09:28:34 [INFO] App: Başlatılıyor. Process: C:\Users\Trakya Türk TV\Downloads\remix-streammesh\bin\Release\net8.0-windows\StreamMesh.exe
+2026-10-31 09:28:34 [ERROR] SettingsRepository: Error getting setting 'AudioNormEnabled'
+[EXCEPTION] Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: AppSettings'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteScalar()
+   at StreamMesh.Core.Database.Repositories.SettingsRepository.GetSetting(String key, String defaultValue) in C:\Users\Trakya Türk TV\Downloads\remix-streammesh\Core\Database\Repositories\SettingsRepository.cs:line 25
+2026-10-31 09:28:34 [ERROR] SettingsRepository: Error getting setting 'VideoEnhanceEnabled'
+[EXCEPTION] Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: AppSettings'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteScalar()
+   at StreamMesh.Core.Database.Repositories.SettingsRepository.GetSetting(String key, String defaultValue) in C:\Users\Trakya Türk TV\Downloads\remix-streammesh\Core\Database\Repositories\SettingsRepository.cs:line 25
+2026-10-31 09:28:34 [INFO] [STARTUP] Arka planda AceStream motoru ön ısıtması başlatılıyor...
+2026-10-31 09:28:34 [INFO] [STARTUP] MainWindow başarıyla açıldı ve gösterildi.
+2026-10-31 09:28:34 [INFO] [STARTUP] Servisler başlatılıyor...
+2026-10-31 09:28:34 [INFO] [STARTUP] Veritabanı başlatılıyor...
+2026-10-31 09:28:34 [INFO] [STARTUP] Veritabanı başarıyla hazırlandı.
+2026-10-31 09:28:34 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 09:28:34 [INFO] HomeViewModel: 0 kanal veritabanından okundu.
+2026-10-31 09:28:34 [INFO] MediaServer: Registered localhost & 127.0.0.1 prefixes on port 8088.
+2026-10-31 09:28:34 [INFO] MediaServer: Registered plus-wildcard prefix http://+:8088/
+2026-10-31 09:28:34 [WARN] MediaServer: Wildcard/LAN prefix binding hit Windows HTTP.sys URL ACL restrictions on port 8088. Falling back to localhost/127.0.0.1.
+2026-10-31 09:28:34 [ERROR] MediaServer Start Localhost Fallback Error (Win32/Ex: Erişim engellendi.)
+[EXCEPTION] System.Net.HttpListenerException (5): Erişim engellendi.
+   at System.Net.HttpListener.AddPrefixCore(String registeredPrefix)
+   at System.Net.HttpListener.AddAllPrefixes()
+   at System.Net.HttpListener.Start()
+   at StreamMesh.Core.Network.MediaServer.Start() in C:\Users\Trakya Türk TV\Downloads\remix-streammesh\Core\Network\MediaServer.cs:line 225
+2026-10-31 09:28:34 [WARN] [STARTUP] MediaServer adayı portlarda açılamadı, yerel oynatma devam edecek.
+2026-10-31 09:28:34 [INFO] [STARTUP] Bakım kontrolü tamamlandı.
+2026-10-31 09:28:34 [INFO] [STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.
+2026-10-31 09:28:34 [INFO] [STARTUP] Servis başlatma sekansı tamamlandı.
+2026-10-31 09:28:34 [INFO] BAKIM: FFmpeg kütüphanesi eksik, indiriliyor...
+2026-10-31 09:28:34 [INFO] [FIREWALL] Güvenlik duvarı kuralları başarıyla denetlendi ve kaydedildi.
+2026-10-31 09:28:37 [INFO] EpgRepository: 0 old EPG items cleaned.
+2026-10-31 09:28:37 [INFO] [AutoEPG] EPG güncellemesi başlatılıyor (force=False, mevcutKayıt=0)...
+2026-10-31 09:28:37 [INFO] [AutoEPG] Otomatik EPG güncellemesi başarıyla tamamlandı.
+2026-10-31 09:28:38 [INFO] [STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...
+2026-10-31 09:28:38 [INFO] GitHubSyncEngine: Otomatik güncelleme başlatıldı.
+2026-10-31 09:28:38 [INFO] BAKIM: FFmpeg paketi indirildi (yaklaşık 100MB), ayıklanıyor...
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] Toplam 11 adet GitHub deposu tespit edildi. Derin ağaç taraması başlatılıyor...
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] hayatiptv/iptv için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] hayatiptv/iptv: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] iptv-org/iptv için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] iptv-org/iptv: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [INFO] BAKIM: FFmpeg motoru başarıyla kuruldu. (8 DLL yapılandırıldı)
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] hydrokin/M3U için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] hydrokin/M3U: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] yasarfalkan/m3u-dosyam için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] yasarfalkan/m3u-dosyam: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] kadirsener1/avva için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] kadirsener1/avva: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] Efeisot/iptv için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] Efeisot/iptv: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] don24crk/Don24crk-Repository için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] don24crk/Don24crk-Repository: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] Zerk1903/zerkfilm için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] Zerk1903/zerkfilm: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] UzunMuhalefet/Legal-IPTV için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] UzunMuhalefet/Legal-IPTV: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] koprulu555/global_radyo için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] koprulu555/global_radyo: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [WARN] [GitHubRepoCrawler] batuhansabri55/AkcagozTV_Film için GitHub API rate limit aşıldı, tohum adreslerle devam ediliyor.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] batuhansabri55/AkcagozTV_Film: 0 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 09:28:39 [INFO] [GitHubRepoCrawler] Derin tarama tamamlandı: Toplam 190 kaynak hazırlandı.
+2026-10-31 09:28:39 [INFO] GitHubSyncEngine: Toplam 194 adet kaynak (TV: 105, Film: 17, Dizi: 62, Radyo: 4, Karma: 2) işleniyor...
+2026-10-31 09:28:41 [INFO] [ACEENGINE] Starting AceStream engine executable once: C:\Users\Trakya Türk TV\AppData\Roaming\ACEStream\engine\ace_engine.exe
+2026-10-31 09:28:43 [INFO] [ACEENGINE] AceStream engine successfully started and ready.
+2026-10-31 09:28:49 [INFO] [STARTUP] EPG senkronizasyonu başlatılıyor (Kayıt sayısı: 0, Durum: Boş)...
+2026-10-31 09:28:54 [INFO] GitHubSyncEngine: Erken TV gösterimi için 31293 TV kanalı SQLite'a kaydediliyor...
+2026-10-31 09:28:54 [INFO] SyncIncomingChannelsAsync: DB'de 0 mevcut kanal var, 31293 yeni kanal ekleniyor...
+2026-10-31 09:28:54 [INFO] EpgRepository: 5178 old EPG items cleaned.
+2026-10-31 09:28:54 [INFO] [STARTUP] EPG senkronizasyonu tamamlandı. Toplam 42142 program hazır.
+2026-10-31 09:28:55 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 25064 kanal kaydedildi (clearFirst=True).
+2026-10-31 09:29:04 [FATAL] DispatcherUnhandledException (UI Thread)
+[FATAL CRASH] System.NullReferenceException: Object reference not set to an instance of an object.
+   at FlyleafLib.Logger.Log(String msg, LogLevel logLevel)
+   at FlyleafLib.LogHandler.Debug(String msg)
+   at FlyleafLib.Controls.WPF.FlyleafHost.Dispose()
+   at FlyleafLib.Controls.WPF.FlyleafHost.Surface_Closed(Object sender, EventArgs e)
+   at System.Windows.Window.WmDestroy()
+   at System.Windows.Window.WindowFilterMessage(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at System.Windows.Interop.HwndSource.PublicHooksFilterMessage(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
+2026-10-31 09:29:04 [INFO] DatabaseEngine: Kütüphane kategori ve dil normalizasyon düzeltmesi başarıyla tamamlandı.
+2026-10-31 09:29:04 [INFO] ChannelRepository: Global aggregation and cleanup starting...
+2026-10-31 09:29:05 [INFO] ChannelRepository: Global aggregation cleanup completed. Merged 0 channels into existing cards.
+2026-10-31 09:29:05 [INFO] [ACEENGINE] AceStream engine process terminated on application exit.
+2026-10-31 11:03:21 [INFO] ======================================================================
+2026-10-31 11:03:21 [INFO] === StreamMesh Oturumu Başlatıldı (PID: 16676) ===
+2026-10-31 11:03:21 [INFO] ======================================================================
+2026-10-31 11:03:21 [INFO] App: Başlatılıyor. Process: C:\Users\Trakya Türk TV\Downloads\remix-streammesh\bin\Release\net8.0-windows\StreamMesh.exe
+2026-10-31 11:03:21 [ERROR] SettingsRepository: Error getting setting 'AudioNormEnabled'
+[EXCEPTION] Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: AppSettings'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteScalar()
+   at StreamMesh.Core.Database.Repositories.SettingsRepository.GetSetting(String key, String defaultValue) in C:\Users\Trakya Türk TV\Downloads\remix-streammesh\Core\Database\Repositories\SettingsRepository.cs:line 25
+2026-10-31 11:03:21 [ERROR] SettingsRepository: Error getting setting 'VideoEnhanceEnabled'
+[EXCEPTION] Microsoft.Data.Sqlite.SqliteException (0x80004005): SQLite Error 1: 'no such table: AppSettings'.
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.PrepareAndEnumerateStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.GetStatements()+MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteScalar()
+   at StreamMesh.Core.Database.Repositories.SettingsRepository.GetSetting(String key, String defaultValue) in C:\Users\Trakya Türk TV\Downloads\remix-streammesh\Core\Database\Repositories\SettingsRepository.cs:line 25
+2026-10-31 11:03:21 [INFO] [STARTUP] Arka planda AceStream motoru ön ısıtması başlatılıyor...
+2026-10-31 11:03:21 [INFO] [STARTUP] MainWindow başarıyla açıldı ve gösterildi.
+2026-10-31 11:03:21 [INFO] [STARTUP] Servisler başlatılıyor...
+2026-10-31 11:03:21 [INFO] [STARTUP] Veritabanı başlatılıyor...
+2026-10-31 11:03:21 [INFO] [STARTUP] Veritabanı başarıyla hazırlandı.
+2026-10-31 11:03:21 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:03:21 [INFO] HomeViewModel: 0 kanal veritabanından okundu.
+2026-10-31 11:03:21 [INFO] MediaServer: Registered localhost & 127.0.0.1 prefixes on port 8088.
+2026-10-31 11:03:21 [INFO] MediaServer: Registered plus-wildcard prefix http://+:8088/
+2026-10-31 11:03:21 [WARN] MediaServer: Wildcard/LAN prefix binding hit Windows HTTP.sys URL ACL restrictions on port 8088. Falling back to localhost/127.0.0.1.
+2026-10-31 11:03:21 [ERROR] MediaServer Start Localhost Fallback Error (Win32/Ex: Erişim engellendi.)
+[EXCEPTION] System.Net.HttpListenerException (5): Erişim engellendi.
+   at System.Net.HttpListener.AddPrefixCore(String registeredPrefix)
+   at System.Net.HttpListener.AddAllPrefixes()
+   at System.Net.HttpListener.Start()
+   at StreamMesh.Core.Network.MediaServer.Start() in C:\Users\Trakya Türk TV\Downloads\remix-streammesh\Core\Network\MediaServer.cs:line 225
+2026-10-31 11:03:21 [WARN] [STARTUP] MediaServer adayı portlarda açılamadı, yerel oynatma devam edecek.
+2026-10-31 11:03:21 [INFO] [STARTUP] Bakım kontrolü tamamlandı.
+2026-10-31 11:03:21 [INFO] [STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.
+2026-10-31 11:03:21 [INFO] [STARTUP] Servis başlatma sekansı tamamlandı.
+2026-10-31 11:03:21 [INFO] BAKIM: FFmpeg kütüphanesi eksik, indiriliyor...
+2026-10-31 11:03:21 [INFO] [FIREWALL] Güvenlik duvarı kuralları başarıyla denetlendi ve kaydedildi.
+2026-10-31 11:03:24 [INFO] EpgRepository: 0 old EPG items cleaned.
+2026-10-31 11:03:24 [INFO] [AutoEPG] EPG güncellemesi başlatılıyor (force=False, mevcutKayıt=0)...
+2026-10-31 11:03:24 [INFO] [AutoEPG] Otomatik EPG güncellemesi başarıyla tamamlandı.
+2026-10-31 11:03:25 [INFO] [STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...
+2026-10-31 11:03:25 [INFO] GitHubSyncEngine: Otomatik güncelleme başlatıldı.
+2026-10-31 11:03:26 [INFO] [GitHubRepoCrawler] Toplam 10 adet GitHub deposu tespit edildi. Derin ağaç taraması başlatılıyor...
+2026-10-31 11:03:26 [INFO] BAKIM: FFmpeg paketi indirildi (yaklaşık 100MB), ayıklanıyor...
+2026-10-31 11:03:26 [INFO] [GitHubRepoCrawler] hayatiptv/iptv: 18 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:26 [INFO] [GitHubRepoCrawler] iptv-org/iptv: 439 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:26 [INFO] BAKIM: FFmpeg motoru başarıyla kuruldu. (8 DLL yapılandırıldı)
+2026-10-31 11:03:27 [INFO] [GitHubRepoCrawler] hydrokin/M3U: 4 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:27 [INFO] [GitHubRepoCrawler] yasarfalkan/m3u-dosyam: 1 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:27 [INFO] [GitHubRepoCrawler] kadirsener1/avva: 1 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:28 [INFO] [GitHubRepoCrawler] Efeisot/iptv: 3 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:28 [INFO] [GitHubRepoCrawler] don24crk/Don24crk-Repository: 67 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:28 [INFO] [ACEENGINE] Starting AceStream engine executable once: C:\Users\Trakya Türk TV\AppData\Roaming\ACEStream\engine\ace_engine.exe
+2026-10-31 11:03:28 [INFO] [GitHubRepoCrawler] Zerk1903/zerkfilm: 19 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:29 [INFO] [GitHubRepoCrawler] UzunMuhalefet/Legal-IPTV: 1520 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:29 [INFO] [GitHubRepoCrawler] koprulu555/global_radyo: 1 yeni kaynak kütüphaneye dahil edildi.
+2026-10-31 11:03:29 [INFO] [GitHubRepoCrawler] Derin tarama tamamlandı: Toplam 2261 kaynak hazırlandı.
+2026-10-31 11:03:29 [INFO] GitHubSyncEngine: Toplam 2261 adet kaynak (TV: 631, Film: 496, Dizi: 1128, Radyo: 6) işleniyor...
+2026-10-31 11:03:31 [INFO] [ACEENGINE] AceStream engine successfully started and ready.
+2026-10-31 11:03:36 [INFO] [STARTUP] EPG senkronizasyonu başlatılıyor (Kayıt sayısı: 0, Durum: Boş)...
+2026-10-31 11:03:42 [INFO] EpgRepository: 5914 old EPG items cleaned.
+2026-10-31 11:03:42 [INFO] [STARTUP] EPG senkronizasyonu tamamlandı. Toplam 41406 program hazır.
+2026-10-31 11:03:44 [INFO] GitHubSyncEngine: Erken TV gösterimi için 156705 TV kanalı kaydediliyor...
+2026-10-31 11:03:44 [INFO] SyncIncomingChannelsAsync: DB'de 0 mevcut kanal var, 156705 yeni kanal ekleniyor...
+2026-10-31 11:03:49 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 129675 kanal kaydedildi (clearFirst=True).
+2026-10-31 11:03:52 [INFO] DatabaseEngine: Kütüphane kategori ve dil normalizasyon düzeltmesi başarıyla tamamlandı.
+2026-10-31 11:03:52 [INFO] ChannelRepository: Global aggregation and cleanup starting...
+2026-10-31 11:03:56 [INFO] ChannelRepository: Global aggregation cleanup completed. Merged 0 channels into existing cards.
+2026-10-31 11:05:37 [INFO] GitHubSyncEngine: Toplam 583951 kanal kaynaklardan çözümlendi. SQLite veritabanına senkronize ediliyor...
+2026-10-31 11:05:39 [INFO] SyncIncomingChannelsAsync: DB'de 129656 mevcut kanal var, 583951 yeni kanal ekleniyor...
+2026-10-31 11:07:35 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 278878 kanal kaydedildi (clearFirst=True).
+2026-10-31 11:07:37 [INFO] [LogoSync] 20 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-31 11:07:37 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-31 11:07:37 [INFO] [LogoSync] GitHub (tv-logos) üzerinden logo verileri güncelleniyor...
+2026-10-31 11:07:40 [INFO] [LogoSync] 6241 adet yeni standart logo indeksi kaydedildi.
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Movie Smart Classic HD TR' -> Key: 'movie-smart-classic-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/movie-smart-classic-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'ATV TR' -> Key: 'atv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/atv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Minika Cocuk TR' -> Key: 'minika-cocuk-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/minika-cocuk-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Minika Go TR' -> Key: 'minika-go-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/minika-go-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TRT Belgesel TR' -> Key: 'trt-belgesel-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-belgesel-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TGRT Belgesel TR' -> Key: 'tgrt-belgesel-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/tgrt-belgesel-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TRT Muzik HD TR' -> Key: 'trt-muzik-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-muzik-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TRT Muzik TR' -> Key: 'trt-muzik-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-muzik-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Dream Turk FHD TR' -> Key: 'dream-turk-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/dream-turk-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'NR1 HD TR' -> Key: 'nr1-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/nr1-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TRT 1 FHD TR' -> Key: 'trt-1-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-1-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TRT 2 FHD TR' -> Key: 'trt-2-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-2-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'ATV FHD TR' -> Key: 'atv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/atv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'ATV Avrupa TR' -> Key: 'atv-avrupa-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/atv-avrupa-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Show Max TR' -> Key: 'show-max-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/show-max-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Kanal D TR' -> Key: 'kanal-d-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/kanal-d-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Euro D TR' -> Key: 'euro-d-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/euro-d-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Star TV FHD TR' -> Key: 'star-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/star-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Kanal 7 FHD TR' -> Key: 'kanal-7-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/kanal-7-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Kanal 7 TR' -> Key: 'kanal-7-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/kanal-7-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Kanal 7 Avrupa TR' -> Key: 'kanal-7-avrupa-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/kanal-7-avrupa-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Beyaz TV FHD TR' -> Key: 'beyaz-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/beyaz-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Beyaz TV TR' -> Key: 'beyaz-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/beyaz-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'A Para FHD TR' -> Key: 'a-para-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/a-para-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Teve2 FHD TR' -> Key: 'teve2-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/teve2-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TRT Haber HD TR' -> Key: 'trt-haber-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/trt-haber-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'A Haber TR' -> Key: 'a-haber-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/a-haber-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'NTV FHD TR' -> Key: 'ntv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/ntv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'NTV TR' -> Key: 'ntv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/ntv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'CNN Turk FHD TR' -> Key: 'cnn-turk-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/cnn-turk-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TV100 TR' -> Key: 'tv100-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/tv100-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TGRT Haber FHD TR' -> Key: 'tgrt-haber-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/tgrt-haber-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TGRT Haber HD TR' -> Key: 'tgrt-haber-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/tgrt-haber-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Ulke TV TR' -> Key: 'ulke-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/ulke-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'A News FHD TR' -> Key: 'a-news-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/a-news-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'beIN Sports Haber FHD TR' -> Key: 'bein-sports-haber-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-haber-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Kanal V TR' -> Key: 'kanal-v-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/kanal-v-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Kocaeli TV TR' -> Key: 'kocaeli-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/kocaeli-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Ege TV TR' -> Key: 'ege-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/ege-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'KRT TR' -> Key: 'krt-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/krt-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Rumeli TV TR' -> Key: 'rumeli-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/rumeli-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'T.A.Y TV TR' -> Key: 'tay-tv-tr' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/tay-tv-tr.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'BBC News UK HD (1080p)' -> Key: 'bbc-news-uk' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/bbc-news-uk.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'TBN UK (1080p)' -> Key: 'tbn-uk' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/tbn-uk.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'True Crime UK (1080p)' -> Key: 'true-crime-uk' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/true-crime-uk.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'True Crime UK (720p)' -> Key: 'true-crime-uk' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/true-crime-uk.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Red Bull TV DE (1080p)' -> Key: 'red-bull-tv-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/red-bull-tv-de.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Red Bull TV DE (1080p)' -> Key: 'red-bull-tv-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/red-bull-tv-de.png
+2026-10-31 11:07:46 [INFO] [LogoMatch] Success: 'Red Bull TV DE (720p)' -> Key: 'red-bull-tv-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/red-bull-tv-de.png
+2026-10-31 11:07:46 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 49 kanal kaydedildi (clearFirst=False).
+2026-10-31 11:07:46 [INFO] [LogoSync] 49 kanalın logosu indeks üzerinden otomatik tamamlandı.
+2026-10-31 11:17:38 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: LiudmilaSheremet (190502.tomtv.eu:80)
+2026-10-31 11:17:38 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: sh (helga.iptv2022.com)
+2026-10-31 11:17:38 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: smash (80.79.6.221:25461)
+2026-10-31 11:17:38 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: zontano (alex9954094.ddns.net:2052)
+2026-10-31 11:17:38 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: telerama (play.once.net.ec)
+2026-10-31 11:17:38 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: RadioHub_WEB_streaming (streaming.radiohub.hr)
+2026-10-31 11:17:38 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: 1368 (89.187.179.148:826)
+2026-10-31 11:17:38 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:17:43 [INFO] HomeViewModel: 275586 kanal veritabanından okundu.
+2026-10-31 11:19:34 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: 1368 (89.187.179.148:826)
+2026-10-31 11:19:34 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: RadioHub_WEB_streaming (streaming.radiohub.hr)
+2026-10-31 11:19:34 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: telerama (play.once.net.ec)
+2026-10-31 11:19:34 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: sh (helga.iptv2022.com)
+2026-10-31 11:19:34 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: test (alex9954094.ddns.net:2052)
+2026-10-31 11:19:34 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: smash (80.79.6.221:25461)
+2026-10-31 11:19:34 [INFO] [DatabaseEngine] IPTV hesabı doğrulandı ve IptvAccounts tablosuna kaydedildi: LiudmilaSheremet (190502.tomtv.eu:80)
+2026-10-31 11:19:34 [INFO] GitHubSyncEngine: Senkronizasyon sonu SQLite veritabanında toplam 275586 kanal mevcut.
+2026-10-31 11:19:34 [INFO] GitHubSyncEngine: Güncelleme tamamlandı.
+2026-10-31 11:19:34 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:19:38 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-31 11:19:38 [INFO] [LogoSync] Son logo senkronizasyon tarihi: 2026-10-31. Periyodik tarama atlandı.
+2026-10-31 11:19:39 [INFO] HomeViewModel: 275586 kanal veritabanından okundu.
+2026-10-31 11:23:22 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 120 kanal kaydedildi (clearFirst=False).
+2026-10-31 11:23:22 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:23:27 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:23:38 [WARN] [ACEENGINE] AceStream Web endpoint https://api.acestream.org/search?q=%5BDE%5D (sayfa 1) hatası: Hedef makine etkin olarak reddettiğinden bağlantı kurulamadı. (api.acestream.org:443)
+2026-10-31 11:24:06 [INFO] [SmartEPG] Auto-linked 'RTL HD [DE]' to EPG ID 'RTL.de'
+2026-10-31 11:24:06 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 1 kanal kaydedildi (clearFirst=False).
+2026-10-31 11:24:06 [INFO] [LogoMatch] Success: 'RTL HD [DE]' -> Key: 'rtl-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/rtl-de.png
+2026-10-31 11:24:06 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 1 kanal kaydedildi (clearFirst=False).
+2026-10-31 11:24:20 [INFO] [LogoMatch] Success: 'RTL Crime [DE]' -> Key: 'rtl-crime-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/rtl-crime-de.png
+2026-10-31 11:24:20 [INFO] [LogoMatch] Success: 'RTL Living [DE]' -> Key: 'rtl-living-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/rtl-living-de.png
+2026-10-31 11:24:20 [INFO] [LogoMatch] Success: 'RTL Passion [DE]' -> Key: 'rtl-passion-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/rtl-passion-de.png
+2026-10-31 11:24:20 [INFO] [LogoMatch] Success: 'RTL UP [DE]' -> Key: 'rtl-up-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/rtl-up-de.png
+2026-10-31 11:24:20 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 4 kanal kaydedildi (clearFirst=False).
+2026-10-31 11:24:25 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:24:30 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:24:32 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:24:37 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:24:45 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:24:51 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:24:58 [INFO] [LogoMatch] Success: 'Syfy HD [DE]' -> Key: 'syfy-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/syfy-de.png
+2026-10-31 11:24:58 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 1 kanal kaydedildi (clearFirst=False).
+2026-10-31 11:25:03 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:25:08 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:25:11 [INFO] [LogoMatch] Success: 'Sky Atlantic HD [DE]' -> Key: 'sky-atlantic-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/sky-atlantic-de.png
+2026-10-31 11:25:11 [INFO] [LogoMatch] Success: 'Sky Cinema Action HD [DE]' -> Key: 'sky-cinema-action-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/sky-cinema-action-de.png
+2026-10-31 11:25:11 [INFO] [LogoMatch] Success: 'Sky Cinema Classics [DE]' -> Key: 'sky-cinema-classics-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/sky-cinema-classics-de.png
+2026-10-31 11:25:11 [INFO] [LogoMatch] Success: 'Sky Cinema Family [DE]' -> Key: 'sky-cinema-family-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/sky-cinema-family-de.png
+2026-10-31 11:25:11 [INFO] [LogoMatch] Success: 'Sky Cinema Special HD [DE]' -> Key: 'sky-cinema-special-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/sky-cinema-special-de.png
+2026-10-31 11:25:11 [INFO] [LogoMatch] Success: 'Sky Crime HD [DE]' -> Key: 'sky-crime-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/sky-crime-de.png
+2026-10-31 11:25:11 [INFO] [LogoMatch] Success: 'Sky Krimi HD [DE]' -> Key: 'sky-krimi-de' -> URL: https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/germany/sky-krimi-de.png
+2026-10-31 11:25:11 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 7 kanal kaydedildi (clearFirst=False).
+2026-10-31 11:25:15 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:25:20 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:25:22 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:25:28 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:25:29 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:25:34 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:25:36 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:25:42 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:25:44 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-31 11:25:48 [INFO] HomeViewModel: 275706 kanal veritabanından okundu.
+2026-10-31 11:26:12 [INFO] [PLAYBACK] CHANNEL SELECTED: RTL HD [DE] (ID: 8d716e16-1368-4502-b21a-9eaaad68fe91, Category: Canlı TV, Url: acestream://2acd92f20fa60512cf01b4e16dffc5d14574d214)
+2026-10-31 11:26:12 [INFO] FlyleafHelper: Engine started successfully.
+2026-10-31 11:26:12 [INFO] Player: Flyleaf initialized successfully
+2026-10-31 11:26:12 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-31 11:26:12 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-31 11:26:12 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-31 11:26:12 [INFO] [SmartRouter] AceStream channel 'RTL HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:12 [INFO] [SmartRouter] Trying candidate 1/1: 'http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214'
+2026-10-31 11:26:12 [INFO] [AceStreamResolver] Direct stream -> http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:13 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:14 [INFO] [PLAYBACK CLOCK] Status=Opening CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:16 [INFO] [PLAYBACK] Player.Status changed: Playing (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:16 [INFO] [PLAYBACK] Playback started successfully (Status: Playing, CurTime: 0ms)
+2026-10-31 11:26:16 [INFO] [SmartRouter] Candidate response in 3618ms -> Success: True, Player.Status: Playing
+2026-10-31 11:26:16 [INFO] [PLAYBACK] Player.OpenCompleted: Success=True, Error=None, Status=Playing
+2026-10-31 11:26:16 [INFO] [SmartRouter] Playback started successfully on candidate 1/1 -> http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:16 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-31 11:26:16 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:17 [INFO] [PLAYBACK] Player.Status changed: Paused (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:19 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:21 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:23 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:25 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:27 [INFO] [PLAYBACK CLOCK] Status=Paused CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:28 [INFO] Player: Fast reloading current stream for 'RTL HD [DE]' to apply filters immediately (VOD pos: 0ms)
+2026-10-31 11:26:28 [INFO] [PLAYBACK] CHANNEL SELECTED: RTL HD [DE] (ID: 8d716e16-1368-4502-b21a-9eaaad68fe91, Category: Canlı TV, Url: acestream://2acd92f20fa60512cf01b4e16dffc5d14574d214)
+2026-10-31 11:26:28 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-31 11:26:28 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-31 11:26:28 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:28 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-31 11:26:28 [INFO] [SmartRouter] AceStream channel 'RTL HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:28 [INFO] [SmartRouter] Trying candidate 1/1: 'http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214'
+2026-10-31 11:26:28 [INFO] [AceStreamResolver] Direct stream -> http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:28 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:29 [INFO] [PLAYBACK CLOCK] Status=Opening CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:29 [INFO] Player: Fast reloading current stream for 'RTL HD [DE]' to apply filters immediately (VOD pos: 0ms)
+2026-10-31 11:26:29 [INFO] [PLAYBACK] CHANNEL SELECTED: RTL HD [DE] (ID: 8d716e16-1368-4502-b21a-9eaaad68fe91, Category: Canlı TV, Url: acestream://2acd92f20fa60512cf01b4e16dffc5d14574d214)
+2026-10-31 11:26:29 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-31 11:26:29 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-31 11:26:29 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-31 11:26:29 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=Cancelled, Status=Failed
+2026-10-31 11:26:29 [INFO] [PLAYBACK] Player.Status changed: Failed (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:29 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-31 11:26:29 [INFO] [SmartRouter] AceStream channel 'RTL HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:29 [INFO] [SmartRouter] Trying candidate 1/1: 'http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214'
+2026-10-31 11:26:29 [INFO] [AceStreamResolver] Direct stream -> http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:29 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:31 [INFO] [PLAYBACK CLOCK] Status=Opening CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-31 11:26:31 [INFO] [PLAYBACK] Player.Status changed: Playing (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:31 [INFO] [PLAYBACK] Playback started successfully (Status: Playing, CurTime: 0ms)
+2026-10-31 11:26:31 [INFO] [SmartRouter] Candidate response in 2235ms -> Success: True, Player.Status: Playing
+2026-10-31 11:26:31 [INFO] [SmartRouter] Playback started successfully on candidate 1/1 -> http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:31 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-31 11:26:31 [INFO] [PLAYBACK] Player.OpenCompleted: Success=True, Error=None, Status=Playing
+2026-10-31 11:26:32 [INFO] Player: Fast reloading current stream for 'RTL HD [DE]' to apply filters immediately (VOD pos: 0ms)
+2026-10-31 11:26:32 [INFO] [PLAYBACK] CHANNEL SELECTED: RTL HD [DE] (ID: 8d716e16-1368-4502-b21a-9eaaad68fe91, Category: Canlı TV, Url: acestream://2acd92f20fa60512cf01b4e16dffc5d14574d214)
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-31 11:26:32 [INFO] [SmartRouter] AceStream channel 'RTL HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:32 [INFO] [SmartRouter] Trying candidate 1/1: 'http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214'
+2026-10-31 11:26:32 [INFO] [AceStreamResolver] Direct stream -> http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Player.Status changed: Playing (CurTime: 0ms, Duration: 0ms)
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Playback started successfully (Status: Playing, CurTime: 0ms)
+2026-10-31 11:26:32 [INFO] [SmartRouter] Candidate response in 230ms -> Success: True, Player.Status: Playing
+2026-10-31 11:26:32 [INFO] [SmartRouter] Playback started successfully on candidate 1/1 -> http://127.0.0.1:6878/ace/getstream?infohash=2acd92f20fa60512cf01b4e16dffc5d14574d214
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-31 11:26:32 [INFO] [PLAYBACK] Player.OpenCompleted: Success=True, Error=None, Status=Playing
+2026-10-31 11:26:33 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=879ms Duration=0ms Advancing=True (delta=879ms/2s, IsVod=False)
+2026-10-31 11:26:35 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=2899ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-31 11:26:37 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=4899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:26:39 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=6899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:26:41 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=8919ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-31 11:26:43 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=10899ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)
+2026-10-31 11:26:45 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=12899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:26:47 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=14899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:26:49 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=16899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:26:51 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=18899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:26:53 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=20919ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-31 11:26:55 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=22899ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)
+2026-10-31 11:26:57 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=24919ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-31 11:26:59 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=26919ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:27:01 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=28919ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:27:03 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=30899ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)
+2026-10-31 11:27:05 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=32899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:27:07 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=34899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:27:09 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=36899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:27:11 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=38899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:27:13 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=40899ms Duration=0ms Advancing=True (delta=2000ms/2s, IsVod=False)
+2026-10-31 11:27:15 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=42919ms Duration=0ms Advancing=True (delta=2020ms/2s, IsVod=False)
+2026-10-31 11:27:17 [INFO] [PLAYBACK CLOCK] Status=Playing CurTime=44899ms Duration=0ms Advancing=True (delta=1980ms/2s, IsVod=False)

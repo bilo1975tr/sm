@@ -1,0 +1,420 @@
+<Window x:Class="StreamMesh.UI.Windows.EditChannelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:StreamMesh.Converters"
+        Title="Gelişmiş Kanal Düzenleyici" Height="680" Width="850"
+        Background="#0f172a" Foreground="White" WindowStartupLocation="CenterOwner"
+        Icon="{StaticResource AppIconImage}"
+        WindowStyle="None" AllowsTransparency="True">
+
+    <Window.Resources>
+        <conv:LogoCacheConverter x:Key="LogoCacheConverter" />
+
+        <!-- Modern TabItem Style (Underline) -->
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" Padding="20,10" Margin="0,0,10,0" Background="Transparent" BorderThickness="0,0,0,2">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#38bdf8"/>
+                                <Setter Property="Foreground" Value="#38bdf8"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="False">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="Gray"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ListBox Style -->
+        <Style x:Key="SourceListBoxStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="#1e293b"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="0,5,0,10"/>
+            <Setter Property="Padding" Value="5"/>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="20" Background="#0f172a" BorderBrush="#334155" BorderThickness="1">
+        <Grid Margin="25">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Custom Title Bar -->
+            <Grid Grid.Row="0" Margin="0,0,0,25">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Kanal Yönetimi" FontSize="28" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Çoklu yayın kaynağı, alternatif isim/logo ve otomatik birleştirme sihirbazı" FontSize="12" Foreground="#64748b"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="🔗 Kanal Birleştir" Width="160" Height="40"
+                            Style="{StaticResource PrimaryButtonStyle}" Click="OpenMergeDialog_Click" Background="#0284c7" Foreground="White" FontWeight="Bold" Margin="0,0,10,0"/>
+                    <Button Content="🪄 Otomatik Veri Eşle" Width="160" Height="40"
+                            Style="{StaticResource PrimaryButtonStyle}" Click="AutoMatch_Click" Background="#334155" Margin="0,0,15,0"/>
+                    <Button Content="✕" Width="40" Height="40" Background="Transparent" Foreground="Gray" FontSize="20" BorderThickness="0" Click="Cancel_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Content Area -->
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+                <TabItem Header="TEMEL BİLGİLER &amp; İSİMLER">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="0,20">
+                            <TextBlock Text="Alternatif Kanal İsimleri (En üstteki varsayılandır)" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
+                            <ListBox x:Name="NameList" Height="150" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempNameList}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="⭐ Varsayılan" ToolTip="Bu ismi ana isim yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryName_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                                <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveName_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <Button Content="+ Yeni Alternatif İsim Ekle" HorizontalAlignment="Left" Width="200" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="AddName_Click" Background="#1e293b" Margin="0,0,0,15"/>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Kategori (TV, Film, Dizi, Radyo)" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
+                                    <ComboBox Text="{Binding ChannelObj.Category, UpdateSourceTrigger=PropertyChanged}" Height="40" IsEditable="True" Foreground="White" Background="#0f172a">
+                                        <ComboBoxItem Content="TV"/>
+                                        <ComboBoxItem Content="Film"/>
+                                        <ComboBoxItem Content="Dizi"/>
+                                        <ComboBoxItem Content="Radyo"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="Grup / Paket" Foreground="#94a3b8" Margin="0,0,0,8" FontSize="11" FontWeight="SemiBold"/>
+                                    <TextBox Text="{Binding ChannelObj.GroupTitle, UpdateSourceTrigger=PropertyChanged}" Height="40"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="Dil (ISO Kodları: tr, en, de...)" Foreground="#94a3b8" Margin="0,20,0,8" FontSize="11" FontWeight="SemiBold"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding LanguageText, UpdateSourceTrigger=PropertyChanged}" Height="40" VerticalContentAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+                                    <Border CornerRadius="6" Margin="2,0" Background="#334155">
+                                        <Button Content="TR" Width="36" Height="36" Click="LangPill_Click" Tag="tr" Background="Transparent" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                    <Border CornerRadius="6" Margin="2,0" Background="#334155">
+                                        <Button Content="DE" Width="36" Height="36" Click="LangPill_Click" Tag="de" Background="Transparent" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                    <Border CornerRadius="6" Margin="2,0" Background="#334155">
+                                        <Button Content="EN" Width="36" Height="36" Click="LangPill_Click" Tag="en" Background="Transparent" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                    <Border CornerRadius="6" Margin="2,0" Background="#334155">
+                                        <Button Content="FR" Width="36" Height="36" Click="LangPill_Click" Tag="fr" Background="Transparent" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                    <Border CornerRadius="6" Margin="2,0" Background="#ef4444">
+                                        <Button Content="Temizle" Padding="10,0" Height="36" Click="LangPill_Click" Tag="" Background="Transparent" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="YAYIN KAYNAKLARI">
+                    <Grid Margin="0,20">
+                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <ListBox x:Name="UrlList" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempUrlList}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{Binding CardBackground}" BorderBrush="{Binding CardBorderBrush}" BorderThickness="1" CornerRadius="8" Margin="0,0,0,8" Padding="8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                    <Border Background="#059669" CornerRadius="4" Padding="6,1" Margin="0,0,8,0" Visibility="{Binding DefaultBadgeVisibility}">
+                                                        <TextBlock Text="⭐ VARSAYILAN KAYNAK" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                                    </Border>
+                                                    <TextBlock Text="Yayın Akış URL Adresi" Foreground="#94a3b8" FontSize="10"/>
+                                                </StackPanel>
+                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="#0f172a" Foreground="White" BorderBrush="#334155" BorderThickness="1" Padding="8,4" VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                <Button Content="🗑️ Bu Hesabı Temizle" ToolTip="Bu IPTV hesabına ait tüm kanalları/bölümleri kütüphaneden topluca sil" Margin="0,0,6,0" Padding="10,6" Click="PurgeAccountFromUrl_Click" Background="#475569" Foreground="#f8fafc" BorderThickness="0" Height="35" Visibility="{Binding PurgeAccountButtonVisibility}"/>
+                                                <Button Content="✂️ Ayrı Kanal Yap" ToolTip="Bu yayını bu kanaldan ayırıp bağımsız yeni bir kanal olarak kaydet" Margin="0,0,6,0" Padding="10,6" Click="SeparateSource_Click" Background="#0f766e" Foreground="#5eead4" BorderThickness="0" Height="35" Cursor="Hand"/>
+                                                <Button Content="⭐ Varsayılan Yap" ToolTip="Bu yayını varsayılan / birincil kaynak yap" Margin="0,0,4,0" Padding="12,6" Click="SetPrimaryUrl_Click" Background="#0284c7" Foreground="White" BorderThickness="0" Height="35" Visibility="{Binding MakeDefaultButtonVisibility}"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Content="✕" ToolTip="Bu kaynağı kaldır" Width="35" Height="35" Click="RemoveUrl_Click" Background="#7f1d1d" BorderThickness="0" Foreground="#ff8a8a" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal">
+                            <Button Content="+ Yeni Yayın URL Ekle" HorizontalAlignment="Left" Width="200" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddUrl_Click" Background="#1e293b" Margin="0,0,10,0"/>
+                            <Button Content="🔍 M3U Kaynak Tanısı" Height="40" Padding="14,0" Style="{StaticResource PrimaryButtonStyle}" Background="#0f172a" BorderBrush="#38bdf8" BorderThickness="1" Foreground="#38bdf8" Click="M3uSourceInfo_Click" ToolTip="Bu kanalın M3U kaynağını, satır numarasını ve ham EXTINF metnini inceleyin"/>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="LOGOLAR">
+                    <Grid Margin="0,15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Top Toolbar for Logo Tab -->
+                        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="+ Yeni Logo URL Ekle" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="AddLogo_Click" Background="#1e293b" Margin="0,0,10,0"/>
+                            <Button Content="🔍 Logo Ara (Sihirbaz)" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="ToggleLogoSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,15,0">
+                            <!-- Search Panel (Collapsible) -->
+                            <Border x:Name="LogoSearchPanel" Visibility="Collapsed" Background="#1e293b" CornerRadius="10" Padding="12" Margin="0,0,0,10" BorderBrush="#38bdf8" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock Text="🔍 Logo Arama Sihirbazı (tv-logos &amp; iptv-org)" Foreground="#38bdf8" FontWeight="Bold" Margin="0,0,0,8"/>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="130"/>
+                                            <ColumnDefinition Width="90"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="LogoSearchQueryBox" Height="35" VerticalContentAlignment="Center" Margin="0,0,5,0"/>
+                                        <ComboBox Grid.Column="1" x:Name="LogoSourceCombo" Height="35" SelectedIndex="0" Margin="0,0,5,0" VerticalContentAlignment="Center">
+                                            <ComboBoxItem Content="Tüm Kaynaklar"/>
+                                            <ComboBoxItem Content="tv-logos (GitHub)"/>
+                                            <ComboBoxItem Content="iptv-org"/>
+                                            <ComboBoxItem Content="Clearbit"/>
+                                        </ComboBox>
+                                        <Button Grid.Column="2" Content="Ara" Height="35" Style="{StaticResource PrimaryButtonStyle}" Click="DoLogoSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
+                                    </Grid>
+
+                                    <!-- Logo Search Results -->
+                                    <ListBox x:Name="LogoSearchResultsList" Height="140" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding LogoSearchResults}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#0f172a" CornerRadius="6" Margin="0,0,0,4" Padding="6">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="40"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Image Source="{Binding Url, Converter={StaticResource LogoCacheConverter}}" Width="30" Height="30" Stretch="Uniform"/>
+                                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" Foreground="White"/>
+                                                            <TextBlock Text="{Binding Source}" FontSize="10" Foreground="#64748b"/>
+                                                        </StackPanel>
+                                                        <Border Grid.Column="2" CornerRadius="4" Background="#334155">
+                                                            <Button Content="➕ Logoyu Ekle" Padding="10,4" Click="SelectSearchResultLogo_Click" Background="Transparent" Foreground="#38bdf8" BorderThickness="0"/>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </StackPanel>
+                            </Border>
+
+                            <ListBox x:Name="LogoList" Height="220" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempLogoList}" SelectionChanged="LogoList_SelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="⭐ Ana Logo Yap" ToolTip="Bu logoyu birincil logo yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryLogo_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                                <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveLogo_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+
+                        <!-- Logo Preview -->
+                        <Border Grid.Row="1" Grid.Column="1" Background="#1e293b" CornerRadius="15" Padding="15" BorderBrush="#334155" BorderThickness="1" VerticalAlignment="Top">
+                            <StackPanel>
+                                <TextBlock Text="Görsel Önizleme" HorizontalAlignment="Center" Margin="0,0,0,10" Foreground="#94a3b8" FontWeight="SemiBold"/>
+                                <Border Background="#0f172a" Width="150" Height="150" CornerRadius="12" BorderBrush="#334155" BorderThickness="1">
+                                    <Grid>
+                                        <Path Data="{StaticResource GeoTv}" Fill="White" Width="40" Height="40" Stretch="Uniform" Opacity="0.1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Image Source="{Binding SelectedLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="10"/>
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="Logoyu doğrulamak için listeden seçin." TextWrapping="Wrap" TextAlignment="Center" FontSize="10" Foreground="#64748b" Margin="0,10,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="EPG EŞLEME">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid Margin="0,15">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Toolbar -->
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                <Button Content="+ Yeni EPG ID Ekle" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="AddEpg_Click" Background="#1e293b" Margin="0,0,10,0"/>
+                                <Button Content="🔍 EPG Ara (Sihirbaz)" Width="180" Height="36" Style="{StaticResource PrimaryButtonStyle}" Click="ToggleEpgSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1">
+                                <!-- EPG Search Panel (Collapsible) -->
+                                <Border x:Name="EpgSearchPanel" Visibility="Collapsed" Background="#1e293b" CornerRadius="10" Padding="12" Margin="0,0,0,10" BorderBrush="#38bdf8" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="🔍 EPG Arama Sihirbazı" Foreground="#38bdf8" FontWeight="Bold" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="180"/>
+                                                <ColumnDefinition Width="90"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox x:Name="EpgSearchQueryBox" Height="35" VerticalContentAlignment="Center" Margin="0,0,5,0"/>
+                                            <ComboBox Grid.Column="1" x:Name="EpgScopeCombo" Height="35" SelectedIndex="0" Margin="0,0,5,0" VerticalContentAlignment="Center">
+                                                <ComboBoxItem Content="Tüm EPG Kaynaklarında"/>
+                                                <ComboBoxItem Content="Mevcut EPG Kaynağında"/>
+                                            </ComboBox>
+                                            <Button Grid.Column="2" Content="Ara" Height="35" Style="{StaticResource PrimaryButtonStyle}" Click="DoEpgSearch_Click" Background="#38bdf8" Foreground="#0f172a" FontWeight="Bold"/>
+                                        </Grid>
+
+                                        <!-- EPG Search Results -->
+                                        <ListBox x:Name="EpgSearchResultsList" Height="150" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding EpgSearchResults}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#0f172a" CornerRadius="6" Margin="0,0,0,4" Padding="6">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel VerticalAlignment="Center">
+                                                                <WrapPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                                                    <TextBlock Text="{Binding ChannelName}" FontWeight="Bold" Foreground="White" FontSize="13" TextWrapping="Wrap"/>
+                                                                    <TextBlock Text="{Binding SourceName, StringFormat=' ({0})'}" Foreground="#64748b" FontSize="11" Margin="5,1,0,0"/>
+                                                                </WrapPanel>
+                                                                <TextBlock Text="{Binding CurrentProgram}" FontSize="11" Foreground="#94a3b8" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                                                            </StackPanel>
+                                                            <Border Grid.Column="1" CornerRadius="4" Background="#334155">
+                                                                <Button Content="➕ EPG ID Ekle" Padding="10,4" Click="SelectSearchResultEpg_Click" Background="Transparent" Foreground="#38bdf8" BorderThickness="0"/>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <TextBlock Text="⚠️ Sonuç bulunamadı. Lütfen farklı bir anahtar kelime deneyin veya 'Tüm EPG Kaynakları' seçeneğini kullanın."
+                                               Foreground="#ef4444" FontSize="10" Margin="0,5,0,0" TextWrapping="Wrap" HorizontalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding EpgSearchResults.Count}" Value="0"/>
+                                                                <Condition Binding="{Binding Visibility, ElementName=EpgSearchPanel}" Value="Visible"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Text="Alternatif EPG ID Listesi" Foreground="#94a3b8" Margin="0,0,0,5" FontSize="11" FontWeight="SemiBold"/>
+                                <ListBox x:Name="EpgList" Height="150" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempEpgList}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="35" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"/>
+                                                    <Button Grid.Column="1" Content="⭐ Ana EPG Yap" ToolTip="Bu EPG ID'yi birincil yap" Margin="5,0,5,0" Padding="8,2" Click="SetPrimaryEpg_Click" Background="#334155" Foreground="#38bdf8" BorderThickness="0"/>
+                                                    <Button Grid.Column="2" Content="✕" Width="30" Click="RemoveEpg_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <TextBlock Text="Öncelikli EPG Kaynak URL'leri (Otomatik Atanır)" Foreground="#94a3b8" Margin="0,10,0,5" FontSize="11" FontWeight="SemiBold"/>
+                                <ListBox x:Name="EpgUrlList" Height="100" Style="{StaticResource SourceListBoxStyle}" ItemsSource="{Binding TempEpgUrlList}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#0f172a" CornerRadius="8" Margin="0,0,0,5" Padding="5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Height="30" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" FontSize="10"/>
+                                                    <Button Grid.Column="1" Content="✕" Width="30" Click="RemoveEpgUrl_Click" Background="Transparent" BorderThickness="0" Foreground="#ef4444"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+
+            <!-- Footer -->
+            <Grid Grid.Row="2" Margin="0,10,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Content="🔍 M3U Kaynağı &amp; Tanı" Height="45" Padding="16,0" Style="{StaticResource PrimaryButtonStyle}" Background="#1e293b" BorderBrush="#38bdf8" BorderThickness="1.5" Foreground="#38bdf8" FontWeight="Bold" ToolTip="Bu kanalın hangi M3U dosyasından, kaçıncı satırdan ve hangi ham EXTINF satırıyla geldiğini detaylı inceleyin." Click="M3uSourceInfo_Click"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Vazgeç" Width="120" Height="45" Margin="0,0,15,0" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Click="Cancel_Click"/>
+                    <Button Content="Değişiklikleri Kaydet" Width="180" Height="45" Style="{StaticResource PrimaryButtonStyle}" Click="Save_Click"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

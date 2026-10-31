@@ -1,0 +1,149 @@
+<UserControl x:Class="StreamMesh.UI.Views.StatsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:utils="clr-namespace:StreamMesh.Core.Utils"
+             mc:Ignorable="d" 
+             d:DesignHeight="750" d:DesignWidth="1050" Background="#141414">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Sistem &amp; Ağ İstatistikleri" FontSize="28" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="StreamMesh P2P Mesh, bellek durumu, kanal envanteri ve medya sunucu metrikleri" 
+                           Foreground="#94A3B8" FontSize="13" Margin="0,4,0,0"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="🔄 Yenile" Style="{StaticResource PrimaryButtonStyle}" Height="38" Padding="14,6" Click="RefreshStats_Click" Margin="0,0,10,0"/>
+                <Button Content="🧹 Önbelleği Temizle" Background="#334155" Style="{StaticResource PrimaryButtonStyle}" Height="38" Padding="14,6" Click="ClearCache_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- KPI Metric Cards Grid -->
+                <WrapPanel Orientation="Horizontal" Margin="0,0,0,20">
+                    <!-- Total Channels -->
+                    <Border Width="230" Height="100" Background="#1E293B" CornerRadius="12" Margin="0,0,16,16" Padding="16" BorderBrush="#334155" BorderThickness="1">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Toplam Kanal &amp; Yayın" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="TxtTotalChannels" Text="0" Foreground="#38BDF8" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="TxtChannelBreakdown" Text="Canlı TV / Film / Dizi" Foreground="#64748B" FontSize="11" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- P2P Mesh Peers -->
+                    <Border Width="230" Height="100" Background="#1E293B" CornerRadius="12" Margin="0,0,16,16" Padding="16" BorderBrush="#334155" BorderThickness="1">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="P2P Mesh Eşleri (Peers)" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="TxtOnlinePeers" Text="0" Foreground="#10B981" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="TxtStunStatus" Text="STUN Aktif (RFC 5389)" Foreground="#64748B" FontSize="11" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- IPTV Accounts -->
+                    <Border Width="230" Height="100" Background="#1E293B" CornerRadius="12" Margin="0,0,16,16" Padding="16" BorderBrush="#334155" BorderThickness="1">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Bağlı IPTV Hesapları" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="TxtIptvAccounts" Text="0" Foreground="#F59E0B" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="TxtM3uSources" Text="0 Kaynak Aktif" Foreground="#64748B" FontSize="11" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Memory Usage -->
+                    <Border Width="230" Height="100" Background="#1E293B" CornerRadius="12" Margin="0,0,16,16" Padding="16" BorderBrush="#334155" BorderThickness="1">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Bellek (RAM) Kullanımı" Foreground="#94A3B8" FontSize="12" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="TxtRamUsage" Text="0 MB" Foreground="#EC4899" FontSize="24" FontWeight="Bold" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="TxtDbSize" Text="Veritabanı: Hesaplanıyor..." Foreground="#64748B" FontSize="11" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <!-- Detailed Information Sections -->
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Network & Server Panel -->
+                    <Border Grid.Column="0" Background="#1E293B" CornerRadius="12" Padding="20" Margin="0,0,10,0" BorderBrush="#334155" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Ağ ve Hibrit Medya Sunucusu" FontSize="16" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,14"/>
+                            
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="Yerel Medya Portu:" Foreground="#94A3B8"/>
+                                <TextBlock x:Name="TxtServerPort" Text="8080" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="SSDP / UPnP Keşfi:" Foreground="#94A3B8"/>
+                                <TextBlock Text="Etkin (239.255.255.250)" Foreground="#10B981" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="HLS Proxy Hızlandırma:" Foreground="#94A3B8"/>
+                                <TextBlock Text="Aktif (LRU Bellek Önbelleği)" Foreground="#38BDF8" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="AceEngine P2P Motoru:" Foreground="#94A3B8"/>
+                                <TextBlock x:Name="TxtAceStatus" Text="Hazır (Port 6878)" Foreground="#F59E0B" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="P2P Mesh Protokolü:" Foreground="#94A3B8"/>
+                                <TextBlock Text="STUN / WebRTC Uyumlu" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Application & Environment Panel -->
+                    <Border Grid.Column="1" Background="#1E293B" CornerRadius="12" Padding="20" Margin="10,0,0,0" BorderBrush="#334155" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Çalışma Ortamı ve Sistem Sağlığı" FontSize="16" FontWeight="Bold" Foreground="#10B981" Margin="0,0,0,14"/>
+
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="Uygulama Sürümü:" Foreground="#94A3B8"/>
+                                <TextBlock x:Name="TxtAppVersion" Text="StreamMesh v0.1.0" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text=".NET Runtime:" Foreground="#94A3B8"/>
+                                <TextBlock x:Name="TxtDotNetVersion" Text=".NET 8.0 Windows (x64)" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="Video Motoru (Flyleaf):" Foreground="#94A3B8"/>
+                                <TextBlock Text="FFmpeg v7.0 Donanım Hızlandırma" Foreground="#38BDF8" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="İşletim Sistemi:" Foreground="#94A3B8"/>
+                                <TextBlock x:Name="TxtOsInfo" Text="Windows" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="Yerel AI Motoru:" Foreground="#94A3B8"/>
+                                <TextBlock x:Name="TxtAiEngineStatus" Text="Otomatik Algılama Açık" Foreground="#A855F7" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Diagnostic Log / Info Box -->
+                <Border Background="#0F172A" CornerRadius="12" Padding="16" BorderBrush="#334155" BorderThickness="1">
+                    <StackPanel>
+                        <TextBlock Text="Ağ Teşhis Özeti" FontWeight="SemiBold" Foreground="#CBD5E1" Margin="0,0,0,8"/>
+                        <TextBlock x:Name="TxtDiagnosticLog" FontFamily="Consolas" FontSize="12" Foreground="#94A3B8" TextWrapping="Wrap"
+                                   Text="STUN Testi tamamlandı. Ağ trafiği normal hızda akıyor. P2P Mesh bağlantıları hazır."/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

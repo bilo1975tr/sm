@@ -1,0 +1,587 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Text.RegularExpressions;
+using StreamMesh.Models;
+using StreamMesh.Core.Database;
+using StreamMesh.Core.Media;
+
+namespace StreamMesh.UI.Windows
+{
+    public partial class EditChannelWindow : Window, INotifyPropertyChanged
+    {
+        private Channel _channel;
+        private readonly DatabaseEngine _db = new DatabaseEngine();
+
+        public class StringWrapper : INotifyPropertyChanged
+        {
+            private string _value = "";
+            public string Value { get => _value; set { _value = value; OnPropertyChanged(); } }
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        public class ChannelSourceItem : INotifyPropertyChanged
+        {
+            private string _value = "";
+            private bool _isDefault = false;
+
+            public string Value
+            {
+                get => _value;
+                set
+                {
+                    _value = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(PurgeAccountButtonVisibility));
+                }
+            }
+
+            public bool IsDefault
+            {
+                get => _isDefault;
+                set
+                {
+                    if (_isDefault != value)
+                    {
+                        _isDefault = value;
+                        OnPropertyChanged();
+                        OnPropertyChanged(nameof(DefaultBadgeVisibility));
+                        OnPropertyChanged(nameof(MakeDefaultButtonVisibility));
+                        OnPropertyChanged(nameof(CardBorderBrush));
+                        OnPropertyChanged(nameof(CardBackground));
+                    }
+                }
+            }
+
+            public Visibility DefaultBadgeVisibility => IsDefault ? Visibility.Visible : Visibility.Collapsed;
+            public Visibility MakeDefaultButtonVisibility => IsDefault ? Visibility.Collapsed : Visibility.Visible;
+            public Visibility PurgeAccountButtonVisibility
+            {
+                get
+                {
+                    var acc = IptvAccountHelper.ParseAccountFromUrl(_value);
+                    return (acc != null && !string.IsNullOrEmpty(acc.Username)) ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+            public string CardBorderBrush => IsDefault ? "#059669" : "#334155";
+            public string CardBackground => IsDefault ? "#0d2818" : "#0f172a";
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+            protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        public ObservableCollection<StringWrapper> TempNameList { get; set; } = new ObservableCollection<StringWrapper>();
+        public ObservableCollection<ChannelSourceItem> TempUrlList { get; set; } = new ObservableCollection<ChannelSourceItem>();
+        public ObservableCollection<StringWrapper> TempLogoList { get; set; } = new ObservableCollection<StringWrapper>();
+        public ObservableCollection<StringWrapper> TempEpgList { get; set; } = new ObservableCollection<StringWrapper>();
+        public ObservableCollection<StringWrapper> TempEpgUrlList { get; set; } = new ObservableCollection<StringWrapper>();
+
+        public ObservableCollection<LogoSearchResult> LogoSearchResults { get; set; } = new ObservableCollection<LogoSearchResult>();
+        public ObservableCollection<EpgChannelSearchResult> EpgSearchResults { get; set; } = new ObservableCollection<EpgChannelSearchResult>();
+
+        private string _languageText = "";
+        public string LanguageText
+        {
+            get => _languageText;
+            set
+            {
+                _languageText = value;
+                _channel.Language = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string? _selectedLogoUrl;
+        public string? SelectedLogoUrl
+        {
+            get => _selectedLogoUrl;
+            set { _selectedLogoUrl = value; OnPropertyChanged(); }
+        }
+
+        public Channel ChannelObj => _channel;
+
+        public EditChannelWindow(Channel channel)
+        {
+            _channel = channel;
+            InitializeComponent();
+
+            // Handle 'und' (undefined) language gracefully without hardcoding
+            if (string.Equals(channel.Language, "und", StringComparison.OrdinalIgnoreCase))
+            {
+                _channel.Language = "";
+            }
+            LanguageText = _channel.Language ?? "";
+
+            // Load multi-alternative data
+            foreach (var n in channel.GetNamesList()) TempNameList.Add(new StringWrapper { Value = n });
+            var orderedUrls = channel.GetOrderedUrlList();
+            for (int i = 0; i < orderedUrls.Count; i++)
+            {
+                TempUrlList.Add(new ChannelSourceItem { Value = orderedUrls[i], IsDefault = (i == 0) });
+            }
+            if (TempUrlList.Count == 0 && !string.IsNullOrWhiteSpace(channel.Url))
+            {
+                TempUrlList.Add(new ChannelSourceItem { Value = channel.Url.Trim(), IsDefault = true });
+            }
+            foreach (var l in channel.GetLogoList()) TempLogoList.Add(new StringWrapper { Value = l });
+            foreach (var e in channel.GetEpgIdList()) TempEpgList.Add(new StringWrapper { Value = e });
+            var urls = (channel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var u in urls) TempEpgUrlList.Add(new StringWrapper { Value = u.Trim() });
+
+            if (TempNameList.Count == 0 && !string.IsNullOrWhiteSpace(channel.Name))
+                TempNameList.Add(new StringWrapper { Value = channel.Name });
+
+            if (TempLogoList.Count > 0) SelectedLogoUrl = TempLogoList[0].Value;
+
+            this.DataContext = this;
+            this.MouseDown += (s, e) => { if (e.ChangedButton == MouseButton.Left) DragMove(); };
+
+            StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Opened editor for channel '{channel.Name}' (Lang: {LanguageText})");
+        }
+
+        private void LangPill_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is string tag)
+            {
+                LanguageText = tag;
+                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Language set to '{tag}'");
+            }
+        }
+
+        private void ToggleLogoSearch_Click(object sender, RoutedEventArgs e)
+        {
+            LogoSearchPanel.Visibility = LogoSearchPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (LogoSearchPanel.Visibility == Visibility.Visible)
+            {
+                LogoSearchQueryBox.Text = ChannelUtils.GetCleanName(_channel.Name);
+                DoLogoSearch_Click(sender, e);
+            }
+        }
+
+        private async void DoLogoSearch_Click(object sender, RoutedEventArgs e)
+        {
+            string query = LogoSearchQueryBox.Text;
+            string sourceFilter = "ALL";
+            if (LogoSourceCombo.SelectedIndex == 1) sourceFilter = "TV_LOGOS";
+            else if (LogoSourceCombo.SelectedIndex == 2) sourceFilter = "IPTV_ORG";
+            else if (LogoSourceCombo.SelectedIndex == 3) sourceFilter = "CLEARBIT";
+
+            LogoSearchResults.Clear();
+            var results = await LogoSearchEngine.SearchLogosAsync(query, sourceFilter);
+            foreach (var r in results) LogoSearchResults.Add(r);
+
+            StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Logo search completed for '{query}', found {results.Count} candidates.");
+        }
+
+        private void SelectSearchResultLogo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is LogoSearchResult res)
+            {
+                TempLogoList.Insert(0, new StringWrapper { Value = res.Url });
+                SelectedLogoUrl = res.Url;
+                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Added logo URL '{res.Url}' from {res.Source}");
+                System.Windows.MessageBox.Show($"Logo kütüphaneye eklendi ve birincil logo yapıldı:\n{res.Name}", "Logo Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void ToggleEpgSearch_Click(object sender, RoutedEventArgs e)
+        {
+            EpgSearchPanel.Visibility = EpgSearchPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+            if (EpgSearchPanel.Visibility == Visibility.Visible)
+            {
+                EpgSearchQueryBox.Text = ChannelUtils.GetCleanName(_channel.Name);
+                DoEpgSearch_Click(sender, e);
+            }
+        }
+
+        private async void DoEpgSearch_Click(object sender, RoutedEventArgs e)
+        {
+            string query = EpgSearchQueryBox.Text;
+            bool allSources = EpgScopeCombo.SelectedIndex == 0;
+
+            EpgSearchResults.Clear();
+            var results = await _db.SearchEpgChannelsAsync(query, allSources);
+            foreach (var r in results) EpgSearchResults.Add(r);
+
+            StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] EPG search completed for '{query}', scope: {(allSources ? "All" : "Current")}, found {results.Count} EPG items.");
+        }
+
+        private void SelectSearchResultEpg_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button btn && btn.DataContext is EpgChannelSearchResult res)
+            {
+                // Add EpgId to the top
+                var existingId = TempEpgList.FirstOrDefault(x => x.Value.Equals(res.EpgId, StringComparison.OrdinalIgnoreCase));
+                if (existingId != null) TempEpgList.Remove(existingId);
+                TempEpgList.Insert(0, new StringWrapper { Value = res.EpgId });
+
+                // Also store the Source URL to prioritize this source later
+                if (!string.IsNullOrEmpty(res.SourceUrl))
+                {
+                    if (!TempEpgUrlList.Any(x => x.Value.Equals(res.SourceUrl, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        TempEpgUrlList.Insert(0, new StringWrapper { Value = res.SourceUrl });
+                    }
+                }
+
+                StreamMesh.Core.Utils.LogService.LogInfo($"[EditChannel] Added EPG ID '{res.EpgId}' and Source '{res.SourceUrl}' for channel '{_channel.Name}'");
+                System.Windows.MessageBox.Show($"EPG ID ve Kaynak URL eklendi. Bu ID artık öncelikle bu kaynaktan okunacak:\n{res.EpgId}", "EPG ID Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void LogoList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LogoList.SelectedItem is StringWrapper sw) SelectedLogoUrl = sw.Value;
+        }
+
+        private void AddName_Click(object sender, RoutedEventArgs e) => TempNameList.Add(new StringWrapper { Value = "" });
+        private void RemoveName_Click(object sender, RoutedEventArgs e) { if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw) TempNameList.Remove(sw); }
+        private void SetPrimaryName_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw)
+            {
+                TempNameList.Remove(sw);
+                TempNameList.Insert(0, sw);
+            }
+        }
+
+        private async void PurgeAccountFromUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
+            {
+                var acc = IptvAccountHelper.ParseAccountFromUrl(item.Value);
+                if (acc == null || string.IsNullOrWhiteSpace(acc.Username))
+                {
+                    System.Windows.MessageBox.Show("Bu URL adresinden geçerli bir IPTV hesap bilgisi (kullanıcı adı/şifre) tespit edilemedi.", "Hesap Bulunamadı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Sayımları al
+                var counts = await IptvAccountHelper.CountAccountOccurrencesAsync(acc);
+
+                string confirmMessage = $"IPTV HESAP BİLGİSİ:\n" +
+                                       $"• Sunucu: {acc.HostWithPort}\n" +
+                                       $"• Kullanıcı Adı: {acc.Username}\n\n" +
+                                       $"Bu hesaba ait veritabanında toplam:\n" +
+                                       $"• {counts.totalUrls} adet yayın/bölüm adresi\n" +
+                                       $"• {counts.totalChannels} adet kanal/içerik kaydı\n" +
+                                       $"  ({counts.exclusiveChannels} tanesi SADECE bu hesaba ait ve tamamen silinecek)\n\n" +
+                                       $"Bu hesaba ait TÜM yayın linklerini ve sadece bu hesaba bağlı kanalları topluca silmek istediğinizden emin misiniz?";
+
+                var res = System.Windows.MessageBox.Show(confirmMessage, "Toplu IPTV Hesabı Temizleme Onayı", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (res != MessageBoxResult.Yes) return;
+
+                try
+                {
+                    var purgeResult = await IptvAccountHelper.PurgeAccountFromDatabaseAsync(acc);
+
+                    // Mevcut açık penceredeki TempUrlList içinden de temizle
+                    var toRemove = TempUrlList.Where(u => IptvAccountHelper.UrlBelongsToAccount(u.Value, acc)).ToList();
+                    foreach (var tr in toRemove)
+                    {
+                        TempUrlList.Remove(tr);
+                    }
+                    if (TempUrlList.Count > 0 && !TempUrlList.Any(u => u.IsDefault))
+                    {
+                        TempUrlList[0].IsDefault = true;
+                    }
+
+                    System.Windows.MessageBox.Show(
+                        $"İşlem Başarıyla Tamamlandı:\n\n" +
+                        $"• Silinen toplam ölü URL: {purgeResult.TotalUrlsRemoved}\n" +
+                        $"• Tamamen kaldırılan kanal: {purgeResult.ChannelsDeletedEntirely}\n" +
+                        $"• Kaynakları temizlenen kanal: {purgeResult.ChannelsModifiedSourcesRemoved}\n" +
+                        $"• Temizlenen M3U kaynakları: {purgeResult.SourcesRemovedFromM3uSources}",
+                        "Hesap Temizlendi",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+
+                    // Eğer düzenlenen kanalın hiç kaynağı kalmadıysa pencereyi kapat
+                    if (TempUrlList.Count == 0)
+                    {
+                        this.DialogResult = true;
+                        this.Close();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Temizleme sırasında hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void AddUrl_Click(object sender, RoutedEventArgs e) => TempUrlList.Add(new ChannelSourceItem { Value = "", IsDefault = (TempUrlList.Count == 0) });
+
+        private async void SeparateSource_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
+            {
+                if (TempUrlList.Count <= 1)
+                {
+                    System.Windows.MessageBox.Show("Bu kanala ait sadece 1 adet yayın adresi var. Ayrılacak başka yayın adresi bulunmuyor.", "Tek Kaynak", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                string urlToSeparate = (item.Value ?? "").Trim();
+                if (string.IsNullOrEmpty(urlToSeparate)) return;
+
+                // URL'den veya mevcut kanal adından yeni kanal için mantıklı bir isim üret
+                string baseChannelName = _channel.PrimaryName;
+                string newChannelName = "";
+
+                try
+                {
+                    var uri = new Uri(urlToSeparate);
+                    string lastSegment = System.IO.Path.GetFileNameWithoutExtension(uri.AbsolutePath);
+                    if (!string.IsNullOrWhiteSpace(lastSegment) && lastSegment.Length > 2)
+                    {
+                        // Örn: sinema1001 -> Sinema 1001
+                        string cleanedSegment = Regex.Replace(lastSegment, @"(\D+)(\d+)", "$1 $2");
+                        cleanedSegment = cleanedSegment.Replace('_', ' ').Replace('-', ' ').Trim();
+                        var textInfo = System.Globalization.CultureInfo.GetCultureInfo("tr-TR").TextInfo;
+                        cleanedSegment = textInfo.ToTitleCase(cleanedSegment.ToLower());
+                        newChannelName = cleanedSegment;
+                    }
+                }
+                catch { }
+
+                if (string.IsNullOrWhiteSpace(newChannelName) || newChannelName.Equals(baseChannelName, StringComparison.OrdinalIgnoreCase))
+                {
+                    newChannelName = $"{baseChannelName} (Ayrılmış)";
+                }
+
+                var confirm = System.Windows.MessageBox.Show(
+                    $"Bu yayın akışını mevcut kanaldan ayırıp bağımsız yeni bir kanal oluşturmak istiyor musunuz?\n\n" +
+                    $"• Ayrılacak Yayın: {urlToSeparate}\n" +
+                    $"• Yeni Kanal Adı: {newChannelName}\n" +
+                    $"• Kategori: {_channel.Category ?? "TV"}\n\n" +
+                    $"Onaylarsanız bu yayın mevcut kanaldan çıkarılacak ve bağımsız bir kanal olarak kütüphanenize eklenecektir.",
+                    "Yayını Bağımsız Kanal Olarak Ayır",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (confirm != MessageBoxResult.Yes) return;
+
+                try
+                {
+                    // 1. Yeni bağımsız kanal oluştur
+                    var newCh = new Channel
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = newChannelName,
+                        Url = urlToSeparate,
+                        Category = _channel.Category ?? "TV",
+                        GroupTitle = _channel.GroupTitle ?? "TV",
+                        LogoUrl = _channel.LogoUrl ?? "",
+                        EpgId = _channel.EpgId ?? "",
+                        Language = _channel.Language ?? "tr",
+                        Notes = "Ayrılmış Yayın"
+                    };
+
+                    SmartNormalizationEngine.Instance.NormalizeChannel(newCh);
+                    await _db.SaveChannelAsync(newCh);
+
+                    // 2. Mevcut kanaldan URL'yi kaldır
+                    bool wasDefault = item.IsDefault;
+                    TempUrlList.Remove(item);
+                    if (wasDefault && TempUrlList.Count > 0)
+                    {
+                        TempUrlList[0].IsDefault = true;
+                    }
+
+                    _channel.Url = string.Join(",", TempUrlList.Select(u => u.Value.Trim()));
+                    await _db.SaveChannelAsync(_channel);
+
+                    System.Windows.MessageBox.Show(
+                        $"Yayın başarıyla bağımsız bir kanal olarak ayrıldı ve kütüphanenize eklendi:\n\n" +
+                        $"Kanal: {newChannelName}\nYayın: {urlToSeparate}",
+                        "Kanal Başarıyla Ayrıldı",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Kanal ayrılırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void RemoveUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
+            {
+                bool wasDefault = item.IsDefault;
+                TempUrlList.Remove(item);
+                if (wasDefault && TempUrlList.Count > 0)
+                {
+                    TempUrlList[0].IsDefault = true;
+                }
+            }
+        }
+        private void SetPrimaryUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is ChannelSourceItem item)
+            {
+                foreach (var x in TempUrlList) x.IsDefault = false;
+                item.IsDefault = true;
+                TempUrlList.Remove(item);
+                TempUrlList.Insert(0, item);
+            }
+        }
+
+        private void AddLogo_Click(object sender, RoutedEventArgs e) => TempLogoList.Add(new StringWrapper { Value = "" });
+        private void RemoveLogo_Click(object sender, RoutedEventArgs e) { if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw) TempLogoList.Remove(sw); }
+        private void SetPrimaryLogo_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw)
+            {
+                TempLogoList.Remove(sw);
+                TempLogoList.Insert(0, sw);
+                SelectedLogoUrl = sw.Value;
+            }
+        }
+
+        private void AddEpg_Click(object sender, RoutedEventArgs e) => TempEpgList.Add(new StringWrapper { Value = "" });
+        private void RemoveEpg_Click(object sender, RoutedEventArgs e) { if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw) TempEpgList.Remove(sw); }
+        private void RemoveEpgUrl_Click(object sender, RoutedEventArgs e) { if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw) TempEpgUrlList.Remove(sw); }
+        private void SetPrimaryEpg_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button b && b.DataContext is StringWrapper sw)
+            {
+                TempEpgList.Remove(sw);
+                TempEpgList.Insert(0, sw);
+            }
+        }
+
+        private void OpenMergeDialog_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var mergeWin = new MergeChannelsWindow(_channel)
+                {
+                    Owner = this
+                };
+
+                if (mergeWin.ShowDialog() == true)
+                {
+                    // Reload all fields to reflect merged data
+                    TempNameList.Clear();
+                    foreach (var n in _channel.GetNamesList()) TempNameList.Add(new StringWrapper { Value = n });
+
+                    TempUrlList.Clear();
+                    var mergedUrls = _channel.GetOrderedUrlList();
+                    for (int i = 0; i < mergedUrls.Count; i++)
+                    {
+                        TempUrlList.Add(new ChannelSourceItem { Value = mergedUrls[i], IsDefault = (i == 0) });
+                    }
+
+                    TempLogoList.Clear();
+                    foreach (var l in _channel.GetLogoList()) TempLogoList.Add(new StringWrapper { Value = l });
+
+                    TempEpgList.Clear();
+                    foreach (var ep in _channel.GetEpgIdList()) TempEpgList.Add(new StringWrapper { Value = ep });
+
+                    TempEpgUrlList.Clear();
+                    var urls = (_channel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var u in urls) TempEpgUrlList.Add(new StringWrapper { Value = u.Trim() });
+
+                    if (TempLogoList.Count > 0) SelectedLogoUrl = TempLogoList[0].Value;
+                    LanguageText = _channel.Language ?? "";
+
+                    OnPropertyChanged(nameof(ChannelObj));
+                    OnPropertyChanged(nameof(LanguageText));
+                    OnPropertyChanged(nameof(SelectedLogoUrl));
+                }
+            }
+            catch (Exception ex)
+            {
+                StreamMesh.Core.Utils.LogService.LogError("EditChannelWindow.OpenMergeDialog_Click failed", ex);
+                System.Windows.MessageBox.Show($"Kanal birleştirme penceresi açılırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void AutoMatch_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string name = _channel.PrimaryName;
+                if (string.IsNullOrWhiteSpace(name)) return;
+
+                // Use the unified index-based logo matching (strictly following tv-logos convention)
+                string? indexedLogo = ChannelEnricher.GetLogoFromIndex(name);
+
+                if (!string.IsNullOrEmpty(indexedLogo))
+                {
+                    TempLogoList.Clear();
+                    TempLogoList.Add(new StringWrapper { Value = indexedLogo });
+                    SelectedLogoUrl = indexedLogo;
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("Veritabanında uygun bir logo bulunamadı. Lütfen manuel aramayı deneyin.", "Logo Bulunamadı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+
+                // 2. EPG Match
+                if (TempEpgList.Count == 0 || string.IsNullOrWhiteSpace(TempEpgList[0].Value))
+                {
+                    string epgId = name.ToUpper().Replace(" ", ".").Replace("HD", "").Trim('.');
+                    TempEpgList.Add(new StringWrapper { Value = $"{epgId}.tr" });
+                }
+
+                System.Windows.MessageBox.Show("Akıllı eşleme tamamlandı. Lütfen listeden logoları seçerek önizlemeyi kontrol edin.", "Akıllı Sihirbaz", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch { }
+        }
+
+        private async void Save_Click(object sender, RoutedEventArgs e)
+        {
+            var validNames = TempNameList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()).ToList();
+            if (validNames.Count > 0) _channel.Name = string.Join(", ", validNames);
+
+            _channel.Url = string.Join(",", TempUrlList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+            _channel.PreferredUrlIndex = 0;
+            _channel.LogoUrl = string.Join(",", TempLogoList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+
+            string newEpgId = string.Join(",", TempEpgList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+            if (_channel.EpgId != newEpgId)
+            {
+                _channel.EpgId = newEpgId;
+                _channel.IsEpgLocked = true; // Mark as locked because user manually changed EPG list
+            }
+
+            _channel.EpgUrl = string.Join(",", TempEpgUrlList.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => x.Value.Trim()));
+
+            await _db.SaveChannelAsync(_channel);
+            DialogResult = true;
+            Close();
+        }
+
+        private void M3uSourceInfo_Click(object sender, RoutedEventArgs e)
+        {
+            var diagWin = new SourceDiagnosisWindow(_channel)
+            {
+                Owner = this
+            };
+            diagWin.ShowDialog();
+
+            // In case the user converted a series group to a movie or modified the channel in the diagnosis window
+            if (!string.IsNullOrWhiteSpace(_channel.Url) && (TempUrlList.Count == 0 || string.IsNullOrWhiteSpace(TempUrlList[0].Value)))
+            {
+                TempUrlList.Clear();
+                TempUrlList.Add(new ChannelSourceItem { Value = _channel.Url, IsDefault = true });
+            }
+        }
+
+        private void Cancel_Click(object sender, RoutedEventArgs e) => Close();
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
+}

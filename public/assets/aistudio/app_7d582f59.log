@@ -1,0 +1,104 @@
+﻿2026-10-21 19:26:45 [INFO] === Yeni Oturum Başlatıldı, Loglar Temizlendi ===
+2026-10-21 19:26:45 [INFO] App: Başlatılıyor. Process: C:\Users\ev\Downloads\streammesh\bin\Release\net8.0-windows\StreamMesh.exe
+2026-10-21 19:26:45 [INFO] [STARTUP] Servisler başlatılıyor...
+2026-10-21 19:26:45 [INFO] [STARTUP] Veritabanı başlatılıyor...
+2026-10-21 19:26:45 [INFO] [STARTUP] Veritabanı başarıyla hazırlandı.
+2026-10-21 19:26:45 [INFO] MediaServer: Registered localhost & 127.0.0.1 prefixes on port 8088.
+2026-10-21 19:26:45 [INFO] MediaServer: Registered plus-wildcard prefix http://+:8088/
+2026-10-21 19:26:45 [WARN] MediaServer: Wildcard/LAN prefix binding hit Windows HTTP.sys URL ACL restrictions on port 8088. Falling back to localhost/127.0.0.1.
+2026-10-21 19:26:45 [INFO] MediaServer: Started in fallback mode on Port: 8088 [Bound to: localhost, 127.0.0.1].
+2026-10-21 19:26:45 [INFO] [STARTUP] MediaServer ve SSDP 8088 portunda başlatıldı.
+2026-10-21 19:26:45 [INFO] [STARTUP] Bakım kontrolü tamamlandı.
+2026-10-21 19:26:45 [INFO] [STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.
+2026-10-21 19:26:45 [INFO] [STARTUP] Servis başlatma sekansı tamamlandı.
+2026-10-21 19:26:45 [INFO] BAKIM: FFmpeg kütüphanesi hazır.
+2026-10-21 19:26:45 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-21 19:26:49 [INFO] [STARTUP] Veritabanında 240016 adet kanal mevcut. Açılışta otomatik internet indirmesi atlandı, yerel liste yüklendi.
+2026-10-21 19:26:50 [INFO] HomeViewModel: 240016 kanal veritabanından okundu.
+2026-10-21 19:27:10 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-21 19:27:10 [INFO] [LogoSync] Son logo senkronizasyon tarihi: 2026-10-21. Periyodik tarama atlandı.
+2026-10-21 19:27:23 [INFO] [M3uEngine] 620 adet IPTV hesabı keşfedildi. Sağlayıcı orijinal tam listeleri ve VOD arşivi arka planda entegre ediliyor...
+2026-10-21 19:27:23 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: delta @ fe.tring.al
+2026-10-21 19:27:23 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: delta @ fe.tring.al -> http://fe.tring.al/get.php?username=delta&password=105&type=m3u_plus&output=ts
+2026-10-21 19:27:24 [WARN] MediaHttpClient: GetString failed for http://fe.tring.al/player_api.php?username=delta&password=105&action=get_vod_streams: Response status code does not indicate success: 404 (Not Found).
+2026-10-21 19:27:24 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: 7236 @ 5d00db0e0fcd5.streamlock.net
+2026-10-21 19:27:24 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: 7236 @ 5d00db0e0fcd5.streamlock.net -> http://5d00db0e0fcd5.streamlock.net/get.php?username=7236&password=7236&type=m3u_plus&output=ts
+2026-10-21 19:27:24 [WARN] MediaHttpClient: GetString failed for http://5d00db0e0fcd5.streamlock.net/player_api.php?username=7236&password=7236&action=get_vod_streams: Response status code does not indicate success: 404 (Not Found).
+2026-10-21 19:27:24 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: news24 @ tv.balkanweb.com
+2026-10-21 19:27:24 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: news24 @ tv.balkanweb.com -> http://tv.balkanweb.com/get.php?username=news24&password=livestream&type=m3u_plus&output=ts
+2026-10-21 19:27:25 [WARN] MediaHttpClient: GetString failed for http://tv.balkanweb.com/player_api.php?username=news24&password=livestream&action=get_vod_streams: Response status code does not indicate success: 404 (Not Found).
+2026-10-21 19:27:25 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: panorama @ 198.244.188.94
+2026-10-21 19:27:25 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: panorama @ 198.244.188.94 -> http://198.244.188.94/get.php?username=panorama&password=livestream&type=m3u_plus&output=ts
+2026-10-21 19:27:25 [WARN] MediaHttpClient: GetString failed for http://198.244.188.94/player_api.php?username=panorama&password=livestream&action=get_vod_streams: Response status code does not indicate success: 404 (Not Found).
+2026-10-21 19:27:25 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: albaniatv @ rpn3.bozztv.com
+2026-10-21 19:27:25 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: albaniatv @ rpn3.bozztv.com -> http://rpn3.bozztv.com/get.php?username=albaniatv&password=Med7-TV7Tirana&type=m3u_plus&output=ts
+2026-10-21 19:27:30 [WARN] [GlobalSearch] IPTVCat sorgu hatası: A task was canceled.
+2026-10-21 19:27:31 [INFO] [PLAYBACK] CHANNEL SELECTED: Syfy HD [DE] (ID: 0c8d4146-3141-4849-8e53-5dbfacb70f6b, Category: regional, Url: acestream://?channel_id=24785)
+2026-10-21 19:27:31 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-21 19:27:44 [INFO] FlyleafHelper: Engine started successfully.
+2026-10-21 19:27:47 [WARN] MediaHttpClient: GetString failed for http://rpn3.bozztv.com/player_api.php?username=albaniatv&password=Med7-TV7Tirana&action=get_vod_streams: Bilinen böyle bir ana bilgisayar yok. (rpn3.bozztv.com:80)
+2026-10-21 19:27:47 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: perfiltv @ unlimited1-us.dps.live
+2026-10-21 19:27:47 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: perfiltv @ unlimited1-us.dps.live -> http://unlimited1-us.dps.live/get.php?username=perfiltv&password=perfiltv.smil&type=m3u_plus&output=ts
+2026-10-21 19:27:48 [WARN] MediaHttpClient: GetString failed for http://unlimited1-us.dps.live/player_api.php?username=perfiltv&password=perfiltv.smil&action=get_vod_streams: Response status code does not indicate success: 404 (Not Found).
+2026-10-21 19:27:48 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: nettv @ unlimited1-us.dps.live
+2026-10-21 19:27:48 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: nettv @ unlimited1-us.dps.live -> http://unlimited1-us.dps.live/get.php?username=nettv&password=nettv.smil&type=m3u_plus&output=ts
+2026-10-21 19:27:49 [WARN] MediaHttpClient: GetString failed for http://unlimited1-us.dps.live/player_api.php?username=nettv&password=nettv.smil&action=get_vod_streams: Response status code does not indicate success: 404 (Not Found).
+2026-10-21 19:27:49 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: ARG @ 45.134.141.161:2200
+2026-10-21 19:27:49 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: ARG @ 45.134.141.161:2200 -> http://45.134.141.161:2200/get.php?username=ARG&password=TELEFE_HD&type=m3u_plus&output=ts
+2026-10-21 19:27:49 [WARN] MediaHttpClient: GetString failed for http://45.134.141.161:2200/player_api.php?username=ARG&password=TELEFE_HD&action=get_vod_streams: Response status code does not indicate success: 404 (Not Found).
+2026-10-21 19:27:49 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: a07 @ prepublish.f.qaotic.net
+2026-10-21 19:27:49 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: a07 @ prepublish.f.qaotic.net -> http://prepublish.f.qaotic.net/get.php?username=a07&password=americahls-100056&type=m3u_plus&output=ts
+2026-10-21 19:27:54 [WARN] MediaHttpClient: GetString failed for http://prepublish.f.qaotic.net/player_api.php?username=a07&password=americahls-100056&action=get_vod_streams: An error occurred while sending the request.
+2026-10-21 19:27:54 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: out @ dce3793146fef017.mediapackage.us-west-2.amazonaws.com
+2026-10-21 19:27:54 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: out @ dce3793146fef017.mediapackage.us-west-2.amazonaws.com -> http://dce3793146fef017.mediapackage.us-west-2.amazonaws.com/get.php?username=out&password=v1&type=m3u_plus&output=ts
+2026-10-21 19:28:01 [ERROR] [PLAYBACK] Player Init TIMEOUT 
+2026-10-21 19:28:04 [INFO] Player: Flyleaf initialized successfully
+2026-10-21 19:28:15 [INFO] [ACEENGINE] Starting AceStream engine executable once: C:\Users\ev\AppData\Roaming\ACEStream\engine\ace_engine.exe
+2026-10-21 19:28:17 [INFO] [ACEENGINE] AceStream engine successfully started and ready.
+2026-10-21 19:28:20 [INFO] [PLAYBACK] CHANNEL SELECTED: Syfy HD [DE] (ID: 57526e20-194f-4eec-be93-52d315ac1c81, Category: regional, Url: acestream://?channel_id=24785)
+2026-10-21 19:28:20 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-21 19:28:20 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-21 19:28:22 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-21 19:28:22 [INFO] [SmartRouter] Trying candidate 1/1: 'acestream://?channel_id=24785'
+2026-10-21 19:28:22 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?channel_id=24785
+2026-10-21 19:28:22 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-21 19:28:22 [INFO] [PLAYBACK] Player.Status changed: Failed (CurTime: 0ms, Duration: 0ms)
+2026-10-21 19:28:22 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-21 19:28:22 [INFO] [SmartRouter] Candidate response in 23ms -> Success: False, Player.Status: Failed
+2026-10-21 19:28:22 [WARN] [SmartRouter] Candidate 1/1 failed (Status: Failed). Moving to next alternative...
+2026-10-21 19:28:22 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-21 19:28:22 [WARN] [SmartRouter] All 1 candidate URLs failed for channel 'Syfy HD [DE]'.
+2026-10-21 19:28:22 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-21 19:28:24 [WARN] MediaHttpClient: GetString failed for http://dce3793146fef017.mediapackage.us-west-2.amazonaws.com/player_api.php?username=out&password=v1&action=get_vod_streams: A task was canceled.
+2026-10-21 19:28:24 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: orf @ orf3.mdn.ors.at
+2026-10-21 19:28:24 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: orf @ orf3.mdn.ors.at -> http://orf3.mdn.ors.at/get.php?username=orf&password=orf3&type=m3u_plus&output=ts
+2026-10-21 19:28:24 [WARN] MediaHttpClient: GetString failed for http://orf3.mdn.ors.at/player_api.php?username=orf&password=orf3&action=get_vod_streams: Response status code does not indicate success: 400 (Bad Request).
+2026-10-21 19:28:24 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: eds @ oe24.mdn.ors.at
+2026-10-21 19:28:24 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: eds @ oe24.mdn.ors.at -> http://oe24.mdn.ors.at/get.php?username=eds&password=oe24tv_hd&type=m3u_plus&output=ts
+2026-10-21 19:28:24 [WARN] MediaHttpClient: GetString failed for http://oe24.mdn.ors.at/player_api.php?username=eds&password=oe24tv_hd&action=get_vod_streams: Response status code does not indicate success: 400 (Bad Request).
+2026-10-21 19:28:24 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: LiveApp @ streaming14.huberwebmedia.at
+2026-10-21 19:28:24 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: LiveApp @ streaming14.huberwebmedia.at -> http://streaming14.huberwebmedia.at/get.php?username=LiveApp&password=streams&type=m3u_plus&output=ts
+2026-10-21 19:28:24 [WARN] MediaHttpClient: GetString failed for http://streaming14.huberwebmedia.at/player_api.php?username=LiveApp&password=streams&action=get_vod_streams: Response status code does not indicate success: 404.
+2026-10-21 19:28:24 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: cbcsports_live @ mn-nl.mncdn.com
+2026-10-21 19:28:24 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: cbcsports_live @ mn-nl.mncdn.com -> http://mn-nl.mncdn.com/get.php?username=cbcsports_live&password=cbcsports&type=m3u_plus&output=ts
+2026-10-21 19:28:25 [WARN] MediaHttpClient: GetString failed for http://mn-nl.mncdn.com/player_api.php?username=cbcsports_live&password=cbcsports&action=get_vod_streams: An error occurred while sending the request.
+2026-10-21 19:28:25 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: KANAL-S @ lives.atv.az:5443
+2026-10-21 19:28:25 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: KANAL-S @ lives.atv.az:5443 -> http://lives.atv.az:5443/get.php?username=KANAL-S&password=streams&type=m3u_plus&output=ts
+2026-10-21 19:28:27 [INFO] EpgRepository: 37432 old EPG items cleaned.
+2026-10-21 19:28:44 [INFO] [PLAYBACK] CHANNEL SELECTED: Syfy HD [DE] (ID: a4d5426e-2c75-43be-a7e8-321e30d54bbc, Category: regional, Url: acestream://?channel_id=24785)
+2026-10-21 19:28:44 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-21 19:28:44 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-21 19:28:46 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-21 19:28:46 [INFO] [SmartRouter] Trying candidate 1/1: 'acestream://?channel_id=24785'
+2026-10-21 19:28:46 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?channel_id=24785
+2026-10-21 19:28:46 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-21 19:28:46 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-21 19:28:46 [INFO] [SmartRouter] Candidate response in 1ms -> Success: False, Player.Status: Failed
+2026-10-21 19:28:46 [WARN] [SmartRouter] Candidate 1/1 failed (Status: Failed). Moving to next alternative...
+2026-10-21 19:28:46 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-21 19:28:46 [WARN] [SmartRouter] All 1 candidate URLs failed for channel 'Syfy HD [DE]'.
+2026-10-21 19:28:46 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-21 19:28:55 [WARN] MediaHttpClient: GetString failed for http://lives.atv.az:5443/player_api.php?username=KANAL-S&password=streams&action=get_vod_streams: A task was canceled.
+2026-10-21 19:28:55 [INFO] [AutoIptv] Sağlayıcıdan tam paket ve VOD arşivi çekiliyor: ctv @ ctv.dc.beltelecom.by
+2026-10-21 19:28:55 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: ctv @ ctv.dc.beltelecom.by -> http://ctv.dc.beltelecom.by/get.php?username=ctv&password=ctv.stream&type=m3u_plus&output=ts
+2026-10-21 19:28:56 [INFO] [ACEENGINE] AceStream engine process terminated on application exit.

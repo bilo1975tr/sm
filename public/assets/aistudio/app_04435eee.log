@@ -1,0 +1,62 @@
+﻿2026-10-23 10:21:45 [INFO] === Yeni Oturum Başlatıldı, Loglar Temizlendi ===
+2026-10-23 10:21:45 [INFO] App: Başlatılıyor. Process: C:\Users\Trakya Türk TV\Downloads\streammesh\bin\Release\net8.0-windows\StreamMesh.exe
+2026-10-23 10:21:45 [INFO] [STARTUP] Servisler başlatılıyor...
+2026-10-23 10:21:45 [INFO] [STARTUP] Veritabanı başlatılıyor...
+2026-10-23 10:21:45 [INFO] [STARTUP] Veritabanı başarıyla hazırlandı.
+2026-10-23 10:21:45 [INFO] MediaServer: Registered localhost & 127.0.0.1 prefixes on port 8088.
+2026-10-23 10:21:45 [INFO] MediaServer: Registered plus-wildcard prefix http://+:8088/
+2026-10-23 10:21:45 [INFO] MediaServer: Started successfully on Port: 8088 [Bound to: localhost, 127.0.0.1, +]
+2026-10-23 10:21:45 [INFO] [STARTUP] MediaServer ve SSDP 8088 portunda başlatıldı.
+2026-10-23 10:21:45 [INFO] [STARTUP] Bakım kontrolü tamamlandı.
+2026-10-23 10:21:45 [INFO] [STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.
+2026-10-23 10:21:45 [INFO] [STARTUP] Servis başlatma sekansı tamamlandı.
+2026-10-23 10:21:45 [INFO] BAKIM: FFmpeg kütüphanesi hazır.
+2026-10-23 10:21:45 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-23 10:21:45 [INFO] [FIREWALL] Güvenlik duvarı kuralları başarıyla denetlendi ve kaydedildi.
+2026-10-23 10:21:48 [INFO] HomeViewModel: 134749 kanal veritabanından okundu.
+2026-10-23 10:21:48 [INFO] [STARTUP] Arka planda AceStream motoru ön ısıtması başlatılıyor...
+2026-10-23 10:21:49 [INFO] [STARTUP] Veritabanında 134749 adet kanal mevcut. Açılışta otomatik internet indirmesi atlandı, yerel liste yüklendi.
+2026-10-23 10:21:55 [INFO] [ACEENGINE] Starting AceStream engine executable once: C:\Users\Trakya Türk TV\AppData\Roaming\ACEStream\engine\ace_engine.exe
+2026-10-23 10:21:57 [INFO] [M3uEngine] 2 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-23 10:21:57 [INFO] [ACEENGINE] AceStream engine successfully started and ready.
+2026-10-23 10:21:59 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (A task was canceled.): catchuptv @ grevsen.dk
+2026-10-23 10:21:59 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (tbn-jw.cdn.vustreams.com:80)): tci @ tbn-jw.cdn.vustreams.com
+2026-10-23 10:21:59 [INFO] MediaServer: Request GET /desc.xml from 192.168.1.31:50512
+2026-10-23 10:22:02 [INFO] [PLAYBACK] CHANNEL SELECTED: Syfy HD [DE] (ID: 4029e09d-fec0-493b-aee6-0d1a27a0e413, Category: regional, Url: acestream://?channel_id=24785)
+2026-10-23 10:22:03 [INFO] FlyleafHelper: Engine started successfully.
+2026-10-23 10:22:03 [INFO] Player: Flyleaf initialized successfully
+2026-10-23 10:22:03 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-23 10:22:03 [INFO] [PLAYBACK] Waiting for Play Semaphore...
+2026-10-23 10:22:03 [INFO] [PLAYBACK] Getting candidate stream URLs...
+2026-10-23 10:22:03 [INFO] [SmartRouter] Channel='Syfy HD [DE]', probing 3 candidate URLs in parallel...
+2026-10-23 10:22:03 [INFO] [SmartRouter] Probe completed: Best candidate 'acestream://?channel_id=24785' (Latency: 100ms). Valid: 3/3
+2026-10-23 10:22:03 [INFO] [SmartRouter] Trying candidate 1/3: 'acestream://?channel_id=24785'
+2026-10-23 10:22:03 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?id=24785
+2026-10-23 10:22:03 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:04 [INFO] [PLAYBACK] Player.Status changed: Failed (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:04 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-23 10:22:04 [INFO] [SmartRouter] Candidate response in 935ms -> Success: False, Player.Status: Failed
+2026-10-23 10:22:04 [WARN] [SmartRouter] Candidate 1/3 failed (Status: Failed). Moving to next alternative...
+2026-10-23 10:22:04 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:04 [INFO] [SmartRouter] Trying candidate 2/3: 'http://127.0.0.1:6878/ace/getstream?id=24785'
+2026-10-23 10:22:04 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?id=http://127.0.0.1:6878/ace/getstream?id=24785
+2026-10-23 10:22:04 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:05 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-23 10:22:05 [INFO] [PLAYBACK] Player.Status changed: Failed (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:05 [INFO] [SmartRouter] Candidate response in 875ms -> Success: False, Player.Status: Failed
+2026-10-23 10:22:05 [WARN] [SmartRouter] Candidate 2/3 failed (Status: Failed). Moving to next alternative...
+2026-10-23 10:22:05 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:05 [INFO] [SmartRouter] Trying candidate 3/3: 'http://127.0.0.1:6878/ace/getstream?content_id=24785'
+2026-10-23 10:22:05 [INFO] [PLAYBACK] AceStream direct stream -> http://127.0.0.1:6878/ace/getstream?id=http://127.0.0.1:6878/ace/getstream?content_id=24785
+2026-10-23 10:22:05 [INFO] [PLAYBACK] Player.Status changed: Opening (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:05 [INFO] [PLAYBACK CLOCK] Status=Opening CurTime=0ms Duration=0ms Advancing=False (delta=0ms/2s, IsVod=False)
+2026-10-23 10:22:06 [INFO] [PLAYBACK] Player.OpenCompleted: Success=False, Error=[avformat_open_input] Server returned 5XX Server Error reply (-1482175992), Status=Failed
+2026-10-23 10:22:06 [INFO] [PLAYBACK] Player.Status changed: Failed (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:06 [INFO] [SmartRouter] Candidate response in 857ms -> Success: False, Player.Status: Failed
+2026-10-23 10:22:06 [WARN] [SmartRouter] Candidate 3/3 failed (Status: Failed). Moving to next alternative...
+2026-10-23 10:22:06 [INFO] [PLAYBACK] Player.Status changed: Stopped (CurTime: 0ms, Duration: 0ms)
+2026-10-23 10:22:06 [WARN] [SmartRouter] All 3 candidate URLs failed for channel 'Syfy HD [DE]'.
+2026-10-23 10:22:06 [INFO] [PLAYBACK] Play Semaphore Released
+2026-10-23 10:22:10 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-23 10:22:10 [INFO] [LogoSync] Son logo senkronizasyon tarihi: 2026-10-23. Periyodik tarama atlandı.
+2026-10-23 10:22:15 [INFO] [ACEENGINE] AceStream engine process terminated on application exit.

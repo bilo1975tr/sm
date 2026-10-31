@@ -1,0 +1,229 @@
+﻿2026-10-22 14:45:56 [INFO] === Yeni Oturum Başlatıldı, Loglar Temizlendi ===
+2026-10-22 14:45:56 [INFO] App: Başlatılıyor. Process: C:\Users\Trakya Türk TV\Downloads\streammesh\bin\Release\net8.0-windows\StreamMesh.exe
+2026-10-22 14:45:56 [INFO] [STARTUP] Servisler başlatılıyor...
+2026-10-22 14:45:56 [INFO] [STARTUP] Veritabanı başlatılıyor...
+2026-10-22 14:45:56 [INFO] [STARTUP] Veritabanı başarıyla hazırlandı.
+2026-10-22 14:45:56 [INFO] MediaServer: Registered localhost & 127.0.0.1 prefixes on port 8088.
+2026-10-22 14:45:56 [INFO] MediaServer: Registered plus-wildcard prefix http://+:8088/
+2026-10-22 14:45:56 [WARN] MediaServer: Wildcard/LAN prefix binding hit Windows HTTP.sys URL ACL restrictions on port 8088. Falling back to localhost/127.0.0.1.
+2026-10-22 14:45:56 [INFO] MediaServer: Started in fallback mode on Port: 8088 [Bound to: localhost, 127.0.0.1].
+2026-10-22 14:45:56 [INFO] [STARTUP] MediaServer ve SSDP 8088 portunda başlatıldı.
+2026-10-22 14:45:56 [INFO] [STARTUP] Bakım kontrolü tamamlandı.
+2026-10-22 14:45:56 [INFO] [STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.
+2026-10-22 14:45:56 [INFO] [STARTUP] Servis başlatma sekansı tamamlandı.
+2026-10-22 14:45:56 [INFO] BAKIM: FFmpeg kütüphanesi eksik, indiriliyor...
+2026-10-22 14:45:56 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-22 14:45:56 [INFO] HomeViewModel: 0 kanal veritabanından okundu.
+2026-10-22 14:45:56 [INFO] [STARTUP] Arka planda AceStream motoru ön ısıtması başlatılıyor...
+2026-10-22 14:45:57 [INFO] BAKIM: FFmpeg paketi indirildi (yaklaşık 100MB), ayıklanıyor...
+2026-10-22 14:45:58 [INFO] BAKIM: FFmpeg motoru başarıyla kuruldu. (8 DLL yapılandırıldı)
+2026-10-22 14:46:00 [INFO] [STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...
+2026-10-22 14:46:00 [INFO] GitHubSyncEngine: Otomatik güncelleme başlatıldı.
+2026-10-22 14:46:01 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:01 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (goldvod.org:80)): hpgdisco @ goldvod.org
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (goldvod.org:80)): hpgdisco @ goldvod.org
+2026-10-22 14:46:01 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (goldvod.org:80)): hpgdisco @ goldvod.org
+2026-10-22 14:46:01 [INFO] [M3uEngine] 4 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): kastamonutv @ 51.91.118.139:8080
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (www.enterweb.tv:25463)): ssadtv @ www.enterweb.tv:25463
+2026-10-22 14:46:01 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (tbn-jw.cdn.vustreams.com:80)): tci @ tbn-jw.cdn.vustreams.com
+2026-10-22 14:46:01 [INFO] [M3uEngine] 5 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): kastamonutv @ 51.91.118.139:8080
+2026-10-22 14:46:01 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (www.enterweb.tv:25463)): ssadtv @ www.enterweb.tv:25463
+2026-10-22 14:46:02 [INFO] [M3uEngine] 6 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:02 [INFO] [M3uEngine] 9 adet IPTV hesabı keşfedildi. Öncelikli 2 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:02 [INFO] [IptvAccountHelper] Sağlayıcıya ulaşılamadı (Bilinen böyle bir ana bilgisayar yok. (www.enterweb.tv:25463)): ssadtv @ www.enterweb.tv:25463
+2026-10-22 14:46:02 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 503): 7cba1a3b-318a-4097-8492-374478370b91 @ rfdtv-jw.cdn.vustreams.com
+2026-10-22 14:46:02 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): rx1 @ z88.ubtvfans.com
+2026-10-22 14:46:03 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: littlespiked @ etvhosts.site:55337 -> http://etvhosts.site:55337/get.php?username=littlespiked&password=cam1gail2brian3&type=m3u_plus&output=ts
+2026-10-22 14:46:04 [INFO] [ACEENGINE] Starting AceStream engine executable once: C:\Users\Trakya Türk TV\AppData\Roaming\ACEStream\engine\ace_engine.exe
+2026-10-22 14:46:04 [INFO] GitHubSyncEngine: Erken TV gösterimi için 30481 TV kanalı SQLite'a kaydediliyor...
+2026-10-22 14:46:04 [INFO] SyncIncomingChannelsAsync: DB'de 0 mevcut kanal var, 30481 yeni kanal ekleniyor...
+2026-10-22 14:46:06 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 22613 kanal kaydedildi (clearFirst=True).
+2026-10-22 14:46:06 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-22 14:46:06 [INFO] [ACEENGINE] AceStream engine successfully started and ready.
+2026-10-22 14:46:06 [INFO] HomeViewModel: 22613 kanal veritabanından okundu.
+2026-10-22 14:46:09 [INFO] [PLAYBACK] CHANNEL SELECTED: 13th Street HD [DE] (ID: 60bed7d8-b386-4fd4-9a31-dfcedecc7fa3, Category: Canlı TV, Url: acestream://9b127536c9841e69bf03ff78e15b873b21bc22ab)
+2026-10-22 14:46:09 [INFO] FlyleafHelper: Engine started successfully.
+2026-10-22 14:46:09 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:09 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:09 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-22 14:46:11 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:11 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:13 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:13 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:15 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:15 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:15 [ERROR] [PLAYBACK] Player Init TIMEOUT 
+2026-10-22 14:46:15 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:15 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): air @ pub0101.101.ru:8000
+2026-10-22 14:46:16 [INFO] [M3uEngine] 1 adet IPTV hesabı keşfedildi. Öncelikli 1 sağlayıcı arka planda sorgulanıyor...
+2026-10-22 14:46:16 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 401): sevgul49 @ europe77.xyz:2095
+2026-10-22 14:46:16 [INFO] GitHubSyncEngine: Toplam 172465 kanal kaynaklardan çözümlendi. SQLite veritabanına senkronize ediliyor...
+2026-10-22 14:46:16 [INFO] SyncIncomingChannelsAsync: DB'de 22613 mevcut kanal var, 172465 yeni kanal ekleniyor...
+2026-10-22 14:46:17 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:17 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:19 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:19 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:21 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:21 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:23 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:23 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:25 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:25 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:26 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 136944 kanal kaydedildi (clearFirst=True).
+2026-10-22 14:46:26 [INFO] DatabaseEngine: Kütüphane kategori ve dil normalizasyon düzeltmesi başarıyla tamamlandı.
+2026-10-22 14:46:26 [INFO] ChannelRepository: Global aggregation and cleanup starting...
+2026-10-22 14:46:27 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:27 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:28 [INFO] [PLAYBACK] CHANNEL SELECTED:  (ID: 3d56470c9c6b02282aa4ec815e5ce98a389e9f9d, Category: TV, Url: https://edge1.taksimbilisim.com/neohaber/bant1/chunks.m3u8)
+2026-10-22 14:46:28 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:28 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-22 14:46:28 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:29 [INFO] ChannelRepository: Global aggregation cleanup completed. Merged 0 channels into existing cards.
+2026-10-22 14:46:29 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:29 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:30 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:30 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:30 [INFO] [LogoSync] 20 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-22 14:46:30 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-22 14:46:30 [INFO] [LogoSync] GitHub (tv-logos) üzerinden logo verileri güncelleniyor...
+2026-10-22 14:46:31 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:31 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:32 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:32 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: sevgul49 (europe77.xyz:2095)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: air (pub0101.101.ru:8000)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: syriblue (live.syri.tv:6969)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 0fc97608-6057-4db8-9af7-102c21ac18af (teleamazonas-live.cdn.vustreams.com)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: rx3 (z88.ubtvfans.com)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: hpgdisco (goldvod.org)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: kastamonutv (51.91.118.139:8080)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: ssadtv (www.enterweb.tv:25463)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: n1info (best-str.umn.cdn.united.cloud)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: discord.gg/civ3 (ott.udptv.org)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: tci (tbn-jw.cdn.vustreams.com)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: bshorty (mains.services)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 7cba1a3b-318a-4097-8492-374478370b91 (rfdtv-jw.cdn.vustreams.com)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: littlespiked (etvhosts.site:55337)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: testlivestream (tv.streambox.fr)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 74173747597177 (92.63.196.180:8080)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: 1368 (168.205.87.198:8555)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: qt9k24wa (1a-1791.com)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: rx1 (z88.ubtvfans.com)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: evavision (159.69.56.148:25461)
+2026-10-22 14:46:32 [INFO] DatabaseEngine: Gerçek IPTV hesabı tespit edildi ve IptvAccounts tablosuna eklendi: V7rA1feOk3 (ms.android-iptv.com)
+2026-10-22 14:46:33 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-22 14:46:33 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:33 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:34 [INFO] [LogoSync] 6241 adet yeni standart logo indeksi kaydedildi.
+2026-10-22 14:46:34 [ERROR] [PLAYBACK] Player Init TIMEOUT 
+2026-10-22 14:46:34 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:34 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:35 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:35 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:36 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:36 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:37 [INFO] HomeViewModel: 135272 kanal veritabanından okundu.
+2026-10-22 14:46:37 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): syriblue @ live.syri.tv:6969
+2026-10-22 14:46:38 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:38 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:38 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:38 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:39 [INFO] [IptvAccountHelper] IPTV sağlayıcısından tam liste isteniyor: littlespiked @ etvhosts.site:55337 -> http://etvhosts.site:55337/get.php?username=littlespiked&password=cam1gail2brian3&type=m3u_plus&output=ts
+2026-10-22 14:46:39 [INFO] [IptvAccountHelper] Sağlayıcı doğrulanamadı (HTTP 404): 1368 @ 168.205.87.198:8555
+2026-10-22 14:46:40 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:40 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:40 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:40 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:41 [INFO] GitHubSyncEngine: Senkronizasyon sonu SQLite veritabanında toplam 135272 kanal mevcut.
+2026-10-22 14:46:41 [INFO] GitHubSyncEngine: Güncelleme tamamlandı.
+2026-10-22 14:46:41 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-10-22 14:46:41 [INFO] [LogoSync] 12 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-10-22 14:46:41 [INFO] [LogoSync] Son logo senkronizasyon tarihi: 2026-10-22. Periyodik tarama atlandı.
+2026-10-22 14:46:42 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:42 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:42 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:42 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:43 [INFO] [PLAYBACK] CHANNEL SELECTED: TRT 1 (ID: 8f0a85b15b81906c996e1fd627a60289803084cb, Category: TV, Url: http://176.65.153.12:6002/play/a062/index.m3u8)
+2026-10-22 14:46:43 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:43 [INFO] [PLAYBACK] Waiting for Player Init...
+2026-10-22 14:46:43 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:44 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:44 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:44 [INFO] HomeViewModel: 135272 kanal veritabanından okundu.
+2026-10-22 14:46:44 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:44 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:45 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:45 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:46 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:46 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:46 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:46 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:47 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:47 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:48 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:48 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:48 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:48 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:49 [ERROR] [PLAYBACK] Player Init TIMEOUT 
+2026-10-22 14:46:49 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:49 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:50 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:50 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:50 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:50 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:51 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:51 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:52 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:52 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:52 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:52 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:53 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:53 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:54 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:54 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:54 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:54 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:55 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:55 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:56 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:56 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:56 [INFO] EpgRepository: 0 old EPG items cleaned.
+2026-10-22 14:46:56 [INFO] [AutoEPG] 12 saatlik otomatik EPG güncellemesi başlatılıyor...
+2026-10-22 14:46:56 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:56 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:57 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:57 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:58 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:58 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:58 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:58 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:59 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:46:59 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:00 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:00 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:00 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:00 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:01 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:01 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:02 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:02 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:02 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:02 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:03 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:03 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:04 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:04 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:04 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:04 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:05 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:05 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:06 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:06 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:06 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:06 [WARN] Player: Flyleaf henüz hazır değil (Object reference not set to an instance of an object.), arka planda yeniden denenecek.
+2026-10-22 14:47:07 [INFO] [ACEENGINE] AceStream engine process terminated on application exit.

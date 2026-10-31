@@ -1,0 +1,565 @@
+using System;
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Controls;
+using System.Windows.Threading;
+using StreamMesh.UI.Views;
+using StreamMesh.Core.Network;
+using StreamMesh.Core.Media;
+using StreamMesh.Models;
+using StreamMesh.Core.Utils;
+
+using StreamMesh.UI.ViewModels;
+
+namespace StreamMesh.UI.Windows
+{
+    public partial class MainWindow : Window
+    {
+        public static MainWindow? Instance { get; private set; }
+        public MainWindowViewModel ViewModel { get; } = new MainWindowViewModel();
+
+        private HomeView _homeView = new HomeView();
+        private PlayerView _playerView = new PlayerView();
+        private StatsView? _statsView;
+        private SettingsView? _settingsView;
+        private SearchAceStreamView? _searchAceView;
+
+        private readonly StunEngine _stun = new StunEngine();
+        private readonly UpdateService _updateService = new UpdateService();
+        private DispatcherTimer _peerTimer;
+        private DispatcherTimer _epgTimer;
+        private DispatcherTimer _metaTimer;
+        private System.Windows.Forms.NotifyIcon? _notifyIcon;
+        private bool _isExplicitExit = false;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        private static extern bool DestroyIcon(IntPtr handle);
+
+        public MainWindow()
+        {
+            Instance = this;
+            InitializeComponent();
+
+            try
+            {
+                // Set Window Icon from Vector Resource (Runtime Render)
+                var windowIcon = RenderVectorIcon(256);
+                if (windowIcon != null) this.Icon = windowIcon;
+            }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[STARTUP] Pencere ikonu yükleme hatası: {ex.Message}");
+            }
+
+            try
+            {
+                SetupTrayIcon();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[STARTUP] Tepsi ikonu yükleme hatası: {ex.Message}");
+            }
+
+            DataContext = ViewModel;
+            MainContent.Content = _homeView;
+
+            Title = $"StreamMesh Hybrid v{ViewModel.Version}";
+
+            UpdateService.OnVersionUpdated += (newVer) => {
+                Dispatcher.Invoke(() => {
+                    ViewModel.Version = newVer;
+                    Title = $"StreamMesh Hybrid v{newVer}";
+                    if (_notifyIcon != null) _notifyIcon.Text = $"StreamMesh Hybrid v{newVer}";
+                });
+            };
+
+            // Start AceStream engine in background immediately on startup
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    LogService.LogInfo("[STARTUP] Arka planda AceStream motoru ön ısıtması başlatılıyor...");
+                    await AceEngine.Instance.StartEngineIfNotRunningAsync().ConfigureAwait(false);
+                }
+                catch { }
+            });
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(5000);
+                CheckForUpdatesAsync();
+            });
+
+            _peerTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+            _peerTimer.Tick += async (s, e) => {
+                await ViewModel.RefreshPeersAsync();
+                OnlinePeersText.Text = ViewModel.OnlinePeers.ToString();
+            };
+            _peerTimer.Start();
+
+            _epgTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(12) };
+            _epgTimer.Tick += async (s, e) => { await RunAutoEpgUpdateAsync(); };
+            _epgTimer.Start();
+            _ = Task.Run(async () => { await Task.Delay(3000); await RunAutoEpgUpdateAsync(); });
+
+            // 30-Minute Film & Series Metadata Auto-Enricher Worker (Açılışta 90 sn sonra sessizce çalışır)
+            _metaTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(30) };
+            _metaTimer.Tick += async (s, e) => { await RunAutoMetadataEnrichmentAsync(); };
+            _metaTimer.Start();
+            _ = Task.Run(async () => { await Task.Delay(90000); await RunAutoMetadataEnrichmentAsync(); });
+
+            // Auto-detect local AI Engine (Ollama / LM Studio) in background (20 sn sonra sessizce kontrol eder)
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(20000);
+                try
+                {
+                    var ai = new AiEngine();
+                    await ai.AutoDetectAndConfigureAsync();
+                }
+                catch { }
+            });
+
+            this.KeyDown += MainWindow_KeyDown;
+            this.StateChanged += MainWindow_StateChanged;
+            this.IsVisibleChanged += MainWindow_IsVisibleChanged;
+
+            // Pre-warm SettingsView on Dispatcher background priority when idle so opening settings is instantaneous
+            _ = Dispatcher.InvokeAsync(() =>
+            {
+                try
+                {
+                    _settingsView ??= new SettingsView();
+                }
+                catch { }
+            }, DispatcherPriority.Background);
+        }
+
+        private void MainWindow_StateChanged(object? sender, EventArgs e)
+        {
+            if (this.WindowState == WindowState.Minimized)
+            {
+                if (this.Visibility == Visibility.Visible)
+                {
+                    _playerView.PauseForMinimize();
+                }
+            }
+            else if (this.WindowState == WindowState.Normal || this.WindowState == WindowState.Maximized)
+            {
+                if (this.Visibility == Visibility.Visible)
+                {
+                    _playerView.ResumeFromMinimize();
+                }
+            }
+        }
+
+        private void MainWindow_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (this.Visibility != Visibility.Visible)
+            {
+                _playerView.Stop();
+            }
+        }
+
+        private string _availableRemoteVersion = "";
+
+        private async void CheckForUpdatesAsync()
+        {
+            try
+            {
+                var (hasUpdate, remoteVer) = await _updateService.CheckForUpdateAsync();
+                if (hasUpdate)
+                {
+                    _availableRemoteVersion = remoteVer;
+                    ViewModel.IsUpdateAvailable = true;
+                    ViewModel.UpdateMessage = $"Yeni Güncelleme Var! (v{remoteVer}) - Tıkla ve Güncelle";
+                    UpdateBadgeButton.Visibility = Visibility.Visible;
+                }
+            }
+            catch { }
+        }
+
+        private async void UpdateBadge_Click(object sender, RoutedEventArgs e)
+        {
+            string targetVer = !string.IsNullOrWhiteSpace(_availableRemoteVersion) ? _availableRemoteVersion : UpdateService.GetCurrentVersion();
+
+            var result = System.Windows.MessageBox.Show(
+                $"StreamMesh v{targetVer} sürümüne otomatik güncellensin mi?\n\n- Yeni kurulum paketi indirilecek\n- Uygulama otomatik kapanıp yeni sürüm kurulacak\n- Kurulum bittiğinde uygulama otomatik yeniden açılacaktır.",
+                "StreamMesh Otomatik Güncelleme",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            var progressWin = new UpdateProgressWindow(targetVer);
+            progressWin.Owner = this;
+            progressWin.Show();
+
+            try
+            {
+                UpdateBadgeButton.IsEnabled = false;
+
+                bool success = await _updateService.DownloadAndInstallUpdateAsync(targetVer, (percent, msg, detail) => {
+                    progressWin.UpdateProgress(percent, msg, detail);
+                });
+
+                if (!success)
+                {
+                    progressWin.ShowError("Kurulum dosyası indirilemedi veya başlatılamadı.");
+                    UpdateBadgeButton.IsEnabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("UpdateBadge_Click error", ex);
+                progressWin.ShowError(ex.Message);
+                UpdateBadgeButton.IsEnabled = true;
+            }
+        }
+
+        private bool _isFullscreen = false;
+
+        public void SetFullscreen(bool isFullscreen)
+        {
+            _isFullscreen = isFullscreen;
+            if (_isFullscreen)
+            {
+                SidebarBorder.Visibility = Visibility.Collapsed;
+                SidebarColumn.Width = new GridLength(0);
+                TopOverlay.Visibility = Visibility.Collapsed;
+                this.WindowStyle = WindowStyle.None;
+                this.WindowState = WindowState.Maximized;
+            }
+            else
+            {
+                SidebarBorder.Visibility = Visibility.Visible;
+                SidebarColumn.Width = new GridLength(80);
+                TopOverlay.Visibility = Visibility.Visible;
+                this.WindowStyle = WindowStyle.SingleBorderWindow;
+                this.WindowState = WindowState.Normal;
+            }
+        }
+
+        public void ToggleFullscreen()
+        {
+            SetFullscreen(!_isFullscreen);
+        }
+
+        private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Escape && _isFullscreen)
+            {
+                SetFullscreen(false);
+                e.Handled = true;
+                return;
+            }
+
+            if (MainContent.Content == _playerView)
+            {
+                if (e.Key == System.Windows.Input.Key.Space)
+                {
+                    _playerView.TogglePause();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Left)
+                {
+                    _playerView.Rewind(10000);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Right)
+                {
+                    _playerView.Forward(10000);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Up)
+                {
+                    _playerView.ChangeVolume(5);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Down)
+                {
+                    _playerView.ChangeVolume(-5);
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.L)
+                {
+                    _playerView.GoLive();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.F || e.Key == System.Windows.Input.Key.F11)
+                {
+                    ToggleFullscreen();
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.M)
+                {
+                    _playerView.ToggleMute();
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private static System.Windows.Media.Imaging.RenderTargetBitmap? RenderVectorIcon(int size)
+        {
+            try
+            {
+                if (System.Windows.Application.Current?.Resources["AppIconImage"] is System.Windows.Media.DrawingImage drawingImage)
+                {
+                    var visual = new System.Windows.Media.DrawingVisual();
+                    using (var context = visual.RenderOpen())
+                    {
+                        context.DrawDrawing(drawingImage.Drawing);
+                    }
+
+                    var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(size, size, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    bitmap.Render(visual);
+                    return bitmap;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[STARTUP] RenderVectorIcon hatası: {ex.Message}");
+            }
+            return null;
+        }
+
+        private System.Drawing.Icon GetTrayIcon()
+        {
+            try
+            {
+                // Render Vector to Tray Icon
+                var bitmap = RenderVectorIcon(64);
+                if (bitmap != null)
+                {
+                    using var stream = new System.IO.MemoryStream();
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                    encoder.Save(stream);
+                    using var drawingBmp = new System.Drawing.Bitmap(stream);
+                    IntPtr hIcon = drawingBmp.GetHicon();
+                    var icon = (System.Drawing.Icon)System.Drawing.Icon.FromHandle(hIcon).Clone();
+                    DestroyIcon(hIcon);
+                    return icon;
+                }
+            }
+            catch { }
+
+            try
+            {
+                string mainExe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                if (!string.IsNullOrEmpty(mainExe) && System.IO.File.Exists(mainExe))
+                {
+                    var exeIcon = System.Drawing.Icon.ExtractAssociatedIcon(mainExe);
+                    if (exeIcon != null) return exeIcon;
+                }
+            }
+            catch { }
+
+            return System.Drawing.SystemIcons.Application;
+        }
+
+        private void SetupTrayIcon()
+        {
+            try
+            {
+                _notifyIcon = new System.Windows.Forms.NotifyIcon();
+                _notifyIcon.Icon = GetTrayIcon();
+                _notifyIcon.Visible = true;
+                _notifyIcon.Text = $"StreamMesh Hybrid v{UpdateService.GetCurrentVersion()}";
+
+                _notifyIcon.MouseClick += (s, e) => {
+                    if (e.Button == System.Windows.Forms.MouseButtons.Left)
+                    {
+                        ShowWindow();
+                    }
+                };
+
+                _notifyIcon.DoubleClick += (s, e) => { ShowWindow(); };
+
+                var menu = new System.Windows.Forms.ContextMenuStrip();
+                menu.Items.Add("StreamMesh Göster", null, (s, e) => { ShowWindow(); });
+                menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+                menu.Items.Add("Tamamen Çıkış Yap", null, (s, e) => {
+                    ExitApplication();
+                });
+                _notifyIcon.ContextMenuStrip = menu;
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("SetupTrayIcon failed", ex);
+            }
+        }
+
+        public void ExitApplication()
+        {
+            _isExplicitExit = true;
+            if (_notifyIcon != null)
+            {
+                _notifyIcon.Visible = false;
+                _notifyIcon.Dispose();
+                _notifyIcon = null;
+            }
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (_isExplicitExit)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
+            e.Cancel = true;
+            Hide();
+            if (_notifyIcon != null && _notifyIcon.Visible)
+            {
+                _notifyIcon.ShowBalloonTip(2000, "StreamMesh", "StreamMesh tepside (arka planda) çalışmaya devam ediyor.", System.Windows.Forms.ToolTipIcon.Info);
+            }
+        }
+
+        private void ShowWindow()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+        }
+
+        private void Nav_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.RadioButton rb && rb.Tag is string tag) NavigateTo(tag);
+        }
+
+        public void NavigateTo(string tag)
+        {
+            switch (tag)
+            {
+                case "Home": MainContent.Content = _homeView; break;
+                case "Player": MainContent.Content = _playerView; break;
+                case "Stats":
+                    _statsView ??= new StatsView();
+                    MainContent.Content = _statsView;
+                    break;
+                case "Settings":
+                    _settingsView ??= new SettingsView();
+                    MainContent.Content = _settingsView;
+                    break;
+                case "AceSearch":
+                    _searchAceView ??= new SearchAceStreamView();
+                    MainContent.Content = _searchAceView;
+                    break;
+            }
+        }
+
+        public void LoadChannelToPlayer(Channel ch)
+        {
+            NavigateTo("Player");
+            _playerView.LoadChannel(ch);
+        }
+
+
+
+        private void PeerCount_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var report = new P2PReportWindow("StreamMesh P2P Durum Raporu", "Ağ Durumu: Aktif\nBağlantı Modu: P2P Mesh\nSTUN: Tamam (stun.l.google.com:19302)\nTURN: Hazır (Gerekli olduğunda devreye girer)\n\nAktif Peer Listesi: 127.0.0.1 (Siz)");
+            report.Owner = this;
+            report.ShowDialog();
+        }
+
+        public async System.Threading.Tasks.Task RunAutoEpgUpdateAsync(bool force = false)
+        {
+            try
+            {
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
+
+                // V1.9.0: Cleanup old EPG data before update to save space
+                await db.CleanupOldEpgProgramsAsync(2);
+
+                int epgCount = await db.GetEpgProgramsCountAsync();
+                string lastEpgStr = db.GetSetting("LastAutoEpgUpdate", "0");
+                long.TryParse(lastEpgStr, out long lastEpgUnix);
+                long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                // 12 saat = 43200 saniye (tabloda hiç veri yoksa veya force=true ise beklemeden hemen çalıştır)
+                if (force || epgCount == 0 || (nowUnix - lastEpgUnix >= 43200))
+                {
+                    LogService.LogInfo($"[AutoEPG] EPG güncellemesi başlatılıyor (force={force}, mevcutKayıt={epgCount})...");
+                    var epgSources = db.GetEpgSources();
+                    if (epgSources != null && epgSources.Count > 0)
+                    {
+                        var epgEng = new StreamMesh.Core.Media.EpgEngine();
+                        foreach (var url in epgSources)
+                        {
+                            if (!string.IsNullOrWhiteSpace(url))
+                            {
+                                await epgEng.LoadEpgAsync(url);
+                            }
+                        }
+                    }
+                    db.SetSetting("LastAutoEpgUpdate", nowUnix.ToString());
+                    LogService.LogInfo("[AutoEPG] Otomatik EPG güncellemesi başarıyla tamamlandı.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[AutoEPG] Otomatik EPG güncelleme hatası", ex);
+            }
+        }
+
+        private async System.Threading.Tasks.Task RunAutoMetadataEnrichmentAsync()
+        {
+            try
+            {
+                var db = new StreamMesh.Core.Database.DatabaseEngine();
+                string apiKey = db.GetSetting("TmdbApiKey", "");
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    // TMDB API anahtarı tanımlı değilse arka plan sorgusunu çalıştırma
+                    return;
+                }
+
+                var metaEng = new StreamMesh.Core.Media.MetadataEngine();
+
+                // TMDB Günlük Limit kontrolü (1000 istek/gün)
+                var stats = db.GetDailyQueryStats();
+                if (stats.count >= 950)
+                {
+                    LogService.LogInfo("[AutoMetadata] Günlük TMDB sorgu limitine (1000) yaklaşıldı. Otomatik zenginleştirme duraklatıldı.");
+                    return;
+                }
+
+                var allChannels = await db.GetAllChannelsAsync();
+                var pendingMedia = allChannels.Where(c =>
+                    (c.Category == "Film" || c.Category == "Movie" || c.Category == "Dizi" || c.Category == "Series" || !string.IsNullOrWhiteSpace(c.SeriesBaseName)) &&
+                    string.IsNullOrWhiteSpace(c.Overview)
+                ).Take(50).ToList();
+
+                if (pendingMedia.Count > 0)
+                {
+                    LogService.LogInfo($"[AutoMetadata] {pendingMedia.Count} adet eksik açıklamalı film/dizi zenginleştiriliyor...");
+                    foreach (var item in pendingMedia)
+                    {
+                        try
+                        {
+                            var curStats = db.GetDailyQueryStats();
+                            if (curStats.count >= 950) break;
+
+                            await metaEng.EnrichChannelAsync(item);
+                            await System.Threading.Tasks.Task.Delay(500);
+                        }
+                        catch (Exception innerEx)
+                        {
+                            LogService.LogError($"[AutoMetadata] Kanal metadata hatası: {item.Name}", innerEx);
+                        }
+                    }
+                    LogService.LogInfo("[AutoMetadata] Otomatik metadata taraması tamamlandı.");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("[AutoMetadata] Otomatik metadata tarama hatası", ex);
+            }
+        }
+    }
+}
