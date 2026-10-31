@@ -1,5 +1,0 @@
-{
-  "summary":  "Strictly set AceStream playback URL format to http://127.0.0.1:6878/ace/getstream?infohash={hash} while preserving HlsProxyEngine for DVR/Timeshift features.",
-  "updatedAt":  "2026-10-23T08:31:52.650912538Z",
-  "userFacing":  true
-}

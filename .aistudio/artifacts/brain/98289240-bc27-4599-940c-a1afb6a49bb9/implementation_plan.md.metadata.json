@@ -1,6 +1,0 @@
-{
-  "summary":  "EPG kaynaklarını akıllı çift yönlü GZip/XML fallback ile indiren, her EPG kaynağına özel saat ofseti (timezone shift) atayan, Ayarlar arayüzünde her kaynağın kanal/program sayısı ve durumunu gösteren, ölü/yanıt vermeyen adresleri (AceStream ve YouTube hariç) otomatik temizleyen mimari uygulama planı.",
-  "updatedAt":  "2026-10-25T06:28:25.056735869Z",
-  "requestFeedback":  true,
-  "userFacing":  true
-}
