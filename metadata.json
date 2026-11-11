@@ -1,0 +1,8 @@
+{
+  "name": "Remix StreamMesh",
+  "description": "A decentralized, adaptive bitrate streaming platform with P2P distribution, multi-language support, and local content ingestion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

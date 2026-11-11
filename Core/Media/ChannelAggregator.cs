@@ -1,0 +1,101 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using StreamMesh.Models;
+
+namespace StreamMesh.Core.Media
+{
+    public class ChannelAggregator
+    {
+        private static readonly ChannelAggregator _instance = new ChannelAggregator();
+        public static ChannelAggregator Instance => _instance;
+
+        private ChannelAggregator() { }
+
+        public List<Channel> AggregateChannels(IEnumerable<Channel> incomingChannels)
+        {
+            if (incomingChannels == null) return new List<Channel>();
+
+            var aggregated = new List<Channel>();
+            var urlMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+            var epgMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+            var aceMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+            var nameMap = new Dictionary<string, Channel>(StringComparer.OrdinalIgnoreCase);
+
+            var aceEngine = new AceEngine();
+
+            foreach (var ch in incomingChannels)
+            {
+                if (ch == null) continue;
+
+                Channel? matched = null;
+                var urls = ch.GetUrlList();
+                var epgs = ch.GetEpgIdList();
+                var names = ch.GetNamesList();
+
+                // 1. Try matching by AceStream Hash (Strongest match for P2P)
+                foreach (var u in urls)
+                {
+                    string hash = aceEngine.ExtractHash(u);
+                    if (!string.IsNullOrEmpty(hash) && hash.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(hash, "^[a-fA-F0-9]{40}$"))
+                    {
+                        if (aceMap.TryGetValue(hash, out matched)) break;
+                    }
+                }
+
+                // 2. Try matching by identical stream URL or cleaned identity
+                if (matched == null)
+                {
+                    foreach (var u in urls)
+                    {
+                        if (urlMap.TryGetValue(u, out matched)) break;
+                        string cleanId = M3uEngine.CleanStreamUrlForIdentity(u);
+                        if (!string.IsNullOrEmpty(cleanId) && urlMap.TryGetValue(cleanId, out matched)) break;
+                    }
+                }
+
+                // Dizi ve Bölüm Güvencesi: Eğer kanal bir dizi bölümüyse ve matched kanalın sezon/bölümü farklıysa ASLA birleştirme!
+                if (matched != null)
+                {
+                    bool isSeriesMismatch = (ch.SeasonNumber > 0 && matched.SeasonNumber > 0 && (ch.SeasonNumber != matched.SeasonNumber || ch.EpisodeNumber != matched.EpisodeNumber)) ||
+                                            (ch.EpisodeNumber > 0 && matched.EpisodeNumber > 0 && ch.EpisodeNumber != matched.EpisodeNumber);
+
+                    if (isSeriesMismatch)
+                    {
+                        matched = null; // Ayrı kart olarak bırak
+                    }
+                }
+
+                // NOTE: Automatic name-based channel aggregation has been strictly disabled.
+                // Channels with identical or similar names in different countries/languages (e.g. ATV TR vs ATV DE)
+                // must NEVER be auto-merged unless explicitly merged by the user via Manual Channel Merge.
+
+                if (matched != null)
+                {
+                    matched.MergeWith(ch);
+                }
+                else
+                {
+                    matched = ch;
+                    aggregated.Add(matched);
+                }
+
+                // Re-index only strictly identical stream identifiers
+                foreach (var u in matched.GetUrlList())
+                {
+                    urlMap[u] = matched;
+                    string cleanId = M3uEngine.CleanStreamUrlForIdentity(u);
+                    if (!string.IsNullOrEmpty(cleanId)) urlMap[cleanId] = matched;
+
+                    string h = aceEngine.ExtractHash(u);
+                    if (!string.IsNullOrEmpty(h) && h.Length == 40 && System.Text.RegularExpressions.Regex.IsMatch(h, "^[a-fA-F0-9]{40}$"))
+                    {
+                        aceMap[h] = matched;
+                    }
+                }
+            }
+
+            return aggregated;
+        }
+    }
+}

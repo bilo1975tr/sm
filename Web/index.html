@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StreamMesh - Yerel Ağ Medya &amp; Web TV Portalı</title>
+    <meta name="description" content="StreamMesh yerel ağ canlı TV, EPG, VOD ve AceStream medya oynatıcı arayüzü">
+    <meta name="referrer" content="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js"></script>
+    <link rel="stylesheet" href="/Web/css/styles.css">
+</head>
+<body>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Header Navigation -->
+    <header class="top-header">
+        <a href="/" class="brand-zone">
+            <div class="brand-icon">SM</div>
+            <div class="brand-title">Stream<span>Mesh</span></div>
+            <div class="lan-badge">
+                <span class="lan-dot"></span>
+                <span>Açık Ağ Yayını</span>
+            </div>
+        </a>
+
+        <!-- Main Category Tabs -->
+        <nav class="main-nav-tabs">
+            <button class="tab-btn active" id="tabLiveTv" onclick="switchMediaTab('TV')">📺 Canlı TV</button>
+            <button class="tab-btn" id="tabMovies" onclick="switchMediaTab('Filmler')">🎬 Filmler (VOD)</button>
+            <button class="tab-btn" id="tabSeries" onclick="switchMediaTab('Diziler')">🍿 Diziler</button>
+            <button class="tab-btn" id="tabAce" onclick="switchMediaTab('ACE')">⚡ AceStream / URL</button>
+            <button class="tab-btn fav-tab" id="tabFavs" onclick="switchMediaTab('FAVORİLER')">⭐ Favoriler</button>
+        </nav>
+
+        <div class="header-actions">
+            <button class="action-link" style="background:rgba(2, 132, 199, 0.25); border-color:var(--primary-glow); color:#fff;" onclick="openPluginsModal()">🧩 Eklentiler &amp; Ayarlar</button>
+            <a class="action-link" href="/playlist.m3u" download="StreamMesh.m3u">📥 M3U İndir</a>
+            <button class="action-link" onclick="toggleFullscreen()">⛶ Tam Ekran</button>
+        </div>
+    </header>
+
+    <!-- Plugins Management Modal Dialog -->
+    <div id="pluginsModal" class="plugins-modal-backdrop" style="display:none;" onclick="if(event.target===this)closePluginsModal()">
+        <div class="plugins-modal-content">
+            <div class="plugins-modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:28px;">🧩</span>
+                    <div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <h2 style="font-size:18px; font-weight:800; color:#fff;">Eklenti &amp; Modül Yönetim Merkezi</h2>
+                            <span id="pluginsActiveCountBadge" style="font-size:11px; background:#064e3b; color:#a7f3d0; padding:2px 8px; border-radius:12px; font-weight:bold;">15 / 15 Aktif</span>
+                        </div>
+                        <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">StreamMesh çekirdek modüllerini etkinleştirin, ayarlarını yapılandırın ve canlı test edin.</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closePluginsModal()" title="Kapat">✕</button>
+            </div>
+
+            <!-- Toolbar: Search & Category Filter Pills -->
+            <div class="plugins-modal-toolbar">
+                <div class="search-input-box" style="max-width:240px; margin:0;">
+                    <span>🔍</span>
+                    <input type="text" id="pluginSearchInput" placeholder="Eklenti ara..." oninput="filterWebPlugins()">
+                </div>
+                <div class="sub-category-pills" id="pluginCategoryPills" style="margin:0;">
+                    <button class="sub-pill active" onclick="setPluginCategoryFilter('Tümü', this)">Tümü</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Yayın & Oynatıcı', this)">Yayın &amp; Oynatıcı</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Ağ & Paylaşım', this)">Ağ &amp; Paylaşım</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Veri & Rehber', this)">Veri &amp; Rehber</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Yapay Zeka & Meta', this)">Yapay Zeka &amp; Meta</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Sistem & Bakım', this)">Sistem &amp; Bakım</button>
+                </div>
+            </div>
+
+            <!-- 2-Column Body -->
+            <div class="plugins-modal-body">
+                <!-- Left: Plugin List -->
+                <div class="plugins-list-column" id="pluginsList"></div>
+
+                <!-- Right: Selected Plugin Details & Settings -->
+                <div class="plugin-details-column" id="pluginDetails">
+                    <div style="color:var(--text-muted); text-align:center; padding:60px 20px;">
+                        <span style="font-size:36px; display:block; margin-bottom:10px;">👈</span>
+                        Yapılandırmak veya test etmek için sol taraftan bir eklenti seçin.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Grid -->
+    <main class="app-workspace">
+
+        <!-- Left: Video Player Workspace -->
+        <section class="player-wrapper">
+            <div class="video-box" id="videoBox">
+                <div class="video-top-ribbon">
+                    <div class="live-tag" id="liveTag">
+                        <span class="live-pulse-dot"></span>
+                        <span id="liveTagText">CANLI YAYIN</span>
+                    </div>
+                    <div class="video-badge-pill" id="resolutionBadge">1080p · HLS</div>
+                </div>
+
+                <video id="playerVideo" controls playsinline></video>
+
+                <!-- Initial Prompt & Loading Overlay -->
+                <div class="video-state-overlay" id="playerOverlay" onclick="resumeActivePlayback()" style="cursor:pointer;">
+                    <div class="overlay-icon" id="overlayIcon">▶</div>
+                    <div class="spinner" id="overlaySpinner" style="display:none;"></div>
+                    <div class="overlay-title" id="overlayTitle">Yayın Başlatılmaya Hazır</div>
+                    <div class="overlay-desc" id="overlayDesc">Sağdaki listeden bir kanal, film veya AceStream yayını seçin ya da dokunarak başlatın.</div>
+                    <button class="overlay-btn" id="overlayBtn" onclick="resumeActivePlayback()">Oynat</button>
+                </div>
+            </div>
+
+            <!-- Custom OSD Information & Controls -->
+            <div class="player-osd-card">
+                <div class="osd-media-row">
+                    <div class="osd-meta-left">
+                        <img id="activeLogo" class="osd-logo" referrerpolicy="no-referrer" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/TRT_1_logo.svg/320px-TRT_1_logo.svg.png" alt="Logo">
+                        <div class="osd-titles">
+                            <h2 id="activeTitle">Kanal Seçimi Bekleniyor</h2>
+                            <p id="activeSub">Kategori: <strong>Genel</strong> • Akıllı StreamMesh Yönlendirici Hazır</p>
+                        </div>
+                    </div>
+
+                    <div class="osd-controls">
+                        <button class="ctrl-btn" onclick="seekVideo(-10)" title="10 Saniye Geri">⏪ 10s</button>
+                        <button class="ctrl-btn primary" id="playPauseBtn" onclick="togglePlayPause()">⏸ Duraklat</button>
+                        <button class="ctrl-btn" onclick="seekVideo(10)" title="10 Saniye İleri">⏩ 10s</button>
+                        <button class="ctrl-btn" onclick="toggleMute()" id="muteBtn">🔊 Ses</button>
+                        <button class="ctrl-btn" onclick="cycleAspectRatio()" id="aspectBtn">📐 16:9</button>
+                        <button class="ctrl-btn" onclick="togglePiP()" id="pipBtn">🗗 PiP</button>
+                        <button class="ctrl-btn" onclick="toggleFavoriteActive()" id="favActiveBtn">⭐ Favori</button>
+                        <button class="ctrl-btn" onclick="copyCurrentStreamUrl()">📋 URL</button>
+                    </div>
+                </div>
+
+                <!-- Live EPG Bar -->
+                <div class="epg-info-bar" id="epgInfoBar">
+                    <div class="now-playing">
+                        <span>🔴</span>
+                        <strong id="epgNowTitle">Canlı Yayın Akışı</strong>
+                        <span id="epgNowTime" style="color:var(--text-muted);">(14:00 - 16:00)</span>
+                    </div>
+                    <div class="next-up" id="epgNextTitle">Sonraki: Akşam Bülteni</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Content Discovery Panel -->
+        <aside class="content-panel">
+            <div class="panel-top-bar">
+                <div class="search-input-box">
+                    <span>🔍</span>
+                    <input type="text" id="filterInput" placeholder="Kanal veya içerik ara... (/ tuşu)" oninput="handleSearch()">
+                </div>
+
+                <!-- Sub-category filter pills for TV / VOD -->
+                <div class="sub-category-pills" id="subCategoryPills">
+                    <button class="sub-pill active" onclick="setSubFilter('Tümü', this)">Tümü</button>
+                    <button class="sub-pill" onclick="setSubFilter('Ulusal', this)">Ulusal</button>
+                    <button class="sub-pill" onclick="setSubFilter('Haber', this)">Haber</button>
+                    <button class="sub-pill" onclick="setSubFilter('Spor', this)">Spor</button>
+                    <button class="sub-pill" onclick="setSubFilter('Belgesel', this)">Belgesel</button>
+                    <button class="sub-pill" onclick="setSubFilter('Müzik', this)">Müzik</button>
+                    <button class="sub-pill" onclick="setSubFilter('Çocuk', this)">Çocuk</button>
+                </div>
+
+                <div class="panel-meta-row">
+                    <span id="itemCountLabel">İçerikler yükleniyor...</span>
+                    <span id="pageCountLabel">Sayfa 1 / 1</span>
+                </div>
+            </div>
+
+            <!-- Scrollable List of Media Items -->
+            <div class="media-scroll-container" id="mediaList"></div>
+
+            <!-- Custom Quick-Play Form (Hidden by default, shown when AceStream tab is active) -->
+            <div class="quick-play-box" id="quickPlayArea" style="display:none;">
+                <div class="input-group">
+                    <label>AceStream Content ID / Hash (40 Haneli):</label>
+                    <input type="text" id="manualAceInput" placeholder="acestream://... veya d80e1a3f6b9c5d2e1a3f6b9c5d2e1a3f6b9c5d2e">
+                </div>
+                <div class="input-group">
+                    <label>Veya Doğrudan M3U8 / MP4 Akış Linki:</label>
+                    <input type="text" id="manualUrlInput" placeholder="https://domain.com/live/stream.m3u8">
+                </div>
+                <button class="btn-launch" onclick="playManualStream()">Hemen Oynat &amp; Proxy Başlat</button>
+                <div class="sample-chips">
+                    <span style="font-size:11px; color:var(--text-muted); align-self:center;">Hızlı Örnekler:</span>
+                    <button class="sample-btn" onclick="loadSampleAce('d80e1a3f6b9c5d2e1a3f6b9c5d2e1a3f6b9c5d2e')">⚡ Ace Canlı Maç</button>
+                    <button class="sample-btn" onclick="loadSampleUrl('https://tv-trt1.medya.trt.com.tr/master.m3u8')">📡 TRT 1 HLS</button>
+                    <button class="sample-btn" onclick="loadSampleUrl('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4')">🎬 Big Buck Bunny MP4</button>
+                </div>
+            </div>
+
+            <!-- Pagination Bar (Strict 20 items per view) -->
+            <div class="pagination-bar" id="paginationBar">
+                <button class="page-action-btn" id="prevBtn" onclick="changePage(-1)">‹ Önceki</button>
+                <span id="pageIndicator" style="font-size:12px; font-weight:700;">1 / 1</span>
+                <button class="page-action-btn" id="nextBtn" onclick="changePage(1)">Sonraki ›</button>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- TV Box / Keyboard Remote Legend -->
+    <footer class="tv-legend">
+        <div>
+            <strong>TV Kumandası &amp; Klavye Kısayolları:</strong>
+            <span style="margin-left:8px;"><kbd>▲ ▼ ◄ ►</kbd> Gezin</span>
+            <span style="margin-left:8px;"><kbd>Enter / OK</kbd> Kanal Aç</span>
+            <span style="margin-left:8px;"><kbd>Space</kbd> Duraklat</span>
+            <span style="margin-left:8px;"><kbd>F</kbd> Tam Ekran</span>
+            <span style="margin-left:8px;"><kbd>M</kbd> Sessiz</span>
+            <span style="margin-left:8px;"><kbd>Esc</kbd> Geri</span>
+        </div>
+        <div>StreamMesh Yerel Ağ Medya Merkezi v0.0.1 • Açık Yayın</div>
+    </footer>
+
+    <script type="module" src="/Web/js/app.js"></script>
+</body>
+</html>
