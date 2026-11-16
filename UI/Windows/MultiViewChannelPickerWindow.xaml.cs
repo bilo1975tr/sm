@@ -33,11 +33,13 @@ namespace StreamMesh.UI.Windows
 
         public Channel? SelectedChannel { get; private set; }
 
-        public MultiViewChannelPickerWindow(int slotIndex, IReadOnlySet<string> blockedServerKeys, bool blockAceStream)
+        public MultiViewChannelPickerWindow(int slotIndex, IReadOnlySet<string>? blockedServerKeys, bool blockAceStream)
         {
             InitializeComponent();
             _slotIndex = slotIndex;
-            _blockedServerKeys = new HashSet<string>(blockedServerKeys ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            _blockedServerKeys = blockedServerKeys != null
+                ? new HashSet<string>(blockedServerKeys, StringComparer.OrdinalIgnoreCase)
+                : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             _blockAceStream = blockAceStream;
 
             SlotBadgeText.Text = $"EKRAN {slotIndex + 1}";
