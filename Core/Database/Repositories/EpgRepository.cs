@@ -72,9 +72,9 @@ namespace StreamMesh.Core.Database.Repositories
 
                     if (count > 5000)
                     {
-                        var optCmd = connection.CreateCommand();
-                        optCmd.CommandText = "PRAGMA optimize;";
-                        await optCmd.ExecuteNonQueryAsync();
+                        var vacuumCmd = connection.CreateCommand();
+                        vacuumCmd.CommandText = "VACUUM";
+                        await vacuumCmd.ExecuteNonQueryAsync();
                     }
                     LogService.LogInfo($"EpgRepository: {count} old EPG items cleaned.");
                 }
@@ -161,31 +161,7 @@ namespace StreamMesh.Core.Database.Repositories
             return list;
         }
 
-        public async Task<List<(string EpgId, string Name)>> GetAllEpgChannelIndexAsync()
-        {
-            var list = new List<(string EpgId, string Name)>();
-            try
-            {
-                using var connection = new SqliteConnection(_connectionString);
-                await connection.OpenAsync().ConfigureAwait(false);
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = "SELECT EpgId, Name FROM EpgChannels WHERE EpgId IS NOT NULL AND trim(EpgId) != ''";
-                using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    string id = reader.GetString(0);
-                    string name = reader.IsDBNull(1) ? id : reader.GetString(1);
-                    list.Add((id, name));
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogWarning($"EpgRepository.GetAllEpgChannelIndexAsync warning: {ex.Message}");
-            }
-            return list;
-        }
-
-        public async Task<List<EpgChannelSearchResult>> SearchEpgChannelsAsync(string query, bool allSources, List<string> epgSources, bool includeCurrentProgram = true)
+        public async Task<List<EpgChannelSearchResult>> SearchEpgChannelsAsync(string query, bool allSources, List<string> epgSources)
         {
             var list = new List<EpgChannelSearchResult>();
             try
@@ -194,9 +170,17 @@ namespace StreamMesh.Core.Database.Repositories
                 {
                     await connection.OpenAsync();
                     string rawQuery = (query ?? "").Trim();
+                    string cleanQuery = StreamMesh.Core.Media.ChannelUtils.GetCleanName(rawQuery);
 
                     var cmd = connection.CreateCommand();
-                    string whereSql = "WHERE 1=1 ";
+                    string sql = @"
+                        SELECT DISTINCT ec.EpgId, ec.Name, ec.SourceUrl,
+                        (SELECT Title FROM EpgPrograms ep WHERE (ep.ChannelName = ec.EpgId OR ep.ChannelName LIKE ec.EpgId || ',%' OR ep.ChannelName LIKE '%, ' || ec.EpgId)
+                         AND ep.StartTime <= @now AND ep.EndTime >= @now ORDER BY ep.StartTime DESC LIMIT 1) as LatestTitle
+                        FROM EpgChannels ec
+                        WHERE 1=1 ";
+
+                    cmd.Parameters.AddWithValue("@now", DateTime.Now.ToString("o"));
 
                     if (!string.IsNullOrWhiteSpace(rawQuery))
                     {
@@ -210,7 +194,7 @@ namespace StreamMesh.Core.Database.Repositories
                         }
                         if (orClauses.Count > 0)
                         {
-                            whereSql += $" AND ({string.Join(" OR ", orClauses)}) ";
+                            sql += $" AND ({string.Join(" OR ", orClauses)}) ";
                         }
                     }
 
@@ -223,36 +207,10 @@ namespace StreamMesh.Core.Database.Repositories
                             placeholders.Add(pName);
                             cmd.Parameters.AddWithValue(pName, epgSources[i]);
                         }
-                        whereSql += $" AND ec.SourceUrl IN ({string.Join(",", placeholders)}) ";
+                        sql += $" AND ec.SourceUrl IN ({string.Join(",", placeholders)}) ";
                     }
 
-                    string sql;
-                    if (includeCurrentProgram)
-                    {
-                        cmd.Parameters.AddWithValue("@now", DateTime.Now.ToString("o"));
-                        sql = $@"
-                            WITH matched AS (
-                                SELECT DISTINCT ec.EpgId, ec.Name, ec.SourceUrl
-                                FROM EpgChannels ec
-                                {whereSql}
-                                ORDER BY ec.Name ASC
-                                LIMIT 100
-                            )
-                            SELECT m.EpgId, m.Name, m.SourceUrl,
-                            (SELECT Title FROM EpgPrograms ep WHERE (ep.ChannelName = m.EpgId OR ep.ChannelName LIKE m.EpgId || ',%' OR ep.ChannelName LIKE '%, ' || m.EpgId)
-                             AND ep.StartTime <= @now AND ep.EndTime >= @now ORDER BY ep.StartTime DESC LIMIT 1) as LatestTitle
-                            FROM matched m";
-                    }
-                    else
-                    {
-                        sql = $@"
-                            SELECT DISTINCT ec.EpgId, ec.Name, ec.SourceUrl, NULL as LatestTitle
-                            FROM EpgChannels ec
-                            {whereSql}
-                            ORDER BY ec.Name ASC
-                            LIMIT 100";
-                    }
-
+                    sql += " ORDER BY ec.Name ASC LIMIT 100";
                     cmd.CommandText = sql;
 
                     using (var reader = await cmd.ExecuteReaderAsync())

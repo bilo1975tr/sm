@@ -620,7 +620,12 @@ namespace StreamMesh.UI.Windows
                     return;
                 }
 
-                var pendingMedia = await db.GetPendingMetadataChannelsAsync(50);
+                var allChannels = await db.GetAllChannelsAsync();
+                var pendingMedia = allChannels.Where(c =>
+                    !StreamMesh.Core.Media.MetadataEngine.IsLikelyLiveTv(c) &&
+                    (c.Category == "Film" || c.Category == "Filmler" || c.Category == "Movie" || c.Category == "Dizi" || c.Category == "Series" || !string.IsNullOrWhiteSpace(c.SeriesBaseName)) &&
+                    string.IsNullOrWhiteSpace(c.Overview)
+                ).Take(50).ToList();
 
                 if (pendingMedia.Count > 0)
                 {

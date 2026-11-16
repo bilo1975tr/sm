@@ -73,117 +73,84 @@ namespace StreamMesh.Core.Media.Mpv
         {
             if (_handle != IntPtr.Zero) return;
             if (MpvNative.EnsureLoaded() == IntPtr.Zero)
-                throw new DllNotFoundException(string.IsNullOrEmpty(MpvNative.LastLoadError) ? "libmpv-2.dll bulunamadı." : MpvNative.LastLoadError);
+                throw new DllNotFoundException("libmpv-2.dll bulunamadı.");
 
-            var profiles = headless || windowHandle == IntPtr.Zero
-                ? new[] { (Vo: "null", GpuApi: "", HwDec: "no", IsHeadless: true) }
-                : new[]
+            IntPtr ctx = MpvNative.mpv_create();
+            if (ctx == IntPtr.Zero)
+                throw new InvalidOperationException("mpv_create başarısız oldu.");
+
+            try
+            {
+                if (headless || windowHandle == IntPtr.Zero)
                 {
-                    (Vo: "gpu", GpuApi: "d3d11", HwDec: hwAccel ? "auto-safe" : "no", IsHeadless: false),
-                    (Vo: "gpu", GpuApi: "", HwDec: "no", IsHeadless: false),
-                    (Vo: "direct3d", GpuApi: "", HwDec: "no", IsHeadless: false)
+                    MpvNative.mpv_set_option_string(ctx, "vo", "null");
+                    MpvNative.mpv_set_option_string(ctx, "ao", "null");
+                    MpvNative.mpv_set_option_string(ctx, "vid", "1");
+                    MpvNative.mpv_set_option_string(ctx, "aid", "1");
+                }
+                else
+                {
+                    MpvNative.mpv_set_option_string(ctx, "wid", windowHandle.ToInt64().ToString(CultureInfo.InvariantCulture));
+                    MpvNative.mpv_set_option_string(ctx, "vo", "gpu");
+                    MpvNative.mpv_set_option_string(ctx, "gpu-api", "d3d11");
+                    MpvNative.mpv_set_option_string(ctx, "hwdec", hwAccel ? "auto-safe" : "no");
+                }
+
+                MpvNative.mpv_set_option_string(ctx, "idle", "yes");
+                MpvNative.mpv_set_option_string(ctx, "keep-open", "no");
+                MpvNative.mpv_set_option_string(ctx, "osc", "no");
+                MpvNative.mpv_set_option_string(ctx, "osd-level", "0");
+                MpvNative.mpv_set_option_string(ctx, "input-default-bindings", "no");
+                MpvNative.mpv_set_option_string(ctx, "input-vo-keyboard", "no");
+                MpvNative.mpv_set_option_string(ctx, "cursor-autohide", "no");
+                MpvNative.mpv_set_option_string(ctx, "ytdl", "no");
+
+                // Broadcast-grade A/V sync & anti-microstutter buffering
+                MpvNative.mpv_set_option_string(ctx, "video-sync", "audio");
+                MpvNative.mpv_set_option_string(ctx, "audio-buffer", "0.25");
+                MpvNative.mpv_set_option_string(ctx, "cache", "yes");
+                double cacheSecs = Math.Clamp(cacheMs / 1000.0, 2.5, 15.0);
+                MpvNative.mpv_set_option_string(ctx, "cache-secs", cacheSecs.ToString("0.0", CultureInfo.InvariantCulture));
+                MpvNative.mpv_set_option_string(ctx, "demuxer-max-bytes", "64MiB");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-max-back-bytes", "32MiB");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-readahead-secs", "6");
+                MpvNative.mpv_set_option_string(ctx, "network-timeout", "15");
+                MpvNative.mpv_set_option_string(ctx, "tls-verify", "no");
+                MpvNative.mpv_set_option_string(ctx, "hls-bitrate", "max");
+                MpvNative.mpv_set_option_string(ctx, "alang", "tr,tur,en,eng,de,deu");
+
+                if (!string.IsNullOrWhiteSpace(userAgent))
+                    MpvNative.mpv_set_option_string(ctx, "user-agent", userAgent);
+
+                int initRes = MpvNative.mpv_initialize(ctx);
+                if (initRes < 0)
+                    throw new InvalidOperationException($"mpv_initialize hatası: {MpvNative.GetErrorString(initRes)}");
+
+                _handle = ctx;
+
+                MpvNative.mpv_observe_property(_handle, 1, "time-pos", MpvFormat.Double);
+                MpvNative.mpv_observe_property(_handle, 2, "duration", MpvFormat.Double);
+                MpvNative.mpv_observe_property(_handle, 3, "pause", MpvFormat.Flag);
+                MpvNative.mpv_observe_property(_handle, 4, "track-list", MpvFormat.String);
+                MpvNative.mpv_observe_property(_handle, 5, "aid", MpvFormat.String);
+                MpvNative.mpv_observe_property(_handle, 6, "video-params/w", MpvFormat.Int64);
+                MpvNative.mpv_observe_property(_handle, 7, "video-params/h", MpvFormat.Int64);
+                MpvNative.mpv_observe_property(_handle, 8, "video-codec", MpvFormat.String);
+                MpvNative.mpv_observe_property(_handle, 9, "audio-codec-name", MpvFormat.String);
+
+                _eventThread = new Thread(EventLoop)
+                {
+                    Name = headless ? "MpvValidatorEventLoop" : "MpvPlayerEventLoop",
+                    IsBackground = true
                 };
-
-            string lastError = "mpv_initialize başarısız";
-            IntPtr initializedCtx = IntPtr.Zero;
-
-            foreach (var profile in profiles)
-            {
-                IntPtr ctx = MpvNative.mpv_create();
-                if (ctx == IntPtr.Zero)
-                {
-                    lastError = "mpv_create başarısız oldu.";
-                    continue;
-                }
-
-                try
-                {
-                    if (profile.IsHeadless)
-                    {
-                        MpvNative.mpv_set_option_string(ctx, "vo", "null");
-                        MpvNative.mpv_set_option_string(ctx, "ao", "null");
-                        MpvNative.mpv_set_option_string(ctx, "vid", "1");
-                        MpvNative.mpv_set_option_string(ctx, "aid", "1");
-                    }
-                    else
-                    {
-                        MpvNative.mpv_set_option_string(ctx, "wid", windowHandle.ToInt64().ToString(CultureInfo.InvariantCulture));
-                        MpvNative.mpv_set_option_string(ctx, "vo", profile.Vo);
-                        if (!string.IsNullOrEmpty(profile.GpuApi))
-                            MpvNative.mpv_set_option_string(ctx, "gpu-api", profile.GpuApi);
-                        MpvNative.mpv_set_option_string(ctx, "hwdec", profile.HwDec);
-                    }
-
-                    ApplyCommonOptions(ctx, cacheMs, userAgent);
-
-                    int initRes = MpvNative.mpv_initialize(ctx);
-                    if (initRes >= 0)
-                    {
-                        initializedCtx = ctx;
-                        break;
-                    }
-
-                    lastError = $"mpv_initialize ({profile.Vo}/{profile.GpuApi}): {MpvNative.GetErrorString(initRes)}";
-                    LogService.LogWarning($"[MPV] {lastError}, alternatif sürücü deneniyor...");
-                    MpvNative.mpv_terminate_destroy(ctx);
-                }
-                catch (Exception ex)
-                {
-                    lastError = ex.Message;
-                    try { MpvNative.mpv_terminate_destroy(ctx); } catch { }
-                }
+                _eventThread.Start();
             }
-
-            if (initializedCtx == IntPtr.Zero)
-                throw new InvalidOperationException(lastError);
-
-            _handle = initializedCtx;
-
-            MpvNative.mpv_observe_property(_handle, 1, "time-pos", MpvFormat.Double);
-            MpvNative.mpv_observe_property(_handle, 2, "duration", MpvFormat.Double);
-            MpvNative.mpv_observe_property(_handle, 3, "pause", MpvFormat.Flag);
-            MpvNative.mpv_observe_property(_handle, 4, "track-list", MpvFormat.String);
-            MpvNative.mpv_observe_property(_handle, 5, "aid", MpvFormat.String);
-            MpvNative.mpv_observe_property(_handle, 6, "video-params/w", MpvFormat.Int64);
-            MpvNative.mpv_observe_property(_handle, 7, "video-params/h", MpvFormat.Int64);
-            MpvNative.mpv_observe_property(_handle, 8, "video-codec", MpvFormat.String);
-            MpvNative.mpv_observe_property(_handle, 9, "audio-codec-name", MpvFormat.String);
-
-            _eventThread = new Thread(EventLoop)
+            catch
             {
-                Name = headless ? "MpvValidatorEventLoop" : "MpvPlayerEventLoop",
-                IsBackground = true
-            };
-            _eventThread.Start();
-        }
-
-        private static void ApplyCommonOptions(IntPtr ctx, int cacheMs, string userAgent)
-        {
-            MpvNative.mpv_set_option_string(ctx, "idle", "yes");
-            MpvNative.mpv_set_option_string(ctx, "keep-open", "no");
-            MpvNative.mpv_set_option_string(ctx, "osc", "no");
-            MpvNative.mpv_set_option_string(ctx, "osd-level", "0");
-            MpvNative.mpv_set_option_string(ctx, "input-default-bindings", "no");
-            MpvNative.mpv_set_option_string(ctx, "input-vo-keyboard", "no");
-            MpvNative.mpv_set_option_string(ctx, "cursor-autohide", "no");
-            MpvNative.mpv_set_option_string(ctx, "ytdl", "no");
-
-            // Broadcast-grade A/V sync & anti-microstutter buffering
-            MpvNative.mpv_set_option_string(ctx, "video-sync", "audio");
-            MpvNative.mpv_set_option_string(ctx, "audio-buffer", "0.25");
-            MpvNative.mpv_set_option_string(ctx, "cache", "yes");
-            double cacheSecs = Math.Clamp(cacheMs / 1000.0, 2.5, 15.0);
-            MpvNative.mpv_set_option_string(ctx, "cache-secs", cacheSecs.ToString("0.0", CultureInfo.InvariantCulture));
-            MpvNative.mpv_set_option_string(ctx, "demuxer-max-bytes", "64MiB");
-            MpvNative.mpv_set_option_string(ctx, "demuxer-max-back-bytes", "32MiB");
-            MpvNative.mpv_set_option_string(ctx, "demuxer-readahead-secs", "6");
-            MpvNative.mpv_set_option_string(ctx, "network-timeout", "15");
-            MpvNative.mpv_set_option_string(ctx, "tls-verify", "no");
-            MpvNative.mpv_set_option_string(ctx, "hls-bitrate", "max");
-            MpvNative.mpv_set_option_string(ctx, "alang", "tr,tur,en,eng,de,deu");
-
-            if (!string.IsNullOrWhiteSpace(userAgent))
-                MpvNative.mpv_set_option_string(ctx, "user-agent", userAgent);
+                MpvNative.mpv_terminate_destroy(ctx);
+                _handle = IntPtr.Zero;
+                throw;
+            }
         }
 
         private void EventLoop()

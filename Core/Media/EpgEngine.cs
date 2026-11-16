@@ -16,7 +16,6 @@ namespace StreamMesh.Core.Media
     public class EpgEngine
     {
         private readonly DatabaseEngine _db = DatabaseEngine.Instance;
-        private static readonly Regex TimeOffsetRegex = new(@"^([+-])(\d{2}):?(\d{2})$", RegexOptions.Compiled);
 
         public async Task LoadEpgAsync(string url, Action<string, double>? progressCallback = null)
         {
@@ -118,7 +117,6 @@ namespace StreamMesh.Core.Media
 
                     int totalSaved = 0;
                     int channelCount = 0;
-                    int timeShift = _db.GetEpgSourceTimeShift(url);
                     var batch = new List<EpgProgram>();
                     var channelBatch = new List<(string epgId, string name, string logo, string url)>();
                     var channelMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -179,8 +177,8 @@ namespace StreamMesh.Core.Media
                                             SourceUrl = url
                                         };
 
-                                        if (TryParseXmlTime(startAttr, timeShift, out DateTime st)) prog.StartTime = st;
-                                        if (TryParseXmlTime(stopAttr, timeShift, out DateTime et)) prog.EndTime = et;
+                                        if (TryParseXmlTime(startAttr, url, out DateTime st)) prog.StartTime = st;
+                                        if (TryParseXmlTime(stopAttr, url, out DateTime et)) prog.EndTime = et;
 
                                         batch.Add(prog);
 
@@ -211,7 +209,6 @@ namespace StreamMesh.Core.Media
                     }
 
                     _db.UpdateEpgSourceStats(url, "Başarılı", channelCount, totalSaved, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), "");
-                    EpgService.InvalidateCache();
                     progressCallback?.Invoke($"EPG Tamamlandı: Toplam {totalSaved} yayın akışı eklendi.", 100);
                 }
                 finally
@@ -232,7 +229,7 @@ namespace StreamMesh.Core.Media
 
         private string GetShortUrl(string url) => MediaHttpClient.GetShortUrl(url);
 
-        private static bool TryParseXmlTime(string time, int timeShift, out DateTime result)
+        private bool TryParseXmlTime(string time, string sourceUrl, out DateTime result)
         {
             result = DateTime.MinValue;
             if (string.IsNullOrWhiteSpace(time)) return false;
@@ -240,6 +237,7 @@ namespace StreamMesh.Core.Media
             try
             {
                 string cleanTime = time.Trim();
+                int timeShift = _db.GetEpgSourceTimeShift(sourceUrl);
 
                 if (cleanTime.Length >= 14 && char.IsDigit(cleanTime[0]))
                 {
@@ -249,7 +247,7 @@ namespace StreamMesh.Core.Media
                         if (cleanTime.Length > 14)
                         {
                             string offsetPart = cleanTime.Substring(14).Trim();
-                            var match = TimeOffsetRegex.Match(offsetPart);
+                            var match = Regex.Match(offsetPart, @"^([+-])(\d{2}):?(\d{2})$");
                             if (match.Success)
                             {
                                 int hours = int.Parse(match.Groups[2].Value);

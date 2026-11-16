@@ -38,17 +38,21 @@ namespace StreamMesh.Core.Media
                 channel.Language = Channel.NormalizeLanguage(channel.Language);
             }
 
+            // V1.8.8: Standart kategori koruması
+            if (channel.Notes == "FORCE_CAT")
+            {
+                channel.Notes = ""; // Clear marker
+                return;
+            }
+
             // 2. KESİN CANLI YAYIN ve VOD FİLM/DİZİ TESPİTİ
             bool hasMovieExt = urlLower.EndsWith(".mkv") || urlLower.EndsWith(".mp4") || urlLower.EndsWith(".avi") ||
                                urlLower.Contains(".mkv?") || urlLower.Contains(".mp4?") || urlLower.Contains(".avi?") ||
                                urlLower.Contains(".mkv,") || urlLower.Contains(".mp4,");
             bool hasMoviePath = urlLower.Contains("/movie/") || urlLower.Contains("/movies/") || urlLower.Contains("/vod/");
             bool hasSeriesPath = urlLower.Contains("/series/");
-            bool isRawXtreamLive = !hasMoviePath && !hasSeriesPath &&
-                                   System.Text.RegularExpressions.Regex.IsMatch(urlLower, @"^https?://[^/]+/[^/]+/[^/]+/\d+(?:\?.*)?$");
             bool isExplicitLiveUrl = urlLower.Contains("/live/") || urlLower.EndsWith(".ts") || urlLower.Contains(".ts?") ||
                                      urlLower.EndsWith(".m3u8") || urlLower.Contains(".m3u8?") || urlLower.StartsWith("acestream://") ||
-                                     isRawXtreamLive ||
                                      string.Equals(channel.SourceType, "ACESTREAM", StringComparison.OrdinalIgnoreCase);
 
             bool hasStrongVodGroup = groupUpper.Contains("VOD") || groupUpper.Contains("FILMLER") || groupUpper.Contains("MOVIES") ||
@@ -69,17 +73,6 @@ namespace StreamMesh.Core.Media
             bool isRadio = groupUpper.Contains("RADYO") || groupUpper.Contains("RADIO") ||
                            catUpper.Contains("RADYO") || catUpper.Contains("RADIO") ||
                            nameUpper.Contains(" RADYO") || nameUpper.Contains(" RADIO") || nameUpper.StartsWith("RADYO ") || nameUpper.StartsWith("RADIO ");
-
-            // V1.8.8: Standart kategori koruması (Ancak kesin canlı TV yayınlarını yanlışlıkla Film/Dizi yapma)
-            if (channel.Notes == "FORCE_CAT")
-            {
-                channel.Notes = ""; // Clear marker
-                if ((isExplicitLiveUrl || !string.IsNullOrWhiteSpace(channel.EpgId)) && !hasMovieExt && !hasMoviePath && !hasSeriesPath && !hasEpisodePattern)
-                {
-                    channel.Category = isRadio ? "Radyo" : "TV";
-                }
-                return;
-            }
 
             if (isRadio)
             {

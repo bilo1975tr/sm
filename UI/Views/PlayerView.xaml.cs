@@ -80,9 +80,7 @@ namespace StreamMesh.UI.Views
         private long _playbackSessionId;
         private bool _wasPausedByMinimize;
         private bool _hasReceivedFirstFrame;
-        private string? _lastMpvInitError;
-        private readonly object _mpvEnsureLock = new();
-        private Task<bool>? _mpvEnsureTask;
+        private bool _mpvDownloadTriggered;
 
         // UI deduplication caches
         private DateTime _lastMouseOsdResetUtc = DateTime.MinValue;
@@ -101,15 +99,6 @@ namespace StreamMesh.UI.Views
         private string _lastLoadedChannelId = "";
         private IptvAccountInfo? _currentDeadAccountDetected;
 
-        // 4-Screen Multi-View State
-        private bool _isMultiViewActive;
-        private int _focusedMultiViewSlot;
-        private MultiViewSlotState[]? _multiViewSlots;
-        private static readonly SolidColorBrush TileActiveBorderBrush = CreateFrozenBrush(56, 189, 248);
-        private static readonly SolidColorBrush TileInactiveBorderBrush = CreateFrozenBrush(30, 41, 59);
-        private static readonly SolidColorBrush TileMuteOnBrush = CreateFrozenBrush(2, 132, 199);
-        private static readonly SolidColorBrush TileMuteOffBrush = CreateFrozenBrush(30, 41, 59);
-
         public PlayerView()
         {
             InitializeComponent();
@@ -123,7 +112,7 @@ namespace StreamMesh.UI.Views
             };
             VideoPlayer.VideoDoubleClick += (_, _) => Fullscreen_Click(this, new RoutedEventArgs());
 
-            Loaded += (_, _) => _ = EnsureMpvReadyAsync(null, 0, CancellationToken.None);
+            Loaded += (_, _) => InitializePlayer();
 
             _osdTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4.5) };
             _osdTimer.Tick += (_, _) =>
@@ -468,11 +457,7 @@ namespace StreamMesh.UI.Views
 
         private void ConfigureMpvForUrl(string url, Channel channel)
         {
-            if (_mpv != null) ConfigureMpvEngineForUrl(_mpv, url, channel);
-        }
-
-        private void ConfigureMpvEngineForUrl(MpvPlayerEngine engine, string url, Channel channel)
-        {
+            if (_mpv == null) return;
             var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
 
             string ua = !string.IsNullOrWhiteSpace(channel.HttpUserAgent) ? channel.HttpUserAgent : defaultUa;
@@ -493,99 +478,46 @@ namespace StreamMesh.UI.Views
                 }
             }
 
-            engine.ConfigureRuntimeOptions(hwAccel, cacheMs, ua, headers, isAceStream, isHls);
+            _mpv.ConfigureRuntimeOptions(hwAccel, cacheMs, ua, headers, isAceStream, isHls);
         }
 
-        private Task<bool> EnsureMpvReadyAsync(string? channelName, long sessionId, CancellationToken token)
-        {
-            if (_mpv != null)
-            {
-                _initTcs.TrySetResult(true);
-                _ = Dispatcher.InvokeAsync(() => VideoPlayer.SyncOverlayBounds());
-                return Task.FromResult(true);
-            }
-
-            Task<bool> sharedTask;
-            lock (_mpvEnsureLock)
-            {
-                if (_mpvEnsureTask == null || _mpvEnsureTask.IsCompleted)
-                {
-                    _mpvEnsureTask = EnsureMpvReadyCoreAsync(channelName, sessionId);
-                }
-                sharedTask = _mpvEnsureTask;
-            }
-
-            if (token.CanBeCanceled)
-                return sharedTask.WaitAsync(token);
-
-            return sharedTask;
-        }
-
-        private async Task<bool> EnsureMpvReadyCoreAsync(string? initialChannelName, long initialSessionId)
-        {
-            try
-            {
-                if (!MpvPlayerEngine.IsLibraryAvailable())
-                {
-                    LogService.LogWarning("Player: libmpv-2.dll henüz hazır değil, indiriliyor/bekleniyor...");
-                    bool installed = await MaintenanceEngine.EnsureMpvInstalledAsync((_, msg) =>
-                    {
-                        _ = Dispatcher.InvokeAsync(() =>
-                        {
-                            string activeName = ViewModel.CurrentChannel?.PrimaryName ?? initialChannelName ?? "Kanal";
-                            if (OsdTitle != null)
-                            {
-                                OsdTitle.Text = $"{activeName} ({msg})";
-                                ShowOsdTemporary();
-                            }
-                        });
-                    }).ConfigureAwait(false);
-
-                    if (!installed || !MpvPlayerEngine.IsLibraryAvailable())
-                    {
-                        _lastMpvInitError = MaintenanceEngine.LastMpvInstallError ?? "libmpv-2.dll indirilemedi.";
-                        LogService.LogError($"[PLAYBACK/MPV] Kurulum başarısız: {_lastMpvInitError}");
-                        return false;
-                    }
-                }
-
-                // Wait briefly on UI dispatcher for Win32 VideoHandle to be valid if view just loaded
-                bool created = false;
-                for (int attempt = 0; attempt < 10 && !created; attempt++)
-                {
-                    created = await Dispatcher.InvokeAsync(TryCreateMpvEngine);
-                    if (!created && _mpv == null)
-                        await Task.Delay(120).ConfigureAwait(false);
-                }
-
-                return _mpv != null;
-            }
-            catch (Exception ex)
-            {
-                _lastMpvInitError = ex.Message;
-                LogService.LogError("[PLAYBACK/MPV] EnsureMpvReadyCoreAsync hatası", ex);
-                return false;
-            }
-        }
-
-        private bool TryCreateMpvEngine()
+        private void InitializePlayer()
         {
             if (_mpv != null)
             {
                 VideoPlayer.SyncOverlayBounds();
-                return true;
+                return;
             }
 
             if (!MpvPlayerEngine.IsLibraryAvailable())
-                return false;
+            {
+                LogService.LogWarning("Player: libmpv-2.dll henüz hazır değil, arka planda indiriliyor/bekleniyor...");
+                if (!_mpvDownloadTriggered)
+                {
+                    _mpvDownloadTriggered = true;
+                    _ = Task.Run(MaintenanceEngine.CheckAndInstallMpvAsync);
+                }
+
+                _ = Task.Run(async () =>
+                {
+                    for (int i = 0; i < 60; i++)
+                    {
+                        await Task.Delay(1500).ConfigureAwait(false);
+                        if (MpvPlayerEngine.IsLibraryAvailable())
+                        {
+                            await Dispatcher.InvokeAsync(InitializePlayer);
+                            break;
+                        }
+                    }
+                });
+                return;
+            }
 
             try
             {
-                IntPtr hwnd = VideoPlayer.VideoHandle;
-                if (hwnd == IntPtr.Zero)
-                    return false;
-
                 var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
+                IntPtr hwnd = VideoPlayer.VideoHandle;
+
                 var engine = new MpvPlayerEngine();
                 engine.Initialize(hwnd, hwAccel, cacheMs, defaultUa);
                 engine.SetAudioNormalization(_isAudioNormEnabled);
@@ -599,23 +531,22 @@ namespace StreamMesh.UI.Views
                 engine.TracksChanged += RefreshAudioTracks;
 
                 _mpv = engine;
-                _lastMpvInitError = null;
                 _initTcs.TrySetResult(true);
 
-                if (string.IsNullOrEmpty(OsdTitle.Text) || OsdTitle.Text == "Kanal Yükleniyor...")
-                    OsdTitle.Text = "Sistem Hazır (libmpv).";
-                OsdPanel.Visibility = Visibility.Visible;
-                UpdateAudioNormButtonUI();
-                UpdateVideoEnhanceButtonUI();
-                ShowOsdTemporary();
-                VideoPlayer.SyncOverlayBounds();
-                return true;
+                Dispatcher.InvokeAsync(() =>
+                {
+                    if (string.IsNullOrEmpty(OsdTitle.Text) || OsdTitle.Text == "Kanal Yükleniyor...")
+                        OsdTitle.Text = "Sistem Hazır (libmpv).";
+                    OsdPanel.Visibility = Visibility.Visible;
+                    UpdateAudioNormButtonUI();
+                    UpdateVideoEnhanceButtonUI();
+                    ShowOsdTemporary();
+                    VideoPlayer.SyncOverlayBounds();
+                });
             }
             catch (Exception ex)
             {
-                _lastMpvInitError = ex.Message;
                 LogService.LogError("[PLAYBACK/MPV] Başlatma hatası", ex);
-                return false;
             }
         }
 
@@ -782,11 +713,6 @@ namespace StreamMesh.UI.Views
                 if (!authorized) return;
             }
 
-            if (_isMultiViewActive)
-            {
-                Dispatcher.Invoke(() => ExitMultiViewMode(restoreChannel: null, stopAceIfUnused: false));
-            }
-
             if (_isRecording) StopRecording();
 
             ViewModel.CurrentChannel = channel;
@@ -826,26 +752,17 @@ namespace StreamMesh.UI.Views
 
                 try
                 {
-                    bool ready = await EnsureMpvReadyAsync(channel.PrimaryName, sessionId, token).ConfigureAwait(false);
-                    if (!ready || _mpv == null)
-                    {
-                        if (!token.IsCancellationRequested && sessionId == _playbackSessionId)
-                        {
-                            string detail = !string.IsNullOrWhiteSpace(_lastMpvInitError)
-                                ? _lastMpvInitError
-                                : (MaintenanceEngine.LastMpvInstallError ?? "DLL yüklenemedi");
-                            _ = Dispatcher.InvokeAsync(() =>
-                            {
-                                OsdTitle.Text = $"Görüntü motoru (libmpv) başlatılamadı: {detail}";
-                                UpdatePlayPauseIcon(false);
-                                ShowOsdTemporary();
-                            });
-                        }
-                        return;
-                    }
+                    if (_mpv == null) await Dispatcher.InvokeAsync(InitializePlayer);
+                    else _initTcs.TrySetResult(true);
+
+                    using var initTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+                    using var linkedInit = CancellationTokenSource.CreateLinkedTokenSource(token, initTimeout.Token);
+                    await _initTcs.Task.WaitAsync(linkedInit.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
+                    if (!token.IsCancellationRequested && sessionId == _playbackSessionId)
+                        _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = "Görüntü motoru (libmpv) başlatılamadı"; ShowOsdTemporary(); });
                     return;
                 }
 
@@ -1047,11 +964,6 @@ namespace StreamMesh.UI.Views
 
         public async void Stop()
         {
-            if (_isMultiViewActive)
-            {
-                Dispatcher.Invoke(() => ExitMultiViewMode(restoreChannel: null, stopAceIfUnused: true));
-            }
-
             if (_isRecording) StopRecording();
             _wasPausedByMinimize = false;
             _loadCts?.Cancel();
@@ -1179,32 +1091,13 @@ namespace StreamMesh.UI.Views
             });
         }
 
-        private void MultiViewBtn_Click(object sender, RoutedEventArgs e)
+        private void MiniPlayerBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (_isMultiViewActive)
-            {
-                ExitMultiViewMode(restoreChannel: GetFocusedOrFirstMultiViewChannel());
-            }
-            else
-            {
-                EnterMultiViewMode();
-            }
+            (Window.GetWindow(this) as UI.Windows.MainWindow ?? UI.Windows.MainWindow.Instance)?.ToggleMiniPlayer();
         }
 
         public void PauseForMinimize()
         {
-            if (_isMultiViewActive && _multiViewSlots != null)
-            {
-                foreach (var slot in _multiViewSlots)
-                {
-                    if (slot.Engine != null && slot.Engine.Status == MpvPlaybackStatus.Playing)
-                    {
-                        try { slot.Engine.Pause(); slot.PausedByMinimize = true; } catch { }
-                    }
-                }
-                return;
-            }
-
             if (_mpv != null && ViewModel.CurrentChannel != null && _mpv.Status == MpvPlaybackStatus.Playing)
             {
                 _wasPausedByMinimize = true;
@@ -1214,19 +1107,6 @@ namespace StreamMesh.UI.Views
 
         public void ResumeFromMinimize()
         {
-            if (_isMultiViewActive && _multiViewSlots != null)
-            {
-                foreach (var slot in _multiViewSlots)
-                {
-                    if (slot.Engine != null && slot.PausedByMinimize)
-                    {
-                        slot.PausedByMinimize = false;
-                        try { if (slot.Engine.Status == MpvPlaybackStatus.Paused) slot.Engine.Play(); } catch { }
-                    }
-                }
-                return;
-            }
-
             if (_mpv != null && ViewModel.CurrentChannel != null && _wasPausedByMinimize)
             {
                 _wasPausedByMinimize = false;
@@ -1450,15 +1330,6 @@ namespace StreamMesh.UI.Views
 
         public void ToggleMute()
         {
-            if (_isMultiViewActive && _multiViewSlots != null)
-            {
-                var slot = _multiViewSlots[_focusedMultiViewSlot];
-                slot.IsMuted = !slot.IsMuted;
-                try { slot.Engine?.SetMute(slot.IsMuted); } catch { }
-                RefreshMultiViewSlotVisuals();
-                return;
-            }
-
             if (_mpv != null)
             {
                 _mpv.SetMute(!_mpv.IsMuted);
@@ -1852,689 +1723,6 @@ namespace StreamMesh.UI.Views
 
         private void BtnCloseDeadAccountAlert_Click(object sender, RoutedEventArgs e) => DeadAccountAlertCard.Visibility = Visibility.Collapsed;
 
-        #region 4-Screen Simultaneous Multi-View
-
-        private sealed class MultiViewSlotState
-        {
-            public int Index;
-            public long SessionId;
-            public CancellationTokenSource? LoadCts;
-            public MpvPlayerEngine? Engine;
-            public System.Windows.Forms.Integration.WindowsFormsHost? WfHost;
-            public System.Windows.Forms.Panel? VideoPanel;
-            public Channel? ActiveChannel;
-            public string? ActiveRawUrl;
-            public string? ActivePreparedUrl;
-            public string ActiveServerKey = "";
-            public string ActiveServerLabel = "";
-            public bool IsAceStream;
-            public bool IsMuted = true;
-            public bool PausedByMinimize;
-
-            public System.Windows.Controls.Border Border = null!;
-            public System.Windows.Controls.TextBlock TitleText = null!;
-            public System.Windows.Controls.TextBlock ServerText = null!;
-            public System.Windows.Controls.Button MuteBtn = null!;
-            public System.Windows.Controls.Grid VideoContainer = null!;
-            public System.Windows.Controls.Grid EmptyPanel = null!;
-
-            public IntPtr EnsureVideoHandle()
-            {
-                if (VideoPanel == null) return IntPtr.Zero;
-                if (!VideoPanel.IsHandleCreated) VideoPanel.CreateControl();
-                return VideoPanel.Handle;
-            }
-        }
-
-        private void EnsureMultiViewSlotsInitialized()
-        {
-            if (_multiViewSlots != null) return;
-
-            var borders = new[] { TileBorder0, TileBorder1, TileBorder2, TileBorder3 };
-            var titles = new[] { TileTitle0, TileTitle1, TileTitle2, TileTitle3 };
-            var servers = new[] { TileServer0, TileServer1, TileServer2, TileServer3 };
-            var muteBtns = new[] { TileMuteBtn0, TileMuteBtn1, TileMuteBtn2, TileMuteBtn3 };
-            var videoContainers = new[] { TileVideoContainer0, TileVideoContainer1, TileVideoContainer2, TileVideoContainer3 };
-            var emptyPanels = new[] { TileEmpty0, TileEmpty1, TileEmpty2, TileEmpty3 };
-
-            _multiViewSlots = new MultiViewSlotState[4];
-            for (int i = 0; i < 4; i++)
-            {
-                int slotIdx = i;
-                var panel = new System.Windows.Forms.Panel
-                {
-                    BackColor = System.Drawing.Color.Black,
-                    Dock = System.Windows.Forms.DockStyle.Fill,
-                    Margin = System.Windows.Forms.Padding.Empty,
-                    TabStop = false
-                };
-                panel.MouseDown += (_, _) => Dispatcher.InvokeAsync(() => SetMultiViewAudioFocus(slotIdx));
-
-                var wfHost = new System.Windows.Forms.Integration.WindowsFormsHost
-                {
-                    Child = panel,
-                    HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
-                    VerticalAlignment = System.Windows.VerticalAlignment.Stretch
-                };
-
-                videoContainers[i].Children.Clear();
-                videoContainers[i].Children.Add(wfHost);
-
-                _multiViewSlots[i] = new MultiViewSlotState
-                {
-                    Index = i,
-                    IsMuted = i != 0,
-                    WfHost = wfHost,
-                    VideoPanel = panel,
-                    Border = borders[i],
-                    TitleText = titles[i],
-                    ServerText = servers[i],
-                    MuteBtn = muteBtns[i],
-                    VideoContainer = videoContainers[i],
-                    EmptyPanel = emptyPanels[i]
-                };
-            }
-        }
-
-        private void EnterMultiViewMode()
-        {
-            var mainWin = Window.GetWindow(this) as UI.Windows.MainWindow ?? UI.Windows.MainWindow.Instance;
-            mainWin?.SetMiniPlayer(false);
-
-            EnsureMultiViewSlotsInitialized();
-
-            Channel? transferChannel = ViewModel.CurrentChannel;
-            long transferVodPosMs = 0;
-            if (transferChannel != null && _mpv != null && ViewModel.IsVod(transferChannel))
-            {
-                try
-                {
-                    transferVodPosMs = _mpv.PositionMs;
-                    ViewModel.SaveVodPosition(transferChannel, transferVodPosMs);
-                }
-                catch { }
-            }
-
-            if (_isRecording) StopRecording();
-            _loadCts?.Cancel();
-            _positionTimer?.Stop();
-            _osdTimer?.Stop();
-            if (OsdPanel != null) OsdPanel.Visibility = Visibility.Collapsed;
-            if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
-
-            try { _mpv?.Stop(); } catch { }
-            _activeProxySession = null;
-            ResetTimeshiftState();
-
-            _isMultiViewActive = true;
-            _focusedMultiViewSlot = 0;
-            VideoPlayer.Visibility = Visibility.Collapsed;
-            MultiViewContainer.Visibility = Visibility.Visible;
-            VideoPlayer.SyncOverlayBounds();
-
-            SetMultiViewAudioFocus(0);
-
-            if (transferChannel != null)
-            {
-                _ = LoadMultiViewSlotAsync(0, transferChannel, transferVodPosMs);
-            }
-            else
-            {
-                UpdateMultiViewHeaderStatus();
-            }
-        }
-
-        private void ExitMultiViewMode(Channel? restoreChannel, bool stopAceIfUnused = true)
-        {
-            if (!_isMultiViewActive) return;
-
-            bool restoreIsAce = restoreChannel != null && MultiViewConflictHelper.IsAceStreamUrl(restoreChannel.Url, restoreChannel);
-            bool anySlotUsedAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
-
-            StopAllMultiViewSlots(disposeEngines: false);
-
-            _isMultiViewActive = false;
-            MultiViewContainer.Visibility = Visibility.Collapsed;
-            VideoPlayer.Visibility = Visibility.Visible;
-            VideoPlayer.SyncOverlayBounds();
-
-            if (anySlotUsedAce && stopAceIfUnused && !restoreIsAce)
-            {
-                _ = Task.Run(async () =>
-                {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
-                });
-            }
-
-            if (restoreChannel != null)
-            {
-                LoadChannel(restoreChannel);
-            }
-            else
-            {
-                ViewModel.CurrentChannel = null;
-                _currentPlayingUrl = null;
-                UpdateMultiViewHeaderStatus();
-            }
-        }
-
-        private Channel? GetFocusedOrFirstMultiViewChannel()
-        {
-            if (_multiViewSlots == null) return null;
-            if (_focusedMultiViewSlot >= 0 && _focusedMultiViewSlot < _multiViewSlots.Length && _multiViewSlots[_focusedMultiViewSlot].ActiveChannel != null)
-                return _multiViewSlots[_focusedMultiViewSlot].ActiveChannel;
-            return _multiViewSlots.FirstOrDefault(s => s.ActiveChannel != null)?.ActiveChannel;
-        }
-
-        private (HashSet<string> blockedKeys, bool blockAce) GetMultiViewConflictsExcluding(int excludedSlotIndex)
-        {
-            var blockedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            bool blockAce = false;
-
-            if (_multiViewSlots == null) return (blockedKeys, false);
-
-            foreach (var s in _multiViewSlots)
-            {
-                if (s.Index == excludedSlotIndex || s.ActiveChannel == null) continue;
-
-                if (s.IsAceStream || MultiViewConflictHelper.IsAceStreamUrl(s.ActivePreparedUrl ?? s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel))
-                {
-                    blockAce = true;
-                    blockedKeys.Add(MultiViewConflictHelper.AceStreamServerKey);
-                }
-
-                if (!string.IsNullOrWhiteSpace(s.ActiveServerKey))
-                {
-                    blockedKeys.Add(s.ActiveServerKey);
-                }
-                else
-                {
-                    string fallbackKey = MultiViewConflictHelper.GetNormalizedServerKey(s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel);
-                    if (!string.IsNullOrWhiteSpace(fallbackKey))
-                        blockedKeys.Add(fallbackKey);
-                }
-            }
-
-            return (blockedKeys, blockAce);
-        }
-
-        private void SetMultiViewAudioFocus(int slotIndex)
-        {
-            if (_multiViewSlots == null || slotIndex < 0 || slotIndex >= _multiViewSlots.Length) return;
-            _focusedMultiViewSlot = slotIndex;
-
-            for (int i = 0; i < _multiViewSlots.Length; i++)
-            {
-                var slot = _multiViewSlots[i];
-                slot.IsMuted = (i != slotIndex);
-                try { slot.Engine?.SetMute(slot.IsMuted); } catch { }
-            }
-
-            RefreshMultiViewSlotVisuals();
-        }
-
-        private void RefreshMultiViewSlotVisuals()
-        {
-            if (_multiViewSlots == null) return;
-            for (int i = 0; i < _multiViewSlots.Length; i++)
-            {
-                var slot = _multiViewSlots[i];
-                bool isFocused = (i == _focusedMultiViewSlot);
-                slot.Border.BorderBrush = isFocused ? TileActiveBorderBrush : TileInactiveBorderBrush;
-                slot.MuteBtn.Content = slot.IsMuted ? "🔇" : "🔊";
-                slot.MuteBtn.Background = slot.IsMuted ? TileMuteOffBrush : TileMuteOnBrush;
-                slot.MuteBtn.Foreground = slot.IsMuted ? System.Windows.Media.Brushes.LightGray : System.Windows.Media.Brushes.White;
-            }
-        }
-
-        private void UpdateMultiViewHeaderStatus()
-        {
-            if (MultiViewStatusText == null || _multiViewSlots == null) return;
-            int activeCount = _multiViewSlots.Count(s => s.ActiveChannel != null);
-            var locks = new List<string>();
-            if (_multiViewSlots.Any(s => s.ActiveChannel != null && s.IsAceStream))
-                locks.Add("AceStream P2P (Tekil)");
-
-            foreach (var s in _multiViewSlots)
-            {
-                if (s.ActiveChannel != null && !s.IsAceStream && !string.IsNullOrWhiteSpace(s.ActiveServerKey))
-                    locks.Add(s.ActiveServerKey);
-            }
-
-            string lockInfo = locks.Count > 0 ? $" • Kilitli Sunucular: {string.Join(", ", locks.Distinct(StringComparer.OrdinalIgnoreCase))}" : "";
-            MultiViewStatusText.Text = $"{activeCount}/4 Ekran Aktif{lockInfo} • Sesi geçirmek için ekrana tıklayın";
-        }
-
-        private async Task LoadMultiViewSlotAsync(int slotIndex, Channel channel, long startPositionMs = 0)
-        {
-            if (_multiViewSlots == null || slotIndex < 0 || slotIndex >= _multiViewSlots.Length || channel == null) return;
-
-            var authPlugin = PluginManager.Instance.GetPluginById("user_auth") as UserAuthPlugin;
-            if (channel.IsLocked && authPlugin is { IsEnabled: true } && authPlugin.GetBool("EnableParentalPin"))
-            {
-                bool authorized = Dispatcher.Invoke(() => PromptParentalPin(channel.PrimaryName, authPlugin));
-                if (!authorized) return;
-            }
-
-            var slot = _multiViewSlots[slotIndex];
-            slot.LoadCts?.Cancel();
-            slot.LoadCts?.Dispose();
-            slot.LoadCts = new CancellationTokenSource();
-            var token = slot.LoadCts.Token;
-            long sessionId = Interlocked.Increment(ref slot.SessionId);
-
-            bool wasAce = slot.IsAceStream;
-            slot.ActiveChannel = channel;
-            slot.ActiveRawUrl = null;
-            slot.ActivePreparedUrl = null;
-            slot.ActiveServerKey = "";
-            slot.ActiveServerLabel = "";
-            slot.IsAceStream = MultiViewConflictHelper.IsAceStreamUrl(channel.Url, channel);
-
-            await Dispatcher.InvokeAsync(() =>
-            {
-                slot.EmptyPanel.Visibility = Visibility.Collapsed;
-                slot.VideoContainer.Visibility = Visibility.Visible;
-                slot.TitleText.Text = $"{channel.PrimaryName} (Bağlanıyor...)";
-                slot.ServerText.Text = "";
-                UpdateMultiViewHeaderStatus();
-            });
-
-            if (wasAce && !slot.IsAceStream && !_multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream))
-            {
-                _ = Task.Run(async () =>
-                {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
-                });
-            }
-
-            await Task.Run(async () =>
-            {
-                if (token.IsCancellationRequested || sessionId != slot.SessionId) return;
-
-                try
-                {
-                    if (!MpvPlayerEngine.IsLibraryAvailable())
-                    {
-                        await Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} (libmpv indiriliyor...)");
-                        bool installed = await MaintenanceEngine.EnsureMpvInstalledAsync((_, msg) =>
-                        {
-                            _ = Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} ({msg})");
-                        }).WaitAsync(token).ConfigureAwait(false);
-                        if (!installed) return;
-                    }
-
-                    if (!MpvPlayerEngine.IsLibraryAvailable() || token.IsCancellationRequested || sessionId != slot.SessionId)
-                        return;
-
-                    await Dispatcher.InvokeAsync(() =>
-                    {
-                        if (slot.Engine == null)
-                        {
-                            IntPtr hwnd = slot.EnsureVideoHandle();
-                            if (hwnd == IntPtr.Zero) return;
-                            var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
-                            var eng = new MpvPlayerEngine();
-                            eng.Initialize(hwnd, hwAccel, cacheMs, defaultUa);
-                            eng.SetMute(slot.IsMuted);
-                            slot.Engine = eng;
-                        }
-                        else
-                        {
-                            try { slot.Engine.Stop(); } catch { }
-                        }
-                    });
-
-                    if (slot.Engine == null || token.IsCancellationRequested || sessionId != slot.SessionId) return;
-
-                    var (blockedKeys, blockAce) = GetMultiViewConflictsExcluding(slotIndex);
-                    var rawCandidates = await ViewModel.GetSmartOrderedCandidatesAsync(channel, token).ConfigureAwait(false);
-                    var filteredCandidates = MultiViewConflictHelper.FilterNonConflictingUrls(rawCandidates, channel, blockedKeys, blockAce);
-
-                    if (filteredCandidates.Count == 0)
-                    {
-                        await Dispatcher.InvokeAsync(() =>
-                        {
-                            slot.ActiveChannel = null;
-                            slot.ActiveServerKey = "";
-                            slot.IsAceStream = false;
-                            slot.VideoContainer.Visibility = Visibility.Collapsed;
-                            slot.EmptyPanel.Visibility = Visibility.Visible;
-                            slot.TitleText.Text = "Çakışan Sunucu / AceStream Kısıtı";
-                            slot.ServerText.Text = "";
-                            UpdateMultiViewHeaderStatus();
-                        });
-                        return;
-                    }
-
-                    var resPlugin = PluginManager.Instance.GetPluginById("stream_resolution") as StreamResolutionPlugin;
-                    int customTimeoutSec = resPlugin is { IsEnabled: true } ? Math.Clamp(resPlugin.GetInt("ConnectionTimeoutSeconds", 8), 5, 45) : 15;
-
-                    bool succeeded = false;
-                    string successRaw = "";
-                    string successPrepared = "";
-                    string successKey = "";
-                    bool successIsAce = false;
-
-                    for (int i = 0; i < filteredCandidates.Count; i++)
-                    {
-                        if (token.IsCancellationRequested || sessionId != slot.SessionId) break;
-                        string rawCandidate = filteredCandidates[i];
-
-                        // Re-check conflicts right before resolving in case another slot loaded concurrently
-                        var (latestBlocked, latestBlockAce) = GetMultiViewConflictsExcluding(slotIndex);
-                        if (!MultiViewConflictHelper.IsUrlAllowed(rawCandidate, channel, latestBlocked, latestBlockAce))
-                            continue;
-
-                        if (i > 0)
-                        {
-                            await Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} (Alternatif {i + 1}/{filteredCandidates.Count}...)");
-                        }
-
-                        string preparedUrl = await ViewModel.PrepareSingleStreamUrlAsync(rawCandidate, channel, token).ConfigureAwait(false);
-                        if (token.IsCancellationRequested || sessionId != slot.SessionId || string.IsNullOrWhiteSpace(preparedUrl))
-                            continue;
-
-                        bool isAceCandidate = MultiViewConflictHelper.IsAceStreamUrl(preparedUrl, channel) || MultiViewConflictHelper.IsAceStreamUrl(rawCandidate, channel);
-                        string candidateKey = isAceCandidate
-                            ? MultiViewConflictHelper.AceStreamServerKey
-                            : MultiViewConflictHelper.GetNormalizedServerKey(rawCandidate, channel);
-
-                        slot.IsAceStream = isAceCandidate;
-                        slot.ActiveServerKey = candidateKey;
-
-                        int watchdogMs = isAceCandidate ? 35000 : customTimeoutSec * 1000;
-                        if (await OpenAndAwaitSlotPlaybackAsync(slot, preparedUrl, channel, watchdogMs, token, sessionId).ConfigureAwait(false))
-                        {
-                            succeeded = true;
-                            successRaw = rawCandidate;
-                            successPrepared = preparedUrl;
-                            successKey = candidateKey;
-                            successIsAce = isAceCandidate;
-                            break;
-                        }
-
-                        try { slot.Engine?.Stop(); } catch { }
-                    }
-
-                    if (token.IsCancellationRequested || sessionId != slot.SessionId) return;
-
-                    if (succeeded)
-                    {
-                        slot.ActiveRawUrl = successRaw;
-                        slot.ActivePreparedUrl = successPrepared;
-                        slot.ActiveServerKey = successKey;
-                        slot.IsAceStream = successIsAce;
-                        slot.ActiveServerLabel = successIsAce ? "AceStream P2P" : (string.IsNullOrEmpty(successKey) ? channel.SourceType : successKey);
-
-                        if (startPositionMs > 0 && ViewModel.IsVod(channel))
-                        {
-                            try { slot.Engine?.SeekMs(startPositionMs); } catch { }
-                        }
-
-                        await Dispatcher.InvokeAsync(() =>
-                        {
-                            slot.TitleText.Text = channel.PrimaryName;
-                            slot.ServerText.Text = slot.ActiveServerLabel;
-                            slot.Engine?.SetMute(slot.IsMuted);
-                            RefreshMultiViewSlotVisuals();
-                            UpdateMultiViewHeaderStatus();
-                        });
-                    }
-                    else
-                    {
-                        await Dispatcher.InvokeAsync(() =>
-                        {
-                            slot.ActiveChannel = null;
-                            slot.ActiveServerKey = "";
-                            slot.IsAceStream = false;
-                            slot.TitleText.Text = $"{channel.PrimaryName} (Sinyal Yok)";
-                            slot.ServerText.Text = "";
-                            slot.VideoContainer.Visibility = Visibility.Collapsed;
-                            slot.EmptyPanel.Visibility = Visibility.Visible;
-                            UpdateMultiViewHeaderStatus();
-                        });
-                    }
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception ex)
-                {
-                    LogService.LogError($"[MultiView] Slot {slotIndex + 1} playback error", ex);
-                }
-            }, token);
-        }
-
-        private async Task<bool> OpenAndAwaitSlotPlaybackAsync(
-            MultiViewSlotState slot,
-            string url,
-            Channel channel,
-            int watchdogMs,
-            CancellationToken token,
-            long sessionId)
-        {
-            var eng = slot.Engine;
-            if (eng == null || token.IsCancellationRequested || sessionId != slot.SessionId)
-                return false;
-
-            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-            Action<MpvPlaybackStatus> statusHandler = status =>
-            {
-                if (sessionId != slot.SessionId) { tcs.TrySetResult(false); return; }
-                if (status == MpvPlaybackStatus.Playing) tcs.TrySetResult(true);
-                else if (status == MpvPlaybackStatus.Failed) tcs.TrySetResult(false);
-            };
-
-            Action<bool, string?> openHandler = (success, _) =>
-            {
-                if (sessionId != slot.SessionId) { tcs.TrySetResult(false); return; }
-                tcs.TrySetResult(success);
-            };
-
-            eng.StatusChanged += statusHandler;
-            eng.OpenCompleted += openHandler;
-
-            try
-            {
-                ConfigureMpvEngineForUrl(eng, url, channel);
-                eng.SetMute(slot.IsMuted);
-
-                if (MultiViewConflictHelper.IsAceStreamUrl(url, channel))
-                    await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
-
-                eng.Open(url);
-
-                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
-                var completed = await Task.WhenAny(tcs.Task, Task.Delay(watchdogMs, linkedCts.Token)).ConfigureAwait(false);
-                if (token.IsCancellationRequested || sessionId != slot.SessionId) return false;
-
-                if (completed == tcs.Task)
-                {
-                    linkedCts.Cancel();
-                    return await tcs.Task.ConfigureAwait(false);
-                }
-                return false;
-            }
-            finally
-            {
-                eng.StatusChanged -= statusHandler;
-                eng.OpenCompleted -= openHandler;
-            }
-        }
-
-        private void ClearMultiViewSlot(int slotIndex)
-        {
-            if (_multiViewSlots == null || slotIndex < 0 || slotIndex >= _multiViewSlots.Length) return;
-            var slot = _multiViewSlots[slotIndex];
-            bool wasAce = slot.IsAceStream;
-
-            Interlocked.Increment(ref slot.SessionId);
-            slot.LoadCts?.Cancel();
-            slot.LoadCts?.Dispose();
-            slot.LoadCts = null;
-
-            if (slot.ActiveChannel != null && slot.Engine != null && ViewModel.IsVod(slot.ActiveChannel))
-            {
-                try { ViewModel.SaveVodPosition(slot.ActiveChannel, slot.Engine.PositionMs); } catch { }
-            }
-
-            try { slot.Engine?.Stop(); } catch { }
-
-            slot.ActiveChannel = null;
-            slot.ActiveRawUrl = null;
-            slot.ActivePreparedUrl = null;
-            slot.ActiveServerKey = "";
-            slot.ActiveServerLabel = "";
-            slot.IsAceStream = false;
-
-            slot.VideoContainer.Visibility = Visibility.Collapsed;
-            slot.EmptyPanel.Visibility = Visibility.Visible;
-            slot.TitleText.Text = "Boş Ekran";
-            slot.ServerText.Text = "";
-
-            if (wasAce && !_multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream))
-            {
-                _ = Task.Run(async () =>
-                {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
-                });
-            }
-
-            UpdateMultiViewHeaderStatus();
-        }
-
-        private void StopAllMultiViewSlots(bool disposeEngines)
-        {
-            if (_multiViewSlots == null) return;
-
-            foreach (var slot in _multiViewSlots)
-            {
-                Interlocked.Increment(ref slot.SessionId);
-                slot.LoadCts?.Cancel();
-                slot.LoadCts?.Dispose();
-                slot.LoadCts = null;
-
-                if (slot.ActiveChannel != null && slot.Engine != null && ViewModel.IsVod(slot.ActiveChannel))
-                {
-                    try { ViewModel.SaveVodPosition(slot.ActiveChannel, slot.Engine.PositionMs); } catch { }
-                }
-
-                try { slot.Engine?.Stop(); } catch { }
-                if (disposeEngines)
-                {
-                    try { slot.Engine?.Dispose(); } catch { }
-                    slot.Engine = null;
-                    try { slot.WfHost?.Dispose(); } catch { }
-                    slot.WfHost = null;
-                    try { slot.VideoPanel?.Dispose(); } catch { }
-                    slot.VideoPanel = null;
-                }
-
-                slot.ActiveChannel = null;
-                slot.ActiveRawUrl = null;
-                slot.ActivePreparedUrl = null;
-                slot.ActiveServerKey = "";
-                slot.ActiveServerLabel = "";
-                slot.IsAceStream = false;
-
-                if (!disposeEngines)
-                {
-                    slot.VideoContainer.Visibility = Visibility.Collapsed;
-                    slot.EmptyPanel.Visibility = Visibility.Visible;
-                    slot.TitleText.Text = "Boş Ekran";
-                    slot.ServerText.Text = "";
-                }
-            }
-        }
-
-        private static int ParseSlotTag(object sender)
-        {
-            if (sender is FrameworkElement fe && fe.Tag != null && int.TryParse(fe.Tag.ToString(), out int idx))
-                return idx;
-            return -1;
-        }
-
-        private void MultiViewTileHeader_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            int idx = ParseSlotTag(sender);
-            if (idx >= 0) SetMultiViewAudioFocus(idx);
-        }
-
-        private void MultiViewTileMute_Click(object sender, RoutedEventArgs e)
-        {
-            int idx = ParseSlotTag(sender);
-            if (_multiViewSlots == null || idx < 0 || idx >= _multiViewSlots.Length) return;
-
-            var slot = _multiViewSlots[idx];
-            if (slot.IsMuted)
-            {
-                SetMultiViewAudioFocus(idx);
-            }
-            else
-            {
-                slot.IsMuted = true;
-                try { slot.Engine?.SetMute(true); } catch { }
-                RefreshMultiViewSlotVisuals();
-            }
-        }
-
-        private void MultiViewTilePick_Click(object sender, RoutedEventArgs e)
-        {
-            int idx = ParseSlotTag(sender);
-            if (idx < 0 || idx > 3) return;
-
-            var (blockedKeys, blockAce) = GetMultiViewConflictsExcluding(idx);
-            var picker = new UI.Windows.MultiViewChannelPickerWindow(idx, blockedKeys, blockAce)
-            {
-                Owner = Window.GetWindow(this) ?? UI.Windows.MainWindow.Instance
-            };
-
-            if (picker.ShowDialog() == true && picker.SelectedChannel != null)
-            {
-                SetMultiViewAudioFocus(idx);
-                _ = LoadMultiViewSlotAsync(idx, picker.SelectedChannel);
-            }
-        }
-
-        private void MultiViewTileExpand_Click(object sender, RoutedEventArgs e)
-        {
-            int idx = ParseSlotTag(sender);
-            if (_multiViewSlots == null || idx < 0 || idx >= _multiViewSlots.Length) return;
-            var ch = _multiViewSlots[idx].ActiveChannel;
-            ExitMultiViewMode(restoreChannel: ch ?? GetFocusedOrFirstMultiViewChannel());
-        }
-
-        private void MultiViewTileClose_Click(object sender, RoutedEventArgs e)
-        {
-            int idx = ParseSlotTag(sender);
-            if (idx >= 0) ClearMultiViewSlot(idx);
-        }
-
-        private void MultiViewStopAllBtn_Click(object sender, RoutedEventArgs e)
-        {
-            bool anyAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
-            StopAllMultiViewSlots(disposeEngines: false);
-            if (anyAce)
-            {
-                _ = Task.Run(async () =>
-                {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
-                });
-            }
-            UpdateMultiViewHeaderStatus();
-        }
-
-        private void MultiViewExitBtn_Click(object sender, RoutedEventArgs e)
-        {
-            ExitMultiViewMode(restoreChannel: GetFocusedOrFirstMultiViewChannel());
-        }
-
-        #endregion
-
         public void Dispose()
         {
             if (_isRecording) StopRecording();
@@ -2548,9 +1736,6 @@ namespace StreamMesh.UI.Views
             _viewersTimer?.Stop();
             _toastTimer?.Stop();
 
-            bool anyMultiViewAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
-            StopAllMultiViewSlots(disposeEngines: true);
-
             if (_mpv != null)
             {
                 try
@@ -2560,17 +1745,13 @@ namespace StreamMesh.UI.Views
                         ViewModel.SaveVodPosition(ch, _mpv.PositionMs);
                     _mpv.Stop();
 
-                    if (anyMultiViewAce || ch?.SourceType == "ACESTREAM" || ch?.Url?.Contains("acestream://") == true)
+                    if (ch?.SourceType == "ACESTREAM" || ch?.Url?.Contains("acestream://") == true)
                         Task.Run(async () => await _ace.StopAllStreamsAsync());
 
                     _mpv.Dispose();
                 }
                 catch { }
                 _mpv = null;
-            }
-            else if (anyMultiViewAce)
-            {
-                Task.Run(async () => await _ace.StopAllStreamsAsync());
             }
 
             try { VideoPlayer.Dispose(); } catch { }

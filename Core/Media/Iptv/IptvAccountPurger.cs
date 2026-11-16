@@ -45,19 +45,9 @@ namespace StreamMesh.Core.Media.Iptv
         public static bool ChannelBelongsToAccount(Channel? channel, IptvAccountInfo? account)
         {
             if (channel == null || account == null) return false;
-            string host = account.HostWithPort;
-            if (string.IsNullOrEmpty(host)) return false;
 
             string pUrl = (channel.PlaylistUrl ?? "").Trim();
-            string rawUrl = channel.Url ?? "";
-
-            if (!pUrl.Contains(host, StringComparison.OrdinalIgnoreCase) &&
-                !rawUrl.Contains(host, StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(pUrl) && pUrl.Contains(host, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(pUrl) && pUrl.Contains(account.HostWithPort, StringComparison.OrdinalIgnoreCase))
             {
                 if (string.IsNullOrEmpty(account.Username) || pUrl.Contains(account.Username, StringComparison.OrdinalIgnoreCase))
                 {
