@@ -171,10 +171,12 @@ namespace StreamMesh.Core.Media
                             var crawler = new GitHubRepoCrawler();
                             var seedDict = new Dictionary<string, List<string>>();
 
+                            bool syncKarma = syncTv || syncMovies || syncSeries || syncRadio;
                             if (syncTv && !cleanM3uLoaded) seedDict["TV"] = cfg.Tv ?? new List<string>();
                             if (syncMovies) seedDict["Film"] = cfg.Film ?? new List<string>();
                             if (syncSeries) seedDict["Dizi"] = cfg.Dizi ?? new List<string>();
                             if (syncRadio) seedDict["Radyo"] = cfg.Radyo ?? new List<string>();
+                            if (syncKarma && cfg.Karma != null && cfg.Karma.Count > 0) seedDict["Karma"] = cfg.Karma;
 
                             if (seedDict.Count > 0)
                             {
@@ -187,12 +189,13 @@ namespace StreamMesh.Core.Media
                                 var filmUrls = syncMovies ? discoveredSources.Where(x => x.Category.Equals("Film", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
                                 var diziUrls = syncSeries ? discoveredSources.Where(x => x.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
                                 var radyoUrls = syncRadio ? discoveredSources.Where(x => x.Category.Equals("Radyo", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
+                                var karmaUrls = syncKarma ? discoveredSources.Where(x => x.Category.Equals("Karma", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
 
-                                int totalSources = tvUrls.Count + filmUrls.Count + diziUrls.Count + radyoUrls.Count;
+                                int totalSources = tvUrls.Count + filmUrls.Count + diziUrls.Count + radyoUrls.Count + karmaUrls.Count;
                                 if (totalSources > 0)
                                 {
                                     ReportProgress(20, $"🎉 {totalSources} adet kaynak tespit edildi! Kütüphane indirmesi başlatılıyor...");
-                                    LogService.LogInfo($"GitHubSyncEngine: Toplam {totalSources} adet kaynak (TV: {tvUrls.Count}, Film: {filmUrls.Count}, Dizi: {diziUrls.Count}, Radyo: {radyoUrls.Count}) işleniyor...");
+                                    LogService.LogInfo($"GitHubSyncEngine: Toplam {totalSources} adet kaynak (TV: {tvUrls.Count}, Film: {filmUrls.Count}, Dizi: {diziUrls.Count}, Radyo: {radyoUrls.Count}, Karma: {karmaUrls.Count}) işleniyor...");
 
                                     int processedSources = 0;
                                     var accumulativeChannels = new List<Channel>();
@@ -210,6 +213,7 @@ namespace StreamMesh.Core.Media
                                     if (filmUrls.Count > 0) await ProcessListWithProgress(filmUrls, "Film", totalSources, () => ++processedSources, true, accumulativeChannels);
                                     if (diziUrls.Count > 0) await ProcessListWithProgress(diziUrls, "Dizi", totalSources, () => ++processedSources, true, accumulativeChannels);
                                     if (radyoUrls.Count > 0) await ProcessListWithProgress(radyoUrls, "Radyo", totalSources, () => ++processedSources, true, accumulativeChannels);
+                                    if (karmaUrls.Count > 0) await ProcessListWithProgress(karmaUrls, "TV", totalSources, () => ++processedSources, false, accumulativeChannels);
 
                                     if (accumulativeChannels.Count > 0)
                                     {

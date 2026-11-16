@@ -104,6 +104,8 @@ namespace StreamMesh.Core.Media.Mpv
             });
         }
 
+        public static string LastLoadError { get; private set; } = "";
+
         public static string? FindLibraryPath()
         {
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -123,8 +125,12 @@ namespace StreamMesh.Core.Media.Mpv
 
             foreach (var path in candidates)
             {
-                if (File.Exists(path))
-                    return path;
+                try
+                {
+                    if (File.Exists(path) && new FileInfo(path).Length > 65536)
+                        return path;
+                }
+                catch { }
             }
 
             return null;
@@ -133,8 +139,7 @@ namespace StreamMesh.Core.Media.Mpv
         public static bool IsLibraryAvailable()
         {
             if (_loadedHandle != IntPtr.Zero) return true;
-            if (FindLibraryPath() != null) return true;
-            return NativeLibrary.TryLoad(DllName, out _);
+            return FindLibraryPath() != null || NativeLibrary.TryLoad(DllName, out _);
         }
 
         public static IntPtr EnsureLoaded()
@@ -147,6 +152,7 @@ namespace StreamMesh.Core.Media.Mpv
                 if (_loadedHandle != IntPtr.Zero)
                     return _loadedHandle;
 
+                LastLoadError = "";
                 string? path = FindLibraryPath();
                 if (!string.IsNullOrEmpty(path))
                 {
@@ -160,6 +166,10 @@ namespace StreamMesh.Core.Media.Mpv
                         _loadedHandle = handle;
                         return _loadedHandle;
                     }
+
+                    int winErr = Marshal.GetLastWin32Error();
+                    LastLoadError = $"NativeLibrary.TryLoad('{path}') başarısız (Win32={winErr})";
+                    Core.Utils.LogService.LogError($"[MPV] {LastLoadError}");
                 }
 
                 if (NativeLibrary.TryLoad(DllName, out IntPtr fallbackHandle))
@@ -168,6 +178,11 @@ namespace StreamMesh.Core.Media.Mpv
                     return _loadedHandle;
                 }
 
+                if (string.IsNullOrEmpty(LastLoadError))
+                {
+                    int winErr = Marshal.GetLastWin32Error();
+                    LastLoadError = $"libmpv-2.dll bulunamadı veya yüklenemedi (Win32={winErr})";
+                }
                 return IntPtr.Zero;
             }
         }

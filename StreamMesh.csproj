@@ -29,6 +29,7 @@
     <Page Remove="eski player\**" />
     <None Remove="eski player\**" />
     <EmbeddedResource Remove="eski player\**" />
+    <Compile Remove="Core\Utils\FlyleafHelper.cs" />
   </ItemGroup>
 
   <ItemGroup>

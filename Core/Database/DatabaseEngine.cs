@@ -98,11 +98,11 @@ namespace StreamMesh.Core.Database
 
         private async Task PostStartupMaintenanceAsync()
         {
-            if (GetSetting("FixLiveTvCategoryAndPollutedLogosV3Done", "") != "true")
+            if (GetSetting("FixLiveTvCategoryAndPollutedLogosV4Done", "") != "true")
             {
                 await Task.Delay(8000);
                 await CleanupPollutedTvLogosAsync().ConfigureAwait(false);
-                SetSetting("FixLiveTvCategoryAndPollutedLogosV3Done", "true");
+                SetSetting("FixLiveTvCategoryAndPollutedLogosV4Done", "true");
             }
 
             if (GetSetting("InitialStartupMaintenanceV2Done", "false") == "true")
@@ -429,6 +429,7 @@ namespace StreamMesh.Core.Database
         public async Task<List<Channel>> GetSeriesEpisodesAsync(string seriesBaseName) => await _channels.GetSeriesEpisodesAsync(seriesBaseName);
         public async Task<List<Channel>> GetAllChannelsAsync() => await _channels.GetAllChannelsAsync();
         public async Task<Channel?> GetChannelByIdAsync(string id) => await _channels.GetChannelByIdAsync(id);
+        public async Task<List<Channel>> GetPendingMetadataChannelsAsync(int limit = 50) => await _channels.GetPendingMetadataChannelsAsync(limit);
         public async Task SaveChannelAsync(Channel ch, bool notifyUpdated = true) => await _channels.SaveChannelAsync(ch, notifyUpdated);
         public async Task SaveChannelsBatchAsync(List<Channel> channels, bool clearFirst = false, bool notifyUpdated = true, Action<string, double>? progressCallback = null) => await _channels.SaveChannelsBatchAsync(channels, clearFirst, notifyUpdated, progressCallback);
         public async Task SyncIncomingChannelsAsync(List<Channel> incoming, Action<string, double>? progressCallback = null) => await _channels.SyncIncomingChannelsAsync(incoming, progressCallback);
@@ -448,18 +449,19 @@ namespace StreamMesh.Core.Database
         public async Task<int> GetEpgProgramsCountAsync() => await _epg.GetEpgProgramsCountAsync();
         public async Task SaveEpgProgramsAsync(List<EpgProgram> programs) => await _epg.SaveEpgProgramsAsync(programs);
         public async Task CleanupOldEpgProgramsAsync(int daysBack = 1) => await _epg.CleanupOldEpgProgramsAsync(daysBack);
-        public async Task ClearEpgSourceDataAsync(string url) => await _epg.ClearEpgSourceDataAsync(url);
+        public async Task ClearEpgSourceDataAsync(string url) { await _epg.ClearEpgSourceDataAsync(url); EpgService.InvalidateCache(); }
         public async Task SaveEpgChannelsBatchAsync(List<(string epgId, string name, string logo, string url)> channels) => await _epg.SaveEpgChannelsBatchAsync(channels);
-        public async Task<List<EpgChannelSearchResult>> SearchEpgChannelsAsync(string query, bool allSources) => await _epg.SearchEpgChannelsAsync(query, allSources, GetEpgSources());
+        public async Task<List<(string EpgId, string Name)>> GetAllEpgChannelIndexAsync() => await _epg.GetAllEpgChannelIndexAsync();
+        public async Task<List<EpgChannelSearchResult>> SearchEpgChannelsAsync(string query, bool allSources, bool includeCurrentProgram = true) => await _epg.SearchEpgChannelsAsync(query, allSources, GetEpgSources(), includeCurrentProgram);
         public async Task<List<EpgProgram>> GetCurrentEpgProgramsAsync() => await _epg.GetCurrentEpgProgramsAsync();
         public async Task<List<EpgProgram>> GetEpgProgramsInRangeAsync(DateTime start, DateTime end) => await _epg.GetEpgProgramsInRangeAsync(start, end);
         public async Task<List<EpgProgram>> GetEpgForChannelsAsync(List<string> channelNames) => await _epg.GetEpgForChannelsAsync(channelNames);
         public List<string> GetEpgSources() => _epg.GetEpgSources();
         public List<EpgSourceItem> GetEpgSourceItems() => _epg.GetEpgSourceItems();
         public void AddEpgSource(string url) => _epg.AddEpgSource(url);
-        public void RemoveEpgSource(string url) => _epg.RemoveEpgSource(url);
+        public void RemoveEpgSource(string url) { _epg.RemoveEpgSource(url); EpgService.InvalidateCache(); }
         public void UpdateEpgSourceStats(string url, string status, int channelCount, int programCount, long lastUpdated, string errorMessage) => _epg.UpdateEpgSourceStats(url, status, channelCount, programCount, lastUpdated, errorMessage);
-        public void SetEpgSourceTimeShift(string url, int timeShiftHours) => _epg.SetEpgSourceTimeShift(url, timeShiftHours);
+        public void SetEpgSourceTimeShift(string url, int timeShiftHours) { _epg.SetEpgSourceTimeShift(url, timeShiftHours); EpgService.InvalidateCache(); }
         public int GetEpgSourceTimeShift(string url) => _epg.GetEpgSourceTimeShift(url);
         public async Task<List<(string EpgId, string Name, string LogoUrl)>> GetEpgLogoLookupAsync() => await _epg.GetEpgLogoLookupAsync();
 
@@ -486,8 +488,36 @@ namespace StreamMesh.Core.Database
                           lower(Url) LIKE '%/live/%'
                           OR lower(Url) LIKE '%.ts%'
                           OR lower(Url) LIKE '%.m3u8%'
+                          OR lower(Url) LIKE 'acestream://%'
                           OR (EpgId IS NOT NULL AND trim(EpgId) != '')
                           OR upper(GroupTitle) NOT LIKE '%VOD%'
+                      );
+
+                    UPDATE Channels
+                    SET Category = 'TV', Overview = '', BackdropUrl = '', [Cast] = '', ImdbId = ''
+                    WHERE lower(Category) IN ('dizi', 'diziler', 'series')
+                      AND lower(Url) NOT LIKE '%.mkv%'
+                      AND lower(Url) NOT LIKE '%.mp4%'
+                      AND lower(Url) NOT LIKE '%.avi%'
+                      AND lower(Url) NOT LIKE '%/series/%'
+                      AND lower(Url) NOT LIKE '%/movie/%'
+                      AND lower(Url) NOT LIKE '%/vod/%'
+                      AND Name NOT GLOB '*[Ss][0-9]*[Ee][0-9]*'
+                      AND lower(Name) NOT LIKE '%bölüm%'
+                      AND lower(Name) NOT LIKE '%bolum%'
+                      AND lower(Name) NOT LIKE '%sezon%'
+                      AND (
+                          lower(Url) LIKE '%/live/%'
+                          OR lower(Url) LIKE '%.ts%'
+                          OR lower(Url) LIKE '%.m3u8%'
+                          OR lower(Url) LIKE 'acestream://%'
+                          OR (EpgId IS NOT NULL AND trim(EpgId) != '')
+                          OR (
+                              upper(GroupTitle) NOT LIKE '%DIZ%'
+                              AND upper(GroupTitle) NOT LIKE '%DİZ%'
+                              AND upper(GroupTitle) NOT LIKE '%SERIES%'
+                              AND upper(GroupTitle) NOT LIKE '%VOD%'
+                          )
                       );
 
                     UPDATE Channels
@@ -499,6 +529,15 @@ namespace StreamMesh.Core.Database
                           OR lower(LogoUrl) LIKE '%upload.wikimedia.org%'
                           OR lower(LogoUrl) LIKE '%tvmaze.com%'
                           OR lower(LogoUrl) LIKE '%clearbit.com%'
+                      );
+
+                    UPDATE Channels
+                    SET Overview = '', BackdropUrl = '', [Cast] = '', ImdbId = ''
+                    WHERE lower(Category) IN ('tv', 'canli', 'live', 'radyo', 'radio', 'genel')
+                      AND (
+                          (Overview IS NOT NULL AND trim(Overview) != '')
+                          OR (BackdropUrl IS NOT NULL AND trim(BackdropUrl) != '')
+                          OR (ImdbId IS NOT NULL AND trim(ImdbId) != '')
                       );
                 ";
                 affected = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

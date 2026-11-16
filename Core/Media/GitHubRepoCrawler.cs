@@ -250,8 +250,9 @@ namespace StreamMesh.Core.Media
                     continue;
                 }
 
-                // Otomatik kategori tespiti
-                string cat = InferCategory(path, target.DefaultCategory);
+                // Repo tarayıcısının keşfettiği tüm ek dosyaları kullanıcının belirlediği "Karma" havuzuna aktar
+                // (İçerikleri SmartNormalizationEngine tarafından tekil akış sinyallerine göre TV/Film/Dizi/Radyo olarak sınıflandırılır)
+                string cat = "Karma";
 
                 // Ham GitHub URL'si inşa et
                 string rawUrl = $"https://raw.githubusercontent.com/{target.Owner}/{target.Repo}/{workingBranch}/{path.TrimStart('/')}";

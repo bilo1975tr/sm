@@ -23,6 +23,25 @@ namespace StreamMesh.Core.Media
             bool isExplicitEpisode = Regex.IsMatch(currentName, @"^(?i)(?:sezon\s*\d+\s*)?(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)?\s*\d+\.?$") ||
                                      Regex.IsMatch(currentName, @"^(?i)s\d+\s*e\d+");
 
+            string urlLower = (channel.Url ?? "").ToLowerInvariant();
+            bool hasVodExt = urlLower.EndsWith(".mkv") || urlLower.EndsWith(".mp4") || urlLower.EndsWith(".avi") ||
+                             urlLower.Contains(".mkv?") || urlLower.Contains(".mp4?") || urlLower.Contains(".avi?") ||
+                             urlLower.Contains("/series/") || urlLower.Contains("/movie/") || urlLower.Contains("/vod/");
+            bool isRawXtreamLive = !urlLower.Contains("/movie/") && !urlLower.Contains("/series/") &&
+                                   Regex.IsMatch(urlLower, @"^https?://[^/]+/[^/]+/[^/]+/\d+(?:\?.*)?$");
+            bool isExplicitLive = !hasVodExt && (
+                                      urlLower.Contains("/live/") || urlLower.EndsWith(".ts") || urlLower.Contains(".ts?") ||
+                                      urlLower.EndsWith(".m3u8") || urlLower.Contains(".m3u8?") || urlLower.StartsWith("acestream://") ||
+                                      isRawXtreamLive ||
+                                      string.Equals(channel.SourceType, "ACESTREAM", StringComparison.OrdinalIgnoreCase) ||
+                                      !string.IsNullOrWhiteSpace(channel.EpgId)
+                                  );
+
+            if (isExplicitLive && !isExplicitEpisode)
+            {
+                return;
+            }
+
             bool isSeriesCategory = cat.Contains("dizi") || cat.Contains("series") ||
                                     (!string.IsNullOrEmpty(origGroup) && (origGroup.IndexOf("dizi", StringComparison.OrdinalIgnoreCase) >= 0 || origGroup.IndexOf("series", StringComparison.OrdinalIgnoreCase) >= 0));
 
