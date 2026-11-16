@@ -29,11 +29,13 @@
             <button class="tab-btn active" id="tabLiveTv" onclick="switchMediaTab('TV')">📺 Canlı TV</button>
             <button class="tab-btn" id="tabMovies" onclick="switchMediaTab('Filmler')">🎬 Filmler (VOD)</button>
             <button class="tab-btn" id="tabSeries" onclick="switchMediaTab('Diziler')">🍿 Diziler</button>
+            <button class="tab-btn" id="tabContinue" onclick="switchMediaTab('DEVAM_ET')">🕒 Devam Et</button>
             <button class="tab-btn" id="tabAce" onclick="switchMediaTab('ACE')">⚡ AceStream / URL</button>
             <button class="tab-btn fav-tab" id="tabFavs" onclick="switchMediaTab('FAVORİLER')">⭐ Favoriler</button>
         </nav>
 
         <div class="header-actions">
+            <button class="action-link" onclick="openEpgGuideModal()">📅 TV Rehberi</button>
             <button class="action-link" style="background:rgba(2, 132, 199, 0.25); border-color:var(--primary-glow); color:#fff;" onclick="openPluginsModal()">🧩 Eklentiler &amp; Ayarlar</button>
             <a class="action-link" href="/playlist.m3u" download="StreamMesh.m3u">📥 M3U İndir</a>
             <button class="action-link" onclick="toggleFullscreen()">⛶ Tam Ekran</button>
@@ -49,7 +51,7 @@
                     <div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <h2 style="font-size:18px; font-weight:800; color:#fff;">Eklenti &amp; Modül Yönetim Merkezi</h2>
-                            <span id="pluginsActiveCountBadge" style="font-size:11px; background:#064e3b; color:#a7f3d0; padding:2px 8px; border-radius:12px; font-weight:bold;">15 / 15 Aktif</span>
+                            <span id="pluginsActiveCountBadge" style="font-size:11px; background:#064e3b; color:#a7f3d0; padding:2px 8px; border-radius:12px; font-weight:bold;">14 / 14 Aktif</span>
                         </div>
                         <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">StreamMesh çekirdek modüllerini etkinleştirin, ayarlarını yapılandırın ve canlı test edin.</p>
                     </div>
@@ -66,9 +68,11 @@
                 <div class="sub-category-pills" id="pluginCategoryPills" style="margin:0;">
                     <button class="sub-pill active" onclick="setPluginCategoryFilter('Tümü', this)">Tümü</button>
                     <button class="sub-pill" onclick="setPluginCategoryFilter('Yayın & Oynatıcı', this)">Yayın &amp; Oynatıcı</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Medya & Çalma', this)">Medya &amp; Çalma</button>
                     <button class="sub-pill" onclick="setPluginCategoryFilter('Ağ & Paylaşım', this)">Ağ &amp; Paylaşım</button>
                     <button class="sub-pill" onclick="setPluginCategoryFilter('Veri & Rehber', this)">Veri &amp; Rehber</button>
-                    <button class="sub-pill" onclick="setPluginCategoryFilter('Yapay Zeka & Meta', this)">Yapay Zeka &amp; Meta</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Veri & Senkron', this)">Veri &amp; Senkron</button>
+                    <button class="sub-pill" onclick="setPluginCategoryFilter('Meta Veri', this)">Meta Veri</button>
                     <button class="sub-pill" onclick="setPluginCategoryFilter('Sistem & Bakım', this)">Sistem &amp; Bakım</button>
                 </div>
             </div>
@@ -85,6 +89,32 @@
                         Yapılandırmak veya test etmek için sol taraftan bir eklenti seçin.
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EPG TV Guide Modal Dialog -->
+    <div id="epgGuideModal" class="plugins-modal-backdrop" style="display:none;" onclick="if(event.target===this)closeEpgGuideModal()">
+        <div class="plugins-modal-content">
+            <div class="plugins-modal-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:26px;">📅</span>
+                    <div>
+                        <h2 style="font-size:18px; font-weight:800; color:#fff;">TV Rehberi (Elektronik Program Akışı)</h2>
+                        <p id="epgGuideSubtitle" style="font-size:11px; color:var(--text-muted); margin-top:2px;">Kanalların güncel ve sıradaki programlarını görüntüleyin ve tek tıkla izleyin.</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeEpgGuideModal()" title="Kapat">✕</button>
+            </div>
+            <div class="plugins-modal-toolbar">
+                <div class="search-input-box" style="max-width:340px; width:100%; margin:0;">
+                    <span>🔍</span>
+                    <input type="text" id="epgGuideSearchInput" placeholder="Kanal veya program ara..." oninput="filterEpgGuide()">
+                </div>
+                <button class="action-link" onclick="openEpgGuideModal()">🔄 Rehberi Yenile</button>
+            </div>
+            <div class="epg-guide-list" id="epgGuideBody">
+                <div style="color:var(--text-muted); text-align:center; padding:40px 20px;">Yayın rehberi yükleniyor...</div>
             </div>
         </div>
     </div>
@@ -106,7 +136,7 @@
                 <video id="playerVideo" controls playsinline></video>
 
                 <!-- Initial Prompt & Loading Overlay -->
-                <div class="video-state-overlay" id="playerOverlay" onclick="resumeActivePlayback()" style="cursor:pointer;">
+                <div class="video-state-overlay" id="playerOverlay">
                     <div class="overlay-icon" id="overlayIcon">▶</div>
                     <div class="spinner" id="overlaySpinner" style="display:none;"></div>
                     <div class="overlay-title" id="overlayTitle">Yayın Başlatılmaya Hazır</div>
@@ -119,7 +149,7 @@
             <div class="player-osd-card">
                 <div class="osd-media-row">
                     <div class="osd-meta-left">
-                        <img id="activeLogo" class="osd-logo" referrerpolicy="no-referrer" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/TRT_1_logo.svg/320px-TRT_1_logo.svg.png" alt="Logo">
+                        <img id="activeLogo" class="osd-logo" referrerpolicy="no-referrer" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCIgdmlld0JveD0iMCAwIDQ0IDQ0Ij48cmVjdCB3aWR0aD0iNDQiIGhlaWdodD0iNDQiIGZpbGw9IiMxNTFhMjQiIHJ4PSI4Ii8+PHRleHQgeD0iMjIiIHk9IjI3IiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iODAwIiBmaWxsPSIjMzhiZGY4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TTTwvdGV4dD48L3N2Zz4=" alt="Logo">
                         <div class="osd-titles">
                             <h2 id="activeTitle">Kanal Seçimi Bekleniyor</h2>
                             <p id="activeSub">Kategori: <strong>Genel</strong> • Akıllı StreamMesh Yönlendirici Hazır</p>
@@ -167,6 +197,7 @@
                     <button class="sub-pill" onclick="setSubFilter('Belgesel', this)">Belgesel</button>
                     <button class="sub-pill" onclick="setSubFilter('Müzik', this)">Müzik</button>
                     <button class="sub-pill" onclick="setSubFilter('Çocuk', this)">Çocuk</button>
+                    <button class="sub-pill" onclick="setSubFilter('AceStream', this)">AceStream</button>
                 </div>
 
                 <div class="panel-meta-row">
@@ -211,14 +242,15 @@
     <footer class="tv-legend">
         <div>
             <strong>TV Kumandası &amp; Klavye Kısayolları:</strong>
-            <span style="margin-left:8px;"><kbd>▲ ▼ ◄ ►</kbd> Gezin</span>
+            <span style="margin-left:8px;"><kbd>▲ ▼</kbd> Kanal Gezin</span>
+            <span style="margin-left:8px;"><kbd>◄ ►</kbd> 10sn Sar</span>
             <span style="margin-left:8px;"><kbd>Enter / OK</kbd> Kanal Aç</span>
             <span style="margin-left:8px;"><kbd>Space</kbd> Duraklat</span>
             <span style="margin-left:8px;"><kbd>F</kbd> Tam Ekran</span>
             <span style="margin-left:8px;"><kbd>M</kbd> Sessiz</span>
-            <span style="margin-left:8px;"><kbd>Esc</kbd> Geri</span>
+            <span style="margin-left:8px;"><kbd>Esc</kbd> Kapat / Geri</span>
         </div>
-        <div>StreamMesh Yerel Ağ Medya Merkezi v0.0.1 • Açık Yayın</div>
+        <div>StreamMesh Yerel Ağ Medya Merkezi <span id="appVersionLabel">v0.1.20</span> • Açık Yayın</div>
     </footer>
 
     <script type="module" src="/Web/js/app.js"></script>

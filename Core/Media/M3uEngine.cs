@@ -11,21 +11,10 @@ namespace StreamMesh.Core.Media
 {
     public class M3uEngine
     {
-        public static List<Channel> ParseM3u(string m3uContent, string playlistUrl = "")
+        public async Task<List<Channel>> ParseM3uContentAsync(string m3uContent, string sourceUrlOrPath = "", string categoryHint = "TV", bool forceCategory = false, Action<string, double>? progressCallback = null)
         {
-            try
-            {
-                var engine = new M3uEngine();
-                // Synchronously await the async parse method
-                var task = Task.Run(() => engine.ParseM3uAsync(playlistUrl.StartsWith("http") ? playlistUrl : "memory.m3u", "TV", false, null));
-                task.Wait(TimeSpan.FromSeconds(5));
-                if (task.IsCompletedSuccessfully)
-                {
-                    return task.Result;
-                }
-            }
-            catch { }
-            return new List<Channel>();
+            if (string.IsNullOrWhiteSpace(m3uContent)) return new List<Channel>();
+            return await Task.Run(() => ParseLinesInternal(m3uContent, sourceUrlOrPath ?? "", categoryHint, forceCategory, progressCallback)).ConfigureAwait(false);
         }
 
         public async Task<List<Channel>> ParseM3uAsync(string urlOrPath, string categoryHint = "TV", bool forceCategory = false, Action<string, double>? progressCallback = null)
@@ -53,7 +42,20 @@ namespace StreamMesh.Core.Media
                 }
 
                 if (string.IsNullOrEmpty(content)) return channels;
+                return await Task.Run(() => ParseLinesInternal(content, urlOrPath, categoryHint, forceCategory, progressCallback)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                progressCallback?.Invoke($"Ayrıştırma hatası: {ex.Message}", 0);
+                return ChannelAggregator.Instance.AggregateChannels(channels);
+            }
+        }
 
+        private List<Channel> ParseLinesInternal(string content, string urlOrPath, string categoryHint, bool forceCategory, Action<string, double>? progressCallback)
+        {
+            var channels = new List<Channel>();
+            try
+            {
                 // 1. Check if the content is HTML, JS or script response instead of M3U
                 string trimmedStart = content.TrimStart();
                 if (trimmedStart.StartsWith("<!DOCTYPE html", StringComparison.OrdinalIgnoreCase) ||
@@ -76,7 +78,7 @@ namespace StreamMesh.Core.Media
                 int extinfLineNumber = 0;
                 string rawExtinf = "";
                 var extraDirectives = new List<string>();
-                var db = new StreamMesh.Core.Database.DatabaseEngine();
+                var db = StreamMesh.Core.Database.DatabaseEngine.Instance;
 
                 foreach (var rawLine in lines)
                 {

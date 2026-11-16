@@ -30,5 +30,7 @@ namespace StreamMesh.Models
         public int SeekAnchorIndex { get; set; } = -1;
         public long SeekAnchorTicks { get; set; } = 0;
         public double LastAnchorStartSec { get; set; } = -1;
+        public bool IsPaused { get; set; } = false;
+        public long PausedAtTicks { get; set; } = 0;
     }
 }

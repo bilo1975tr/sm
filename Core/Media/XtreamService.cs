@@ -6,13 +6,13 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using StreamMesh.Models;
 using StreamMesh.Core.Database;
+using StreamMesh.Core.Network;
 
 namespace StreamMesh.Core.Media
 {
     public class XtreamService
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         public async Task<bool> SyncAccountAsync(IptvAccount acc)
         {
@@ -32,9 +32,10 @@ namespace StreamMesh.Core.Media
                 try
                 {
                     string loginUrl = $"{baseUrl}/player_api.php?username={Uri.EscapeDataString(acc.Username)}&password={Uri.EscapeDataString(acc.Password)}";
-                    var req = new HttpRequestMessage(HttpMethod.Get, loginUrl);
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(6));
+                    using var req = new HttpRequestMessage(HttpMethod.Get, loginUrl);
                     req.Headers.TryAddWithoutValidation("User-Agent", "IPTVSmartersPro/1.0.0 (Linux;Android 11) StreamMesh/1.0");
-                    var resp = await _httpClient.SendAsync(req);
+                    using var resp = await MediaHttpClient.Client.SendAsync(req, cts.Token);
                     
                     if (resp.IsSuccessStatusCode)
                     {
@@ -97,9 +98,10 @@ namespace StreamMesh.Core.Media
                     try
                     {
                         string m3uTestUrl = $"{baseUrl}/get.php?username={Uri.EscapeDataString(acc.Username)}&password={Uri.EscapeDataString(acc.Password)}&type=m3u_plus";
-                        var req = new HttpRequestMessage(HttpMethod.Get, m3uTestUrl);
+                        using var cts2 = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(6));
+                        using var req = new HttpRequestMessage(HttpMethod.Get, m3uTestUrl);
                         req.Headers.TryAddWithoutValidation("User-Agent", "IPTVSmartersPro/1.0.0 (Linux;Android 11) StreamMesh/1.0");
-                        var resp = await _httpClient.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+                        using var resp = await MediaHttpClient.Client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
                         if (resp.IsSuccessStatusCode)
                         {
                             // En azından başlık başarılı döndü, içerik kontrolü
@@ -156,7 +158,7 @@ namespace StreamMesh.Core.Media
                         // Canlı yayın sayısı
                         try
                         {
-                            var liveResp = await _httpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_live_streams").ConfigureAwait(false);
+                            var liveResp = await MediaHttpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_live_streams", 6).ConfigureAwait(false);
                             if (liveResp.TrimStart().StartsWith("["))
                             {
                                 var liveArr = JArray.Parse(liveResp);
@@ -169,7 +171,7 @@ namespace StreamMesh.Core.Media
                         // VOD Film sayısı
                         try
                         {
-                            var vodResp = await _httpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_vod_streams").ConfigureAwait(false);
+                            var vodResp = await MediaHttpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_vod_streams", 6).ConfigureAwait(false);
                             if (vodResp.TrimStart().StartsWith("["))
                             {
                                 var vodArr = JArray.Parse(vodResp);
@@ -182,7 +184,7 @@ namespace StreamMesh.Core.Media
                         // Dizi sayısı
                         try
                         {
-                            var seriesResp = await _httpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_series").ConfigureAwait(false);
+                            var seriesResp = await MediaHttpClient.GetStringAsync($"{baseUrl}/player_api.php?{authP}&action=get_series", 6).ConfigureAwait(false);
                             if (seriesResp.TrimStart().StartsWith("["))
                             {
                                 var serArr = JArray.Parse(seriesResp);
@@ -215,73 +217,6 @@ namespace StreamMesh.Core.Media
                 try { _db.RemoveIptvAccount(acc.Id); } catch { }
                 return false;
             }
-        }
-
-        private async Task FetchAllContentsAsync(IptvAccount acc)
-        {
-            string baseUrl = acc.ServerUrl.TrimEnd('/');
-            string authParams = $"u={acc.Username}&p={acc.Password}";
-
-            await ProcessAction(acc, $"{baseUrl}/player_api.php?{authParams}&action=get_live_streams", "TV", "live");
-            await ProcessAction(acc, $"{baseUrl}/player_api.php?{authParams}&action=get_vod_streams", "Film", "movie");
-            await ProcessAction(acc, $"{baseUrl}/player_api.php?{authParams}&action=get_series", "Dizi", "series");
-        }
-
-        private async Task ProcessAction(IptvAccount acc, string url, string category, string type)
-        {
-            try
-            {
-                var response = await _httpClient.GetStringAsync(url);
-                var items = JArray.Parse(response);
-                var allItems = new List<Channel>();
-
-                string baseUrl = acc.ServerUrl.TrimEnd('/');
-
-                foreach (var item in items)
-                {
-                    string rawName = item["name"]?.ToString() ?? "İsimsiz";
-                    string streamIcon = item["stream_icon"]?.ToString() ?? item["cover"]?.ToString() ?? "";
-
-                    var ch = new Channel
-                    {
-                        Id = $"xt_{acc.Id}_{item["stream_id"] ?? item["series_id"]}",
-                        Name = rawName,
-                        GroupTitle = $"IPTV: {acc.Name} ({item["category_name"] ?? category})",
-                        Category = category,
-                        LogoUrl = streamIcon,
-                        SourceType = "M3U",
-                        PlaylistUrl = acc.ServerUrl
-                    };
-
-                    string streamId = item["stream_id"]?.ToString() ?? item["series_id"]?.ToString() ?? string.Empty;
-                    string ext = item["container_extension"]?.ToString() ?? "m3u8";
-
-                    if (type == "live") ch.Url = $"{baseUrl}/live/{acc.Username}/{acc.Password}/{streamId}.ts";
-                    else if (type == "movie") ch.Url = $"{baseUrl}/movie/{acc.Username}/{acc.Password}/{streamId}.{ext}";
-                    else if (type == "series") ch.Url = $"{baseUrl}/series/{acc.Username}/{acc.Password}/{streamId}.{ext}";
-
-                    SmartNormalizationEngine.Instance.NormalizeChannel(ch);
-
-                    // Automatic logo fallback from index if missing
-                    if (string.IsNullOrWhiteSpace(ch.LogoUrl))
-                    {
-                        string? indexedLogo = ChannelEnricher.GetLogoFromIndex(ch.Name);
-                        if (!string.IsNullOrEmpty(indexedLogo)) ch.LogoUrl = indexedLogo;
-                    }
-
-                    allItems.Add(ch);
-                }
-
-                // Chunked Saving to Database (Avoid UI freeze)
-                int chunkSize = 250;
-                for (int i = 0; i < allItems.Count; i += chunkSize)
-                {
-                    var chunk = allItems.Skip(i).Take(chunkSize).ToList();
-                    await _db.SyncIncomingChannelsAsync(chunk);
-                    GitHubSyncEngine.RaiseSyncCompleted(); // Auto-refresh UI
-                }
-            }
-            catch { }
         }
     }
 }

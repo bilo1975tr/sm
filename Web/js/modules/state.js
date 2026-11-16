@@ -2,13 +2,14 @@
 
 export const appState = {
     allChannels: [],
-    currentTab: 'TV', // 'TV', 'Filmler', 'Diziler', 'ACE', 'FAVORİLER'
+    currentTab: 'TV', // 'TV', 'Filmler', 'Diziler', 'DEVAM_ET', 'ACE', 'FAVORİLER'
     currentSubFilter: 'Tümü',
     searchQuery: '',
     currentPage: 1,
     activeChannel: null,
     hlsInstance: null,
     favoritesSet: new Set(),
+    continueWatchingMap: new Map(), // id -> { id, timestamp, lastTimeSec }
     aspectRatioMode: 0, // 0: 16:9, 1: 4:3, 2: Cover/Zoom
     webPlugins: [],
     activePluginFilterCategory: 'Tümü',

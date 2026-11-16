@@ -3,13 +3,33 @@ import { appState } from './state.js';
 import { normalizeChannel } from './channelNormalizer.js';
 import { initFavorites } from './favorites.js';
 import { renderChannelList } from './channelList.js';
-import { playMedia } from './player.js';
+import { playMedia, initContinueWatching } from './player.js';
+
+/**
+ * Updates footer version badge from /api/version.
+ */
+async function syncAppVersion() {
+    try {
+        const res = await fetch('/api/version');
+        if (res.ok) {
+            const data = await res.json();
+            const label = document.getElementById('appVersionLabel');
+            if (label && data && data.version) {
+                label.innerText = 'v' + String(data.version).replace(/^v/i, '');
+            }
+        }
+    } catch {
+        // Ignore version sync failure
+    }
+}
 
 /**
  * Loads channel data from Node.js / C# API with seamless fallback to built-in catalog.
  */
 export async function loadChannelData() {
     initFavorites();
+    initContinueWatching();
+    syncAppVersion();
     let loaded = false;
 
     // Try primary /api/channels endpoint

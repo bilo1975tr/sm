@@ -10,7 +10,6 @@ namespace StreamMesh.UI.Windows
     {
         public Channel Media { get; set; }
         public List<string> CastList { get; set; } = new List<string>();
-        public List<Episode> Episodes { get; set; } = new List<Episode>();
 
         public string HeroImageUrl => !string.IsNullOrEmpty(Media?.BackdropUrl) ? Media.BackdropUrl : Media?.LogoUrl ?? "";
         public string OverviewText => !string.IsNullOrWhiteSpace(Media?.Overview) ? Media.Overview : "Bu içerik için açıklama bulunamadı veya henüz yüklenmedi.";
@@ -73,10 +72,6 @@ namespace StreamMesh.UI.Windows
                 }
                 catch { }
             }
-        }
-
-        private void Tag_Click(object sender, RoutedEventArgs e)
-        {
         }
     }
 }

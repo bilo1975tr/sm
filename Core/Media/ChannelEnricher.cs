@@ -13,37 +13,72 @@ namespace StreamMesh.Core.Media
 {
     public static class ChannelUtils
     {
+        private static readonly Regex SignificantTagRegex = new(@"\d{4}|\[(de|tr|en|fr|es|it|ru|uk|us)\]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex NonLangBracketRegex = new(@"\[(?!(de|tr|en|fr|es|it|ru|uk|us)\]).*?\]|\((?!(de|tr|en|fr|es|it|ru|uk|us)\)).*?\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex AnyBracketRegex = new(@"\[.*?\]|\(.*?\)", RegexOptions.Compiled);
+        private static readonly Regex ResolutionTagRegex = new(@"\b(fhd|hd|sd|4k|raw|1080p|720p|hevc|h265|h264)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex ResolutionUhdRegex = new(@"\b(fhd|hd|sd|4k|raw|1080p|720p|hevc|h265|h264|uhd)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex MultiSpaceRegex = new(@"\s+", RegexOptions.Compiled);
+        private static readonly Regex GermanYearTagRegex = new(@"\d{4}\s*\[de\]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex NonAlphaNumRegex = new(@"[^a-z0-9]", RegexOptions.Compiled);
+        private static readonly Regex LangTagRegex = new(@"\[(de|tr|en|fr|es|it|ru|uk|us|nl|pl|ar|az)\]|\((de|tr|en|fr|es|it|ru|uk|us|nl|pl|ar|az)\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex OtherLangTagRegex = new(@"\[(de|en|fr|es|it|ru|uk|us)\]|\((de|en|fr|es|it|ru|uk|us)\)", RegexOptions.Compiled);
+
+        public static string GetDisplayBaseName(string? rawName)
+        {
+            if (string.IsNullOrWhiteSpace(rawName)) return "";
+            string cleaned = AnyBracketRegex.Replace(rawName, " ").Trim();
+            cleaned = ResolutionUhdRegex.Replace(cleaned, " ").Trim();
+            cleaned = Regex.Replace(cleaned, @"(?i)\b(uhd|fhd|hd|sd|raw|hevc|h\.?264|h\.?265)\b", " ");
+            cleaned = MultiSpaceRegex.Replace(cleaned, " ").Trim(' ', '-', '_', ':', '|', '.', '\'', '"', '`', '’', '‘', '“', '”');
+            return string.IsNullOrWhiteSpace(cleaned) ? rawName.Trim() : cleaned;
+        }
+
+        public static string DetectCountryCode(string? rawName)
+        {
+            if (string.IsNullOrWhiteSpace(rawName)) return "";
+            string s = rawName.ToLowerInvariant();
+            if (s.Contains("[de]") || s.Contains("(de)") || s.StartsWith("de•") || s.StartsWith("de:") || s.StartsWith("de -") || s.EndsWith(" de")) return "de";
+            if (s.Contains("[tr]") || s.Contains("(tr)") || s.StartsWith("tr•") || s.StartsWith("tr:") || s.StartsWith("tr -") || s.EndsWith(" tr")) return "tr";
+            if (s.Contains("[uk]") || s.Contains("(uk)") || s.Contains("[gb]") || s.Contains("(gb)") || s.StartsWith("uk•") || s.StartsWith("uk:")) return "gb";
+            if (s.Contains("[us]") || s.Contains("(us)") || s.StartsWith("us•") || s.StartsWith("us:")) return "us";
+            if (s.Contains("[fr]") || s.Contains("(fr)") || s.StartsWith("fr•") || s.StartsWith("fr:") || s.EndsWith(" fr")) return "fr";
+            if (s.Contains("[es]") || s.Contains("(es)") || s.StartsWith("es•") || s.StartsWith("es:") || s.EndsWith(" es")) return "es";
+            if (s.Contains("[it]") || s.Contains("(it)") || s.StartsWith("it•") || s.StartsWith("it:") || s.EndsWith(" it")) return "it";
+            if (s.Contains("[nl]") || s.Contains("(nl)") || s.StartsWith("nl•") || s.StartsWith("nl:") || s.EndsWith(" nl")) return "nl";
+            if (s.Contains("[ru]") || s.Contains("(ru)") || s.StartsWith("ru•") || s.StartsWith("ru:") || s.EndsWith(" ru")) return "ru";
+            if (s.Contains("[az]") || s.Contains("(az)") || s.StartsWith("az•") || s.StartsWith("az:") || s.EndsWith(" az")) return "az";
+            if (s.Contains("[ar]") || s.Contains("(ar)") || s.StartsWith("ar•") || s.StartsWith("ar:")) return "ar";
+            return "";
+        }
+
         public static string GetCleanName(string rawName)
         {
             if (string.IsNullOrWhiteSpace(rawName)) return "";
 
-            // V1.8.7: [de], [tr], [en] gibi ülke etiketlerini ve 4 haneli kodları temizlikten muaf tut.
-            bool hasSignificantTag = Regex.IsMatch(rawName, @"\d{4}|\[(de|tr|en|fr|es|it|ru|uk|us)\]", RegexOptions.IgnoreCase);
+            string cleaned = SignificantTagRegex.IsMatch(rawName)
+                ? NonLangBracketRegex.Replace(rawName, "").Trim()
+                : AnyBracketRegex.Replace(rawName, "").Trim();
 
-            string cleaned;
-            if (hasSignificantTag)
-            {
-                cleaned = Regex.Replace(rawName, @"\[(?!(de|tr|en|fr|es|it|ru|uk|us)\])\.*?\]|\((?!(de|tr|en|fr|es|it|ru|uk|us)\))\.*?\)", "", RegexOptions.IgnoreCase).Trim();
-            }
-            else
-            {
-                cleaned = Regex.Replace(rawName, @"\[.*?\]|\(.*?\)", "").Trim();
-            }
-
-            cleaned = Regex.Replace(cleaned, @"\b(fhd|hd|sd|4k|raw|1080p|720p|hevc|h265|h264)\b", "", RegexOptions.IgnoreCase).Trim();
-            cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim(' ', '-', '_', ':', '|', '.', '\'', '"', '`', '’', '‘', '“', '”');
+            cleaned = ResolutionTagRegex.Replace(cleaned, "").Trim();
+            cleaned = MultiSpaceRegex.Replace(cleaned, " ").Trim(' ', '-', '_', ':', '|', '.', '\'', '"', '`', '’', '‘', '“', '”');
             return string.IsNullOrWhiteSpace(cleaned) ? rawName : cleaned;
         }
 
         public static string ToNormalizedKey(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return "";
-            if (Regex.IsMatch(name, @"\d{4}\s*\[de\]", RegexOptions.IgnoreCase))
+            if (GermanYearTagRegex.IsMatch(name))
             {
                 return name.ToLowerInvariant().Replace(" ", "");
             }
             string clean = GetCleanName(name);
-            return Regex.Replace(clean.ToLowerInvariant(), @"[^a-z0-9]", "");
+            return NonAlphaNumRegex.Replace(clean.ToLowerInvariant(), "");
+        }
+
+        public static string NormalizeForMatch(string? name)
+        {
+            return ToNormalizedKey(name ?? "");
         }
 
         public static List<string> GetEpgSearchCandidateNames(string channelName, string? epgId = null)
@@ -57,30 +92,26 @@ namespace StreamMesh.Core.Media
 
             list.Add(channelName.Trim());
 
-            // 1. Strip country tags like [DE], [TR], (DE), [EN] etc.
-            string strippedLang = Regex.Replace(channelName, @"\[(de|tr|en|fr|es|it|ru|uk|us|nl|pl|ar|az)\]|\((de|tr|en|fr|es|it|ru|uk|us|nl|pl|ar|az)\)", "", RegexOptions.IgnoreCase).Trim();
+            string strippedLang = LangTagRegex.Replace(channelName, "").Trim();
             if (!string.IsNullOrWhiteSpace(strippedLang) && !list.Contains(strippedLang, StringComparer.OrdinalIgnoreCase))
             {
                 list.Add(strippedLang);
             }
 
-            // 2. Clean name from GetCleanName
             string clean = GetCleanName(channelName);
             if (!string.IsNullOrWhiteSpace(clean) && !list.Contains(clean, StringComparer.OrdinalIgnoreCase))
             {
                 list.Add(clean);
             }
 
-            // 3. Fully stripped of resolution tags (HD, FHD, 4K, UHD)
-            string fullyStripped = Regex.Replace(strippedLang, @"\b(fhd|hd|sd|4k|raw|1080p|720p|hevc|h265|h264|uhd)\b", "", RegexOptions.IgnoreCase).Trim();
-            fullyStripped = Regex.Replace(fullyStripped, @"\s+", " ").Trim(' ', '-', '_', ':', '|', '.', '\'', '"');
+            string fullyStripped = ResolutionUhdRegex.Replace(strippedLang, "").Trim();
+            fullyStripped = MultiSpaceRegex.Replace(fullyStripped, " ").Trim(' ', '-', '_', ':', '|', '.', '\'', '"');
             if (!string.IsNullOrWhiteSpace(fullyStripped) && !list.Contains(fullyStripped, StringComparer.OrdinalIgnoreCase))
             {
                 list.Add(fullyStripped);
             }
 
-            // 4. Country code variations for XMLTV (e.g. Syfy.de, Syfy DE, Syfy HD.de)
-            var langMatch = Regex.Match(channelName, @"\[(de|tr|en|fr|es|it|ru|uk|us|nl|pl|ar|az)\]|\((de|tr|en|fr|es|it|ru|uk|us|nl|pl|ar|az)\)", RegexOptions.IgnoreCase);
+            var langMatch = LangTagRegex.Match(channelName);
             if (langMatch.Success && !string.IsNullOrWhiteSpace(fullyStripped))
             {
                 string lang = (langMatch.Groups[1].Success ? langMatch.Groups[1].Value : langMatch.Groups[2].Value).ToLowerInvariant();
@@ -103,19 +134,17 @@ namespace StreamMesh.Core.Media
             string nameLower = channelName.ToLowerInvariant();
             if (languageFilter.Contains("Almanca") || languageFilter.Contains("DE") || languageFilter.Equals("de", StringComparison.OrdinalIgnoreCase))
             {
-                bool isGerman = Regex.IsMatch(nameLower, @"\d{4}\s*\[de\]") || nameLower.Contains("[de]") || nameLower.Contains("(de)") || nameLower.Contains("deutsch") || nameLower.Contains("german");
-                return isGerman;
+                return GermanYearTagRegex.IsMatch(nameLower) || nameLower.Contains("[de]") || nameLower.Contains("(de)") || nameLower.Contains("deutsch") || nameLower.Contains("german");
             }
-            else if (languageFilter.Contains("Türkçe") || languageFilter.Contains("TR") || languageFilter.Equals("tr", StringComparison.OrdinalIgnoreCase))
+            if (languageFilter.Contains("Türkçe") || languageFilter.Contains("TR") || languageFilter.Equals("tr", StringComparison.OrdinalIgnoreCase))
             {
-                bool hasOtherLangTag = Regex.IsMatch(nameLower, @"\[(de|en|fr|es|it|ru|uk|us)\]|\((de|en|fr|es|it|ru|uk|us)\)");
+                bool hasOtherLangTag = OtherLangTagRegex.IsMatch(nameLower);
                 bool isTurkish = nameLower.Contains("[tr]") || nameLower.Contains("(tr)") || nameLower.Contains("türk") || nameLower.Contains("turk") || nameLower.Contains("tr ") || nameLower.EndsWith(" tr");
                 return isTurkish || !hasOtherLangTag;
             }
-            else if (languageFilter.Contains("İngilizce") || languageFilter.Contains("EN") || languageFilter.Equals("en", StringComparison.OrdinalIgnoreCase))
+            if (languageFilter.Contains("İngilizce") || languageFilter.Contains("EN") || languageFilter.Equals("en", StringComparison.OrdinalIgnoreCase))
             {
-                bool isEnglish = nameLower.Contains("[en]") || nameLower.Contains("(en)") || nameLower.Contains("english") || nameLower.Contains("ingiltere") || nameLower.Contains("usa") || nameLower.Contains("uk");
-                return isEnglish;
+                return nameLower.Contains("[en]") || nameLower.Contains("(en)") || nameLower.Contains("english") || nameLower.Contains("ingiltere") || nameLower.Contains("usa") || nameLower.Contains("uk");
             }
             return true;
         }
@@ -195,14 +224,11 @@ namespace StreamMesh.Core.Media
             if (string.IsNullOrWhiteSpace(term)) return true;
 
             // 1. Köşeli veya parantezli etiket aramaları: [de], (de), [tr], [4k], vb.
-            // Kullanıcı köşeli parantez içinde arama yaptıysa (örn. [DE]), sadece ve sadece bu 4 karakteri ([DE]) içerenler kabul edilir!
-            // "M. Liga de Campeones" gibi İspanyolca/Fransızca bağlaç/kelime içeren kanallar kesinlikle elenir.
             if (term.StartsWith("[") && term.EndsWith("]"))
             {
                 string innerTag = term.Trim('[', ']').Trim();
                 if (string.IsNullOrWhiteSpace(innerTag)) return false;
 
-                // Tam köşeli etiket kontrolü: [de], [ de ], [de ]
                 if (name.Contains(term) || name.Contains($"[{innerTag}]") || name.Contains($"[ {innerTag} ]") ||
                     group.Contains(term) || group.Contains($"[{innerTag}]") ||
                     cat.Contains(term) || cat.Contains($"[{innerTag}]"))
@@ -238,7 +264,6 @@ namespace StreamMesh.Core.Media
             // 2. Kısa kodlar (<= 3 karakter, örn. "de", "tr", "fr", "es", "it", "4k", "hd")
             if (term.Length <= 3)
             {
-                // Etiketli kullanım varsa kabul et: [de], (de), |de|, "de: ", "de - "
                 if (name.Contains($"[{term}]") || name.Contains($"({term})") || 
                     name.Contains($"|{term}|") || name.Contains($"| {term} |") ||
                     name.StartsWith($"{term}:") || name.StartsWith($"{term} -") ||
@@ -248,7 +273,6 @@ namespace StreamMesh.Core.Media
                     return true;
                 }
 
-                // "de" aramalarında İspanyolca/Fransızca "de" bağlacı geçen yabancı kanalları kesinlikle ele
                 if (term == "de")
                 {
                     if (name.Contains("liga") || name.Contains("campeones") || name.Contains("deportes") || 
@@ -276,7 +300,6 @@ namespace StreamMesh.Core.Media
                         return true;
                 }
 
-                // 4k, hd, ufc, wwe, f1 gibi kısaltmalar için kelime sınırı kontrolü (bağlaç olan de, fr, es hariç)
                 if (term != "de" && term != "fr" && term != "es" && term != "it" && term != "en" && term != "da")
                 {
                     if (Regex.IsMatch(name, $@"\b{Regex.Escape(term)}\b", RegexOptions.IgnoreCase) ||
@@ -303,7 +326,7 @@ namespace StreamMesh.Core.Media
     {
         private static Dictionary<string, string>? _globalLogoIndex;
         private static readonly object _lock = new object();
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         public static void InvalidateLogoCache()
         {
@@ -313,49 +336,67 @@ namespace StreamMesh.Core.Media
             }
         }
 
-        public static string? GetLogoFromIndex(string rawName)
+        private static string ToSlug(string text)
+        {
+            string s = text.ToLowerInvariant().Replace("&", "and").Replace("+", "plus").Replace(".", "-");
+            s = Regex.Replace(s, @"\s+", "-");
+            s = Regex.Replace(s, @"[^a-z0-9-]", "");
+            s = Regex.Replace(s, @"-{2,}", "-");
+            return s.Trim('-');
+        }
+
+        public static string? GetLogoFromIndex(string rawName, string? languageHint = null)
         {
             if (string.IsNullOrWhiteSpace(rawName)) return null;
 
             if (_globalLogoIndex == null || _globalLogoIndex.Count == 0)
             {
-                var db = new DatabaseEngine();
+                var db = DatabaseEngine.Instance;
                 var cached = db.GetAllLogoIndex();
                 lock (_lock) { _globalLogoIndex = cached; }
             }
 
             if (_globalLogoIndex == null || _globalLogoIndex.Count == 0) return null;
 
-            string rawLower = rawName.ToLowerInvariant();
-            string cleanName = ChannelUtils.GetCleanName(rawName);
-
-            // Country suffix detection
-            string countrySuffix = "";
-            if (rawLower.Contains("[de]") || rawLower.Contains("(de)") || rawLower.EndsWith(" de") || rawLower.Contains(" de ")) countrySuffix = "de";
-            else if (rawLower.Contains("[tr]") || rawLower.Contains("(tr)") || rawLower.EndsWith(" tr") || rawLower.Contains(" tr ")) countrySuffix = "tr";
-
-            // Standard tv-logos key transformer
-            string ToTvLogoKey(string name, string suffix)
+            string baseName = ChannelUtils.GetDisplayBaseName(rawName);
+            string countrySuffix = ChannelUtils.DetectCountryCode(rawName);
+            if (string.IsNullOrEmpty(countrySuffix) && !string.IsNullOrWhiteSpace(languageHint))
             {
-                string s = name.ToLowerInvariant();
-                s = s.Replace("&", "and").Replace("+", "plus");
-                s = Regex.Replace(s, @"\s+", "-");
-                s = Regex.Replace(s, @"[^a-z0-9-]", "");
-                string key = s.Trim('-');
-                if (!string.IsNullOrEmpty(suffix) && !key.EndsWith("-" + suffix)) key += "-" + suffix;
-                return key;
+                string lh = languageHint.Trim().ToLowerInvariant();
+                if (lh is "de" or "tr" or "fr" or "es" or "it" or "nl" or "ru" or "az" or "ar")
+                    countrySuffix = lh;
             }
 
-            var keysToTry = new List<string>();
-            keysToTry.Add(ToTvLogoKey(cleanName, countrySuffix));
-            keysToTry.Add(Regex.Replace(cleanName.ToLowerInvariant().Replace(" ", "-"), @"[^a-z0-9-]", "").Trim('-'));
+            string dashSlug = ToSlug(baseName);
+            string compactSlug = Regex.Replace(baseName.ToLowerInvariant().Replace("&", "and").Replace("+", "plus"), @"[^a-z0-9]", "");
+            string compactNoPlus = Regex.Replace(baseName.ToLowerInvariant().Replace("+", ""), @"[^a-z0-9]", "");
 
-            foreach (var k in keysToTry.Distinct())
+            var keysToTry = new List<string>();
+            if (!string.IsNullOrEmpty(countrySuffix))
+            {
+                if (!string.IsNullOrEmpty(dashSlug)) keysToTry.Add($"{dashSlug}-{countrySuffix}");
+                if (!string.IsNullOrEmpty(compactSlug)) keysToTry.Add($"{compactSlug}-{countrySuffix}");
+                if (!string.IsNullOrEmpty(compactNoPlus)) keysToTry.Add($"{compactNoPlus}-{countrySuffix}");
+                if (countrySuffix == "gb")
+                {
+                    if (!string.IsNullOrEmpty(dashSlug)) keysToTry.Add($"{dashSlug}-uk");
+                    if (!string.IsNullOrEmpty(compactSlug)) keysToTry.Add($"{compactSlug}-uk");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(dashSlug)) keysToTry.Add(dashSlug);
+            if (!string.IsNullOrEmpty(compactSlug)) keysToTry.Add(compactSlug);
+            if (!string.IsNullOrEmpty(compactNoPlus)) keysToTry.Add(compactNoPlus);
+
+            // Exact normalized key fallback without country tag pollution
+            string cleanKey = Regex.Replace(baseName.ToLowerInvariant(), @"[^a-z0-9]", "");
+            if (!string.IsNullOrEmpty(cleanKey)) keysToTry.Add(cleanKey);
+
+            foreach (var k in keysToTry.Distinct(StringComparer.OrdinalIgnoreCase))
             {
                 if (string.IsNullOrEmpty(k)) continue;
-                if (_globalLogoIndex.TryGetValue(k, out string? logo))
+                if (_globalLogoIndex.TryGetValue(k, out string? logo) && !string.IsNullOrWhiteSpace(logo))
                 {
-                    LogService.LogInfo($"[LogoMatch] Success: '{rawName}' -> Key: '{k}' -> URL: {logo}");
                     return logo;
                 }
             }
@@ -367,22 +408,71 @@ namespace StreamMesh.Core.Media
             if (channels == null || channels.Count == 0) return;
             var updatedChannels = new List<Channel>();
 
+            // Build fast in-memory EPG icon lookup (prefer PNG/JPG/WebP over SVG for WPF compatibility)
+            var epgIconById = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var epgIconByNormName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                var epgLogos = await _db.GetEpgLogoLookupAsync().ConfigureAwait(false);
+                foreach (var (epgId, name, logoUrl) in epgLogos)
+                {
+                    if (logoUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!string.IsNullOrWhiteSpace(epgId) && !epgIconById.ContainsKey(epgId))
+                        epgIconById[epgId] = logoUrl;
+
+                    foreach (var n in name.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        string norm = Regex.Replace(ChannelUtils.GetDisplayBaseName(n).ToLowerInvariant(), @"[^a-z0-9]", "");
+                        if (!string.IsNullOrEmpty(norm) && !epgIconByNormName.ContainsKey(norm))
+                            epgIconByNormName[norm] = logoUrl;
+                    }
+                }
+            }
+            catch { }
+
             foreach (var ch in channels)
             {
-                if (string.IsNullOrWhiteSpace(ch.LogoUrl))
+                if (!string.IsNullOrWhiteSpace(ch.LogoUrl)) continue;
+                if (!MetadataEngine.IsLikelyLiveTv(ch)) continue;
+
+                string? foundLogo = null;
+
+                // 1. EPG Channel <icon> by EpgId
+                foreach (var epgId in ch.GetEpgIdList())
                 {
-                    string? indexedLogo = GetLogoFromIndex(ch.Name);
-                    if (!string.IsNullOrEmpty(indexedLogo))
+                    if (epgIconById.TryGetValue(epgId, out var epgLogo))
                     {
-                        ch.LogoUrl = indexedLogo;
-                        updatedChannels.Add(ch);
+                        foundLogo = epgLogo;
+                        break;
                     }
+                }
+
+                // 2. EPG Channel <icon> by normalized channel name
+                if (string.IsNullOrEmpty(foundLogo))
+                {
+                    string chNorm = Regex.Replace(ChannelUtils.GetDisplayBaseName(ch.PrimaryName ?? ch.Name).ToLowerInvariant(), @"[^a-z0-9]", "");
+                    if (!string.IsNullOrEmpty(chNorm) && epgIconByNormName.TryGetValue(chNorm, out var epgNameLogo))
+                    {
+                        foundLogo = epgNameLogo;
+                    }
+                }
+
+                // 3. iptv-org + tv-logos + local LogoIndex
+                if (string.IsNullOrEmpty(foundLogo))
+                {
+                    foundLogo = GetLogoFromIndex(ch.PrimaryName ?? ch.Name, ch.Language);
+                }
+
+                if (!string.IsNullOrEmpty(foundLogo))
+                {
+                    ch.LogoUrl = foundLogo;
+                    updatedChannels.Add(ch);
                 }
             }
 
             if (updatedChannels.Count > 0)
             {
-                await _db.SaveChannelsBatchAsync(updatedChannels, clearFirst: false, notifyUpdated: false);
+                await _db.SaveChannelsBatchAsync(updatedChannels, clearFirst: false, notifyUpdated: false).ConfigureAwait(false);
             }
         }
     }

@@ -38,38 +38,48 @@ namespace StreamMesh.Core.Media
                 channel.Language = Channel.NormalizeLanguage(channel.Language);
             }
 
-            // V1.8.8: Standart kategori koruması
-            if (channel.Notes == "FORCE_CAT")
-            {
-                channel.Notes = ""; // Clear marker
-                return;
-            }
-
-            // 2. KESİN VOD FİLM TESPİTİ (URL Deseni, dosya uzantısı, yıl bilgisi ve uluslararası anahtar kelimeler)
+            // 2. KESİN CANLI YAYIN ve VOD FİLM/DİZİ TESPİTİ
             bool hasMovieExt = urlLower.EndsWith(".mkv") || urlLower.EndsWith(".mp4") || urlLower.EndsWith(".avi") ||
                                urlLower.Contains(".mkv?") || urlLower.Contains(".mp4?") || urlLower.Contains(".avi?") ||
                                urlLower.Contains(".mkv,") || urlLower.Contains(".mp4,");
             bool hasMoviePath = urlLower.Contains("/movie/") || urlLower.Contains("/movies/") || urlLower.Contains("/vod/");
-            bool hasMovieKeywords = groupUpper.Contains("FILM") || groupUpper.Contains("MOVIE") || groupUpper.Contains("SINEMA") || groupUpper.Contains("VOD") ||
-                                    groupUpper.Contains("AKSIYON") || groupUpper.Contains("ACTION") || groupUpper.Contains("KOMEDI") || groupUpper.Contains("COMEDY") ||
-                                    groupUpper.Contains("KORKU") || groupUpper.Contains("HORROR") || groupUpper.Contains("THRILLER") || groupUpper.Contains("GERILIM") ||
-                                    groupUpper.Contains("DRAMA") || groupUpper.Contains("ABENTEUER") || groupUpper.Contains("ADVENTURE") || groupUpper.Contains("ROMANCE") ||
-                                    groupUpper.Contains("NETFLIX") || groupUpper.Contains("CINEMA") || groupUpper.Contains("KINO") ||
-                                    catUpper.Contains("FILM") || catUpper.Contains("MOVIE") || catUpper.Contains("SINEMA") || catUpper.Contains("VOD");
+            bool hasSeriesPath = urlLower.Contains("/series/");
+            bool isRawXtreamLive = !hasMoviePath && !hasSeriesPath &&
+                                   System.Text.RegularExpressions.Regex.IsMatch(urlLower, @"^https?://[^/]+/[^/]+/[^/]+/\d+(?:\?.*)?$");
+            bool isExplicitLiveUrl = urlLower.Contains("/live/") || urlLower.EndsWith(".ts") || urlLower.Contains(".ts?") ||
+                                     urlLower.EndsWith(".m3u8") || urlLower.Contains(".m3u8?") || urlLower.StartsWith("acestream://") ||
+                                     isRawXtreamLive ||
+                                     string.Equals(channel.SourceType, "ACESTREAM", StringComparison.OrdinalIgnoreCase);
+
+            bool hasStrongVodGroup = groupUpper.Contains("VOD") || groupUpper.Contains("FILMLER") || groupUpper.Contains("MOVIES") ||
+                                     groupUpper.Contains("YABANCI FILM") || groupUpper.Contains("YERLI FILM") ||
+                                     catUpper == "FILM" || catUpper == "FILMLER" || catUpper == "MOVIE" || catUpper == "MOVIES" || catUpper == "VOD";
 
             bool hasYearInName = System.Text.RegularExpressions.Regex.IsMatch(name, @"\((19\d{2}|20\d{2})\)");
 
-            // 3. DİZİ TESPİTİ (Sezon, Bölüm, Series anahtar kelimeleri)
-            bool isSeriesPattern = channel.SeasonNumber > 0 || channel.EpisodeNumber > 0 ||
-                                   System.Text.RegularExpressions.Regex.IsMatch(nameUpper, @"(?i)\bs\d+\s*e\d+|\b\d+x\d+|(?:bölüm|bolum|\bep\b|\be\b|\bpart\b)\s*\d+") ||
-                                   urlLower.Contains("/series/") ||
-                                   groupUpper.Contains("DIZI") || groupUpper.Contains("SERIES") || groupUpper.Contains("SEZON") || groupUpper.Contains("EPISODE") ||
-                                   catUpper.Contains("DIZI") || catUpper.Contains("SERIES");
+            // 3. DİZİ TESPİTİ (Bölüm/Sezon kalıbı, /series/ yolu veya VOD uzantılı dizi grubu)
+            bool hasEpisodePattern = channel.SeasonNumber > 0 || channel.EpisodeNumber > 0 ||
+                                     System.Text.RegularExpressions.Regex.IsMatch(nameUpper, @"(?i)\bs\d+\s*e\d+\b|\b\d+x\d+\b|(?:bölüm|bolum|\bsezon\b|\bep\b|\bpart\b)\s*\d+");
+            bool hasSeriesGroup = groupUpper.Contains("DIZILER") || groupUpper.Contains("DİZİLER") || groupUpper.Contains("SERIES") ||
+                                  catUpper == "DIZI" || catUpper == "DİZİ" || catUpper == "DIZILER" || catUpper == "SERIES";
+            bool isSeriesPattern = hasSeriesPath ||
+                                   (!isExplicitLiveUrl && (hasEpisodePattern || (hasSeriesGroup && string.IsNullOrWhiteSpace(channel.EpgId))));
 
             // 4. RADYO TESPİTİ
             bool isRadio = groupUpper.Contains("RADYO") || groupUpper.Contains("RADIO") ||
                            catUpper.Contains("RADYO") || catUpper.Contains("RADIO") ||
                            nameUpper.Contains(" RADYO") || nameUpper.Contains(" RADIO") || nameUpper.StartsWith("RADYO ") || nameUpper.StartsWith("RADIO ");
+
+            // V1.8.8: Standart kategori koruması (Ancak kesin canlı TV yayınlarını yanlışlıkla Film/Dizi yapma)
+            if (channel.Notes == "FORCE_CAT")
+            {
+                channel.Notes = ""; // Clear marker
+                if ((isExplicitLiveUrl || !string.IsNullOrWhiteSpace(channel.EpgId)) && !hasMovieExt && !hasMoviePath && !hasSeriesPath && !hasEpisodePattern)
+                {
+                    channel.Category = isRadio ? "Radyo" : "TV";
+                }
+                return;
+            }
 
             if (isRadio)
             {
@@ -79,14 +89,14 @@ namespace StreamMesh.Core.Media
             {
                 channel.Category = "Dizi";
             }
-            else if (hasMoviePath || hasMovieExt || (hasYearInName && (hasMovieKeywords || !groupUpper.Contains("CANLI") && !groupUpper.Contains("LIVE"))) || hasMovieKeywords)
+            else if (hasMoviePath || hasMovieExt || (!isExplicitLiveUrl && string.IsNullOrWhiteSpace(channel.EpgId) && (hasStrongVodGroup || (hasYearInName && !groupUpper.Contains("CANLI") && !groupUpper.Contains("LIVE")))))
             {
-                // Canlı TV kanalı adı değilse ve Film işaretleri varsa FİLM yap
+                // Gerçek VOD film sinyalleri varsa Film yap (Action/Drama/Cinema gibi canlı TV kanalları TV kalır)
                 channel.Category = "Film";
             }
             else
             {
-                // Canlı TV (Ulusal, Haber, Spor, Belgesel, Çocuk, Müzik vb. tüm canlı yayınlar)
+                // Canlı TV (Ulusal, Haber, Spor, Belgesel, Sinema kanalları vb.)
                 channel.Category = "TV";
             }
 

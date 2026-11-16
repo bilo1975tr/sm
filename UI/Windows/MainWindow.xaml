@@ -40,6 +40,10 @@
                     <Path Data="{StaticResource GeoSearch}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
                 </RadioButton>
 
+                <RadioButton Style="{StaticResource NavButtonStyle}" Click="Nav_Click" Tag="EpgGuide" ToolTip="TV Rehberi (EPG &amp; Catch-up)">
+                    <Path Data="{StaticResource GeoGuide}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
+                </RadioButton>
+
                 <RadioButton Style="{StaticResource NavButtonStyle}" Click="Nav_Click" Tag="Player" ToolTip="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[NavPlayer]}">
                     <Path Data="{StaticResource GeoPlay}" Fill="{Binding RelativeSource={RelativeSource AncestorType=RadioButton}, Path=Foreground}" Width="20" Height="20" Stretch="Uniform"/>
                 </RadioButton>
@@ -77,7 +81,7 @@
                 <Border Background="#1E1E1E" CornerRadius="12" Padding="10,5" BorderBrush="#333" BorderThickness="1" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="v" Foreground="#38BDF8" FontSize="11" FontWeight="Bold"/>
-                        <TextBlock x:Name="CurrentVersionBadge" Text="0.1.0" Foreground="#CCC" FontSize="11" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="CurrentVersionBadge" Text="{Binding Version}" Foreground="#CCC" FontSize="11" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Border>
             </StackPanel>

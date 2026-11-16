@@ -133,6 +133,34 @@ namespace StreamMesh.Core.Database.Repositories
             finally { _dbLock.Release(); }
         }
 
+        public async Task<List<(string EpgId, string Name, string LogoUrl)>> GetEpgLogoLookupAsync()
+        {
+            var list = new List<(string EpgId, string Name, string LogoUrl)>();
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                await connection.OpenAsync().ConfigureAwait(false);
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT EpgId, Name, LogoUrl FROM EpgChannels WHERE LogoUrl IS NOT NULL AND trim(LogoUrl) != ''";
+                using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    string epgId = reader.IsDBNull(0) ? "" : reader.GetString(0);
+                    string name = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                    string logo = reader.IsDBNull(2) ? "" : reader.GetString(2);
+                    if (!string.IsNullOrWhiteSpace(logo))
+                    {
+                        list.Add((epgId, name, logo));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"EpgRepository.GetEpgLogoLookupAsync warning: {ex.Message}");
+            }
+            return list;
+        }
+
         public async Task<List<EpgChannelSearchResult>> SearchEpgChannelsAsync(string query, bool allSources, List<string> epgSources)
         {
             var list = new List<EpgChannelSearchResult>();
@@ -275,6 +303,46 @@ namespace StreamMesh.Core.Database.Repositories
                     if (DateTime.TryParse(reader.GetString(3), out DateTime st)) ep.StartTime = st.AddHours(shift);
                     if (DateTime.TryParse(reader.GetString(4), out DateTime et)) ep.EndTime = et.AddHours(shift);
                     list.Add(ep);
+                }
+            }
+            return list;
+        }
+
+        public async Task<List<EpgProgram>> GetEpgProgramsInRangeAsync(DateTime start, DateTime end)
+        {
+            var list = new List<EpgProgram>();
+            using (var connection = new SqliteConnection(_connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+                var shifts = GetSourceTimeShifts(connection);
+                var cmd = connection.CreateCommand();
+                var startWin = start.AddHours(-4).ToString("o");
+                var endWin = end.AddHours(4).ToString("o");
+
+                cmd.CommandText = "SELECT ChannelName, Title, Description, StartTime, EndTime, SourceUrl FROM EpgPrograms WHERE StartTime <= @EndWin AND EndTime >= @StartWin ORDER BY StartTime ASC LIMIT 12000";
+                cmd.Parameters.AddWithValue("@StartWin", startWin);
+                cmd.Parameters.AddWithValue("@EndWin", endWin);
+
+                using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    string srcUrl = reader.IsDBNull(5) ? "" : reader.GetString(5);
+                    int shift = shifts.TryGetValue(srcUrl, out int s) ? s : 0;
+
+                    var ep = new EpgProgram
+                    {
+                        ChannelName = reader.GetString(0),
+                        Title = reader.IsDBNull(1) ? "" : reader.GetString(1),
+                        Description = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                        SourceUrl = srcUrl
+                    };
+                    if (DateTime.TryParse(reader.GetString(3), out DateTime st)) ep.StartTime = st.AddHours(shift);
+                    if (DateTime.TryParse(reader.GetString(4), out DateTime et)) ep.EndTime = et.AddHours(shift);
+
+                    if (ep.EndTime >= start && ep.StartTime <= end)
+                    {
+                        list.Add(ep);
+                    }
                 }
             }
             return list;

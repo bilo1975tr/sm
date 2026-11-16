@@ -17,7 +17,7 @@ namespace StreamMesh.UI.Windows
     public partial class EditChannelWindow : Window, INotifyPropertyChanged
     {
         private Channel _channel;
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         public class StringWrapper : INotifyPropertyChanged
         {

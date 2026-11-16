@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using StreamMesh.Models;
 using StreamMesh.Core.Database;
+using StreamMesh.Core.Network;
 using System.Diagnostics;
 using System.Linq;
 
@@ -15,7 +16,7 @@ namespace StreamMesh.UI.Windows
     public partial class SourceEditWindow : Window
     {
         private readonly string _sourceUrl;
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private List<Channel> _allChannels = new List<Channel>();
         public ObservableCollection<Channel> DisplayedChannels { get; set; } = new ObservableCollection<Channel>();
 
@@ -177,9 +178,6 @@ namespace StreamMesh.UI.Windows
             if (targets.Count == 0) targets = DisplayedChannels.ToList();
             if (targets.Count == 0) return;
 
-            using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-
             foreach (var ch in targets)
             {
                 ch.Notes = "⏳ Test ediliyor...";
@@ -187,8 +185,10 @@ namespace StreamMesh.UI.Windows
                 {
                     var sw = Stopwatch.StartNew();
                     string testUrl = (ch.Url ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
                     using var req = new HttpRequestMessage(HttpMethod.Head, testUrl);
-                    var response = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+                    req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                    using var response = await MediaHttpClient.Client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                     sw.Stop();
 
                     if (response.IsSuccessStatusCode) ch.Notes = $"✅ {sw.ElapsedMilliseconds}ms";

@@ -14,10 +14,17 @@ namespace StreamMesh.UI.ViewModels
 {
     public class HomeViewModel : INotifyPropertyChanged
     {
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private readonly EpgService _epg = new EpgService();
         private List<Channel> _allChannels = new List<Channel>();
+        private List<Channel> _filteredUnsorted = new List<Channel>();
         private List<Channel> _filteredChannels = new List<Channel>();
+        private List<IptvAccountInfo> _cachedAccountInfos = new List<IptvAccountInfo>();
+        private Dictionary<string, IptvAccountInfo> _cachedAccountInfosById = new Dictionary<string, IptvAccountInfo>(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly System.Text.RegularExpressions.Regex SeriesEpisodeRegex = new System.Text.RegularExpressions.Regex(
+            @"\b(s\d+\s*e\d+|bölüm|bolum|sezon)\b",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
 
         private string? _currentBackdrop;
         public string? CurrentBackdrop
@@ -49,19 +56,20 @@ namespace StreamMesh.UI.ViewModels
                 if (_searchText == value) return;
                 _searchText = value;
                 OnPropertyChanged();
-                _ = DebouncedRefreshDisplayAsync();
+                _ = DebouncedSearchAsync();
             }
         }
 
         private System.Threading.CancellationTokenSource? _searchCts;
-        private async Task DebouncedRefreshDisplayAsync()
+        private async Task DebouncedSearchAsync()
         {
             _searchCts?.Cancel();
             _searchCts = new System.Threading.CancellationTokenSource();
             try
             {
-                await Task.Delay(300, _searchCts.Token);
-                _ = RefreshDisplayAsync();
+                await Task.Delay(250, _searchCts.Token);
+                _currentPage = 1;
+                await ApplyFiltersAsync(rebuildGroups: false);
             }
             catch (TaskCanceledException) { }
         }
@@ -88,7 +96,7 @@ namespace StreamMesh.UI.ViewModels
                     OnPropertyChanged();
                     UpdateSelectedSourceInList();
                     _currentPage = 1;
-                    _ = RefreshDisplayAsync();
+                    _ = ApplyFiltersAsync(rebuildGroups: true);
                 }
             }
         }
@@ -102,8 +110,66 @@ namespace StreamMesh.UI.ViewModels
         }
 
         public ObservableCollection<GroupCategoryItem> GroupCategories { get; set; } = new ObservableCollection<GroupCategoryItem>();
+        public ObservableCollection<GroupCategoryItem> FilteredGroupCategories { get; set; } = new ObservableCollection<GroupCategoryItem>();
 
         public bool HasGroupCategories => GroupCategories.Count > 1;
+        public bool CanToggleGroupSidebar => GroupCategories.Count > 1;
+        public bool ShowGroupSidebar => _isGroupSidebarOpen && GroupCategories.Count > 1;
+
+        private bool _isGroupSidebarOpen = true;
+        public bool IsGroupSidebarOpen
+        {
+            get => _isGroupSidebarOpen;
+            set
+            {
+                if (_isGroupSidebarOpen != value)
+                {
+                    _isGroupSidebarOpen = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ShowGroupSidebar));
+                }
+            }
+        }
+
+        private string _groupSearchText = "";
+        public string GroupSearchText
+        {
+            get => _groupSearchText;
+            set
+            {
+                if (_groupSearchText != value)
+                {
+                    _groupSearchText = value ?? "";
+                    OnPropertyChanged();
+                    RebuildFilteredGroups();
+                }
+            }
+        }
+
+        public void ToggleGroupSidebar() => IsGroupSidebarOpen = !IsGroupSidebarOpen;
+
+        private void RebuildFilteredGroups()
+        {
+            string query = (_groupSearchText ?? "").Trim();
+            var matches = string.IsNullOrEmpty(query)
+                ? GroupCategories.ToList()
+                : GroupCategories.Where(g =>
+                    string.Equals(g.Name, "All", StringComparison.OrdinalIgnoreCase) ||
+                    (g.Name?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+
+            void Apply()
+            {
+                FilteredGroupCategories.Clear();
+                foreach (var g in matches) FilteredGroupCategories.Add(g);
+            }
+
+            if (System.Windows.Application.Current?.Dispatcher?.CheckAccess() == true)
+                Apply();
+            else
+                System.Windows.Application.Current?.Dispatcher?.Invoke(Apply);
+        }
+
+        public string ActiveCategory => _activeCategory;
 
         public string SelectedGroup
         {
@@ -116,7 +182,7 @@ namespace StreamMesh.UI.ViewModels
                     OnPropertyChanged();
                     UpdateSelectedGroupInList();
                     _currentPage = 1;
-                    _ = RefreshDisplayAsync();
+                    _ = ApplyFiltersAsync(rebuildGroups: false);
                 }
             }
         }
@@ -130,6 +196,130 @@ namespace StreamMesh.UI.ViewModels
         }
 
         public ObservableCollection<Channel> DisplayedChannels { get; set; } = new ObservableCollection<Channel>();
+
+        private Channel? _selectedHeroItem;
+        private System.Threading.CancellationTokenSource? _heroEnrichCts;
+
+        public Channel? SelectedHeroItem
+        {
+            get => _selectedHeroItem;
+            set
+            {
+                if (ReferenceEquals(_selectedHeroItem, value)) return;
+                if (_selectedHeroItem != null)
+                {
+                    _selectedHeroItem.IsSelected = false;
+                    _selectedHeroItem.PropertyChanged -= SelectedHeroItem_PropertyChanged;
+                }
+
+                _selectedHeroItem = value;
+
+                if (_selectedHeroItem != null)
+                {
+                    _selectedHeroItem.IsSelected = true;
+                    _selectedHeroItem.PropertyChanged += SelectedHeroItem_PropertyChanged;
+                    CurrentBackdrop = !string.IsNullOrWhiteSpace(_selectedHeroItem.BackdropUrl)
+                        ? _selectedHeroItem.BackdropUrl
+                        : _selectedHeroItem.PrimaryLogoUrl;
+                }
+
+                NotifyHeroPropertiesChanged();
+            }
+        }
+
+        private void SelectedHeroItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Channel.Overview) ||
+                e.PropertyName == nameof(Channel.BackdropUrl) ||
+                e.PropertyName == nameof(Channel.LogoUrl) ||
+                e.PropertyName == nameof(Channel.PrimaryLogoUrl) ||
+                e.PropertyName == nameof(Channel.Cast) ||
+                e.PropertyName == nameof(Channel.ImdbId) ||
+                e.PropertyName == nameof(Channel.IsFavorite) ||
+                e.PropertyName == nameof(Channel.LastPositionMs))
+            {
+                System.Windows.Application.Current?.Dispatcher?.InvokeAsync(NotifyHeroPropertiesChanged);
+            }
+        }
+
+        private void NotifyHeroPropertiesChanged()
+        {
+            OnPropertyChanged(nameof(SelectedHeroItem));
+            OnPropertyChanged(nameof(ShowVodHero));
+            OnPropertyChanged(nameof(HeroBackdropUrl));
+            OnPropertyChanged(nameof(HeroPosterUrl));
+            OnPropertyChanged(nameof(HeroOverviewText));
+            OnPropertyChanged(nameof(IsSelectedHeroSeries));
+            OnPropertyChanged(nameof(IsSelectedHeroResume));
+            OnPropertyChanged(nameof(HeroPlayButtonText));
+            OnPropertyChanged(nameof(HeroDetailsButtonText));
+        }
+
+        public bool ShowVodHero =>
+            SelectedHeroItem != null &&
+            !string.Equals(_activeCategory, "TV", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(_activeCategory, "Radio", StringComparison.OrdinalIgnoreCase) &&
+            (SelectedHeroItem.IsVodMedia ||
+             string.Equals(_activeCategory, "Movies", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(_activeCategory, "Series", StringComparison.OrdinalIgnoreCase));
+
+        public string HeroBackdropUrl =>
+            !string.IsNullOrWhiteSpace(SelectedHeroItem?.BackdropUrl)
+                ? SelectedHeroItem.BackdropUrl
+                : (SelectedHeroItem?.PrimaryLogoUrl ?? "");
+
+        public string HeroPosterUrl => SelectedHeroItem?.PrimaryLogoUrl ?? "";
+
+        public string HeroOverviewText =>
+            !string.IsNullOrWhiteSpace(SelectedHeroItem?.Overview)
+                ? SelectedHeroItem.Overview
+                : "Bu yapım için özet bilgisi bulunmuyor. İsterseniz detay penceresinden kontrol edebilir veya doğrudan oynatabilirsiniz.";
+
+        public bool IsSelectedHeroSeries => SelectedHeroItem is SeriesGroup;
+        public bool IsSelectedHeroResume => (SelectedHeroItem?.LastPositionMs ?? 0) > 0;
+        public string HeroPlayButtonText => IsSelectedHeroResume ? "⏯ Devam Et" : (IsSelectedHeroSeries ? "▶ Bölümleri Aç" : "▶ Şimdi İzle");
+        public string HeroDetailsButtonText => IsSelectedHeroSeries ? "📋 Sezon & Bölümler" : "ℹ Detay & Fragman";
+
+        public void SelectHeroItem(Channel? item, bool enrichIfMissing = true)
+        {
+            SelectedHeroItem = item;
+
+            if (!enrichIfMissing || item == null || !item.IsVodMedia || MetadataEngine.IsLikelyLiveTv(item))
+                return;
+
+            bool needsMeta = string.IsNullOrWhiteSpace(item.Overview) ||
+                             string.IsNullOrWhiteSpace(item.BackdropUrl) ||
+                             string.IsNullOrWhiteSpace(item.Cast);
+            if (!needsMeta) return;
+
+            _heroEnrichCts?.Cancel();
+            var cts = new System.Threading.CancellationTokenSource();
+            _heroEnrichCts = cts;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(180, cts.Token).ConfigureAwait(false);
+                    if (cts.Token.IsCancellationRequested) return;
+
+                    await new MetadataEngine().EnrichChannelAsync(item).ConfigureAwait(false);
+
+                    if (item is SeriesGroup sg && sg.Episodes.Count > 0)
+                    {
+                        var ep0 = sg.Episodes[0];
+                        bool epChanged = false;
+                        if (string.IsNullOrWhiteSpace(ep0.Overview) && !string.IsNullOrWhiteSpace(sg.Overview)) { ep0.Overview = sg.Overview; epChanged = true; }
+                        if (string.IsNullOrWhiteSpace(ep0.BackdropUrl) && !string.IsNullOrWhiteSpace(sg.BackdropUrl)) { ep0.BackdropUrl = sg.BackdropUrl; epChanged = true; }
+                        if (string.IsNullOrWhiteSpace(ep0.Cast) && !string.IsNullOrWhiteSpace(sg.Cast)) { ep0.Cast = sg.Cast; epChanged = true; }
+                        if (string.IsNullOrWhiteSpace(ep0.ImdbId) && !string.IsNullOrWhiteSpace(sg.ImdbId)) { ep0.ImdbId = sg.ImdbId; epChanged = true; }
+                        if (epChanged) await _db.SaveChannelAsync(ep0).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception ex) { LogService.LogWarning($"Hero metadata enrich skipped: {ex.Message}"); }
+            });
+        }
 
         private bool _isSyncing;
         public bool IsSyncing
@@ -203,10 +393,7 @@ namespace StreamMesh.UI.ViewModels
 
             if (ValidateAllInGroup)
             {
-                lock (_filteredChannels)
-                {
-                    targetChannels = _filteredChannels.ToList();
-                }
+                targetChannels = _filteredChannels.ToList();
                 scopeDescription = $"seçili filtrenin/grubun tamamındaki ({targetChannels.Count} içerik)";
             }
             else
@@ -296,10 +483,7 @@ namespace StreamMesh.UI.ViewModels
                 if (deadChannelIds.Count > 0)
                 {
                     ValidationStatusText = $"{deadChannelIds.Count} ölü kanal kütüphaneden temizleniyor...";
-                    foreach (var id in deadChannelIds)
-                    {
-                        _db.DeleteChannelById(id);
-                    }
+                    await _db.DeleteChannelsAsync(deadChannelIds.ToList());
                 }
 
                 await LoadDataAsync();
@@ -334,82 +518,71 @@ namespace StreamMesh.UI.ViewModels
 
         public async Task RefreshSourceAsync(string sourceId)
         {
-            if (string.IsNullOrWhiteSpace(sourceId)) return;
+            if (string.IsNullOrWhiteSpace(sourceId) || !sourceId.StartsWith("IPTV_", StringComparison.OrdinalIgnoreCase)) return;
 
-            if (sourceId.StartsWith("IPTV_", StringComparison.OrdinalIgnoreCase))
+            string accountId = sourceId.Substring(5);
+            var acc = _db.GetAllIptvAccounts().FirstOrDefault(a => a.Id == accountId);
+            if (acc == null) return;
+
+            var accInfo = IptvAccountInfo.FromAccount(acc);
+            IsSyncing = true;
+            SyncStatusMessage = $"{acc.Name} sağlayıcısından tüm kanallar ve içerikler indiriliyor...";
+            SyncProgressPercent = 10;
+
+            try
             {
-                string accountId = sourceId.Substring(5);
-                var allAccs = _db.GetAllIptvAccounts();
-                var acc = allAccs.FirstOrDefault(a => a.Id == accountId);
-                if (acc != null)
+                var (success, count, msg) = await IptvAccountHelper.FetchAndImportFullAccountAsync(accInfo, (m, p) =>
                 {
-                    var accInfo = IptvAccountInfo.FromAccount(acc);
-                    IsSyncing = true;
-                    SyncStatusMessage = $"{acc.Name} sağlayıcısından tüm kanallar ve içerikler indiriliyor...";
-                    SyncProgressPercent = 10;
+                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                    {
+                        SyncStatusMessage = $"[{acc.Username}] {m}";
+                        SyncProgressPercent = (int)p;
+                    });
+                }).ConfigureAwait(false);
 
-                    try
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    if (success)
                     {
-                        var (success, count, msg) = await IptvAccountHelper.FetchAndImportFullAccountAsync(accInfo, (m, p) =>
-                        {
-                            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-                            {
-                                SyncStatusMessage = $"[{acc.Username}] {m}";
-                                SyncProgressPercent = (int)p;
-                            });
-                        }).ConfigureAwait(false);
-
-                        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                        {
-                            if (success)
-                            {
-                                System.Windows.MessageBox.Show($"{acc.Name} sağlayıcısından {count} kanal ve içerik başarıyla güncellendi!", "Sağlayıcı Güncellendi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                            }
-                            else
-                            {
-                                System.Windows.MessageBox.Show($"Güncelleme uyarısı: {msg}", "Bilgi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                            }
-                        });
+                        System.Windows.MessageBox.Show($"{acc.Name} sağlayıcısından {count} kanal ve içerik başarıyla güncellendi!", "Sağlayıcı Güncellendi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        LogService.LogError("HomeViewModel.RefreshSourceAsync hatası", ex);
-                        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                        {
-                            System.Windows.MessageBox.Show($"Hata: {ex.Message}", "Hata", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
-                        });
+                        System.Windows.MessageBox.Show($"Güncelleme uyarısı: {msg}", "Bilgi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     }
-                    finally
-                    {
-                        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                        {
-                            IsSyncing = false;
-                            SyncStatusMessage = "";
-                        });
-                        await LoadDataAsync();
-                    }
-                }
+                });
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("HomeViewModel.RefreshSourceAsync hatası", ex);
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    System.Windows.MessageBox.Show($"Hata: {ex.Message}", "Hata", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                });
+            }
+            finally
+            {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    IsSyncing = false;
+                    SyncStatusMessage = "";
+                });
+                await LoadDataAsync();
             }
         }
 
         public async Task PurgeSourceAsync(string sourceId)
         {
-            if (string.IsNullOrWhiteSpace(sourceId)) return;
+            if (string.IsNullOrWhiteSpace(sourceId) || !sourceId.StartsWith("IPTV_", StringComparison.OrdinalIgnoreCase)) return;
 
-            if (sourceId.StartsWith("IPTV_", StringComparison.OrdinalIgnoreCase))
+            string accountId = sourceId.Substring(5);
+            var acc = _db.GetAllIptvAccounts().FirstOrDefault(a => a.Id == accountId);
+            if (acc == null) return;
+
+            if (System.Windows.MessageBox.Show($"{acc.Name} sağlayıcısı ve bu sağlayıcıya ait tüm kanallar veritabanından kalıcı olarak silinecek. Emin misiniz?", "Sağlayıcıyı Sil", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes)
             {
-                string accountId = sourceId.Substring(5);
-                var allAccs = _db.GetAllIptvAccounts();
-                var acc = allAccs.FirstOrDefault(a => a.Id == accountId);
-                if (acc != null)
-                {
-                    if (System.Windows.MessageBox.Show($"{acc.Name} sağlayıcısı ve bu sağlayıcıya ait tüm kanallar veritabanından kalıcı olarak silinecek. Emin misiniz?", "Sağlayıcıyı Sil", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes)
-                    {
-                        var accInfo = IptvAccountInfo.FromAccount(acc);
-                        await IptvAccountHelper.PurgeAccountFromDatabaseAsync(accInfo);
-                        await LoadDataAsync();
-                    }
-                }
+                await IptvAccountHelper.PurgeAccountFromDatabaseAsync(IptvAccountInfo.FromAccount(acc));
+                await LoadDataAsync();
             }
         }
 
@@ -444,7 +617,8 @@ namespace StreamMesh.UI.ViewModels
                 });
             };
 
-            GitHubSyncEngine.OnSyncCompleted += () => {
+            GitHubSyncEngine.OnSyncCompleted += () =>
+            {
                 System.Windows.Application.Current?.Dispatcher.InvokeAsync(async () =>
                 {
                     SyncProgressPercent = 100;
@@ -456,8 +630,8 @@ namespace StreamMesh.UI.ViewModels
                 RequestLoadData(0);
             };
 
-            DatabaseEngine.OnDatabaseUpdated += (s, e) => {
-                // Coalesce / debounce database updates (300ms) so rapid batch writes trigger a single clean UI update
+            DatabaseEngine.OnDatabaseUpdated += (s, e) =>
+            {
                 RequestLoadData(300);
             };
         }
@@ -481,7 +655,6 @@ namespace StreamMesh.UI.ViewModels
 
                     if (!await _loadSemaphore.WaitAsync(0))
                     {
-                        // Load in progress - mark that a reload is required once current load finishes
                         _hasPendingReload = true;
                         return;
                     }
@@ -511,7 +684,6 @@ namespace StreamMesh.UI.ViewModels
         {
             try
             {
-                // Veritabanı tablolarının oluşturulup hazır hale gelmesini bekle
                 try
                 {
                     using var cts = new System.Threading.CancellationTokenSource(4000);
@@ -525,111 +697,26 @@ namespace StreamMesh.UI.ViewModels
 
                 _allChannels = channels;
 
-                // Dinamik Kaynak (Playlist / Xtream) Filtrelerini Hazırla:
+                // Cache normalized IPTV accounts once per data load so filtering never queries SQLite
                 var rawIptvAccounts = _db.GetAllIptvAccounts();
                 var seenAccKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var registeredIptvAccounts = new List<IptvAccount>();
+                var registeredAccounts = new List<(IptvAccount Account, IptvAccountInfo Info)>();
+                var accById = new Dictionary<string, IptvAccountInfo>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var acc in rawIptvAccounts)
                 {
-                    string host = IptvAccountHelper.ExtractHostAndPort(acc.ServerUrl).ToLowerInvariant();
-                    string user = (acc.Username ?? "").Trim().ToLowerInvariant();
-                    string key = $"{user}@{host}";
-
-                    if (seenAccKeys.Add(key))
+                    var info = IptvAccountInfo.FromAccount(acc);
+                    if (!string.IsNullOrEmpty(acc.Id)) accById[acc.Id] = info;
+                    if (seenAccKeys.Add(info.SignatureKey))
                     {
-                        registeredIptvAccounts.Add(acc);
+                        registeredAccounts.Add((acc, info));
                     }
                 }
 
-                var sourceList = new List<SourceFilterItem>();
+                _cachedAccountInfos = registeredAccounts.Select(x => x.Info).ToList();
+                _cachedAccountInfosById = accById;
 
-                if (registeredIptvAccounts.Count > 0)
-                {
-                    sourceList.Add(new SourceFilterItem
-                    {
-                        Id = "ALL",
-                        Name = "Tüm Liste",
-                        Icon = "📁",
-                        Count = channels.Count,
-                        IsSelected = string.Equals(_selectedSourceId, "ALL", StringComparison.OrdinalIgnoreCase)
-                    });
-
-                    // Hızlı tek geçişli eşleme (Single-pass account mapping)
-                    var accInfos = registeredIptvAccounts.Select(acc =>
-                    {
-                        string host = IptvAccountHelper.ExtractHostAndPort(acc.ServerUrl).ToLowerInvariant();
-                        string user = (acc.Username ?? "").Trim().ToLowerInvariant();
-                        return new
-                        {
-                            Account = acc,
-                            Host = host,
-                            User = user,
-                            DisplayName = !string.IsNullOrWhiteSpace(acc.Name) ? acc.Name : $"{acc.Username} ({host})",
-                            Count = 0
-                        };
-                    }).ToList();
-
-                    var accountCounts = new int[accInfos.Count];
-                    var accountMatchedChannelIds = new HashSet<string>();
-
-                    foreach (var ch in channels)
-                    {
-                        string pUrl = (ch.PlaylistUrl ?? "").ToLowerInvariant();
-                        string chUrl = (ch.Url ?? "").ToLowerInvariant();
-
-                        for (int i = 0; i < accInfos.Count; i++)
-                        {
-                            var info = accInfos[i];
-                            bool matches = false;
-
-                            if (!string.IsNullOrEmpty(info.Host) && (pUrl.Contains(info.Host) || chUrl.Contains(info.Host)))
-                            {
-                                if (string.IsNullOrEmpty(info.User) || pUrl.Contains(info.User) || chUrl.Contains(info.User))
-                                {
-                                    matches = true;
-                                }
-                            }
-
-                            if (matches)
-                            {
-                                accountCounts[i]++;
-                                accountMatchedChannelIds.Add(ch.Id);
-                                break;
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < accInfos.Count; i++)
-                    {
-                        if (accountCounts[i] > 0)
-                        {
-                            var info = accInfos[i];
-                            sourceList.Add(new SourceFilterItem
-                            {
-                                Id = $"IPTV_{info.Account.Id}",
-                                Name = info.DisplayName,
-                                SourceUrl = info.Account.ServerUrl,
-                                Icon = "⚡",
-                                Count = accountCounts[i],
-                                IsSelected = string.Equals(_selectedSourceId, $"IPTV_{info.Account.Id}", StringComparison.OrdinalIgnoreCase)
-                            });
-                        }
-                    }
-
-                    int generalCount = channels.Count(c => !accountMatchedChannelIds.Contains(c.Id));
-                    if (generalCount > 0)
-                    {
-                        sourceList.Insert(1, new SourceFilterItem
-                        {
-                            Id = "GENERAL_M3U",
-                            Name = "Genel Liste",
-                            Icon = "🌐",
-                            Count = generalCount,
-                            IsSelected = string.Equals(_selectedSourceId, "GENERAL_M3U", StringComparison.OrdinalIgnoreCase)
-                        });
-                    }
-                }
+                var sourceList = BuildSourceFilters(channels, registeredAccounts);
 
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                 {
@@ -638,20 +725,15 @@ namespace StreamMesh.UI.ViewModels
                     OnPropertyChanged(nameof(HasMultipleSources));
                 });
 
-                await RefreshDisplayAsync();
+                await ApplyFiltersAsync(rebuildGroups: true);
 
                 System.Windows.Application.Current?.Dispatcher.Invoke(() =>
                 {
                     if (channels.Count == 0)
                     {
-                        if (IsSyncing)
-                        {
-                            TotalCountText = "Kütüphane boş - İlk kurulum yapılıyor, yayın listesi indiriliyor...";
-                        }
-                        else
-                        {
-                            TotalCountText = "Kütüphanenizde henüz kanal yok.";
-                        }
+                        TotalCountText = IsSyncing
+                            ? "Kütüphane boş - İlk kurulum yapılıyor, yayın listesi indiriliyor..."
+                            : "Kütüphanenizde henüz kanal yok.";
                     }
                     OnPropertyChanged(nameof(HasNoChannels));
                 });
@@ -661,10 +743,7 @@ namespace StreamMesh.UI.ViewModels
                     try
                     {
                         var stats = _db.GetDailyQueryStats();
-                        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                        {
-                            DailyApiCount = stats.count;
-                        });
+                        System.Windows.Application.Current?.Dispatcher.Invoke(() => DailyApiCount = stats.count);
                     }
                     catch { }
                 });
@@ -672,22 +751,84 @@ namespace StreamMesh.UI.ViewModels
             catch (Exception ex)
             {
                 LogService.LogError("HomeViewModel.LoadData failed", ex);
-                System.Windows.Application.Current?.Dispatcher.Invoke(() => {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
                     TotalCountText = "Hata: İçerik yüklenemedi. Logları kontrol edin.";
                 });
             }
+        }
+
+        private List<SourceFilterItem> BuildSourceFilters(List<Channel> channels, List<(IptvAccount Account, IptvAccountInfo Info)> registeredAccounts)
+        {
+            var sourceList = new List<SourceFilterItem>();
+            if (registeredAccounts.Count == 0) return sourceList;
+
+            sourceList.Add(new SourceFilterItem
+            {
+                Id = "ALL",
+                Name = "Tüm Liste",
+                Icon = "📁",
+                Count = channels.Count,
+                IsSelected = string.Equals(_selectedSourceId, "ALL", StringComparison.OrdinalIgnoreCase)
+            });
+
+            var accountCounts = new int[registeredAccounts.Count];
+            int matchedTotal = 0;
+
+            foreach (var ch in channels)
+            {
+                for (int i = 0; i < registeredAccounts.Count; i++)
+                {
+                    if (IptvAccountHelper.ChannelBelongsToAccount(ch, registeredAccounts[i].Info))
+                    {
+                        accountCounts[i]++;
+                        matchedTotal++;
+                        break;
+                    }
+                }
+            }
+
+            for (int i = 0; i < registeredAccounts.Count; i++)
+            {
+                if (accountCounts[i] <= 0) continue;
+                var (acc, info) = registeredAccounts[i];
+                string displayName = !string.IsNullOrWhiteSpace(acc.Name) ? acc.Name : $"{acc.Username} ({info.HostWithPort})";
+                sourceList.Add(new SourceFilterItem
+                {
+                    Id = $"IPTV_{acc.Id}",
+                    Name = displayName,
+                    SourceUrl = acc.ServerUrl,
+                    Icon = "⚡",
+                    Count = accountCounts[i],
+                    IsSelected = string.Equals(_selectedSourceId, $"IPTV_{acc.Id}", StringComparison.OrdinalIgnoreCase)
+                });
+            }
+
+            int generalCount = channels.Count - matchedTotal;
+            if (generalCount > 0)
+            {
+                sourceList.Insert(1, new SourceFilterItem
+                {
+                    Id = "GENERAL_M3U",
+                    Name = "Genel Liste",
+                    Icon = "🌐",
+                    Count = generalCount,
+                    IsSelected = string.Equals(_selectedSourceId, "GENERAL_M3U", StringComparison.OrdinalIgnoreCase)
+                });
+            }
+
+            return sourceList;
         }
 
         public async Task MergeChannelsAsync(Channel source, Channel target)
         {
             if (source == null || target == null || source.Id == target.Id) return;
 
-            var existingUrls = target.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-            var sourceUrls = source.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var u in sourceUrls)
+            var existingUrls = target.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
+            foreach (var u in source.Url.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (!existingUrls.Contains(u.Trim())) existingUrls.Add(u.Trim());
+                string trimmed = u.Trim();
+                if (!existingUrls.Contains(trimmed)) existingUrls.Add(trimmed);
             }
 
             target.Url = string.Join(",", existingUrls);
@@ -701,7 +842,7 @@ namespace StreamMesh.UI.ViewModels
             if (ch == null) return;
             ch.IsFavorite = !ch.IsFavorite;
             await _db.SaveChannelAsync(ch);
-            await RefreshDisplayAsync();
+            await ApplyFiltersAsync(rebuildGroups: _activeCategory == "Favorites");
         }
 
         public async Task DeleteChannelAsync(Channel ch)
@@ -716,275 +857,329 @@ namespace StreamMesh.UI.ViewModels
         public void SetCategory(string tag)
         {
             _activeCategory = tag;
-            _selectedGroup = "All"; // Reset sub-category filter on main category switch
+            _selectedGroup = "All";
             _currentPage = 1;
-            _ = RefreshDisplayAsync();
+            OnPropertyChanged(nameof(ActiveCategory));
+            if (tag == "TV" || tag == "Radio")
+            {
+                SelectedHeroItem = null;
+            }
+            else
+            {
+                NotifyHeroPropertiesChanged();
+            }
+
+            if (tag == "ContinueWatching")
+            {
+                RequestLoadData(0);
+            }
+            else
+            {
+                _ = ApplyFiltersAsync(rebuildGroups: true);
+            }
         }
 
-        public void SetGroup(string group)
-        {
-            SelectedGroup = group;
-        }
-
-        public void SetSource(string sourceId)
-        {
-            SelectedSourceId = sourceId;
-        }
+        public void SetGroup(string group) => SelectedGroup = group;
+        public void SetSource(string sourceId) => SelectedSourceId = sourceId;
 
         public void SetSort(int index)
         {
             _sortIndex = index;
             _currentPage = 1;
-            _ = RefreshDisplayAsync();
+            _ = SortAndRenderAsync();
         }
-        public void NextPage() { if (_currentPage < _totalPages) { _currentPage++; _ = RefreshDisplayAsync(); } }
-        public void PrevPage() { if (_currentPage > 1) { _currentPage--; _ = RefreshDisplayAsync(); } }
+
+        public void NextPage()
+        {
+            if (_currentPage < _totalPages)
+            {
+                _currentPage++;
+                _ = RenderCurrentPageAsync();
+            }
+        }
+
+        public void PrevPage()
+        {
+            if (_currentPage > 1)
+            {
+                _currentPage--;
+                _ = RenderCurrentPageAsync();
+            }
+        }
 
         private System.Threading.CancellationTokenSource? _enrichmentCts;
 
-        private async Task RefreshDisplayAsync()
+        private async Task ApplyFiltersAsync(bool rebuildGroups)
         {
-            var searchText = _searchText;
-            var category = _activeCategory;
-            var selectedGroup = _selectedGroup;
-            var selectedSourceId = _selectedSourceId;
-            var sort = _sortIndex;
-            var page = _currentPage;
-            var pageSize = _pageSize;
-            var sourceChannels = _allChannels.ToList(); // Take a snapshot
+            string searchText = _searchText;
+            string category = _activeCategory;
+            string selectedGroup = _selectedGroup;
+            string selectedSourceId = _selectedSourceId;
+            var sourceChannels = _allChannels;
+            var allAccountInfos = _cachedAccountInfos;
+            var accountInfosById = _cachedAccountInfosById;
 
             await Task.Run(async () =>
             {
-                var baseSourceFiltered = sourceChannels.AsEnumerable();
+                IEnumerable<Channel> filtered = sourceChannels;
 
-                // 1. Kaynak Filtresi (Tüm Liste, Genel M3U veya Xtream Hesabı)
+                // 1. Source filter (uses cached account infos - zero DB roundtrips)
                 if (!string.Equals(selectedSourceId, "ALL", StringComparison.OrdinalIgnoreCase))
                 {
                     if (string.Equals(selectedSourceId, "GENERAL_M3U", StringComparison.OrdinalIgnoreCase))
                     {
-                        var allAccInfos = _db.GetAllIptvAccounts().Select(IptvAccountInfo.FromAccount).ToList();
-                        baseSourceFiltered = baseSourceFiltered.Where(c => !allAccInfos.Any(info => IptvAccountHelper.ChannelBelongsToAccount(c, info)));
+                        filtered = filtered.Where(c => !allAccountInfos.Any(info => IptvAccountHelper.ChannelBelongsToAccount(c, info)));
                     }
                     else if (selectedSourceId.StartsWith("IPTV_", StringComparison.OrdinalIgnoreCase))
                     {
-                        // Belirli bir Xtream hesabı seçildi
                         string targetAccId = selectedSourceId.Substring(5);
-                        var targetAcc = _db.GetAllIptvAccounts().FirstOrDefault(a => a.Id == targetAccId);
-                        if (targetAcc != null)
+                        if (accountInfosById.TryGetValue(targetAccId, out var targetInfo))
                         {
-                            var targetInfo = IptvAccountInfo.FromAccount(targetAcc);
-                            baseSourceFiltered = baseSourceFiltered.Where(c => IptvAccountHelper.ChannelBelongsToAccount(c, targetInfo));
+                            filtered = filtered.Where(c => IptvAccountHelper.ChannelBelongsToAccount(c, targetInfo));
                         }
                     }
                 }
 
-                var baseCategoryFiltered = baseSourceFiltered;
+                // 2. Category filter
+                filtered = category switch
+                {
+                    "Favorites" => filtered.Where(c => c.IsFavorite),
+                    "ContinueWatching" => filtered.Where(c => c.LastPositionMs > 0 || c.PersonalWatchCount > 0),
+                    "TV" => filtered.Where(c => !IsMovieCategory(c.Category) && !IsSeriesCategory(c.Category) && !IsRadioCategory(c.Category)),
+                    "Movies" => filtered.Where(c => IsMovieCategory(c.Category)),
+                    "Series" => filtered.Where(c => IsSeriesCategory(c.Category)),
+                    "Radio" => filtered.Where(c => IsRadioCategory(c.Category)),
+                    _ => filtered
+                };
 
-                if (category == "Favorites")
-                {
-                    baseCategoryFiltered = baseCategoryFiltered.Where(c => c.IsFavorite);
-                }
-                else if (category == "TV")
-                {
-                    baseCategoryFiltered = baseCategoryFiltered.Where(c =>
-                        !IsMovieCategory(c.Category) &&
-                        !IsSeriesCategory(c.Category) &&
-                        !IsRadioCategory(c.Category));
-                }
-                else if (category == "Movies")
-                {
-                    baseCategoryFiltered = baseCategoryFiltered.Where(c => IsMovieCategory(c.Category));
-                }
-                else if (category == "Series")
-                {
-                    baseCategoryFiltered = baseCategoryFiltered.Where(c => IsSeriesCategory(c.Category));
-                }
-                else if (category == "Radio")
-                {
-                    baseCategoryFiltered = baseCategoryFiltered.Where(c => IsRadioCategory(c.Category));
-                }
+                var categoryList = filtered.ToList();
 
-                var baseCategoryList = baseCategoryFiltered.ToList();
-
-                // Compute GroupTitle categories for this active category
-                var groupCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                foreach (var ch in baseCategoryList)
+                // 3. Rebuild group chips only when source/category/library changed
+                if (rebuildGroups)
                 {
-                    string grp = (ch.GroupTitle ?? "").Trim();
-                    if (string.IsNullOrWhiteSpace(grp)) grp = "Genel";
-                    groupCounts[grp] = groupCounts.TryGetValue(grp, out int count) ? count + 1 : 1;
-                }
-
-                // If selected group does not exist in current set, fallback to All
-                if (!string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase) && !groupCounts.ContainsKey(selectedGroup))
-                {
-                    selectedGroup = "All";
-                    _selectedGroup = "All";
-                }
-
-                var groupList = new List<GroupCategoryItem>();
-                groupList.Add(new GroupCategoryItem
-                {
-                    Name = "All",
-                    Count = baseCategoryList.Count,
-                    IsSelected = string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase)
-                });
-
-                // Top popular groups to prevent freezing UI dispatcher with 20,000+ items
-                var sortedGroups = groupCounts.OrderByDescending(x => x.Value).ThenBy(x => x.Key).Take(150);
-                foreach (var kvp in sortedGroups)
-                {
-                    groupList.Add(new GroupCategoryItem
+                    var groupCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                    foreach (var ch in categoryList)
                     {
-                        Name = kvp.Key,
-                        Count = kvp.Value,
-                        IsSelected = string.Equals(selectedGroup, kvp.Key, StringComparison.OrdinalIgnoreCase)
+                        string grp = string.IsNullOrWhiteSpace(ch.GroupTitle) ? "Genel" : ch.GroupTitle.Trim();
+                        groupCounts[grp] = groupCounts.TryGetValue(grp, out int cnt) ? cnt + 1 : 1;
+                    }
+
+                    if (!string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase) && !groupCounts.ContainsKey(selectedGroup))
+                    {
+                        selectedGroup = "All";
+                        _selectedGroup = "All";
+                    }
+
+                    var groupList = new List<GroupCategoryItem>
+                    {
+                        new GroupCategoryItem
+                        {
+                            Name = "All",
+                            Count = categoryList.Count,
+                            IsSelected = string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase)
+                        }
+                    };
+
+                    foreach (var kvp in groupCounts.OrderByDescending(x => x.Value).ThenBy(x => x.Key).Take(150))
+                    {
+                        groupList.Add(new GroupCategoryItem
+                        {
+                            Name = kvp.Key,
+                            Count = kvp.Value,
+                            IsSelected = string.Equals(selectedGroup, kvp.Key, StringComparison.OrdinalIgnoreCase)
+                        });
+                    }
+
+                    if (!string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase) &&
+                        !groupList.Any(g => string.Equals(g.Name, selectedGroup, StringComparison.OrdinalIgnoreCase)) &&
+                        groupCounts.TryGetValue(selectedGroup, out int selectedCount))
+                    {
+                        groupList.Add(new GroupCategoryItem { Name = selectedGroup, Count = selectedCount, IsSelected = true });
+                    }
+
+                    System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        GroupCategories.Clear();
+                        foreach (var g in groupList) GroupCategories.Add(g);
+                        RebuildFilteredGroups();
+                        OnPropertyChanged(nameof(HasGroupCategories));
+                        OnPropertyChanged(nameof(CanToggleGroupSidebar));
+                        OnPropertyChanged(nameof(ShowGroupSidebar));
                     });
                 }
 
-                // If user selected a group that is not in the top 150, make sure it is included
-                if (!string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase) &&
-                    !groupList.Any(g => string.Equals(g.Name, selectedGroup, StringComparison.OrdinalIgnoreCase)) &&
-                    groupCounts.TryGetValue(selectedGroup, out int selectedGroupCount))
-                {
-                    groupList.Add(new GroupCategoryItem
-                    {
-                        Name = selectedGroup,
-                        Count = selectedGroupCount,
-                        IsSelected = true
-                    });
-                }
-
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    GroupCategories.Clear();
-                    foreach (var g in groupList) GroupCategories.Add(g);
-                    OnPropertyChanged(nameof(HasGroupCategories));
-                });
-
-                // Apply group filter if specific group selected
-                var filtered = baseCategoryList.AsEnumerable();
+                // 4. Group & search filter
+                IEnumerable<Channel> narrowed = categoryList;
                 if (!string.Equals(selectedGroup, "All", StringComparison.OrdinalIgnoreCase))
                 {
-                    filtered = filtered.Where(c =>
+                    narrowed = narrowed.Where(c =>
                     {
-                        string g = (c.GroupTitle ?? "").Trim();
-                        if (string.IsNullOrWhiteSpace(g)) g = "Genel";
+                        string g = string.IsNullOrWhiteSpace(c.GroupTitle) ? "Genel" : c.GroupTitle.Trim();
                         return string.Equals(g, selectedGroup, StringComparison.OrdinalIgnoreCase);
                     });
                 }
 
                 if (!string.IsNullOrWhiteSpace(searchText))
                 {
-                    filtered = filtered.Where(c => ChannelUtils.MatchesQueryFilter(c, searchText));
+                    narrowed = narrowed.Where(c => ChannelUtils.MatchesQueryFilter(c, searchText));
                 }
 
-                // Group Series
-                var finalItems = new List<Channel>();
-                var nonSeries = filtered.Where(c => !string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) && !string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
-                var seriesItems = filtered.Where(c => string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) || string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase)).ToList();
+                // 5. Group series episodes into SeriesGroup cards
+                var groupedItems = GroupSeriesItems(narrowed);
+                _filteredUnsorted = groupedItems;
 
-                finalItems.AddRange(nonSeries);
+                await SortAndRenderCoreAsync();
+            });
+        }
 
-                var groups = seriesItems.GroupBy(s => !string.IsNullOrWhiteSpace(s.SeriesBaseName) ? s.SeriesBaseName : s.CleanName).ToList();
-                foreach (var g in groups)
+        private static List<Channel> GroupSeriesItems(IEnumerable<Channel> items)
+        {
+            var result = new List<Channel>();
+            var seriesItems = new List<Channel>();
+
+            foreach (var c in items)
+            {
+                if (string.Equals(c.Category, "Dizi", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(c.Category, "Series", StringComparison.OrdinalIgnoreCase))
                 {
-                    // YALNIZCA GERÇEKTEN BÖLÜM NUMARASI VEYA SEZON OLAN İÇERİKLERİ SeriesGroup YAP!
-                    // Eğer bölüm numarası yoksa, bunlar bağımsız film veya canlı kanallardır; ASLA tek bir karta birleştirilmemelidir!
-                    bool isRealSeriesWithEpisodes = g.Count() > 1 && g.Any(ep => ep.SeasonNumber > 0 || ep.EpisodeNumber > 0 ||
-                        System.Text.RegularExpressions.Regex.IsMatch(ep.Name ?? "", @"(?i)\b(s\d+\s*e\d+|bölüm|bolum|sezon)\b"));
-
-                    if (string.IsNullOrWhiteSpace(g.Key) || !isRealSeriesWithEpisodes)
-                    {
-                        finalItems.AddRange(g);
-                    }
-                    else
-                    {
-                        finalItems.Add(new SeriesGroup(g.Key, g.ToList()));
-                    }
-                }
-
-                // Apply Sorting
-                bool isSearching = !string.IsNullOrWhiteSpace(searchText);
-                if (isSearching)
-                {
-                    finalItems = finalItems
-                        .OrderByDescending(c => ChannelUtils.CalculateSearchScore(c, searchText))
-                        .ThenBy(c => c.CleanName ?? c.Name ?? "")
-                        .ToList();
+                    seriesItems.Add(c);
                 }
                 else
                 {
-                    switch (sort)
+                    result.Add(c);
+                }
+            }
+
+            if (seriesItems.Count == 0) return result;
+
+            foreach (var g in seriesItems.GroupBy(s => !string.IsNullOrWhiteSpace(s.SeriesBaseName) ? s.SeriesBaseName : s.CleanName))
+            {
+                bool isRealSeries = g.Count() > 1 && g.Any(ep =>
+                    ep.SeasonNumber > 0 || ep.EpisodeNumber > 0 || SeriesEpisodeRegex.IsMatch(ep.Name ?? ""));
+
+                if (string.IsNullOrWhiteSpace(g.Key) || !isRealSeries)
+                {
+                    result.AddRange(g);
+                }
+                else
+                {
+                    result.Add(new SeriesGroup(g.Key, g.ToList()));
+                }
+            }
+
+            return result;
+        }
+
+        private async Task SortAndRenderAsync()
+        {
+            await Task.Run(SortAndRenderCoreAsync);
+        }
+
+        private async Task SortAndRenderCoreAsync()
+        {
+            var source = _filteredUnsorted;
+            string searchText = _searchText;
+            string category = _activeCategory;
+            int sort = _sortIndex;
+
+            List<Channel> sorted;
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                sorted = source
+                    .OrderByDescending(c => ChannelUtils.CalculateSearchScore(c, searchText))
+                    .ThenBy(c => c.CleanName ?? c.Name ?? "")
+                    .ToList();
+            }
+            else if (category == "ContinueWatching")
+            {
+                sorted = source
+                    .OrderByDescending(c => c.LastPositionMs > 0)
+                    .ThenByDescending(c => c.PersonalWatchCount)
+                    .ThenBy(c => c.CleanName ?? c.Name ?? "")
+                    .ToList();
+            }
+            else
+            {
+                sorted = sort switch
+                {
+                    1 => source.OrderByDescending(c => c.CleanName ?? c.Name ?? "").ToList(),
+                    2 => source.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id).ToList(),
+                    3 => source.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.CleanName ?? c.Name ?? "").ToList(),
+                    _ => source.OrderBy(c => c.CleanName ?? c.Name ?? "").ToList()
+                };
+            }
+
+            _filteredChannels = sorted;
+            await RenderCurrentPageCoreAsync();
+        }
+
+        private async Task RenderCurrentPageAsync()
+        {
+            await Task.Run(RenderCurrentPageCoreAsync);
+        }
+
+        private async Task RenderCurrentPageCoreAsync()
+        {
+            var finalItems = _filteredChannels;
+            int pageSize = _pageSize;
+            int totalCount = finalItems.Count;
+            int totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)pageSize));
+            int page = Math.Clamp(_currentPage, 1, totalPages);
+
+            var pageItems = finalItems.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            {
+                _totalPages = totalPages;
+                _currentPage = page;
+                TotalCountText = $"Toplam: {totalCount} İçerik";
+                OnPropertyChanged(nameof(CurrentPageText));
+
+                DisplayedChannels.Clear();
+                foreach (var ch in pageItems) DisplayedChannels.Add(ch);
+                OnPropertyChanged(nameof(HasNoChannels));
+
+                if (string.Equals(_activeCategory, "TV", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(_activeCategory, "Radio", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (SelectedHeroItem != null) SelectedHeroItem = null;
+                }
+                else
+                {
+                    var vodCandidate = pageItems.FirstOrDefault(c => c.IsVodMedia);
+                    bool keepCurrent = SelectedHeroItem != null && pageItems.Any(c => c.Id == SelectedHeroItem.Id) && SelectedHeroItem.IsVodMedia;
+                    if (!keepCurrent)
                     {
-                        case 1: // Alfabetik (Z-A)
-                            finalItems = finalItems.OrderByDescending(c => c.CleanName ?? c.Name ?? "").ToList();
-                            break;
-                        case 2: // Yeni Eklenenler
-                            finalItems = finalItems.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id).ToList();
-                            break;
-                        case 3: // Favoriler Önce
-                            finalItems = finalItems.OrderByDescending(c => c.IsFavorite).ThenBy(c => c.CleanName ?? c.Name ?? "").ToList();
-                            break;
-                        case 0: // Alfabetik (A-Z)
-                        default:
-                            finalItems = finalItems.OrderBy(c => c.CleanName ?? c.Name ?? "").ToList();
-                            break;
+                        SelectHeroItem(vodCandidate, enrichIfMissing: true);
                     }
                 }
+            });
 
-                var totalCount = finalItems.Count;
-                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-                if (totalPages < 1) totalPages = 1;
+            System.Threading.CancellationToken token;
+            lock (_debounceLock)
+            {
+                _enrichmentCts?.Cancel();
+                _enrichmentCts = new System.Threading.CancellationTokenSource();
+                token = _enrichmentCts.Token;
+            }
 
-                if (page > totalPages) page = totalPages;
-                if (page < 1) page = 1;
+            if (token.IsCancellationRequested || pageItems.Count == 0) return;
 
-                var pageItems = finalItems.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    _filteredChannels = finalItems;
-                    _totalPages = totalPages;
-                    _currentPage = page;
-                    TotalCountText = $"Toplam: {totalCount} İçerik";
-                    OnPropertyChanged(nameof(CurrentPageText));
-
-                    DisplayedChannels.Clear();
-                    foreach (var ch in pageItems) DisplayedChannels.Add(ch);
-                    OnPropertyChanged(nameof(HasNoChannels));
-                });
-
-                System.Threading.CancellationToken token;
-                lock (_debounceLock)
-                {
-                    _enrichmentCts?.Cancel();
-                    _enrichmentCts = new System.Threading.CancellationTokenSource();
-                    token = _enrichmentCts.Token;
-                }
+            try
+            {
+                var epgChannels = pageItems.SelectMany(c => c is SeriesGroup sg ? sg.Episodes : new List<Channel> { c }).ToList();
+                await _epg.EnrichBatchEpgAsync(epgChannels);
 
                 if (token.IsCancellationRequested) return;
 
-                // Asynchronously enrich missing logos and EPG for visible page items only
-                try
+                var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
+                if (missingLogos.Count > 0)
                 {
-                    // 1. Enrich EPG (New On-Demand Logic)
-                    var epgChannels = pageItems.SelectMany(c => (c is SeriesGroup sg) ? sg.Episodes : new List<Channel> { c }).ToList();
-                    await _epg.EnrichBatchEpgAsync(epgChannels);
-
-                    if (token.IsCancellationRequested) return;
-
-                    // 2. Enrich Logos
-                    var missingLogos = pageItems.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
-                    if (missingLogos.Count > 0)
-                    {
-                        var enricher = new ChannelEnricher();
-                        await enricher.EnrichChannelsAsync(missingLogos);
-                    }
+                    await new ChannelEnricher().EnrichChannelsAsync(missingLogos);
                 }
-                catch (OperationCanceledException) { }
-                catch (Exception ex) { LogService.LogWarning($"HomeViewModel: Enrichment background task error: {ex.Message}"); }
-            });
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { LogService.LogWarning($"HomeViewModel: Enrichment background task error: {ex.Message}"); }
         }
 
         private static bool IsMovieCategory(string? cat)

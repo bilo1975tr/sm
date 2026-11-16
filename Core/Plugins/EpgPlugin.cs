@@ -19,7 +19,7 @@ namespace StreamMesh.Core.Plugins
         public override string Icon => "📅";
 
         private readonly EpgService _epgService = new();
-        private readonly DatabaseEngine _db = new();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private int _matchedCount = 0;
 
         public EpgPlugin()

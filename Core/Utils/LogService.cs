@@ -203,7 +203,7 @@ namespace StreamMesh.Core.Utils
             {
                 _logChannel.Writer.TryComplete();
                 _cts.Cancel();
-                Task.Delay(200).Wait();
+                System.Threading.Thread.Sleep(150);
                 CloseWriter();
             }
             catch { }

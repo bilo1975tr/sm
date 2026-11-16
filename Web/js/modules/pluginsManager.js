@@ -1,5 +1,5 @@
 import { appState } from './state.js';
-import { showToast } from './ui.js';
+import { showToast, escapeHtml } from './ui.js';
 
 export async function loadWebPlugins() {
     try {
@@ -7,15 +7,44 @@ export async function loadWebPlugins() {
         if (res.ok) {
             const data = await res.json();
             appState.webPlugins = data.plugins || [];
+            renderPluginCategoryPills();
             updatePluginsBadge();
             renderWebPluginsList();
             if (!appState.selectedPluginId && appState.webPlugins.length > 0) {
                 selectWebPlugin(appState.webPlugins[0].id);
+            } else if (appState.selectedPluginId) {
+                selectWebPlugin(appState.selectedPluginId);
             }
         }
     } catch (e) {
         console.error("Eklentiler yüklenirken hata:", e);
     }
+}
+
+function renderPluginCategoryPills() {
+    const container = document.getElementById('pluginCategoryPills');
+    if (!container) return;
+
+    const categories = ['Tümü'];
+    appState.webPlugins.forEach((p) => {
+        if (p.category && !categories.includes(p.category)) {
+            categories.push(p.category);
+        }
+    });
+
+    if (!categories.includes(appState.activePluginFilterCategory)) {
+        appState.activePluginFilterCategory = 'Tümü';
+    }
+
+    container.innerHTML = '';
+    categories.forEach((cat) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sub-pill' + (cat === appState.activePluginFilterCategory ? ' active' : '');
+        btn.textContent = cat;
+        btn.addEventListener('click', () => setPluginCategoryFilter(cat, btn));
+        container.appendChild(btn);
+    });
 }
 
 export function updatePluginsBadge() {
@@ -61,7 +90,8 @@ export function renderWebPluginsList() {
         const matchesSearch = !search ||
             p.name.toLowerCase().includes(search) ||
             p.description.toLowerCase().includes(search) ||
-            p.id.toLowerCase().includes(search);
+            p.id.toLowerCase().includes(search) ||
+            (p.category || '').toLowerCase().includes(search);
         return matchesCategory && matchesSearch;
     });
 
@@ -70,32 +100,41 @@ export function renderWebPluginsList() {
         return;
     }
 
-    let html = '';
+    container.innerHTML = '';
     filtered.forEach(p => {
         const isSelected = p.id === appState.selectedPluginId;
         const statusColor = p.isEnabled ? '#10b981' : '#64748b';
-        html += `
-            <div class="plugin-item-card ${isSelected ? 'active' : ''}" onclick="selectWebPlugin('${p.id}')">
-                <div style="font-size:22px; width:34px; height:34px; border-radius:6px; background:#090d16; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                    ${p.icon || '🧩'}
-                </div>
-                <div style="flex:1; min-width:0;">
-                    <div style="font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
-                    <div style="display:flex; align-items:center; gap:6px; margin-top:3px; font-size:10px;">
-                        <span style="background:#0284c7; color:#fff; padding:1px 5px; border-radius:4px; font-weight:bold;">${p.category}</span>
-                        <span style="color:${statusColor}; font-weight:bold;">${p.isEnabled ? '🟢 Aktif' : '⚪ Kapalı'}</span>
-                        <span style="color:var(--text-muted);">v${p.version}</span>
-                    </div>
-                </div>
-                <label class="plugin-toggle-switch" onclick="event.stopPropagation()">
-                    <input type="checkbox" ${p.isEnabled ? 'checked' : ''} onchange="toggleWebPlugin('${p.id}', this.checked)">
-                    <span class="plugin-toggle-slider"></span>
-                </label>
+        const card = document.createElement('div');
+        card.className = `plugin-item-card ${isSelected ? 'active' : ''}`;
+        card.innerHTML = `
+            <div style="font-size:22px; width:34px; height:34px; border-radius:6px; background:#090d16; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                ${escapeHtml(p.icon || '🧩')}
             </div>
+            <div style="flex:1; min-width:0;">
+                <div style="font-size:13px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(p.name)}</div>
+                <div style="display:flex; align-items:center; gap:6px; margin-top:3px; font-size:10px;">
+                    <span style="background:#0284c7; color:#fff; padding:1px 5px; border-radius:4px; font-weight:bold;">${escapeHtml(p.category)}</span>
+                    <span style="color:${statusColor}; font-weight:bold;">${p.isEnabled ? '🟢 Aktif' : '⚪ Kapalı'}</span>
+                    <span style="color:var(--text-muted);">v${escapeHtml(p.version)}</span>
+                </div>
+            </div>
+            <label class="plugin-toggle-switch">
+                <input type="checkbox" ${p.isEnabled ? 'checked' : ''}>
+                <span class="plugin-toggle-slider"></span>
+            </label>
         `;
-    });
 
-    container.innerHTML = html;
+        card.addEventListener('click', () => selectWebPlugin(p.id));
+        const toggleLabel = card.querySelector('.plugin-toggle-switch');
+        const toggleInput = card.querySelector('input[type="checkbox"]');
+        if (toggleLabel) {
+            toggleLabel.addEventListener('click', (e) => e.stopPropagation());
+        }
+        if (toggleInput) {
+            toggleInput.addEventListener('change', (e) => toggleWebPlugin(p.id, e.target.checked));
+        }
+        container.appendChild(card);
+    });
 }
 
 export function selectWebPlugin(pluginId) {
@@ -114,8 +153,8 @@ export function selectWebPlugin(pluginId) {
         Object.entries(p.stats).forEach(([k, v]) => {
             statsHtml += `
                 <div class="stats-metric-badge">
-                    <span style="font-size:10px; color:var(--text-muted);">${k}</span>
-                    <span style="font-size:13px; font-weight:bold; color:#fff;">${v}</span>
+                    <span style="font-size:10px; color:var(--text-muted);">${escapeHtml(k)}</span>
+                    <span style="font-size:13px; font-weight:bold; color:#fff;">${escapeHtml(v)}</span>
                 </div>
             `;
         });
@@ -124,32 +163,37 @@ export function selectWebPlugin(pluginId) {
     let settingsHtml = '';
     if (p.settings && p.settings.length > 0) {
         p.settings.forEach(s => {
+            const safeKey = escapeHtml(s.key);
             let inputControl = '';
             if (s.type === 'boolean') {
                 const isChecked = s.value === 'true' || s.value === true;
                 inputControl = `
                     <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; color:#fff; font-size:13px;">
-                        <input type="checkbox" id="setting_${s.key}" ${isChecked ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--primary);">
+                        <input type="checkbox" id="setting_${safeKey}" ${isChecked ? 'checked' : ''} style="width:16px; height:16px; accent-color:var(--primary);">
                         <span>Etkinleştir</span>
                     </label>
                 `;
             } else if (s.type === 'select') {
-                const options = (s.options || []).map(opt => `<option value="${opt}" ${opt === s.value ? 'selected' : ''}>${opt}</option>`).join('');
+                const options = (s.options || []).map(opt => {
+                    const safeOpt = escapeHtml(opt);
+                    return `<option value="${safeOpt}" ${opt === s.value ? 'selected' : ''}>${safeOpt}</option>`;
+                }).join('');
                 inputControl = `
-                    <select id="setting_${s.key}" style="background:#090d16; border:1px solid var(--border); border-radius:6px; color:#fff; padding:8px 10px; font-size:13px; width:100%; outline:none;">
+                    <select id="setting_${safeKey}" style="background:#090d16; border:1px solid var(--border); border-radius:6px; color:#fff; padding:8px 10px; font-size:13px; width:100%; outline:none;">
                         ${options}
                     </select>
                 `;
             } else {
+                const inputType = s.type === 'number' ? 'number' : (s.type === 'password' ? 'password' : 'text');
                 inputControl = `
-                    <input type="${s.type === 'number' ? 'number' : 'text'}" id="setting_${s.key}" value="${s.value || ''}" style="background:#090d16; border:1px solid var(--border); border-radius:6px; color:#fff; padding:8px 10px; font-size:13px; width:100%; outline:none;">
+                    <input type="${inputType}" id="setting_${safeKey}" value="${escapeHtml(s.value || '')}" style="background:#090d16; border:1px solid var(--border); border-radius:6px; color:#fff; padding:8px 10px; font-size:13px; width:100%; outline:none;">
                 `;
             }
 
             settingsHtml += `
                 <div class="setting-field-card">
-                    <label style="font-size:13px; font-weight:700; color:#fff;">${s.label}</label>
-                    <span style="font-size:11px; color:var(--text-muted);">${s.description || ''}</span>
+                    <label style="font-size:13px; font-weight:700; color:#fff;">${escapeHtml(s.label)}</label>
+                    <span style="font-size:11px; color:var(--text-muted);">${escapeHtml(s.description || '')}</span>
                     <div style="margin-top:4px;">${inputControl}</div>
                 </div>
             `;
@@ -161,25 +205,25 @@ export function selectWebPlugin(pluginId) {
     container.innerHTML = `
         <div class="plugin-header-card">
             <div style="font-size:36px; width:52px; height:52px; border-radius:10px; background:#090d16; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                ${p.icon || '🧩'}
+                ${escapeHtml(p.icon || '🧩')}
             </div>
             <div style="flex:1;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                    <h3 style="font-size:16px; font-weight:800; color:#fff;">${p.name}</h3>
+                    <h3 style="font-size:16px; font-weight:800; color:#fff;">${escapeHtml(p.name)}</h3>
                     <span style="font-size:11px; font-weight:bold; padding:3px 10px; border-radius:12px; background:${statusBg}; color:${statusColor};">
                         ${p.isEnabled ? '🟢 Aktif' : '⚪ Devre Dışı'}
                     </span>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; margin:4px 0 8px 0; font-size:11px;">
-                    <span style="background:#0284c7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">${p.category}</span>
-                    <span style="color:var(--primary-glow); font-weight:600;">v${p.version}</span>
-                    <span style="color:var(--text-muted);">Geliştirici: ${p.author || 'StreamMesh'}</span>
+                    <span style="background:#0284c7; color:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">${escapeHtml(p.category)}</span>
+                    <span style="color:var(--primary-glow); font-weight:600;">v${escapeHtml(p.version)}</span>
+                    <span style="color:var(--text-muted);">Geliştirici: ${escapeHtml(p.author || 'StreamMesh')}</span>
                 </div>
-                <p style="font-size:12px; color:#cbd5e1; line-height:1.5;">${p.description}</p>
+                <p style="font-size:12px; color:#cbd5e1; line-height:1.5;">${escapeHtml(p.description)}</p>
+                ${p.statusMessage ? `<p style="font-size:11px; color:var(--primary-glow); margin-top:6px;">${escapeHtml(p.statusMessage)}</p>` : ''}
             </div>
         </div>
 
-        <!-- Statistics -->
         <div>
             <h4 style="font-size:13px; font-weight:700; color:var(--primary-glow); margin-bottom:10px;">📊 Canlı Metrikler &amp; Durum</h4>
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
@@ -187,23 +231,25 @@ export function selectWebPlugin(pluginId) {
             </div>
         </div>
 
-        <!-- Settings -->
         <div>
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
                 <h4 style="font-size:13px; font-weight:700; color:var(--primary-glow);">⚙️ Eklenti Parametreleri</h4>
-                <button class="action-link" style="padding:4px 10px; font-size:11px; background:#0284c7;" onclick="executeWebPluginAction('${p.id}')">⚡ Test Et / Çalıştır</button>
+                <button type="button" id="pluginTestActionBtn" class="action-link" style="padding:4px 10px; font-size:11px; background:#0284c7;">⚡ Test Et / Çalıştır</button>
             </div>
             <div style="display:flex; flex-direction:column; gap:10px;">
                 ${settingsHtml}
             </div>
         </div>
 
-        <!-- Save Action Buttons -->
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px; padding-top:14px; border-top:1px solid var(--border);">
-            <button class="page-action-btn" onclick="resetWebPluginSettings('${p.id}')">↩️ Sıfırla</button>
-            <button class="page-action-btn" style="background:#059669; border-color:#10b981; color:#fff;" onclick="saveWebPluginSettings('${p.id}')">💾 Değişiklikleri Kaydet</button>
+            <button type="button" id="pluginResetBtn" class="page-action-btn">↩️ Sıfırla</button>
+            <button type="button" id="pluginSaveBtn" class="page-action-btn" style="background:#059669; border-color:#10b981; color:#fff;">💾 Değişiklikleri Kaydet</button>
         </div>
     `;
+
+    container.querySelector('#pluginTestActionBtn')?.addEventListener('click', () => executeWebPluginAction(p.id));
+    container.querySelector('#pluginResetBtn')?.addEventListener('click', () => resetWebPluginSettings(p.id));
+    container.querySelector('#pluginSaveBtn')?.addEventListener('click', () => saveWebPluginSettings(p.id));
 }
 
 export async function toggleWebPlugin(pluginId, isChecked) {
@@ -214,8 +260,11 @@ export async function toggleWebPlugin(pluginId, isChecked) {
             body: JSON.stringify({ id: pluginId, enabled: isChecked })
         });
         if (res.ok) {
+            const data = await res.json();
             const target = appState.webPlugins.find(p => p.id === pluginId);
-            if (target) {
+            if (target && data.plugin) {
+                Object.assign(target, data.plugin);
+            } else if (target) {
                 target.isEnabled = isChecked;
                 target.status = isChecked ? 'Aktif' : 'Devre Dışı';
             }
@@ -289,6 +338,13 @@ export async function executeWebPluginAction(pluginId) {
         });
         if (res.ok) {
             const data = await res.json();
+            if (data.plugin) {
+                const target = appState.webPlugins.find(p => p.id === pluginId);
+                if (target) Object.assign(target, data.plugin);
+                if (appState.selectedPluginId === pluginId) {
+                    selectWebPlugin(pluginId);
+                }
+            }
             showToast(data.result || 'İşlem tamamlandı.');
         }
     } catch (e) {

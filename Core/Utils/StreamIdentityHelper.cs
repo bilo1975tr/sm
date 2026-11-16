@@ -1,6 +1,4 @@
 using System;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace StreamMesh.Core.Utils
@@ -30,13 +28,6 @@ namespace StreamMesh.Core.Utils
             }
             catch { }
             return url.Trim().ToLowerInvariant();
-        }
-
-        public static string GenerateChannelIdFromUrl(string url)
-        {
-            string clean = CleanStreamUrlForIdentity(url);
-            byte[] hash = SHA1.HashData(Encoding.UTF8.GetBytes(clean));
-            return Convert.ToHexString(hash).ToLowerInvariant();
         }
     }
 }

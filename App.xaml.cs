@@ -137,8 +137,7 @@ namespace StreamMesh
             try
             {
                 LogService.LogInfo("[STARTUP] Veritabanı başlatılıyor...");
-                var db = new DatabaseEngine();
-                await db.InitializeAsync().ConfigureAwait(false);
+                await DatabaseEngine.Instance.InitializeAsync().ConfigureAwait(false);
                 LogService.LogInfo("[STARTUP] Veritabanı başarıyla hazırlandı.");
             }
             catch (Exception ex)
@@ -146,33 +145,57 @@ namespace StreamMesh
                 LogService.LogError("[STARTUP] Veritabanı başlatma hatası", ex);
             }
 
-            // 2. Media Server Init (Artık DB hazır olduğundan port ayarını anında okuyabilir)
+            // 2. Media Server & SSDP Init (Eklenti ayarlarına göre başlat)
+            var db = DatabaseEngine.Instance;
+            var serverPlugin = StreamMesh.Core.Plugins.PluginManager.Instance.GetPluginById("local_network_server") as StreamMesh.Core.Plugins.LocalNetworkServerPlugin;
+            var ssdpPlugin = StreamMesh.Core.Plugins.PluginManager.Instance.GetPluginById("ssdp_discovery") as StreamMesh.Core.Plugins.SsdpDiscoveryPlugin;
+
+            bool shouldStartServer = serverPlugin == null || (serverPlugin.IsEnabled && serverPlugin.GetBool("AutoStartOnLaunch"));
+            if (shouldStartServer)
+            {
+                try
+                {
+                    string fallbackPort = serverPlugin != null ? serverPlugin.GetString("ServerPort", "8088") : "8088";
+                    string savedPortStr = db.GetSetting("ServerPort", fallbackPort);
+                    int initialPort = int.TryParse(savedPortStr, out int p) && p > 0 ? p : 8088;
+
+                    Server = new MediaServer(initialPort);
+                    if (Server.Start())
+                    {
+                        db.SetSetting("ServerPort", Server.Port.ToString());
+                        if (ssdpPlugin == null || ssdpPlugin.IsEnabled)
+                        {
+                            Ssdp = new SsdpService();
+                            Ssdp.Start(Server.Port);
+                        }
+                        LogService.LogInfo($"[STARTUP] MediaServer {Server.Port} portunda başlatıldı.");
+                    }
+                    else
+                    {
+                        LogService.LogWarning("[STARTUP] MediaServer adayı portlarda açılamadı, yerel oynatma devam edecek.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("[STARTUP] MediaServer/SSDP başlatma istisnası", ex);
+                }
+            }
+            else
+            {
+                LogService.LogInfo("[STARTUP] Yerel Medya Sunucusu eklentisi devre dışı veya otomatik başlatma kapalı.");
+            }
+
+            // 3. Eklenti yaşam döngüsünü başlat
             try
             {
-                var db = new DatabaseEngine();
-                string savedPortStr = db.GetSetting("ServerPort", "8088");
-                int initialPort = int.TryParse(savedPortStr, out int p) ? p : 8088;
-
-                Server = new MediaServer(initialPort);
-                Ssdp = new SsdpService();
-
-                if (Server.Start())
-                {
-                    db.SetSetting("ServerPort", Server.Port.ToString());
-                    Ssdp.Start(Server.Port);
-                    LogService.LogInfo($"[STARTUP] MediaServer ve SSDP {Server.Port} portunda başlatıldı.");
-                }
-                else
-                {
-                    LogService.LogWarning("[STARTUP] MediaServer adayı portlarda açılamadı, yerel oynatma devam edecek.");
-                }
+                await StreamMesh.Core.Plugins.PluginManager.Instance.InitializeAllAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                LogService.LogError("[STARTUP] MediaServer/SSDP başlatma istisnası", ex);
+                LogService.LogError("[STARTUP] PluginManager InitializeAllAsync hatası", ex);
             }
 
-            // 3. Maintenance (Arka planda sessiz kontrol)
+            // 4. Maintenance (Arka planda sessiz kontrol)
             try
             {
                 MaintenanceEngine.EnsureSelfInstallation();
@@ -180,7 +203,7 @@ namespace StreamMesh
             }
             catch (Exception ex) { LogService.LogError("[STARTUP] Bakım hatası", ex); }
 
-            // 4. AceStream, Logo Sync & Cloud Sync
+            // 5. AceStream, Logo Sync & Cloud Sync
             StartBackgroundTasks();
 
             LogService.LogInfo("[STARTUP] Servis başlatma sekansı tamamlandı.");
@@ -191,17 +214,23 @@ namespace StreamMesh
             // 0. AceStream Engine: İsteğe bağlı (On-Demand) başlatılır. Açılışta mükerrer kopya oluşmasını önlemek için pasife alındı.
             LogService.LogInfo("[STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.");
 
-            // 1. Logo Sync (Sync local + online tv-logos if necessary)
-            Task.Run(async () => {
+            // 1. Logo Sync (Sync local + online tv-logos if LogoPlugin enabled)
+            _ = Task.Run(async () => {
                 try
                 {
-                    await Task.Delay(25000); // 25s gecikme ile UI açılışını asla yormaz
+                    await Task.Delay(25000).ConfigureAwait(false); // 25s gecikme ile UI açılışını asla yormaz
+                    var logoPlugin = StreamMesh.Core.Plugins.PluginManager.Instance.GetPluginById("logo_manager");
+                    if (logoPlugin != null && !logoPlugin.IsEnabled)
+                    {
+                        LogService.LogInfo("[STARTUP] Logo yöneticisi eklentisi kapalı olduğu için LogoSync atlandı.");
+                        return;
+                    }
                     while (GitHubSyncEngine.IsRunning)
                     {
-                        await Task.Delay(5000);
+                        await Task.Delay(5000).ConfigureAwait(false);
                     }
                     var logoSync = new LogoSyncService();
-                    await logoSync.SyncIfNecessaryAsync();
+                    await logoSync.SyncIfNecessaryAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -210,10 +239,10 @@ namespace StreamMesh
             });
 
             // 2. GitHub Playlist Sync: Yalnızca eklenti aktifse ve açılışta güncelleme seçiliyse
-            Task.Run(async () => {
+            _ = Task.Run(async () => {
                 try
                 {
-                    await Task.Delay(4000); // DB'nin tam stabil oturması için bekle
+                    await Task.Delay(4000).ConfigureAwait(false); // DB'nin tam stabil oturması için bekle
                     var plugin = StreamMesh.Core.Plugins.PluginManager.Instance.GetPluginById("github_sync") as StreamMesh.Core.Plugins.GitHubSyncPlugin;
                     if (plugin != null)
                     {
@@ -229,14 +258,14 @@ namespace StreamMesh
                         }
                     }
 
-                    var db = new DatabaseEngine();
-                    int count = await db.GetTotalChannelCountAsync();
+                    var db = DatabaseEngine.Instance;
+                    int count = await db.GetTotalChannelCountAsync().ConfigureAwait(false);
                     if (count == 0 && db.GetSetting("InitialPlaylistImportAttempted", "false") != "true")
                     {
                         db.SetSetting("InitialPlaylistImportAttempted", "true");
                         LogService.LogInfo("[STARTUP] Veritabanında kanal bulunamadı (Count: 0). İlk kurulum için GitHub listesi indiriliyor...");
                         var sync = new GitHubSyncEngine();
-                        await sync.PullFromGitHubAsync();
+                        await sync.PullFromGitHubAsync().ConfigureAwait(false);
                     }
                     else
                     {
@@ -246,64 +275,6 @@ namespace StreamMesh
                 catch (Exception ex)
                 {
                     LogService.LogError("[STARTUP] GitHubSyncEngine background task error", ex);
-                }
-            });
-
-            // 3. EPG Auto-Sync (Every 24h or if empty, update silently in background)
-            Task.Run(async () => {
-                try
-                {
-                    await Task.Delay(15000); // Wait 15s after startup so UI is fully responsive
-                    var db = new DatabaseEngine();
-                    int epgCount = await db.GetEpgProgramsCountAsync();
-                    string lastUpdateStr = db.GetSetting("LastAutoEpgUpdate", "0");
-                    long.TryParse(lastUpdateStr, out long lastUpdateUnix);
-                    long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    bool isStale = (nowUnix - lastUpdateUnix) > 86400; // 24 hours
-
-                    if (epgCount == 0 || isStale)
-                    {
-                        LogService.LogInfo($"[STARTUP] EPG senkronizasyonu başlatılıyor (Kayıt sayısı: {epgCount}, Durum: {(isStale ? "Bayat" : "Boş")})...");
-                        var sources = db.GetEpgSources();
-                        if (sources.Count == 0)
-                        {
-                            var defaultEpgs = new[] {
-                                "https://iptv-epg.org/files/epg-tr.xml.gz",
-                                "https://iptv-epg.org/files/epg-de.xml.gz",
-                                "https://raw.githubusercontent.com/epgshare01/XMLTV/master/epg_ripper_TR1.xml.gz",
-                                "https://raw.githubusercontent.com/epgshare01/XMLTV/master/epg_ripper_DE1.xml.gz"
-                            };
-                            foreach (var s in defaultEpgs) db.AddEpgSource(s);
-                            sources = db.GetEpgSources();
-                        }
-
-                        var epgEng = new EpgEngine();
-                        foreach (var src in sources)
-                        {
-                            try
-                            {
-                                await epgEng.LoadEpgAsync(src);
-                            }
-                            catch (Exception ex)
-                            {
-                                LogService.LogWarning($"[STARTUP] EPG yükleme hatası ({src}): {ex.Message}");
-                            }
-                        }
-
-                        // Clean old programs (older than 1 day)
-                        await db.CleanupOldEpgProgramsAsync(1);
-                        db.SetSetting("LastAutoEpgUpdate", nowUnix.ToString());
-                        LogService.LogInfo($"[STARTUP] EPG senkronizasyonu tamamlandı. Toplam {await db.GetEpgProgramsCountAsync()} program hazır.");
-                        DatabaseEngine.NotifyDatabaseUpdated();
-                    }
-                    else
-                    {
-                        LogService.LogInfo($"[STARTUP] EPG verileri güncel ({epgCount} program hazır). Otomatik indirme atlandı.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogError("[STARTUP] Otomatik EPG arka plan hatası", ex);
                 }
             });
         }

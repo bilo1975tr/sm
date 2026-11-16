@@ -59,7 +59,8 @@
                             </Grid>
                             <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
                             <TextBlock Text="Aktif Yayın Kaynakları" FontWeight="Bold" Foreground="#38bdf8" Margin="0,10,0,10" FontSize="18"/>
-                            <ListBox x:Name="M3uSourcesList" ItemsSource="{Binding Sources}" Height="300" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5">
+                            <ListBox x:Name="M3uSourcesList" ItemsSource="{Binding Sources}" Height="300" Background="#0f172a" BorderThickness="0" Margin="0,0,0,15" Padding="5"
+                                     VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="#1e293b" CornerRadius="8" Margin="0,0,0,5" Padding="10">
@@ -111,13 +112,35 @@
                                 <StackPanel Grid.Column="2"><TextBlock Text="Şifre" Foreground="Gray" FontSize="10"/><TextBox x:Name="XtreamPassBox" Height="35"/></StackPanel>
                             </Grid>
                             <Button Content="+ Hesabı Ekle" Height="40" Style="{StaticResource PrimaryButtonStyle}" Click="AddIptvAccount_Click"/>
+
+                            <!-- Stalker / MAC Portal Bağlantısı -->
+                            <Border Background="#0f172a" CornerRadius="10" Padding="12" Margin="0,12,0,0" BorderBrush="#334155" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="1.2*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,10,0">
+                                        <TextBlock Text="Stalker / Ministra Portal URL (ör. http://portal.com/c)" Foreground="#94a3b8" FontSize="10"/>
+                                        <TextBox x:Name="StalkerPortalUrlBox" Height="34" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                        <TextBlock Text="MAG MAC Adresi (ör. 00:1A:79:...)" Foreground="#94a3b8" FontSize="10"/>
+                                        <TextBox x:Name="StalkerMacBox" Height="34" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                    <Button x:Name="ConnectStalkerBtn" Grid.Column="2" Content="📡 MAC Portal Bağla" Height="34" VerticalAlignment="Bottom" Padding="14,0" Background="#7c3aed" Style="{StaticResource PrimaryButtonStyle}" Click="ConnectStalker_Click"/>
+                                </Grid>
+                            </Border>
+
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
                                 <Button Content="📥 Tüm Sağlayıcıları Kütüphaneye İndir" Background="#059669" Height="32" Padding="14,0" Margin="0,0,10,0" Style="{StaticResource PrimaryButtonStyle}" Click="ImportAllIptvChannels_Click" ToolTip="Kayıtlı tüm aktif IPTV sağlayıcılarındaki tam kanal, film ve dizi yayınlarını kütüphanenize indirir"/>
                                 <Button Content="🔄 Bilgileri ve İstatistikleri Güncelle" Background="#0284c7" Height="32" Padding="12,0" Style="{StaticResource PrimaryButtonStyle}" Click="RefreshIptvStats_Click"/>
                             </StackPanel>
                             <Rectangle Height="1" Fill="#334155" Margin="0,15"/>
                         </StackPanel>
-                        <ListBox Grid.Row="1" x:Name="IptvAccountsList" ItemsSource="{Binding IptvAccounts}" Background="Transparent" BorderThickness="0">
+                        <ListBox Grid.Row="1" x:Name="IptvAccountsList" ItemsSource="{Binding IptvAccounts}" Background="Transparent" BorderThickness="0"
+                                 VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border Background="#0f172a" CornerRadius="12" Padding="18" Margin="0,0,0,14" BorderBrush="#1e293b" BorderThickness="1">
@@ -322,7 +345,7 @@
             <TabItem Header="Oynatıcı Ayarları">
                 <Border Background="#1e293b" Padding="25" CornerRadius="15">
                     <StackPanel>
-                <TextBlock Text="Oynatıcı Ayarları (Flyleaf)" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
+                <TextBlock Text="Oynatıcı Ayarları (libmpv)" FontWeight="Bold" Foreground="#38bdf8" Margin="0,0,0,15" FontSize="18"/>
 
                 <TextBlock Text="Arabellek (ms)" Foreground="#94a3b8" Margin="0,0,0,5"/>
                 <TextBox x:Name="CachingBox" Background="#1e293b" Foreground="White" BorderBrush="#334155" Padding="8" Margin="0,0,0,15"/>
@@ -496,7 +519,7 @@
                                         <TextBlock Text="{Binding TotalPluginsCount, StringFormat='📦 {0} Toplam'}" Foreground="#94a3b8" FontSize="11" FontWeight="SemiBold"/>
                                     </Border>
                                 </WrapPanel>
-                                <TextBlock Text="Uygulamanın çekirdek medya, arama, ağ, yapay zeka ve sistem modüllerini buradan yönetebilir ve özel parametrelerini yapılandırabilirsiniz." Foreground="#94a3b8" FontSize="11" Margin="0,4,0,0"/>
+                                <TextBlock Text="Uygulamanın çekirdek medya, arama, ağ, meta veri ve sistem modüllerini buradan yönetebilir ve özel parametrelerini yapılandırabilirsiniz." Foreground="#94a3b8" FontSize="11" Margin="0,4,0,0"/>
                             </StackPanel>
 
                             <!-- Search & Category Filters -->
@@ -523,7 +546,8 @@
                             <!-- Left: Plugins List -->
                             <Border Grid.Column="0" Background="#0f172a" CornerRadius="12" Padding="8">
                                 <ListBox x:Name="PluginsListBox" ItemsSource="{Binding DisplayedPlugins}" SelectedItem="{Binding SelectedPlugin, Mode=TwoWay}"
-                                         Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                         Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Border Background="#1e293b" CornerRadius="8" Padding="10" Margin="0,0,0,8" BorderBrush="#334155" BorderThickness="1">

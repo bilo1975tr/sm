@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using StreamMesh.Models;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
@@ -22,10 +23,6 @@ namespace StreamMesh.Core.Media
     /// </summary>
     public class GlobalSearchEngine
     {
-        private static readonly HttpClient _httpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(10)
-        };
 
         private readonly M3uEngine _m3uEngine = new M3uEngine();
 
@@ -33,26 +30,25 @@ namespace StreamMesh.Core.Media
         private static List<Channel>? _cachedFreeTuxChannels;
         private static DateTime _freeTuxCacheTime = DateTime.MinValue;
 
-        private static List<Channel>? _cachedIptvOrgChannels;
-        private static DateTime _iptvOrgCacheTime = DateTime.MinValue;
-
         private static List<Channel>? _cachedFreeTvChannels;
         private static DateTime _freeTvCacheTime = DateTime.MinValue;
 
         private static readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1);
         private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(2);
 
-        static GlobalSearchEngine()
-        {
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml,application/json,*/*;q=0.8");
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
-        }
+        private static readonly Regex AceHexRegex = new(@"\b[a-f0-9]{40}\b", RegexOptions.Compiled);
+        private static readonly Regex HtmlRowRegex = new(@"<tr[^>]*>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex HtmlTagRegex = new("<.*?>", RegexOptions.Compiled);
+        private static readonly Regex IptvCatTitleAttrRegex = new(@"class=[""']channel_name[""'][^>]*title=[""']([^""']+)[""']", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex IptvCatTitleSpanRegex = new(@"class=[""']channel_name[""'][^>]*>(.*?)</span>", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex ClipboardAttrRegex = new(@"data-clipboard-text=[""']([^""']+)[""']", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex HrefAbsRegex = new(@"href=[""'](https?://[^""']+)[""']", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex HrefRelRegex = new(@"href=[""'](/[^""']+)[""']", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex FreeTuxLinkRegex = new(@"(?:=>|=&gt;)\s*<a[^>]*href=[""']?([^""'>]+)[""']?[^>]*>(.*?)</a>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex FreeTuxUrlRegex = new(@"(?:=>|=&gt;)\s*(https?://[^\s<]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex FreeTuxNameRegex = new(@"<td[^>]*>(.*?)(?:<br\s*/?>|=>|=&gt;)", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        public async Task<List<SearchResultItem>> SearchAsync(string query)
-        {
-            return await SearchGlobalAsync(query);
-        }
+        public Task<List<SearchResultItem>> SearchAsync(string query) => SearchGlobalAsync(query);
 
         public async Task<bool> StartAceEngineAsync()
         {
@@ -269,13 +265,11 @@ namespace StreamMesh.Core.Media
             string u = url.Trim().ToLowerInvariant();
             if (u.StartsWith("acestream://") || u.Contains(":6878/ace/") || u.Contains(":6878/content_id/"))
             {
-                // Sadece ve sadece 40 haneli geçerli hex Content ID barındıran AceStream linkleri geçerlidir!
-                return Regex.IsMatch(u, @"\b[a-f0-9]{40}\b");
+                return AceHexRegex.IsMatch(u);
             }
             if (u.Contains(".m3u8") || u.Contains(".ts") || u.Contains(".mpd") || u.Contains(".mp4")) return true;
             if (u.Contains("/live/") || u.Contains("get_stream") || u.Contains("playlist") || u.Contains("/stream/") || u.Contains("chunk")) return true;
-            if (u.StartsWith("http://") || u.StartsWith("https://")) return true;
-            return false;
+            return u.StartsWith("http://") || u.StartsWith("https://");
         }
 
         private static string NormalizeStreamUrl(string url)
@@ -300,37 +294,28 @@ namespace StreamMesh.Core.Media
             try
             {
                 using var req = new HttpRequestMessage(HttpMethod.Get, targetUrl);
-                var resp = await _httpClient.SendAsync(req, cts.Token);
+                req.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml,application/json,*/*;q=0.8");
+                req.Headers.TryAddWithoutValidation("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
+                using var resp = await MediaHttpClient.Client.SendAsync(req, cts.Token);
                 if (!resp.IsSuccessStatusCode) return list;
 
                 var html = await resp.Content.ReadAsStringAsync();
-                var rowMatches = Regex.Matches(html, @"<tr[^>]*>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-                foreach (Match row in rowMatches)
+                foreach (Match row in HtmlRowRegex.Matches(html))
                 {
                     string rowHtml = row.Groups[1].Value;
 
                     string title = "";
-                    var titleMatch = Regex.Match(rowHtml, @"class=[""']channel_name[""'][^>]*title=[""']([^""']+)[""']", RegexOptions.IgnoreCase);
-                    if (!titleMatch.Success)
-                    {
-                        titleMatch = Regex.Match(rowHtml, @"class=[""']channel_name[""'][^>]*>(.*?)</span>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-                    }
+                    var titleMatch = IptvCatTitleAttrRegex.Match(rowHtml);
+                    if (!titleMatch.Success) titleMatch = IptvCatTitleSpanRegex.Match(rowHtml);
                     if (titleMatch.Success)
                     {
-                        title = System.Net.WebUtility.HtmlDecode(Regex.Replace(titleMatch.Groups[1].Value, "<.*?>", "").Trim());
+                        title = System.Net.WebUtility.HtmlDecode(HtmlTagRegex.Replace(titleMatch.Groups[1].Value, "").Trim());
                     }
 
                     string link = "";
-                    var urlMatch = Regex.Match(rowHtml, @"data-clipboard-text=[""']([^""']+)[""']", RegexOptions.IgnoreCase);
-                    if (!urlMatch.Success)
-                    {
-                        urlMatch = Regex.Match(rowHtml, @"href=[""'](https?://[^""']+)[""']", RegexOptions.IgnoreCase);
-                    }
-                    if (!urlMatch.Success)
-                    {
-                        urlMatch = Regex.Match(rowHtml, @"href=[""'](/[^""']+)[""']", RegexOptions.IgnoreCase);
-                    }
+                    var urlMatch = ClipboardAttrRegex.Match(rowHtml);
+                    if (!urlMatch.Success) urlMatch = HrefAbsRegex.Match(rowHtml);
+                    if (!urlMatch.Success) urlMatch = HrefRelRegex.Match(rowHtml);
 
                     if (urlMatch.Success)
                     {
@@ -375,37 +360,26 @@ namespace StreamMesh.Core.Media
                 string encoded = Uri.EscapeDataString(queryLower);
                 string searchUrl = $"https://database.freetuxtv.net/WebStream/index?WebStreamSearchForm%5BName%5D={encoded}&WebStreamSearchForm%5BEditPending%5D=0&yt0=Search";
                 using var req = new HttpRequestMessage(HttpMethod.Get, searchUrl);
-                var resp = await _httpClient.SendAsync(req, cts.Token);
+                req.Headers.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml,application/json,*/*;q=0.8");
+                req.Headers.TryAddWithoutValidation("Accept-Language", "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7");
+                using var resp = await MediaHttpClient.Client.SendAsync(req, cts.Token);
                 if (!resp.IsSuccessStatusCode) return list;
 
                 string html = await resp.Content.ReadAsStringAsync();
-                var rowMatches = Regex.Matches(html, @"<tr[^>]*>(.*?)</tr>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-                foreach (Match row in rowMatches)
+                foreach (Match row in HtmlRowRegex.Matches(html))
                 {
                     string rowHtml = row.Groups[1].Value;
                     if (!rowHtml.Contains("http") && !rowHtml.Contains("m3u8") && !rowHtml.Contains("=>") && !rowHtml.Contains("=&gt;")) continue;
                     if (rowHtml.Contains("Dead") || rowHtml.Contains("Invalid")) continue;
 
-                    string name = "";
-                    string streamUrl = "";
+                    var linkMatch = FreeTuxLinkRegex.Match(rowHtml);
+                    if (!linkMatch.Success) linkMatch = FreeTuxUrlRegex.Match(rowHtml);
+                    string streamUrl = linkMatch.Success ? linkMatch.Groups[1].Value.Trim() : "";
 
-                    var linkMatch = Regex.Match(rowHtml, @"(?:=>|=&gt;)\s*<a[^>]*href=[""']?([^""'>]+)[""']?[^>]*>(.*?)</a>", RegexOptions.IgnoreCase);
-                    if (!linkMatch.Success)
-                    {
-                        linkMatch = Regex.Match(rowHtml, @"(?:=>|=&gt;)\s*(https?://[^\s<]+)", RegexOptions.IgnoreCase);
-                    }
-                    if (linkMatch.Success)
-                    {
-                        streamUrl = linkMatch.Groups[1].Value.Trim();
-                    }
-
-                    var nameMatch = Regex.Match(rowHtml, @"<td[^>]*>(.*?)(?:<br\s*/?>|=>|=&gt;)", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-                    if (nameMatch.Success)
-                    {
-                        name = Regex.Replace(nameMatch.Groups[1].Value, "<.*?>", "").Trim();
-                        name = System.Net.WebUtility.HtmlDecode(name);
-                    }
+                    var nameMatch = FreeTuxNameRegex.Match(rowHtml);
+                    string name = nameMatch.Success
+                        ? System.Net.WebUtility.HtmlDecode(HtmlTagRegex.Replace(nameMatch.Groups[1].Value, "").Trim())
+                        : "";
 
                     if (!string.IsNullOrWhiteSpace(streamUrl) && !string.IsNullOrWhiteSpace(name) && name.Length >= 2)
                     {
@@ -435,7 +409,6 @@ namespace StreamMesh.Core.Media
 
         private async Task<List<SearchResultItem>> SearchFreeTuxTvM3uAsync(string queryLower)
         {
-            var list = new List<SearchResultItem>();
             try
             {
                 if (_cachedFreeTuxChannels == null || (DateTime.Now - _freeTuxCacheTime) > CacheTtl)
@@ -445,107 +418,24 @@ namespace StreamMesh.Core.Media
                     {
                         if (_cachedFreeTuxChannels == null || (DateTime.Now - _freeTuxCacheTime) > CacheTtl)
                         {
-                            string m3uUrl = "https://raw.githubusercontent.com/FreeTuxTV/FreeTuxTV/master/m3u/free_tv.m3u";
-                            _cachedFreeTuxChannels = await _m3uEngine.ParseM3uAsync(m3uUrl, "FreeTuxTV");
+                            _cachedFreeTuxChannels = await _m3uEngine.ParseM3uAsync("https://raw.githubusercontent.com/FreeTuxTV/FreeTuxTV/master/m3u/free_tv.m3u", "FreeTuxTV");
                             _freeTuxCacheTime = DateTime.Now;
                         }
                     }
-                    finally
-                    {
-                        _cacheLock.Release();
-                    }
+                    finally { _cacheLock.Release(); }
                 }
 
-                if (_cachedFreeTuxChannels != null)
-                {
-                    foreach (var ch in _cachedFreeTuxChannels)
-                    {
-                        if (ChannelUtils.MatchesQueryFilter(ch.Name, ch.Category ?? "", ch.GroupTitle ?? "", ch.Url ?? "", queryLower))
-                        {
-                            if (!list.Any(x => x.Url == ch.Url))
-                            {
-                                list.Add(new SearchResultItem
-                                {
-                                    Name = ch.Name,
-                                    Url = ch.Url ?? "",
-                                    Source = "FreeTuxTV Havuzu",
-                                    Category = string.IsNullOrWhiteSpace(ch.Category) ? "Canlı TV" : ch.Category,
-                                    GroupTitle = ch.GroupTitle ?? "FreeTuxTV",
-                                    LogoUrl = ch.LogoUrl ?? "",
-                                    PeersOrDetails = "Açık Liste"
-                                });
-                            }
-                            if (list.Count >= 500) break;
-                        }
-                    }
-                }
+                return FilterCachedCatalog(_cachedFreeTuxChannels, queryLower, "FreeTuxTV Havuzu", "FreeTuxTV", "Açık Liste");
             }
             catch (Exception ex)
             {
                 LogService.LogWarning($"[GlobalSearch] FreeTuxTV M3U havuz uyarısı: {ex.Message}");
+                return new List<SearchResultItem>();
             }
-
-            return list;
-        }
-
-        private async Task<List<SearchResultItem>> SearchIptvOrgAsync(string queryLower, string categoryFilter, string languageFilter)
-        {
-            var list = new List<SearchResultItem>();
-            try
-            {
-                if (_cachedIptvOrgChannels == null || (DateTime.Now - _iptvOrgCacheTime) > CacheTtl)
-                {
-                    await _cacheLock.WaitAsync();
-                    try
-                    {
-                        if (_cachedIptvOrgChannels == null || (DateTime.Now - _iptvOrgCacheTime) > CacheTtl)
-                        {
-                            string url = "https://iptv-org.github.io/iptv/index.m3u";
-                            _cachedIptvOrgChannels = await _m3uEngine.ParseM3uAsync(url, "IPTV-Org");
-                            _iptvOrgCacheTime = DateTime.Now;
-                        }
-                    }
-                    finally
-                    {
-                        _cacheLock.Release();
-                    }
-                }
-
-                if (_cachedIptvOrgChannels != null)
-                {
-                    foreach (var ch in _cachedIptvOrgChannels)
-                    {
-                        if (ChannelUtils.MatchesQueryFilter(ch.Name, ch.Category ?? "", ch.GroupTitle ?? "", ch.Url ?? "", queryLower))
-                        {
-                            if (!list.Any(x => x.Url == ch.Url))
-                            {
-                                list.Add(new SearchResultItem
-                                {
-                                    Name = ch.Name,
-                                    Url = ch.Url ?? "",
-                                    Source = "IPTV-Org Global",
-                                    Category = string.IsNullOrWhiteSpace(ch.Category) ? "Global TV" : ch.Category,
-                                    GroupTitle = ch.GroupTitle ?? "IPTV-Org",
-                                    LogoUrl = ch.LogoUrl ?? "",
-                                    PeersOrDetails = "Küresel Açık Yayın"
-                                });
-                            }
-                            if (list.Count >= 500) break;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogWarning($"[GlobalSearch] IPTV-Org M3U arama hatası: {ex.Message}");
-            }
-
-            return list;
         }
 
         private async Task<List<SearchResultItem>> SearchFreeTvAsync(string queryLower)
         {
-            var list = new List<SearchResultItem>();
             try
             {
                 if (_cachedFreeTvChannels == null || (DateTime.Now - _freeTvCacheTime) > CacheTtl)
@@ -555,46 +445,48 @@ namespace StreamMesh.Core.Media
                     {
                         if (_cachedFreeTvChannels == null || (DateTime.Now - _freeTvCacheTime) > CacheTtl)
                         {
-                            string url = "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8";
-                            _cachedFreeTvChannels = await _m3uEngine.ParseM3uAsync(url, "Free-TV");
+                            _cachedFreeTvChannels = await _m3uEngine.ParseM3uAsync("https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8", "Free-TV");
                             _freeTvCacheTime = DateTime.Now;
                         }
                     }
-                    finally
-                    {
-                        _cacheLock.Release();
-                    }
+                    finally { _cacheLock.Release(); }
                 }
 
-                if (_cachedFreeTvChannels != null)
-                {
-                    foreach (var ch in _cachedFreeTvChannels)
-                    {
-                        if (ChannelUtils.MatchesQueryFilter(ch.Name, ch.Category ?? "", ch.GroupTitle ?? "", ch.Url ?? "", queryLower))
-                        {
-                            if (!list.Any(x => x.Url == ch.Url))
-                            {
-                                list.Add(new SearchResultItem
-                                {
-                                    Name = ch.Name,
-                                    Url = ch.Url ?? "",
-                                    Source = "Free-TV Kataloğu",
-                                    Category = string.IsNullOrWhiteSpace(ch.Category) ? "Canlı TV" : ch.Category,
-                                    GroupTitle = ch.GroupTitle ?? "Free-TV",
-                                    LogoUrl = ch.LogoUrl ?? "",
-                                    PeersOrDetails = "Açık Yayın"
-                                });
-                            }
-                            if (list.Count >= 500) break;
-                        }
-                    }
-                }
+                return FilterCachedCatalog(_cachedFreeTvChannels, queryLower, "Free-TV Kataloğu", "Free-TV", "Açık Yayın");
             }
             catch (Exception ex)
             {
                 LogService.LogWarning($"[GlobalSearch] Free-TV arama hatası: {ex.Message}");
+                return new List<SearchResultItem>();
             }
+        }
 
+        private static List<SearchResultItem> FilterCachedCatalog(List<Channel>? catalog, string queryLower, string sourceName, string defaultGroup, string detailsLabel)
+        {
+            var list = new List<SearchResultItem>();
+            if (catalog == null) return list;
+
+            var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var ch in catalog)
+            {
+                string url = ch.Url ?? "";
+                if (!ChannelUtils.MatchesQueryFilter(ch.Name, ch.Category ?? "", ch.GroupTitle ?? "", url, queryLower))
+                    continue;
+                if (!seenUrls.Add(url))
+                    continue;
+
+                list.Add(new SearchResultItem
+                {
+                    Name = ch.Name,
+                    Url = url,
+                    Source = sourceName,
+                    Category = string.IsNullOrWhiteSpace(ch.Category) ? "Canlı TV" : ch.Category,
+                    GroupTitle = ch.GroupTitle ?? defaultGroup,
+                    LogoUrl = ch.LogoUrl ?? "",
+                    PeersOrDetails = detailsLabel
+                });
+                if (list.Count >= 500) break;
+            }
             return list;
         }
     }

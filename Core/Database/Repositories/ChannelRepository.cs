@@ -500,20 +500,20 @@ namespace StreamMesh.Core.Database.Repositories
             finally { _dbLock.Release(); }
         }
 
-        public void SaveChannelSync(Channel ch, bool notifyUpdated = false)
+        public async Task SaveChannelLogoAndPosAsync(Channel ch, bool notifyUpdated = false)
         {
-            _dbLock.Wait();
+            await _dbLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 using (var connection = new SqliteConnection(_connectionString))
                 {
-                    connection.Open();
+                    await connection.OpenAsync().ConfigureAwait(false);
                     var cmd = connection.CreateCommand();
                     cmd.CommandText = "UPDATE Channels SET LogoUrl = @Logo, LastPositionMs = @Lp WHERE Id = @Id";
                     cmd.Parameters.AddWithValue("@Logo", ch.LogoUrl ?? "");
                     cmd.Parameters.AddWithValue("@Lp", ch.LastPositionMs);
                     cmd.Parameters.AddWithValue("@Id", ch.Id);
-                    cmd.ExecuteNonQuery();
+                    await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
             }
             catch { }
@@ -695,17 +695,6 @@ namespace StreamMesh.Core.Database.Repositories
             cmd.Parameters.AddWithValue("@EpgL", ch.IsEpgLocked ? 1 : 0);
             cmd.Parameters.AddWithValue("@M3uLine", ch.M3uLineNumber);
             cmd.Parameters.AddWithValue("@RawM3u", ch.RawM3uBlock ?? "");
-        }
-
-        private async Task ExecuteRawNonQueryAsync(string sql)
-        {
-            using (var connection = new SqliteConnection(_connectionString))
-            {
-                await connection.OpenAsync();
-                var cmd = connection.CreateCommand();
-                cmd.CommandText = sql;
-                await cmd.ExecuteNonQueryAsync();
-            }
         }
     }
 }

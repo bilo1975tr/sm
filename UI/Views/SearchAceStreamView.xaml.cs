@@ -37,7 +37,7 @@ namespace StreamMesh.UI.Views
             }
         }
 
-        private readonly StreamMesh.Core.Database.DatabaseEngine _db = new StreamMesh.Core.Database.DatabaseEngine();
+        private readonly StreamMesh.Core.Database.DatabaseEngine _db = StreamMesh.Core.Database.DatabaseEngine.Instance;
 
         private async Task ExecuteSearchAsync()
         {
@@ -237,7 +237,7 @@ namespace StreamMesh.UI.Views
                         LogoUrl = item.LogoUrl
                     };
 
-                    var db = new StreamMesh.Core.Database.DatabaseEngine();
+                    var db = StreamMesh.Core.Database.DatabaseEngine.Instance;
                     await db.SaveChannelAsync(channel);
 
                     item.IsAdded = true;

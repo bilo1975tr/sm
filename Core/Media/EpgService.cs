@@ -10,7 +10,7 @@ namespace StreamMesh.Core.Media
 {
     public class EpgService
     {
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         public async Task<Dictionary<string, EpgProgram>> GetCurrentEpgsAsync(List<Channel> channels)
         {
@@ -246,35 +246,6 @@ namespace StreamMesh.Core.Media
             return active.FirstOrDefault();
         }
 
-        public async Task<EpgProgram?> GetNextEpgAsync(Channel channel)
-        {
-            if (channel == null) return null;
-            try
-            {
-                var namesToTry = ChannelUtils.GetEpgSearchCandidateNames(channel.Name, channel.EpgId);
-                if (!string.IsNullOrWhiteSpace(channel.PrimaryName))
-                {
-                    namesToTry.AddRange(ChannelUtils.GetEpgSearchCandidateNames(channel.PrimaryName));
-                }
-
-                var programs = await _db.GetEpgForChannelsAsync(namesToTry.Distinct(StringComparer.OrdinalIgnoreCase).ToList());
-                var now = DateTime.Now;
-                var chEpgUrls = (channel.EpgUrl ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(u => u.Trim()).ToList();
-
-                var future = programs.Where(p => p.StartTime > now).OrderBy(p => p.StartTime).ToList();
-                if (future.Count == 0) return null;
-
-                if (chEpgUrls.Count > 0)
-                {
-                    var pref = future.FirstOrDefault(p => chEpgUrls.Any(u => (p.SourceUrl ?? "").Contains(u)));
-                    if (pref != null) return pref;
-                }
-
-                return future.FirstOrDefault();
-            }
-            catch { return null; }
-        }
-
         public async Task<List<EpgProgram>> GetChannelEpgHistoryAsync(Channel channel)
         {
             var list = new List<EpgProgram>();
@@ -318,7 +289,7 @@ namespace StreamMesh.Core.Media
                         if (best != null && !string.IsNullOrEmpty(best.EpgId))
                         {
                             channel.EpgId = best.EpgId;
-                            try { _db.SaveChannelSync(channel, notifyUpdated: false); } catch { }
+                            try { await _db.SaveChannelAsync(channel, notifyUpdated: false).ConfigureAwait(false); } catch { }
                             LogService.LogInfo($"[SmartEPG] Dynamic auto-matched '{channel.Name}' to EPG ID '{best.EpgId}'");
 
                             var matchedPrograms = await _db.GetEpgForChannelsAsync(new List<string> { best.EpgId });

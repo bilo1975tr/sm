@@ -26,7 +26,7 @@ const server = http.createServer(async (req, res) => {
     if (await handleApiRoute(req, res, pathname, parsedUrl)) return;
 
     // 2. Channel Streaming & AceStream redirection
-    if (handleStreamRoute(req, res, pathname)) return;
+    if (handleStreamRoute(req, res, pathname, parsedUrl)) return;
 
     // 3. Static Web Portal & Media Assets
     if (handleStaticRoute(req, res, pathname)) return;

@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
@@ -35,22 +36,9 @@ namespace StreamMesh.Core.Media
     /// </summary>
     public class GitHubRepoCrawler
     {
-        private static readonly HttpClient _httpClient;
         private static readonly ConcurrentDictionary<string, List<DiscoveredSource>> _repoCache = new();
         private static readonly ConcurrentDictionary<string, DateTime> _cacheTimestamps = new();
         private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(4);
-
-        static GitHubRepoCrawler()
-        {
-            var handler = new HttpClientHandler
-            {
-                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-                AllowAutoRedirect = true
-            };
-            _httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(15) };
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/2.0 GitHubSyncEngine/2.0");
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/vnd.github.v3+json, application/json, */*");
-        }
 
         public static bool TryParseGitHubUrl(string url, out string owner, out string repo, out string branch, out string relativePath)
         {
@@ -211,7 +199,10 @@ namespace StreamMesh.Core.Media
                 try
                 {
                     using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(12));
-                    var response = await _httpClient.GetAsync(apiUrl, cts.Token);
+                    using var req = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+                    req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/2.0 GitHubSyncEngine/2.0");
+                    req.Headers.TryAddWithoutValidation("Accept", "application/vnd.github.v3+json, application/json, */*");
+                    using var response = await MediaHttpClient.Client.SendAsync(req, cts.Token);
                     if (response.IsSuccessStatusCode)
                     {
                         string body = await response.Content.ReadAsStringAsync(cts.Token);
@@ -259,8 +250,9 @@ namespace StreamMesh.Core.Media
                     continue;
                 }
 
-                // Otomatik kategori tespiti
-                string cat = InferCategory(path, target.DefaultCategory);
+                // Repo tarayıcısının keşfettiği tüm ek dosyaları kullanıcının belirlediği "Karma" havuzuna aktar
+                // (İçerikleri SmartNormalizationEngine tarafından tekil akış sinyallerine göre TV/Film/Dizi/Radyo olarak sınıflandırılır)
+                string cat = "Karma";
 
                 // Ham GitHub URL'si inşa et
                 string rawUrl = $"https://raw.githubusercontent.com/{target.Owner}/{target.Repo}/{workingBranch}/{path.TrimStart('/')}";

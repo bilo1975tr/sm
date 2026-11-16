@@ -6,12 +6,12 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using StreamMesh.Core.Media;
+using StreamMesh.Core.Network;
 
 namespace StreamMesh.Core.Utils
 {
     public class UpdateService
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         private const string REMOTE_VERSION_URL = "https://raw.githubusercontent.com/bilo1975tr/sm/refs/heads/main/version.txt";
         private const string GITHUB_REPO_TAG_API = "https://api.github.com/repos/bilo1975tr/sm/releases/tags/v";
 
@@ -59,7 +59,8 @@ namespace StreamMesh.Core.Utils
 
                 try
                 {
-                    var response = await _httpClient.GetAsync(REMOTE_VERSION_URL).ConfigureAwait(false);
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    using var response = await MediaHttpClient.Client.GetAsync(REMOTE_VERSION_URL, cts.Token).ConfigureAwait(false);
                     if (response.IsSuccessStatusCode)
                     {
                         string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -108,7 +109,8 @@ namespace StreamMesh.Core.Utils
                 string tagApiUrl = GITHUB_REPO_TAG_API + cleanTargetVersion;
                 using var request = new HttpRequestMessage(HttpMethod.Get, tagApiUrl);
                 request.Headers.Add("User-Agent", "StreamMesh-Updater");
-                var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(30));
+                using var response = await MediaHttpClient.Client.SendAsync(request, cts.Token).ConfigureAwait(false);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -205,8 +207,8 @@ namespace StreamMesh.Core.Utils
 
                 onProgress(15, "İndirme başlatılıyor...", $"Dosya: {fileName}");
 
-                // Stream Download with Real-Time Progress
-                using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false))
+                using var dlCts = new System.Threading.CancellationTokenSource(TimeSpan.FromMinutes(10));
+                using (var response = await MediaHttpClient.Client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, dlCts.Token).ConfigureAwait(false))
                 {
                     if (!response.IsSuccessStatusCode)
                     {
@@ -299,7 +301,8 @@ namespace StreamMesh.Core.Utils
                 onProgress(90, "Sürüm bilgisi eşitleniyor...", null);
                 try
                 {
-                    var response = await _httpClient.GetAsync(REMOTE_VERSION_URL).ConfigureAwait(false);
+                    using var ctsVer = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(20));
+                    using var response = await MediaHttpClient.Client.GetAsync(REMOTE_VERSION_URL, ctsVer.Token).ConfigureAwait(false);
                     if (response.IsSuccessStatusCode)
                     {
                         string remoteVerContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);

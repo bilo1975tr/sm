@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using StreamMesh.Core.Auth;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Plugins

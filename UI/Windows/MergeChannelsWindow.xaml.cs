@@ -17,11 +17,10 @@ using System.Windows.Media.Imaging;
 using Button = System.Windows.Controls.Button;
 using MessageBox = System.Windows.MessageBox;
 using Application = System.Windows.Application;
-using FlyleafLib;
-using FlyleafLib.MediaPlayer;
 using StreamMesh.Models;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
+using StreamMesh.Core.Media.Mpv;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.UI.Windows
@@ -29,7 +28,7 @@ namespace StreamMesh.UI.Windows
     public partial class MergeChannelsWindow : Window, INotifyPropertyChanged
     {
         private readonly Channel _mainChannel;
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private List<Channel> _allChannels = new List<Channel>();
 
         public Channel MainChannel => _mainChannel;
@@ -457,12 +456,15 @@ namespace StreamMesh.UI.Windows
 
             try
             {
-                // Ensure Flyleaf/FFmpeg is started
-                FlyleafHelper.SafeStart();
+                if (!MpvPlayerEngine.IsLibraryAvailable())
+                {
+                    PreviewStatusText = "libmpv henüz hazırlanıyor";
+                    return;
+                }
 
                 await Task.Run(async () =>
                 {
-                    Player? player = null;
+                    MpvPlayerEngine? player = null;
                     string tempFilePath = Path.Combine(Path.GetTempPath(), $"streammesh_snap_{Guid.NewGuid():N}.jpg");
 
                     try
@@ -483,41 +485,28 @@ namespace StreamMesh.UI.Windows
 
                         if (token.IsCancellationRequested) return;
 
-                        // 2. Configure a lightweight, audio-disabled Player for fast single frame decoding
-                        var config = new Config();
-                        config.Audio.Enabled = false; // Video only, saves CPU & network
-                        config.Video.Enabled = true;
-                        config.Player.AutoPlay = true;
-                        config.Demuxer.FormatOpt["user_agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-                        config.Demuxer.BufferDuration = 1000 * 10000; // 1s buffer for low latency start
-
-                        player = new Player(config);
+                        // 2. Configure a lightweight headless libmpv instance for fast single-frame capture
+                        player = new MpvPlayerEngine();
+                        player.Initialize(
+                            IntPtr.Zero,
+                            hwAccel: false,
+                            cacheMs: 2500,
+                            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                            headless: true);
                         player.Open(targetUrl);
 
                         // 3. Wait for playback / first decoded frame with safety timeout
                         int waitCycles = 0;
-                        while (player.Status != Status.Playing && player.Status != Status.Failed && !token.IsCancellationRequested && waitCycles < 30) // max ~6s
+                        while (player.Status != MpvPlaybackStatus.Playing && player.Status != MpvPlaybackStatus.Failed && !token.IsCancellationRequested && waitCycles < 30)
                         {
                             await Task.Delay(200, token).ConfigureAwait(false);
                             waitCycles++;
                         }
 
-                        if (player.Status == Status.Playing && !token.IsCancellationRequested)
+                        if (player.Status == MpvPlaybackStatus.Playing && !token.IsCancellationRequested)
                         {
-                            // Brief wait for first frame buffer to populate
                             await Task.Delay(300, token).ConfigureAwait(false);
-
-                            // Take decoded frame snapshot using Flyleaf player engine if available
-                            try
-                            {
-                                var takeSnapMethod = player.GetType().GetMethod("TakeSnapshot", new[] { typeof(string) })
-                                                     ?? player.GetType().GetMethod("Snapshot", new[] { typeof(string) });
-                                if (takeSnapMethod != null)
-                                {
-                                    takeSnapMethod.Invoke(player, new object[] { tempFilePath });
-                                }
-                            }
-                            catch { }
+                            player.TakeSnapshot(tempFilePath);
 
                             // Wait up to 1.5s for snapshot file to be written to disk
                             int fileWait = 0;

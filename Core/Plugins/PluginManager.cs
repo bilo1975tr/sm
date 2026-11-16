@@ -16,7 +16,7 @@ namespace StreamMesh.Core.Plugins
         private readonly ObservableCollection<IPlugin> _plugins = new();
         public ObservableCollection<IPlugin> Plugins => _plugins;
 
-        private readonly DatabaseEngine _db = new();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         private PluginManager()
         {
@@ -35,7 +35,6 @@ namespace StreamMesh.Core.Plugins
             _plugins.Add(new M3uPlaylistPlugin());
             _plugins.Add(new GitHubSyncPlugin());
             _plugins.Add(new SsdpDiscoveryPlugin());
-            _plugins.Add(new AiAssistantPlugin());
             _plugins.Add(new UpdatePlugin());
             _plugins.Add(new P2PStatsPlugin());
             _plugins.Add(new MaintenancePlugin());

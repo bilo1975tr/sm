@@ -70,7 +70,7 @@ namespace StreamMesh.Core.Media.Iptv
             var result = new PurgeResult();
             if (account == null) return result;
 
-            var db = new DatabaseEngine();
+            var db = DatabaseEngine.Instance;
             var allChannels = sourceChannels ?? await db.GetChannelsByAccountAsync(account.HostWithPort, account.Username);
 
             var channelsToDelete = new List<string>();
@@ -151,7 +151,7 @@ namespace StreamMesh.Core.Media.Iptv
         {
             if (account == null) return (0, 0, 0);
 
-            var db = new DatabaseEngine();
+            var db = DatabaseEngine.Instance;
             int total = await db.CountChannelsByAccountAsync(account.HostWithPort, account.Username).ConfigureAwait(false);
             return (total, total, total);
         }

@@ -35,22 +35,10 @@ namespace StreamMesh.Core.Media
 
     public class GitHubSyncEngine
     {
-        private static readonly HttpClient _httpClient;
         private static int _isRunning = 0;
         public static bool IsRunning => System.Threading.Volatile.Read(ref _isRunning) == 1;
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private readonly M3uEngine _m3u = new M3uEngine();
-
-        static GitHubSyncEngine()
-        {
-            var handler = new HttpClientHandler
-            {
-                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
-                AllowAutoRedirect = true
-            };
-            _httpClient = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(12) };
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 StreamMesh/1.0");
-        }
 
         public event Action<int, string>? OnProgress;
         public static event Action<int, string>? OnStaticProgress;
@@ -112,8 +100,8 @@ namespace StreamMesh.Core.Media
                 {
                     try
                     {
-                        using var cleanCts = new System.Threading.CancellationTokenSource(TimeSpan.FromMinutes(5));
-                        var response = await _httpClient.GetAsync(cleanM3uUrl, cleanCts.Token);
+                        using var cleanCts = new System.Threading.CancellationTokenSource(TimeSpan.FromMinutes(2));
+                        using var response = await MediaHttpClient.Client.GetAsync(cleanM3uUrl, HttpCompletionOption.ResponseHeadersRead, cleanCts.Token);
                         if (response.IsSuccessStatusCode)
                         {
                             ReportProgress(15, "Temizlenmiş master TV listesi indiriliyor...");
@@ -154,8 +142,8 @@ namespace StreamMesh.Core.Media
                     
                     try
                     {
-                        using var configCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
-                        var configResponse = await _httpClient.GetAsync(configUrl, configCts.Token);
+                        using var configCts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(8));
+                        using var configResponse = await MediaHttpClient.Client.GetAsync(configUrl, configCts.Token);
                         if (configResponse.IsSuccessStatusCode)
                         {
                             configJson = await configResponse.Content.ReadAsStringAsync(configCts.Token);
@@ -183,10 +171,12 @@ namespace StreamMesh.Core.Media
                             var crawler = new GitHubRepoCrawler();
                             var seedDict = new Dictionary<string, List<string>>();
 
+                            bool syncKarma = syncTv || syncMovies || syncSeries || syncRadio;
                             if (syncTv && !cleanM3uLoaded) seedDict["TV"] = cfg.Tv ?? new List<string>();
                             if (syncMovies) seedDict["Film"] = cfg.Film ?? new List<string>();
                             if (syncSeries) seedDict["Dizi"] = cfg.Dizi ?? new List<string>();
                             if (syncRadio) seedDict["Radyo"] = cfg.Radyo ?? new List<string>();
+                            if (syncKarma && cfg.Karma != null && cfg.Karma.Count > 0) seedDict["Karma"] = cfg.Karma;
 
                             if (seedDict.Count > 0)
                             {
@@ -199,12 +189,13 @@ namespace StreamMesh.Core.Media
                                 var filmUrls = syncMovies ? discoveredSources.Where(x => x.Category.Equals("Film", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
                                 var diziUrls = syncSeries ? discoveredSources.Where(x => x.Category.Equals("Dizi", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
                                 var radyoUrls = syncRadio ? discoveredSources.Where(x => x.Category.Equals("Radyo", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
+                                var karmaUrls = syncKarma ? discoveredSources.Where(x => x.Category.Equals("Karma", StringComparison.OrdinalIgnoreCase)).Select(x => x.Url).ToList() : new List<string>();
 
-                                int totalSources = tvUrls.Count + filmUrls.Count + diziUrls.Count + radyoUrls.Count;
+                                int totalSources = tvUrls.Count + filmUrls.Count + diziUrls.Count + radyoUrls.Count + karmaUrls.Count;
                                 if (totalSources > 0)
                                 {
                                     ReportProgress(20, $"🎉 {totalSources} adet kaynak tespit edildi! Kütüphane indirmesi başlatılıyor...");
-                                    LogService.LogInfo($"GitHubSyncEngine: Toplam {totalSources} adet kaynak (TV: {tvUrls.Count}, Film: {filmUrls.Count}, Dizi: {diziUrls.Count}, Radyo: {radyoUrls.Count}) işleniyor...");
+                                    LogService.LogInfo($"GitHubSyncEngine: Toplam {totalSources} adet kaynak (TV: {tvUrls.Count}, Film: {filmUrls.Count}, Dizi: {diziUrls.Count}, Radyo: {radyoUrls.Count}, Karma: {karmaUrls.Count}) işleniyor...");
 
                                     int processedSources = 0;
                                     var accumulativeChannels = new List<Channel>();
@@ -222,6 +213,7 @@ namespace StreamMesh.Core.Media
                                     if (filmUrls.Count > 0) await ProcessListWithProgress(filmUrls, "Film", totalSources, () => ++processedSources, true, accumulativeChannels);
                                     if (diziUrls.Count > 0) await ProcessListWithProgress(diziUrls, "Dizi", totalSources, () => ++processedSources, true, accumulativeChannels);
                                     if (radyoUrls.Count > 0) await ProcessListWithProgress(radyoUrls, "Radyo", totalSources, () => ++processedSources, true, accumulativeChannels);
+                                    if (karmaUrls.Count > 0) await ProcessListWithProgress(karmaUrls, "TV", totalSources, () => ++processedSources, false, accumulativeChannels);
 
                                     if (accumulativeChannels.Count > 0)
                                     {

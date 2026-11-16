@@ -15,13 +15,7 @@ namespace StreamMesh.Core.Media
 {
     public class EpgEngine
     {
-        private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        private readonly DatabaseEngine _db = new DatabaseEngine();
-
-        static EpgEngine()
-        {
-            _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
-        }
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         public async Task LoadEpgAsync(string url, Action<string, double>? progressCallback = null)
         {

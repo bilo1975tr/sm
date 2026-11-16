@@ -34,7 +34,7 @@ namespace StreamMesh.Core.Media.Iptv
             if (account == null || string.IsNullOrWhiteSpace(account.Username)) return false;
             try
             {
-                var db = new DatabaseEngine();
+                var db = DatabaseEngine.Instance;
                 string scheme = account.HostWithPort.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || 
                                 account.HostWithPort.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ? "" : "http://";
                 string cleanHost = IptvUrlParser.ExtractHostAndPort(account.HostWithPort);
@@ -189,7 +189,7 @@ namespace StreamMesh.Core.Media.Iptv
                 }
 
                 progress?.Invoke("Eski parçalı kanallar temizleniyor...", 85);
-                var db = new DatabaseEngine();
+                var db = DatabaseEngine.Instance;
                 await IptvAccountPurger.PurgeAccountFromDatabaseAsync(account);
 
                 progress?.Invoke($"{allChannels.Count} adet güncel kanal kütüphaneye kaydediliyor...", 90);

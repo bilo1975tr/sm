@@ -1,55 +1,13 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
-using StreamMesh.Models;
-using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
 {
     public class YoutubeEngine
     {
         private readonly YoutubeClient _yt = new YoutubeClient();
-
-        public async Task<List<Channel>> GetChannelsFromUrlAsync(string url)
-        {
-            var list = new List<Channel>();
-            try
-            {
-                if (url.Contains("list="))
-                {
-                    string listId = url.Split("list=")[1].Split('&')[0];
-                    var playlist = await _yt.Playlists.GetAsync(listId);
-                    await foreach (var video in _yt.Playlists.GetVideosAsync(playlist.Id))
-                    {
-                        list.Add(new Channel {
-                            Id = video.Id,
-                            Name = video.Title,
-                            Url = video.Url,
-                            LogoUrl = video.Thumbnails.OrderByDescending(t => t.Resolution.Area).FirstOrDefault()?.Url ?? "",
-                            SourceType = "YOUTUBE",
-                            Category = "TV"
-                        });
-                    }
-                }
-                else
-                {
-                    var video = await _yt.Videos.GetAsync(url);
-                    list.Add(new Channel {
-                        Id = video.Id,
-                        Name = video.Title,
-                        Url = video.Url,
-                        LogoUrl = video.Thumbnails.OrderByDescending(t => t.Resolution.Area).FirstOrDefault()?.Url ?? "",
-                        SourceType = "YOUTUBE",
-                        Category = "TV"
-                    });
-                }
-            }
-            catch (Exception ex) { LogService.LogError("YoutubeEngine: Metadata error", ex); }
-            return list;
-        }
 
         public async Task<string?> GetStreamUrlAsync(string videoUrl)
         {

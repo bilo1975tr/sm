@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
+using StreamMesh.Core.Plugins;
 using StreamMesh.Core.Utils;
 using StreamMesh.Models;
 
@@ -21,7 +22,7 @@ namespace StreamMesh.Core.Network
     public class MediaServer
     {
         private HttpListener? _listener;
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private bool _isRunning = false;
         private int _port = 8080;
 
@@ -30,12 +31,27 @@ namespace StreamMesh.Core.Network
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             AllowAutoRedirect = true,
-            MaxConnectionsPerServer = 100,
-            ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+            MaxConnectionsPerServer = 100
         }) { Timeout = TimeSpan.FromSeconds(30) };
 
         // "Last Known Good" source tracker for multi-source channels
         private static readonly ConcurrentDictionary<string, int> _lastKnownGoodIndex = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly System.Text.RegularExpressions.Regex UriAttrRegex = new("URI=\"([^\"]+)\"", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        private static async Task WriteTextAsync(HttpListenerResponse res, string content, string contentType = "text/plain; charset=utf-8", int statusCode = 200)
+        {
+            byte[] buffer = Encoding.UTF8.GetBytes(content);
+            res.StatusCode = statusCode;
+            res.ContentType = contentType;
+            res.ContentLength64 = buffer.Length;
+            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+        }
+
+        private static Task WriteJsonAsync(HttpListenerResponse res, object payload, int statusCode = 200, Newtonsoft.Json.Formatting formatting = Newtonsoft.Json.Formatting.None)
+        {
+            string json = Newtonsoft.Json.JsonConvert.SerializeObject(payload, formatting);
+            return WriteTextAsync(res, json, "application/json; charset=utf-8", statusCode);
+        }
 
         public MediaServer(int port = 0)
         {
@@ -410,9 +426,7 @@ namespace StreamMesh.Core.Network
                 }
                 else if (path == "/ping" || path == "/api/ping")
                 {
-                    byte[] buffer = Encoding.UTF8.GetBytes("pong");
-                    res.ContentType = "text/plain";
-                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                    await WriteTextAsync(res, "pong", "text/plain");
                 }
                 else if (path == "/api/version")
                 {
@@ -438,6 +452,10 @@ namespace StreamMesh.Core.Network
                 {
                     await ServeApiEpgBatch(req, res);
                 }
+                else if (path == "/api/epg/guide")
+                {
+                    await ServeApiEpgGuide(req, res);
+                }
                 else if (path == "/api/yt/resolve")
                 {
                     await ServeApiYtResolve(req, res);
@@ -457,6 +475,26 @@ namespace StreamMesh.Core.Network
                 else if (path == "/api/m3u/sources")
                 {
                     await ServeApiM3uSources(res);
+                }
+                else if (path == "/api/plugins" && req.HttpMethod == "GET")
+                {
+                    await ServePluginsList(res);
+                }
+                else if (path == "/api/plugins/toggle" && req.HttpMethod == "POST")
+                {
+                    await HandlePluginToggle(req, res);
+                }
+                else if (path == "/api/plugins/settings" && req.HttpMethod == "POST")
+                {
+                    await HandlePluginSettings(req, res);
+                }
+                else if (path == "/api/plugins/action" && req.HttpMethod == "POST")
+                {
+                    await HandlePluginAction(req, res);
+                }
+                else if (await TryServeStaticAsset(rawPath, res))
+                {
+                    return;
                 }
                 else
                 {
@@ -566,55 +604,8 @@ namespace StreamMesh.Core.Network
 
                     if (response.IsSuccessStatusCode)
                     {
-                        // Update Last Known Good Index
                         _lastKnownGoodIndex[ch.Id] = currentIndex;
-
-                        string host = req.Headers["Host"] ?? $"127.0.0.1:{_port}";
-                        string contentType = response.Content.Headers.ContentType?.ToString() ?? "";
-                        bool isM3u8 = contentType.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) || 
-                                     contentType.Contains("application/x-mpegurl", StringComparison.OrdinalIgnoreCase) || 
-                                     cleanUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase);
-
-                        if (isM3u8)
-                        {
-                            string rawManifest = await response.Content.ReadAsStringAsync(cts.Token);
-                            string rewritten = RewriteHlsManifest(rawManifest, cleanUrl, host);
-                            byte[] manifestBytes = Encoding.UTF8.GetBytes(rewritten);
-
-                            res.ContentType = "application/vnd.apple.mpegurl; charset=utf-8";
-                            res.StatusCode = 200;
-                            res.ContentLength64 = manifestBytes.Length;
-                            await res.OutputStream.WriteAsync(manifestBytes, 0, manifestBytes.Length, cts.Token);
-                        }
-                        else
-                        {
-                            res.ContentType = !string.IsNullOrEmpty(contentType) ? contentType : 
-                                              cleanUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ? "video/mp4" :
-                                              cleanUrl.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase) ? "video/x-matroska" : "video/mp2t";
-                            res.StatusCode = (int)response.StatusCode;
-                            res.Headers.Add("Accept-Ranges", "bytes");
-
-                            if (response.Content.Headers.ContentRange != null)
-                            {
-                                res.Headers.Add("Content-Range", response.Content.Headers.ContentRange.ToString());
-                            }
-
-                            if (response.Content.Headers.ContentLength.HasValue)
-                            {
-                                res.ContentLength64 = response.Content.Headers.ContentLength.Value;
-                                res.SendChunked = false;
-                            }
-                            else
-                            {
-                                res.SendChunked = true;
-                            }
-
-                            using (var stream = await response.Content.ReadAsStreamAsync(cts.Token))
-                            {
-                                await stream.CopyToAsync(res.OutputStream, cts.Token);
-                            }
-                        }
-
+                        await RelayHttpResponseAsync(response, cleanUrl, req, res, cts.Token);
                         streamEstablished = true;
                         LogService.LogInfo($"SmartRouter: Stream active from source [{currentIndex + 1}] for '{ch.PrimaryName}'");
                         break;
@@ -687,7 +678,7 @@ namespace StreamMesh.Core.Network
 
                 if (trimmed.StartsWith("#EXT-X-KEY") || trimmed.StartsWith("#EXT-X-MAP") || trimmed.StartsWith("#EXT-X-MEDIA"))
                 {
-                    line = System.Text.RegularExpressions.Regex.Replace(line, "URI=\"([^\"]+)\"", match =>
+                    line = UriAttrRegex.Replace(line, match =>
                     {
                         try
                         {
@@ -724,6 +715,51 @@ namespace StreamMesh.Core.Network
             return string.Join("\n", rewritten);
         }
 
+        private async Task RelayHttpResponseAsync(HttpResponseMessage response, string targetUrl, HttpListenerRequest req, HttpListenerResponse res, CancellationToken ct)
+        {
+            string host = req.Headers["Host"] ?? $"127.0.0.1:{_port}";
+            string contentType = response.Content.Headers.ContentType?.ToString() ?? "";
+            bool isM3u8 = contentType.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) ||
+                          contentType.Contains("application/x-mpegurl", StringComparison.OrdinalIgnoreCase) ||
+                          targetUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase);
+
+            if (isM3u8)
+            {
+                string rawManifest = await response.Content.ReadAsStringAsync(ct);
+                string rewritten = RewriteHlsManifest(rawManifest, targetUrl, host);
+                byte[] manifestBytes = Encoding.UTF8.GetBytes(rewritten);
+                res.ContentType = "application/vnd.apple.mpegurl; charset=utf-8";
+                res.StatusCode = (int)response.StatusCode;
+                res.ContentLength64 = manifestBytes.Length;
+                await res.OutputStream.WriteAsync(manifestBytes, 0, manifestBytes.Length, ct);
+                return;
+            }
+
+            res.ContentType = !string.IsNullOrEmpty(contentType) ? contentType :
+                              targetUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ? "video/mp4" :
+                              targetUrl.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase) ? "video/x-matroska" : "video/mp2t";
+            res.StatusCode = (int)response.StatusCode;
+            res.Headers.Add("Accept-Ranges", "bytes");
+
+            if (response.Content.Headers.ContentRange != null)
+            {
+                res.Headers.Add("Content-Range", response.Content.Headers.ContentRange.ToString());
+            }
+
+            if (response.Content.Headers.ContentLength.HasValue)
+            {
+                res.ContentLength64 = response.Content.Headers.ContentLength.Value;
+                res.SendChunked = false;
+            }
+            else
+            {
+                res.SendChunked = true;
+            }
+
+            using var stream = await response.Content.ReadAsStreamAsync(ct);
+            await stream.CopyToAsync(res.OutputStream, ct);
+        }
+
         private async Task ProxyDirectUrlAsync(string targetUrl, HttpListenerRequest req, HttpListenerResponse res)
         {
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
@@ -737,50 +773,8 @@ namespace StreamMesh.Core.Network
                     request.Headers.TryAddWithoutValidation("Range", req.Headers["Range"]);
                 }
 
-                var response = await _proxyClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
-                string host = req.Headers["Host"] ?? $"127.0.0.1:{_port}";
-                string contentType = response.Content.Headers.ContentType?.ToString() ?? "";
-                bool isM3u8 = contentType.Contains("mpegurl", StringComparison.OrdinalIgnoreCase) || 
-                             contentType.Contains("application/x-mpegurl", StringComparison.OrdinalIgnoreCase) || 
-                             targetUrl.Contains(".m3u8", StringComparison.OrdinalIgnoreCase);
-
-                if (isM3u8)
-                {
-                    string raw = await response.Content.ReadAsStringAsync(cts.Token);
-                    string rewritten = RewriteHlsManifest(raw, targetUrl, host);
-                    byte[] bytes = Encoding.UTF8.GetBytes(rewritten);
-                    res.ContentType = "application/vnd.apple.mpegurl; charset=utf-8";
-                    res.StatusCode = (int)response.StatusCode;
-                    res.ContentLength64 = bytes.Length;
-                    await res.OutputStream.WriteAsync(bytes, 0, bytes.Length, cts.Token);
-                }
-                else
-                {
-                    res.ContentType = !string.IsNullOrEmpty(contentType) ? contentType : 
-                                      targetUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ? "video/mp4" :
-                                      targetUrl.EndsWith(".mkv", StringComparison.OrdinalIgnoreCase) ? "video/x-matroska" : 
-                                      (targetUrl.EndsWith(".ts", StringComparison.OrdinalIgnoreCase) ? "video/mp2t" : "video/mp4");
-                    res.StatusCode = (int)response.StatusCode;
-                    res.Headers.Add("Accept-Ranges", "bytes");
-
-                    if (response.Content.Headers.ContentRange != null)
-                    {
-                        res.Headers.Add("Content-Range", response.Content.Headers.ContentRange.ToString());
-                    }
-
-                    if (response.Content.Headers.ContentLength.HasValue)
-                    {
-                        res.ContentLength64 = response.Content.Headers.ContentLength.Value;
-                        res.SendChunked = false;
-                    }
-                    else
-                    {
-                        res.SendChunked = true;
-                    }
-
-                    using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
-                    await stream.CopyToAsync(res.OutputStream, cts.Token);
-                }
+                using var response = await _proxyClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                await RelayHttpResponseAsync(response, targetUrl, req, res, cts.Token);
             }
             catch (Exception ex)
             {
@@ -909,10 +903,7 @@ namespace StreamMesh.Core.Network
                                        c.SourcesCount > 1
             });
 
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            await WriteJsonAsync(res, payload);
         }
 
         private static string? _cachedHtmlPath = null;
@@ -991,12 +982,7 @@ namespace StreamMesh.Core.Network
                     engine = "StreamMesh MediaServer & Smart Router",
                     features = new[] { "20-Item Paginated Unified Player", "Universal HLS Manifest Rewriter", "SmartRouter", "Zero-Crash Safe Logos" }
                 };
-                string json = Newtonsoft.Json.JsonConvert.SerializeObject(verObj);
-                byte[] buffer = Encoding.UTF8.GetBytes(json);
-                res.ContentType = "application/json; charset=utf-8";
-                res.StatusCode = 200;
-                res.ContentLength64 = buffer.Length;
-                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                await WriteJsonAsync(res, verObj);
             }
             catch (Exception ex)
             {
@@ -1087,7 +1073,7 @@ namespace StreamMesh.Core.Network
             }
         }
 
-        private async Task ServeDebugInfo(HttpListenerResponse res)
+        private Task ServeDebugInfo(HttpListenerResponse res)
         {
             var info = new
             {
@@ -1095,19 +1081,16 @@ namespace StreamMesh.Core.Network
                 DotNetVersion = Environment.Version.ToString(),
                 CurrentDirectory = Environment.CurrentDirectory,
                 Is64Bit = Environment.Is64BitProcess,
-                ProcessName = System.Diagnostics.Process.GetCurrentProcess().ProcessName,
+                ProcessName = Process.GetCurrentProcess().ProcessName,
                 Port = _port,
                 ActiveAceSessions = AceStreamService.Instance.GetActiveSessionsSnapshot().Count
             };
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(info, Newtonsoft.Json.Formatting.Indented);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            return WriteJsonAsync(res, info, formatting: Newtonsoft.Json.Formatting.Indented);
         }
 
-        private async Task ServeDeviceDescription(HttpListenerResponse res)
+        private Task ServeDeviceDescription(HttpListenerResponse res)
         {
-            string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+            const string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <root xmlns=""urn:schemas-upnp-org:device-1-0"">
   <specVersion>
     <major>1</major>
@@ -1131,9 +1114,7 @@ namespace StreamMesh.Core.Network
     </serviceList>
   </device>
 </root>";
-            byte[] buffer = Encoding.UTF8.GetBytes(xml);
-            res.ContentType = "text/xml; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            return WriteTextAsync(res, xml, "text/xml; charset=utf-8");
         }
 
         private async Task ServeApiPlay(HttpListenerRequest req, HttpListenerResponse res)
@@ -1143,9 +1124,7 @@ namespace StreamMesh.Core.Network
 
             if (ch != null)
             {
-                byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(new { success = true, channel = ch.PrimaryName, streamUrl = $"/stream/{ch.Id}" }));
-                res.ContentType = "application/json; charset=utf-8";
-                await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                await WriteJsonAsync(res, new { success = true, channel = ch.PrimaryName, streamUrl = $"/stream/{ch.Id}" });
             }
             else
             {
@@ -1209,9 +1188,7 @@ namespace StreamMesh.Core.Network
                 })
             };
 
-            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(result));
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            await WriteJsonAsync(res, result);
         }
 
         private async Task ServeApiEpgBatch(HttpListenerRequest req, HttpListenerResponse res)
@@ -1233,9 +1210,80 @@ namespace StreamMesh.Core.Network
                 }
             }
 
-            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(result));
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            await WriteJsonAsync(res, result);
+        }
+
+        private async Task ServeApiEpgGuide(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            DateTime now = DateTime.Now;
+            var epgPlugin = PluginManager.Instance.GetPluginById("epg_guide");
+            if (epgPlugin != null && !epgPlugin.IsEnabled)
+            {
+                await WriteJsonAsync(res, new
+                {
+                    disabled = true,
+                    generatedAt = now.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    items = Array.Empty<object>()
+                });
+                return;
+            }
+
+            var channels = (await _db.GetAllChannelsAsync())
+                .Where(c => string.Equals(c.Category, "TV", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(c.Category))
+                .Take(200)
+                .ToList();
+
+            var programs = await _db.GetEpgProgramsInRangeAsync(now.AddHours(-3), now.AddHours(9));
+            var progLookup = new Dictionary<string, List<EpgProgram>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var p in programs)
+            {
+                string key = ChannelUtils.NormalizeForMatch(p.ChannelName);
+                if (string.IsNullOrEmpty(key)) continue;
+                if (!progLookup.TryGetValue(key, out var list))
+                {
+                    list = new List<EpgProgram>();
+                    progLookup[key] = list;
+                }
+                list.Add(p);
+            }
+
+            var items = new List<object>();
+            foreach (var ch in channels)
+            {
+                var matched = new List<EpgProgram>();
+                foreach (var idCandidate in ch.GetEpgIdList())
+                {
+                    string k = ChannelUtils.NormalizeForMatch(idCandidate);
+                    if (!string.IsNullOrEmpty(k) && progLookup.TryGetValue(k, out var list)) matched.AddRange(list);
+                }
+                if (matched.Count == 0)
+                {
+                    string nameKey = ChannelUtils.NormalizeForMatch(ch.CleanName ?? ch.PrimaryName);
+                    if (!string.IsNullOrEmpty(nameKey) && progLookup.TryGetValue(nameKey, out var list)) matched.AddRange(list);
+                }
+
+                var ordered = matched.OrderBy(p => p.StartTime).GroupBy(p => p.StartTime).Select(g => g.First()).ToList();
+                var cur = ordered.FirstOrDefault(p => now >= p.StartTime && now <= p.EndTime) ?? ordered.FirstOrDefault();
+                var nxt = ordered.FirstOrDefault(p => p.StartTime > now);
+
+                items.Add(new
+                {
+                    id = ch.Id,
+                    name = ch.PrimaryName,
+                    logo = ch.PrimaryLogoUrl,
+                    group = ch.GroupTitle,
+                    currentTitle = cur != null ? cur.Title : (ch.CurrentEpgTitle ?? "Canlı Yayın"),
+                    currentTime = cur != null ? $"{cur.StartTime:HH:mm} - {cur.EndTime:HH:mm}" : "--:--",
+                    nextTitle = nxt != null ? $"{nxt.StartTime:HH:mm} {nxt.Title}" : "--:--",
+                    desc = cur?.Description ?? ""
+                });
+            }
+
+            await WriteJsonAsync(res, new
+            {
+                generatedAt = now.ToString("yyyy-MM-ddTHH:mm:ss"),
+                items
+            });
         }
 
         private async Task ServeApiYtResolve(HttpListenerRequest req, HttpListenerResponse res)
@@ -1244,31 +1292,21 @@ namespace StreamMesh.Core.Network
             var yt = new YoutubeEngine();
             string? resolved = await yt.GetStreamUrlAsync(url);
 
-            var result = new { Original = url, Resolved = resolved, Success = !string.IsNullOrEmpty(resolved) };
-            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(result));
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            await WriteJsonAsync(res, new { Original = url, Resolved = resolved, Success = !string.IsNullOrEmpty(resolved) });
         }
 
         private async Task ServeApiLogosFind(HttpListenerRequest req, HttpListenerResponse res)
         {
             string q = req.QueryString["q"] ?? "";
             var results = await LogoSearchEngine.SearchLogosAsync(q);
-
-            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(results));
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            await WriteJsonAsync(res, results);
         }
 
         private async Task ServeApiChannelsSearch(HttpListenerRequest req, HttpListenerResponse res)
         {
             string q = req.QueryString["q"] ?? "";
-            var searchEngine = new GlobalSearchEngine();
-            var results = await searchEngine.SearchGlobalAsync(q);
-
-            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(results));
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            var results = await new GlobalSearchEngine().SearchGlobalAsync(q);
+            await WriteJsonAsync(res, results);
         }
 
         private async Task ServeApiLogsErrors(HttpListenerResponse res)
@@ -1278,23 +1316,18 @@ namespace StreamMesh.Core.Network
                 string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StreamMesh", "app.log");
                 if (File.Exists(logPath))
                 {
-                    var lines = File.ReadAllLines(logPath);
-                    var errors = lines.Where(l => l.Contains("[ERROR]")).TakeLast(50).ToList();
-                    byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(errors));
-                    res.ContentType = "application/json; charset=utf-8";
-                    await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                    var errors = File.ReadAllLines(logPath).Where(l => l.Contains("[ERROR]")).TakeLast(50).ToList();
+                    await WriteJsonAsync(res, errors);
                 }
                 else { res.StatusCode = 404; }
             }
             catch { res.StatusCode = 500; }
         }
 
-        private async Task ServeApiM3uSources(HttpListenerResponse res)
+        private Task ServeApiM3uSources(HttpListenerResponse res)
         {
             var sources = _db.GetM3uSources();
-            byte[] buffer = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(sources));
-            res.ContentType = "application/json; charset=utf-8";
-            await res.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+            return WriteJsonAsync(res, sources);
         }
 
         private async Task ServeProxyStream(HttpListenerRequest req, HttpListenerResponse res)
@@ -1314,6 +1347,164 @@ namespace StreamMesh.Core.Network
             {
                 res.StatusCode = 400;
             }
+        }
+
+        private static object SerializePlugin(IPlugin p) => new
+        {
+            id = p.Id,
+            name = p.Name,
+            category = p.Category,
+            version = p.Version,
+            author = p.Author,
+            icon = p.Icon,
+            isEnabled = p.IsEnabled,
+            status = p.Status,
+            statusMessage = p.StatusMessage,
+            description = p.Description,
+            settings = p.Settings.Select(s => new
+            {
+                key = s.Key,
+                label = s.Label,
+                value = s.Value,
+                defaultValue = s.DefaultValue,
+                type = s.Type.ToString().ToLowerInvariant(),
+                options = s.Options,
+                description = s.Description
+            }).ToList(),
+            stats = p.GetStatistics()
+        };
+
+        private Task ServePluginsList(HttpListenerResponse res)
+        {
+            var all = PluginManager.Instance.GetAllPlugins().ToList();
+            return WriteJsonAsync(res, new
+            {
+                total = all.Count,
+                active = all.Count(p => p.IsEnabled),
+                plugins = all.Select(SerializePlugin).ToList()
+            });
+        }
+
+        private static async Task<Newtonsoft.Json.Linq.JObject?> ReadJsonRequestAsync(HttpListenerRequest req)
+        {
+            using var reader = new StreamReader(req.InputStream, req.ContentEncoding ?? Encoding.UTF8);
+            string body = await reader.ReadToEndAsync();
+            return string.IsNullOrWhiteSpace(body) ? null : Newtonsoft.Json.Linq.JObject.Parse(body);
+        }
+
+        private async Task HandlePluginToggle(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            var body = await ReadJsonRequestAsync(req);
+            string id = body?["id"]?.ToString() ?? "";
+            var plugin = PluginManager.Instance.GetPluginById(id);
+            if (plugin == null)
+            {
+                res.StatusCode = 404;
+                return;
+            }
+
+            bool enabled = (body?["enabled"] != null && bool.TryParse(body["enabled"]!.ToString(), out bool parsedEnabled))
+                ? parsedEnabled
+                : !plugin.IsEnabled;
+            PluginManager.Instance.SetPluginEnabled(id, enabled);
+            await WriteJsonAsync(res, new { success = true, plugin = SerializePlugin(plugin) });
+        }
+
+        private async Task HandlePluginSettings(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            var body = await ReadJsonRequestAsync(req);
+            string id = body?["id"]?.ToString() ?? "";
+            var plugin = PluginManager.Instance.GetPluginById(id);
+            if (plugin == null)
+            {
+                res.StatusCode = 404;
+                return;
+            }
+
+            if (body?["settings"] is Newtonsoft.Json.Linq.JArray settingsArr)
+            {
+                foreach (var item in settingsArr)
+                {
+                    string key = item["key"]?.ToString() ?? "";
+                    string val = item["value"]?.ToString() ?? "";
+                    var target = plugin.Settings.FirstOrDefault(s => string.Equals(s.Key, key, StringComparison.OrdinalIgnoreCase));
+                    if (target != null) target.Value = val;
+                }
+                PluginManager.Instance.SavePluginSettings(plugin);
+            }
+
+            await WriteJsonAsync(res, new { success = true, message = "Ayarlar kaydedildi", plugin = SerializePlugin(plugin) });
+        }
+
+        private async Task HandlePluginAction(HttpListenerRequest req, HttpListenerResponse res)
+        {
+            var body = await ReadJsonRequestAsync(req);
+            string id = body?["id"]?.ToString() ?? "";
+            string action = body?["action"]?.ToString() ?? "TestConnection";
+            var plugin = PluginManager.Instance.GetPluginById(id);
+            if (plugin == null)
+            {
+                res.StatusCode = 404;
+                return;
+            }
+
+            string result = await PluginManager.Instance.ExecutePluginActionAsync(id, action);
+            await WriteJsonAsync(res, new { success = true, result, plugin = SerializePlugin(plugin) });
+        }
+
+        private static string ResolveAppRootForStatic()
+        {
+            string webIndex = ResolveWebIndexPath();
+            string? webDir = Path.GetDirectoryName(webIndex);
+            return webDir != null ? Path.GetFullPath(Path.Combine(webDir, "..")) : AppDomain.CurrentDomain.BaseDirectory;
+        }
+
+        private async Task<bool> TryServeStaticAsset(string rawPath, HttpListenerResponse res)
+        {
+            string relPath = rawPath.TrimStart('/');
+            if (string.Equals(rawPath, "/favicon.ico", StringComparison.OrdinalIgnoreCase))
+            {
+                relPath = "logos/StreamMesh_Icon.ico";
+            }
+
+            if (!relPath.StartsWith("Web/", StringComparison.OrdinalIgnoreCase) &&
+                !relPath.StartsWith("logos/", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string root = ResolveAppRootForStatic();
+            string webRoot = Path.GetFullPath(Path.Combine(root, "Web")) + Path.DirectorySeparatorChar;
+            string logosRoot = Path.GetFullPath(Path.Combine(root, "logos")) + Path.DirectorySeparatorChar;
+            string fullPath = Path.GetFullPath(Path.Combine(root, relPath.Replace('/', Path.DirectorySeparatorChar)));
+
+            if (!fullPath.StartsWith(webRoot, StringComparison.OrdinalIgnoreCase) &&
+                !fullPath.StartsWith(logosRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (!File.Exists(fullPath)) return false;
+
+            string ext = Path.GetExtension(fullPath).ToLowerInvariant();
+            res.ContentType = ext switch
+            {
+                ".html" => "text/html; charset=utf-8",
+                ".js" => "application/javascript; charset=utf-8",
+                ".css" => "text/css; charset=utf-8",
+                ".json" => "application/json; charset=utf-8",
+                ".png" => "image/png",
+                ".jpg" => "image/jpeg",
+                ".svg" => "image/svg+xml",
+                ".ico" => "image/x-icon",
+                _ => "application/octet-stream"
+            };
+
+            byte[] bytes = await File.ReadAllBytesAsync(fullPath);
+            res.StatusCode = 200;
+            res.ContentLength64 = bytes.Length;
+            await res.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+            return true;
         }
     }
 }

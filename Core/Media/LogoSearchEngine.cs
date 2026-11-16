@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using StreamMesh.Core.Database;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
@@ -20,7 +21,6 @@ namespace StreamMesh.Core.Media
 
     public static class LogoSearchEngine
     {
-        private static readonly HttpClient _http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
 
         private static async Task<bool> IsUrlAccessibleAsync(string url)
         {
@@ -33,14 +33,14 @@ namespace StreamMesh.Core.Media
                 using var req = new HttpRequestMessage(HttpMethod.Head, url);
                 req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
                 using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(2000));
-                using var resp = await _http.SendAsync(req, cts.Token);
+                using var resp = await MediaHttpClient.Client.SendAsync(req, cts.Token);
                 if (resp.IsSuccessStatusCode) return true;
 
                 // Fallback GET (headers only) if HEAD is forbidden or unsupported
                 using var reqGet = new HttpRequestMessage(HttpMethod.Get, url);
                 reqGet.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
                 using var cts2 = new CancellationTokenSource(TimeSpan.FromMilliseconds(2500));
-                using var respGet = await _http.SendAsync(reqGet, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
+                using var respGet = await MediaHttpClient.Client.SendAsync(reqGet, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
                 return respGet.IsSuccessStatusCode;
             }
             catch
@@ -55,8 +55,9 @@ namespace StreamMesh.Core.Media
             if (string.IsNullOrWhiteSpace(query)) return results;
 
             string rawQuery = query.Trim();
-            string clean = ChannelUtils.GetCleanName(rawQuery);
-            string normKey = ChannelUtils.ToNormalizedKey(clean);
+            string clean = ChannelUtils.GetDisplayBaseName(rawQuery);
+            string countryCode = ChannelUtils.DetectCountryCode(rawQuery);
+            string normKey = Regex.Replace(clean.ToLowerInvariant(), @"[^a-z0-9]", "");
 
             // 0. Search local /logos directory and subdirectories directly
             try
@@ -69,7 +70,7 @@ namespace StreamMesh.Core.Media
 
                 var validExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
-                    ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp"
+                    ".png", ".jpg", ".jpeg", ".ico", ".webp"
                 };
 
                 foreach (var dir in baseDirs.Distinct())
@@ -84,7 +85,7 @@ namespace StreamMesh.Core.Media
                         string fn = System.IO.Path.GetFileNameWithoutExtension(file);
                         if (fn.Contains(clean, StringComparison.OrdinalIgnoreCase) || 
                             fn.Contains(rawQuery, StringComparison.OrdinalIgnoreCase) ||
-                            ChannelUtils.ToNormalizedKey(fn).Contains(normKey, StringComparison.OrdinalIgnoreCase))
+                            Regex.Replace(fn.ToLowerInvariant(), @"[^a-z0-9]", "").Contains(normKey, StringComparison.OrdinalIgnoreCase))
                         {
                             string rel = "logos/" + System.IO.Path.GetRelativePath(dir, file).Replace("\\", "/");
                             if (!results.Any(r => r.Url.Equals(rel, StringComparison.OrdinalIgnoreCase)))
@@ -102,7 +103,7 @@ namespace StreamMesh.Core.Media
             }
             catch { }
 
-            // 1. Check local indexed database (ChannelEnricher & LogoIndex table)
+            // 1. Check local indexed database (iptv-org + tv-logos + local)
             string? indexedLogo = ChannelEnricher.GetLogoFromIndex(rawQuery);
             if (!string.IsNullOrEmpty(indexedLogo))
             {
@@ -117,12 +118,12 @@ namespace StreamMesh.Core.Media
             // Search all matching entries in LogoIndex table
             try
             {
-                var db = new DatabaseEngine();
+                var db = DatabaseEngine.Instance;
                 var logoDict = db.GetAllLogoIndex();
                 foreach (var kvp in logoDict)
                 {
                     string k = kvp.Key.ToLowerInvariant();
-                    if (k.Contains(normKey) || (!string.IsNullOrEmpty(clean) && k.Contains(clean.ToLowerInvariant())))
+                    if ((!string.IsNullOrEmpty(normKey) && k.Contains(normKey)) || (!string.IsNullOrEmpty(clean) && k.Contains(clean.ToLowerInvariant().Replace(" ", "-"))))
                     {
                         if (!results.Any(r => r.Url.Equals(kvp.Value, StringComparison.OrdinalIgnoreCase)))
                         {
@@ -132,30 +133,59 @@ namespace StreamMesh.Core.Media
                                 Url = kvp.Value,
                                 Source = "İndekslenmiş Logo"
                             });
+                            if (results.Count >= 12) break;
                         }
                     }
                 }
             }
             catch { }
 
-            // 2. Search local Channels database for any channel matching query with a valid LogoUrl
+            // 1b. Check EPG channel <icon> entries
             try
             {
-                var db = new DatabaseEngine();
-                var allChannels = await db.GetAllChannelsAsync();
-                var matchedInDb = allChannels.Where(c => !string.IsNullOrWhiteSpace(c.LogoUrl) && 
+                var epgLogos = await DatabaseEngine.Instance.GetEpgLogoLookupAsync().ConfigureAwait(false);
+                foreach (var (epgId, name, logoUrl) in epgLogos)
+                {
+                    if (logoUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)) continue;
+                    string epgNorm = Regex.Replace(ChannelUtils.GetDisplayBaseName(name).ToLowerInvariant(), @"[^a-z0-9]", "");
+                    if ((!string.IsNullOrEmpty(normKey) && epgNorm == normKey) ||
+                        epgId.Contains(clean, StringComparison.OrdinalIgnoreCase) ||
+                        name.Contains(clean, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!results.Any(r => r.Url.Equals(logoUrl, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            results.Add(new LogoSearchResult
+                            {
+                                Name = $"{name} (EPG)",
+                                Url = logoUrl,
+                                Source = "EPG Rehberi İkonu"
+                            });
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // 2. Search local TV/Radio Channels database for matching channel with valid TV LogoUrl
+            try
+            {
+                var db = DatabaseEngine.Instance;
+                var allChannels = await db.GetAllChannelsAsync().ConfigureAwait(false);
+                var matchedInDb = allChannels.Where(c =>
+                    !string.IsNullOrWhiteSpace(c.LogoUrl) &&
+                    MetadataEngine.IsLikelyLiveTv(c) &&
                     (c.Name.Contains(clean, StringComparison.OrdinalIgnoreCase) || 
                      c.Name.Contains(rawQuery, StringComparison.OrdinalIgnoreCase) ||
                      ChannelUtils.ToNormalizedKey(c.Name).Contains(normKey, StringComparison.OrdinalIgnoreCase))).ToList();
 
                 foreach (var ch in matchedInDb.Take(5))
                 {
-                    if (!results.Any(r => r.Url.Equals(ch.LogoUrl, StringComparison.OrdinalIgnoreCase)))
+                    if (!results.Any(r => r.Url.Equals(ch.PrimaryLogoUrl, StringComparison.OrdinalIgnoreCase)))
                     {
                         results.Add(new LogoSearchResult
                         {
                             Name = $"{ch.Name} (Veritabanı)",
-                            Url = ch.LogoUrl!,
+                            Url = ch.PrimaryLogoUrl,
                             Source = "Mevcut Kanal Logosu"
                         });
                     }
@@ -166,42 +196,44 @@ namespace StreamMesh.Core.Media
             // Candidate remote URLs to check
             var candidateResults = new List<LogoSearchResult>();
 
-            // 3. TV-Logo & Personal GitHub Candidates (tv-logo/tv-logos and bilo1975tr/tv-logos)
+            // 3. TV-Logo & Personal GitHub Candidates
             if (sourceFilter == "ALL" || sourceFilter == "TV_LOGOS")
             {
                 string[] repos = { "bilo1975tr/tv-logos/main", "bilo1975tr/tv-logos/master", "tv-logo/tv-logos/main" };
-                string[] countries = { "turkey", "germany", "united-kingdom", "united-states", "france", "spain" };
-                
+                var countryList = new List<string>();
+                if (countryCode == "de") countryList.Add("germany");
+                else if (countryCode == "tr") countryList.Add("turkey");
+                else if (countryCode == "fr") countryList.Add("france");
+                else if (countryCode == "es") countryList.Add("spain");
+                else if (countryCode == "it") countryList.Add("italy");
+                else if (countryCode == "gb") countryList.Add("united-kingdom");
+                else if (countryCode == "us") countryList.Add("united-states");
+                else countryList.AddRange(new[] { "turkey", "germany", "united-kingdom", "united-states", "france", "spain" });
+
                 foreach (var repoPath in repos)
                 {
-                    foreach (var country in countries)
+                    foreach (var country in countryList)
                     {
-                        string suffix = country == "germany" ? "de" : country == "turkey" ? "tr" : country == "france" ? "fr" : country == "spain" ? "es" : "";
+                        string suffix = country == "germany" ? "de" : country == "turkey" ? "tr" : country == "france" ? "fr" : country == "spain" ? "es" : country == "italy" ? "it" : country == "united-kingdom" ? "uk" : "";
                         
                         var slugs = new List<string>();
-                        string dashName = clean.ToLowerInvariant().Replace(" ", "-").Replace("&", "and").Replace("+", "plus");
+                        string dashName = clean.ToLowerInvariant().Replace(" ", "-").Replace("&", "and").Replace("+", "plus").Replace(".", "-");
                         dashName = Regex.Replace(dashName, @"[^a-z0-9-]", "").Trim('-');
-                        slugs.Add(dashName);
+                        if (!string.IsNullOrEmpty(dashName)) slugs.Add(dashName);
 
                         string noDashName = Regex.Replace(clean.ToLowerInvariant(), @"[^a-z0-9]", "");
-                        if (!slugs.Contains(noDashName)) slugs.Add(noDashName);
+                        if (!string.IsNullOrEmpty(noDashName) && !slugs.Contains(noDashName)) slugs.Add(noDashName);
 
-                        // Special alias mappings (e.g., NOW TV -> now, now-tv, fox-tr, etc.)
                         if (clean.Equals("NOW TV", StringComparison.OrdinalIgnoreCase) || clean.Equals("NOW", StringComparison.OrdinalIgnoreCase))
                         {
-                            slugs.Add("now");
-                            slugs.Add("now-tv");
-                            slugs.Add("now-tr");
-                            slugs.Add("now-tv-tr");
-                            slugs.Add("fox-tr");
-                            slugs.Add("fox-tv-tr");
+                            slugs.AddRange(new[] { "now", "now-tv", "now-tr", "now-tv-tr", "fox-tr", "fox-tv-tr" });
                         }
 
                         foreach (var baseSlug in slugs)
                         {
                             if (string.IsNullOrWhiteSpace(baseSlug)) continue;
                             string s = baseSlug;
-                            if (!string.IsNullOrEmpty(suffix) && !s.EndsWith("-" + suffix) && !s.Equals("now-tr") && !s.Equals("now-tv-tr"))
+                            if (!string.IsNullOrEmpty(suffix) && !s.EndsWith("-" + suffix))
                                 s += "-" + suffix;
 
                             string logoUrl = $"https://raw.githubusercontent.com/{repoPath}/countries/{country}/{s}.png";
@@ -241,40 +273,19 @@ namespace StreamMesh.Core.Media
                 }
             }
 
-            // 5. Clearbit Logo candidate
-            if (sourceFilter == "ALL" || sourceFilter == "CLEARBIT")
-            {
-                string cleanDomain = clean.ToLowerInvariant().Replace(" ", "").Replace("&", "");
-                cleanDomain = Regex.Replace(cleanDomain, @"[^a-z0-9]", "");
-                if (!string.IsNullOrEmpty(cleanDomain))
-                {
-                    string clearbitUrl = $"https://logo.clearbit.com/{cleanDomain}.com";
-                    if (!results.Any(r => r.Url.Equals(clearbitUrl, StringComparison.OrdinalIgnoreCase)) &&
-                        !candidateResults.Any(r => r.Url.Equals(clearbitUrl, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        candidateResults.Add(new LogoSearchResult
-                        {
-                            Name = $"{cleanDomain}.com (Clearbit)",
-                            Url = clearbitUrl,
-                            Source = "Clearbit Logo API"
-                        });
-                    }
-                }
-            }
-
             // Validate candidates in parallel to eliminate broken 404 links
             if (candidateResults.Count > 0)
             {
                 var validCandidates = new ConcurrentBag<LogoSearchResult>();
                 var tasks = candidateResults.Select(async candidate =>
                 {
-                    if (await IsUrlAccessibleAsync(candidate.Url))
+                    if (await IsUrlAccessibleAsync(candidate.Url).ConfigureAwait(false))
                     {
                         validCandidates.Add(candidate);
                     }
                 });
 
-                await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks).ConfigureAwait(false);
                 results.AddRange(validCandidates);
             }
 

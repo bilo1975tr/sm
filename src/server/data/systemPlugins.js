@@ -59,22 +59,21 @@ export const SYSTEM_PLUGINS = [
   },
   {
     id: "metadata_enricher",
-    name: "Film & Dizi Meta Veri Zenginleştirici (TMDB)",
-    category: "Yapay Zeka & Meta",
-    version: "1.5.0",
+    name: "Film & Dizi Meta Veri Zenginleştirici",
+    category: "Meta Veri",
+    version: "1.6.0",
     author: "StreamMesh Metadata Lab",
     icon: "🎬",
     isEnabled: true,
     status: "Aktif",
-    statusMessage: "TMDB motoru hazır (tr-TR)",
-    description: "VOD filmler ve diziler için TMDB üzerinden kapak afişleri, arka plan görselleri, konu özetleri, oyuncu kadrosu ve IMDb puanlarını otomatik çeker.",
+    statusMessage: "Ücretsiz meta veri motoru hazır (tr-TR)",
+    description: "VOD filmler ve diziler için TVMaze, IMDb ve Wikipedia açık kaynakları üzerinden API anahtarı gerektirmeden kapak afişleri, görseller, konu özetleri ve oyuncu kadrosunu otomatik çeker.",
     settings: [
-      { key: "TmdbApiKey", label: "TMDB v3 API Anahtarı", value: "3fd2be6f0c70a2a598f084dd23308883", defaultValue: "3fd2be6f0c70a2a598f084dd23308883", type: "text", description: "TheMovieDatabase API anahtarı." },
       { key: "Language", label: "Öncelikli Dil Kodu", value: "tr-TR", defaultValue: "tr-TR", type: "select", options: ["tr-TR", "en-US", "de-DE", "fr-FR"], description: "Film/Dizi özet ve başlıklarının çekileceği dil." },
       { key: "DownloadBackdrops", label: "Yüksek Çözünürlüklü Arka Planları İndir", value: "true", defaultValue: "true", type: "boolean", description: "Detay ekranında gösterilmek üzere geniş format arka planları çeker." },
-      { key: "DailyQueryLimit", label: "Günlük Maksimum TMDB Sorgu Limiti", value: "1000", defaultValue: "1000", type: "number", description: "API banlanmasını önlemek için günlük güvenlik sınırı." }
+      { key: "DailyQueryLimit", label: "Günlük Maksimum Sorgu Limiti", value: "1000", defaultValue: "1000", type: "number", description: "Açık kaynak servislerin aşırı yüklenmesini önlemek için günlük güvenlik sınırı." }
     ],
-    stats: { "Zenginleştirilen İçerik": "164", "Seçili Dil": "tr-TR", "Arka Plan İndirme": "Açık", "Günlük Kalan": "836" }
+    stats: { "Zenginleştirilen İçerik": "164", "Seçili Dil": "tr-TR", "Arka Plan İndirme": "Açık", "Kaynak": "Ücretsiz Açık API" }
   },
   {
     id: "logo_manager",
@@ -166,24 +165,6 @@ export const SYSTEM_PLUGINS = [
       { key: "DeviceFriendlyName", label: "Görünen Cihaz Adı", value: "StreamMesh Home Media Center", defaultValue: "StreamMesh Home Media Center", type: "text", description: "Smart TV ekranında görünecek sunucu ismi." }
     ],
     stats: { "Yayın Adresi": "239.255.255.250:1900", "Cihaz Adı": "StreamMesh Media Center" }
-  },
-  {
-    id: "ai_assistant",
-    name: "Yapay Zeka Asistanı & Öneri Motoru",
-    category: "Yapay Zeka & Meta",
-    version: "1.3.0",
-    author: "StreamMesh AI Lab",
-    icon: "🤖",
-    isEnabled: true,
-    status: "Aktif",
-    statusMessage: "AI servisi hazır (llama3)",
-    description: "Yerel LLM (Ollama, LM Studio) veya bulut yapay zeka modelleriyle akıllı içerik önerileri, özetleme ve sohbet asistanı sağlar.",
-    settings: [
-      { key: "EndpointUrl", label: "AI API URL Endpoint", value: "http://localhost:11434/api/chat", defaultValue: "http://localhost:11434/api/chat", type: "text", description: "Ollama veya OpenAI uyumlu API adresi." },
-      { key: "ModelName", label: "Model Adı", value: "llama3", defaultValue: "llama3", type: "text", description: "Kullanılacak dil modeli (örn: llama3, mistral, gemma2)." },
-      { key: "SmartRecommendations", label: "İzleme Geçmişine Dayalı Akıllı Öneriler", value: "true", defaultValue: "true", type: "boolean", description: "Kullanıcının izleme alışkanlıklarına göre ana sayfada kişiselleştirilmiş öneriler sunar." }
-    ],
-    stats: { "Kullanılan Model": "llama3", "Toplam Sorgu": "12", "Son Yanıt Süresi": "180 ms" }
   },
   {
     id: "auto_updater",

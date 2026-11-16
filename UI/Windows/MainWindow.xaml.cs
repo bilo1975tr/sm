@@ -23,6 +23,7 @@ namespace StreamMesh.UI.Windows
         private PlayerView _playerView = new PlayerView();
         private SettingsView? _settingsView;
         private SearchAceStreamView? _searchAceView;
+        private EpgGuideView? _epgGuideView;
 
         private readonly UpdateService _updateService = new UpdateService();
         private DispatcherTimer _epgTimer;
@@ -71,45 +72,38 @@ namespace StreamMesh.UI.Windows
                 });
             };
 
-            // Start AceStream engine in background immediately on startup
+            // AceStream motoru kuruluysa uygulama acilisinda arka planda otomatik baslat
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    LogService.LogInfo("[STARTUP] Arka planda AceStream motoru ön ısıtması başlatılıyor...");
-                    await AceEngine.Instance.StartEngineIfNotRunningAsync().ConfigureAwait(false);
+                    await Task.Delay(3500).ConfigureAwait(false);
+                    string aceExe = AceEngine.GetEngineExecutablePath();
+                    if (System.IO.File.Exists(aceExe))
+                    {
+                        LogService.LogInfo("[STARTUP] AceStream motoru bulundu, arka planda başlatılıyor...");
+                        await AceEngine.Instance.StartEngineIfNotRunningAsync().ConfigureAwait(false);
+                    }
                 }
                 catch { }
             });
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(5000);
+                await Task.Delay(5000).ConfigureAwait(false);
                 CheckForUpdatesAsync();
             });
 
             _epgTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(12) };
             _epgTimer.Tick += async (s, e) => { await RunAutoEpgUpdateAsync(); };
             _epgTimer.Start();
-            _ = Task.Run(async () => { await Task.Delay(3000); await RunAutoEpgUpdateAsync(); });
+            _ = Task.Run(async () => { await Task.Delay(10000).ConfigureAwait(false); await RunAutoEpgUpdateAsync(); });
 
             // 30-Minute Film & Series Metadata Auto-Enricher Worker (Açılışta 90 sn sonra sessizce çalışır)
             _metaTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(30) };
             _metaTimer.Tick += async (s, e) => { await RunAutoMetadataEnrichmentAsync(); };
             _metaTimer.Start();
             _ = Task.Run(async () => { await Task.Delay(90000); await RunAutoMetadataEnrichmentAsync(); });
-
-            // Auto-detect local AI Engine (Ollama / LM Studio) in background (20 sn sonra sessizce kontrol eder)
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(20000);
-                try
-                {
-                    var ai = new AiEngine();
-                    await ai.AutoDetectAndConfigureAsync();
-                }
-                catch { }
-            });
 
             this.KeyDown += MainWindow_KeyDown;
             this.StateChanged += MainWindow_StateChanged;
@@ -124,15 +118,6 @@ namespace StreamMesh.UI.Windows
                 }
                 catch { }
             }, DispatcherPriority.Background);
-
-            _ = Task.Run(() =>
-            {
-                try
-                {
-                    FlyleafHelper.SafeStart();
-                }
-                catch { }
-            });
         }
 
         private void MainWindow_StateChanged(object? sender, EventArgs e)
@@ -167,6 +152,12 @@ namespace StreamMesh.UI.Windows
         {
             try
             {
+                var updatePlugin = StreamMesh.Core.Plugins.PluginManager.Instance.GetPluginById("auto_updater") as StreamMesh.Core.Plugins.UpdatePlugin;
+                if (updatePlugin != null && (!updatePlugin.IsEnabled || !updatePlugin.GetBool("CheckOnStartup")))
+                {
+                    return;
+                }
+
                 var (hasUpdate, remoteVer) = await _updateService.CheckForUpdateAsync();
                 if (hasUpdate)
                 {
@@ -218,9 +209,15 @@ namespace StreamMesh.UI.Windows
         }
 
         private bool _isFullscreen = false;
+        private bool _isMiniPlayer = false;
+        private double _preMiniWidth = 1300;
+        private double _preMiniHeight = 800;
+        private double _preMiniLeft = 100;
+        private double _preMiniTop = 100;
 
         public void SetFullscreen(bool isFullscreen)
         {
+            if (_isMiniPlayer && isFullscreen) SetMiniPlayer(false);
             _isFullscreen = isFullscreen;
             if (_isFullscreen)
             {
@@ -245,8 +242,82 @@ namespace StreamMesh.UI.Windows
             SetFullscreen(!_isFullscreen);
         }
 
+        public void SetMiniPlayer(bool enable)
+        {
+            if (_isMiniPlayer == enable) return;
+            _isMiniPlayer = enable;
+
+            if (enable)
+            {
+                if (_isFullscreen) SetFullscreen(false);
+                _preMiniWidth = this.Width > 0 ? this.Width : 1300;
+                _preMiniHeight = this.Height > 0 ? this.Height : 800;
+                _preMiniLeft = this.Left;
+                _preMiniTop = this.Top;
+
+                SidebarBorder.Visibility = Visibility.Collapsed;
+                SidebarColumn.Width = new GridLength(0);
+                TopOverlay.Visibility = Visibility.Collapsed;
+                this.WindowState = WindowState.Normal;
+                this.WindowStyle = WindowStyle.None;
+                this.ResizeMode = ResizeMode.CanResizeWithGrip;
+                this.Topmost = true;
+                this.Width = 480;
+                this.Height = 270;
+
+                var workArea = SystemParameters.WorkArea;
+                this.Left = Math.Max(workArea.Left, workArea.Right - 500);
+                this.Top = Math.Max(workArea.Top, workArea.Bottom - 290);
+                this.MouseLeftButtonDown += MiniPlayer_MouseLeftButtonDown;
+            }
+            else
+            {
+                this.MouseLeftButtonDown -= MiniPlayer_MouseLeftButtonDown;
+                this.Topmost = false;
+                this.WindowStyle = WindowStyle.SingleBorderWindow;
+                this.ResizeMode = ResizeMode.CanResize;
+                SidebarBorder.Visibility = Visibility.Visible;
+                SidebarColumn.Width = new GridLength(80);
+                TopOverlay.Visibility = Visibility.Visible;
+                this.Width = _preMiniWidth;
+                this.Height = _preMiniHeight;
+                this.Left = _preMiniLeft;
+                this.Top = _preMiniTop;
+            }
+        }
+
+        public void ToggleMiniPlayer()
+        {
+            SetMiniPlayer(!_isMiniPlayer);
+        }
+
+        private void MiniPlayer_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (_isMiniPlayer && e.ButtonState == System.Windows.Input.MouseButtonState.Pressed)
+            {
+                try { DragMove(); } catch { }
+            }
+        }
+
+        public void TryDragMiniPlayer()
+        {
+            if (_isMiniPlayer && System.Windows.Input.Mouse.LeftButton == System.Windows.Input.MouseButtonState.Pressed)
+            {
+                try { DragMove(); } catch { }
+            }
+        }
+
+        public void HandleForwardedKeyDown(System.Windows.Input.KeyEventArgs e) => MainWindow_KeyDown(this, e);
+
         private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
+            if (e.Key == System.Windows.Input.Key.Escape && _isMiniPlayer)
+            {
+                SetMiniPlayer(false);
+                e.Handled = true;
+                return;
+            }
+
             if (e.Key == System.Windows.Input.Key.Escape && _isFullscreen)
             {
                 SetFullscreen(false);
@@ -436,6 +507,11 @@ namespace StreamMesh.UI.Windows
             {
                 case "Home": MainContent.Content = _homeView; break;
                 case "Player": MainContent.Content = _playerView; break;
+                case "EpgGuide":
+                    _epgGuideView ??= new EpgGuideView();
+                    MainContent.Content = _epgGuideView;
+                    _ = _epgGuideView.LoadGuideAsync();
+                    break;
                 case "Settings":
                     _settingsView ??= new SettingsView();
                     MainContent.Content = _settingsView;
@@ -453,25 +529,53 @@ namespace StreamMesh.UI.Windows
             _playerView.LoadChannel(ch);
         }
 
+        public void PlayCatchup(Channel ch, EpgProgram prog)
+        {
+            NavigateTo("Player");
+            _playerView.PlayCatchupProgram(ch, prog);
+        }
+
         public async System.Threading.Tasks.Task RunAutoEpgUpdateAsync(bool force = false)
         {
             try
             {
-                var db = new StreamMesh.Core.Database.DatabaseEngine();
+                var epgPlugin = StreamMesh.Core.Plugins.PluginManager.Instance.GetPluginById("epg_guide") as StreamMesh.Core.Plugins.EpgPlugin;
+                if (!force && epgPlugin != null && !epgPlugin.IsEnabled)
+                {
+                    return;
+                }
 
-                // V1.9.0: Cleanup old EPG data before update to save space
-                await db.CleanupOldEpgProgramsAsync(2);
+                var db = StreamMesh.Core.Database.DatabaseEngine.Instance;
+
+                if (epgPlugin == null || epgPlugin.GetBool("AutoPurgeExpired"))
+                {
+                    await db.CleanupOldEpgProgramsAsync(2);
+                }
 
                 int epgCount = await db.GetEpgProgramsCountAsync();
                 string lastEpgStr = db.GetSetting("LastAutoEpgUpdate", "0");
                 long.TryParse(lastEpgStr, out long lastEpgUnix);
                 long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                int refreshHours = epgPlugin?.GetInt("AutoRefreshHours", 12) ?? 12;
+                long refreshSeconds = Math.Max(1, refreshHours) * 3600L;
 
-                // 12 saat = 43200 saniye (tabloda hiç veri yoksa veya force=true ise beklemeden hemen çalıştır)
-                if (force || epgCount == 0 || (nowUnix - lastEpgUnix >= 43200))
+                if (force || epgCount == 0 || (nowUnix - lastEpgUnix >= refreshSeconds))
                 {
                     LogService.LogInfo($"[AutoEPG] EPG güncellemesi başlatılıyor (force={force}, mevcutKayıt={epgCount})...");
                     var epgSources = db.GetEpgSources();
+                    if (epgSources == null || epgSources.Count == 0)
+                    {
+                        var defaultEpgs = new[]
+                        {
+                            "https://iptv-epg.org/files/epg-tr.xml.gz",
+                            "https://iptv-epg.org/files/epg-de.xml.gz",
+                            "https://raw.githubusercontent.com/epgshare01/XMLTV/master/epg_ripper_TR1.xml.gz",
+                            "https://raw.githubusercontent.com/epgshare01/XMLTV/master/epg_ripper_DE1.xml.gz"
+                        };
+                        foreach (var src in defaultEpgs) db.AddEpgSource(src);
+                        epgSources = db.GetEpgSources();
+                    }
+
                     if (epgSources != null && epgSources.Count > 0)
                     {
                         var epgEng = new StreamMesh.Core.Media.EpgEngine();
@@ -479,11 +583,13 @@ namespace StreamMesh.UI.Windows
                         {
                             if (!string.IsNullOrWhiteSpace(url))
                             {
-                                await epgEng.LoadEpgAsync(url);
+                                try { await epgEng.LoadEpgAsync(url).ConfigureAwait(false); }
+                                catch (Exception ex) { LogService.LogWarning($"[AutoEPG] EPG kaynağı atlandı ({url}): {ex.Message}"); }
                             }
                         }
                     }
                     db.SetSetting("LastAutoEpgUpdate", nowUnix.ToString());
+                    StreamMesh.Core.Database.DatabaseEngine.NotifyDatabaseUpdated();
                     LogService.LogInfo("[AutoEPG] Otomatik EPG güncellemesi başarıyla tamamlandı.");
                 }
             }
@@ -497,27 +603,27 @@ namespace StreamMesh.UI.Windows
         {
             try
             {
-                var db = new StreamMesh.Core.Database.DatabaseEngine();
-                string apiKey = db.GetSetting("TmdbApiKey", "");
-                if (string.IsNullOrWhiteSpace(apiKey))
+                var metaPlugin = StreamMesh.Core.Plugins.PluginManager.Instance.GetPluginById("metadata_enricher") as StreamMesh.Core.Plugins.MetadataPlugin;
+                if (metaPlugin != null && !metaPlugin.IsEnabled)
                 {
-                    // TMDB API anahtarı tanımlı değilse arka plan sorgusunu çalıştırma
                     return;
                 }
 
+                var db = StreamMesh.Core.Database.DatabaseEngine.Instance;
                 var metaEng = new StreamMesh.Core.Media.MetadataEngine();
+                int dailyLimit = Math.Max(10, metaPlugin?.GetInt("DailyQueryLimit", 1000) ?? 1000);
 
-                // TMDB Günlük Limit kontrolü (1000 istek/gün)
                 var stats = db.GetDailyQueryStats();
-                if (stats.count >= 950)
+                if (stats.count >= dailyLimit - 50)
                 {
-                    LogService.LogInfo("[AutoMetadata] Günlük TMDB sorgu limitine (1000) yaklaşıldı. Otomatik zenginleştirme duraklatıldı.");
+                    LogService.LogInfo($"[AutoMetadata] Günlük meta veri sorgu limitine ({dailyLimit}) yaklaşıldı. Otomatik zenginleştirme duraklatıldı.");
                     return;
                 }
 
                 var allChannels = await db.GetAllChannelsAsync();
                 var pendingMedia = allChannels.Where(c =>
-                    (c.Category == "Film" || c.Category == "Movie" || c.Category == "Dizi" || c.Category == "Series" || !string.IsNullOrWhiteSpace(c.SeriesBaseName)) &&
+                    !StreamMesh.Core.Media.MetadataEngine.IsLikelyLiveTv(c) &&
+                    (c.Category == "Film" || c.Category == "Filmler" || c.Category == "Movie" || c.Category == "Dizi" || c.Category == "Series" || !string.IsNullOrWhiteSpace(c.SeriesBaseName)) &&
                     string.IsNullOrWhiteSpace(c.Overview)
                 ).Take(50).ToList();
 
@@ -529,7 +635,7 @@ namespace StreamMesh.UI.Windows
                         try
                         {
                             var curStats = db.GetDailyQueryStats();
-                            if (curStats.count >= 950) break;
+                            if (curStats.count >= dailyLimit - 50) break;
 
                             await metaEng.EnrichChannelAsync(item);
                             await System.Threading.Tasks.Task.Delay(500);

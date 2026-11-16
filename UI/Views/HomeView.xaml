@@ -3,22 +3,188 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:StreamMesh.UI.Views"
              xmlns:utils="clr-namespace:StreamMesh.Core.Utils"
              xmlns:conv="clr-namespace:StreamMesh.Converters"
-             mc:Ignorable="d" d:DesignHeight="720" d:DesignWidth="1280">
+             mc:Ignorable="d" d:DesignHeight="760" d:DesignWidth="1320">
 
     <UserControl.Resources>
         <conv:LogoCacheConverter x:Key="LogoCacheConverter" />
+
+        <!-- Live TV / Radio Card Template (Logo Stage + EPG) -->
+        <DataTemplate x:Key="TvLogoCardTemplate">
+            <Border Background="#1e293b" CornerRadius="12" Width="178" Height="204" Margin="7" BorderThickness="1" BorderBrush="#334155" x:Name="CardBorder" ClipToBounds="True"
+                    MouseLeftButtonUp="Card_Click" MouseEnter="Card_MouseEnter"
+                    AllowDrop="True" Drop="Card_Drop" PreviewMouseMove="Card_MouseMove" PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
+                        <MenuItem Header="Düzenle" Click="EditContext_Click" CommandParameter="{Binding}"/>
+                        <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
+                        <Separator/>
+                        <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Logo Area -->
+                    <Border Grid.Row="0" Background="#0f172a" CornerRadius="10,10,0,0">
+                        <Grid>
+                            <Image Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="18"/>
+
+                            <!-- Favorite Star Button (Top-Right) -->
+                            <Button x:Name="CardFavBtn" Width="28" Height="28" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6"
+                                    Click="FavContext_Click" CommandParameter="{Binding}" Cursor="Hand" Background="#800f172a" BorderBrush="Transparent" BorderThickness="0" ToolTip="Favorilere Ekle / Kaldır">
+                                <TextBlock Text="★" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#64748b"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                    <Setter Property="Foreground" Value="#f59e0b"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+
+                            <!-- Play Overlay -->
+                            <Button x:Name="PlayOverlayBtn" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Click="DirectPlay_Click" CommandParameter="{Binding}" Cursor="Hand" Opacity="0" Background="Transparent" BorderThickness="0">
+                                <Border Background="#E60284c7" CornerRadius="20" Width="40" Height="40">
+                                    <Path Data="{StaticResource GeoPlay}" Fill="White" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Info Area -->
+                    <StackPanel Grid.Row="1" Margin="10,8">
+                        <TextBlock Text="{Binding PrimaryName}" FontWeight="Bold" FontSize="12.5" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding CurrentEpgTitle}" Foreground="#94a3b8" FontSize="10" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#38bdf8"/>
+                    <Setter TargetName="CardBorder" Property="Background" Value="#334155"/>
+                    <Setter TargetName="PlayOverlayBtn" Property="Opacity" Value="1"/>
+                </Trigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Movie / Series Poster Card Template (TiviMate / Netflix 2:3 Poster) -->
+        <DataTemplate x:Key="VodPosterCardTemplate">
+            <Border Background="#1e293b" CornerRadius="12" Width="162" Height="272" Margin="7" BorderThickness="1.5" BorderBrush="#334155" x:Name="CardBorder" ClipToBounds="True"
+                    MouseLeftButtonUp="Card_Click" MouseEnter="Card_MouseEnter" PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown" Cursor="Hand">
+                <Border.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
+                        <MenuItem Header="Detaylar" Click="DetailsContext_Click" CommandParameter="{Binding}"/>
+                        <MenuItem Header="Düzenle" Click="EditContext_Click" CommandParameter="{Binding}"/>
+                        <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
+                        <Separator/>
+                        <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
+                    </ContextMenu>
+                </Border.ContextMenu>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Poster Image -->
+                    <Border Grid.Row="0" Background="#0b1120" ClipToBounds="True">
+                        <Grid>
+                            <Image Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="UniformToFill"/>
+                            <Rectangle VerticalAlignment="Bottom" Height="64">
+                                <Rectangle.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="Transparent" Offset="0"/>
+                                        <GradientStop Color="#CC0b1120" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+
+                            <!-- Favorite Star Button (Top-Right) -->
+                            <Button x:Name="CardFavBtn" Width="28" Height="28" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6"
+                                    Click="FavContext_Click" CommandParameter="{Binding}" Cursor="Hand" Background="#990f172a" BorderBrush="Transparent" BorderThickness="0" ToolTip="Favorilere Ekle / Kaldır">
+                                <TextBlock Text="★" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#94a3b8"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                    <Setter Property="Foreground" Value="#f59e0b"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+
+                            <!-- Resume Position Badge (Top-Left) -->
+                            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6" Background="#CC0284c7" CornerRadius="5" Padding="6,3"
+                                    Visibility="{Binding HasResumePosition, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="⏯ DEVAM" Foreground="White" FontSize="9" FontWeight="Bold"/>
+                            </Border>
+
+                            <!-- Center Play Overlay -->
+                            <Button x:Name="PlayOverlayBtn" Width="44" Height="44" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Click="DirectPlay_Click" CommandParameter="{Binding}" Cursor="Hand" Opacity="0" Background="Transparent" BorderThickness="0">
+                                <Border Background="#E60284c7" CornerRadius="22" Width="44" Height="44">
+                                    <Path Data="{StaticResource GeoPlay}" Fill="White" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Poster Footer Info -->
+                    <StackPanel Grid.Row="1" Margin="10,7,10,8" Background="#1e293b">
+                        <TextBlock Text="{Binding PrimaryName}" FontWeight="Bold" FontSize="12.5" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding GroupTitle}" Foreground="#94a3b8" FontSize="10" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#38bdf8"/>
+                    <Setter TargetName="CardBorder" Property="BorderThickness" Value="2"/>
+                    <Setter TargetName="CardBorder" Property="Background" Value="#273549"/>
+                </DataTrigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#38bdf8"/>
+                    <Setter TargetName="PlayOverlayBtn" Property="Opacity" Value="1"/>
+                </Trigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <local:MediaCardTemplateSelector x:Key="MediaCardTemplateSelector"
+                                         TvTemplate="{StaticResource TvLogoCardTemplate}"
+                                         VodTemplate="{StaticResource VodPosterCardTemplate}"/>
     </UserControl.Resources>
 
     <Grid Background="#141414">
-        <!-- Backdrop -->
-        <Image Source="{Binding CurrentBackdrop}" Stretch="UniformToFill" Opacity="0.2">
-            <Image.Effect><BlurEffect Radius="30"/></Image.Effect>
+        <!-- Ambient Backdrop -->
+        <Image Source="{Binding CurrentBackdrop, Converter={StaticResource LogoCacheConverter}}" Stretch="UniformToFill" Opacity="0.16">
+            <Image.Effect><BlurEffect Radius="32"/></Image.Effect>
         </Image>
-        <Rectangle><Rectangle.Fill><LinearGradientBrush StartPoint="0,0" EndPoint="0,1"><GradientStop Color="Transparent" Offset="0"/><GradientStop Color="#141414" Offset="0.8"/></LinearGradientBrush></Rectangle.Fill></Rectangle>
+        <Rectangle>
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="Transparent" Offset="0"/>
+                    <GradientStop Color="#141414" Offset="0.75"/>
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
 
-        <Grid Margin="30">
+        <Grid Margin="24,20,24,18">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -27,21 +193,20 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <Grid Grid.Row="0" Margin="0,0,0,20">
+            <!-- Row 0: Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,14">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_MyLibrary]}"
-                               FontSize="32" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="{Binding TotalCountText}" FontSize="14" Foreground="#38bdf8" Margin="0,5,0,0"/>
+                               FontSize="30" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding TotalCountText}" FontSize="13.5" Foreground="#38bdf8" Margin="0,4,0,0"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Grid>
-                        <TextBox x:Name="SearchBox" Width="250" Height="40" Padding="35,8,10,8"
-                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                 PreviewKeyDown="SearchBox_PreviewKeyDown"/>
+                        <TextBox x:Name="SearchBox" Width="260" Height="38" Padding="35,8,10,8"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Text="🔍" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="12,0,0,0" Foreground="Gray" IsHitTestVisible="False"/>
-                        <TextBlock Text="Akıllı Arama (Tab: AI)" Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="35,0,0,0">
+                        <TextBlock Text="Kanal, film veya dizi ara..." Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="35,0,0,0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -57,8 +222,8 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Validation Progress Banner -->
-            <Border Grid.Row="1" Background="#881337" CornerRadius="10" Padding="16,12" Margin="0,0,0,18"
+            <!-- Row 1: Validation Progress Banner -->
+            <Border Grid.Row="1" Background="#881337" CornerRadius="10" Padding="16,10" Margin="0,0,0,12"
                     BorderBrush="#f43f5e" BorderThickness="1"
                     Visibility="{Binding IsValidatingChannels, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid>
@@ -68,27 +233,23 @@
                         <ColumnDefinition Width="140"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
                     <TextBlock Text="⚡" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
-
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="Kanal Canlılık Doğrulaması Yapılıyor" FontWeight="Bold" FontSize="14" Foreground="White"/>
                         <TextBlock Text="{Binding ValidationStatusText}" FontSize="12" Foreground="#ffe4e6" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
                         <ProgressBar Height="8" Width="130" Minimum="0" Maximum="100"
                                      Value="{Binding ValidationProgressPercent}"
                                      Foreground="#f43f5e" Background="#4c0519" BorderThickness="0"/>
                         <TextBlock Text="{Binding ValidationProgressPercent, StringFormat='{}{0}%'}" FontSize="11" Foreground="#ffe4e6" HorizontalAlignment="Right" Margin="0,3,0,0"/>
                     </StackPanel>
-
                     <Button Grid.Column="3" Content="✕ Durdur" Style="{StaticResource PrimaryButtonStyle}" Background="#be123c" Height="30" Padding="10,0" Margin="15,0,0,0" Click="CancelValidation_Click"/>
                 </Grid>
             </Border>
 
-            <!-- Sync / First Run Info Banner -->
-            <Border Grid.Row="1" Background="#0f766e" CornerRadius="10" Padding="16,12" Margin="0,0,0,18"
+            <!-- Row 1: Sync Info Banner -->
+            <Border Grid.Row="1" Background="#0f766e" CornerRadius="10" Padding="16,10" Margin="0,0,0,12"
                     BorderBrush="#14b8a6" BorderThickness="1"
                     Visibility="{Binding IsSyncing, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Grid>
@@ -97,14 +258,11 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="140"/>
                     </Grid.ColumnDefinitions>
-
                     <TextBlock Text="🔄" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
-
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="Yayın Listesi İndiriliyor &amp; Hazırlanıyor" FontWeight="Bold" FontSize="14" Foreground="White"/>
                         <TextBlock Text="{Binding SyncStatusMessage}" FontSize="12" Foreground="#ccfbf1" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
                         <ProgressBar Height="8" Width="130" Minimum="0" Maximum="100"
                                      Value="{Binding SyncProgressPercent}"
@@ -114,16 +272,15 @@
                 </Grid>
             </Border>
 
-            <!-- Toolbar / Categories -->
-            <Border Grid.Row="2" Background="#1e293b" CornerRadius="12" Padding="12" Margin="0,0,0,12" BorderBrush="#334155" BorderThickness="1">
+            <!-- Row 2: Top Toolbar (Sources & Categories & Controls) -->
+            <Border Grid.Row="2" Background="#1e293b" CornerRadius="12" Padding="12,10" Margin="0,0,0,12" BorderBrush="#334155" BorderThickness="1">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Row 0: Kaynak / Xtream Hesap Butonları (Yalnızca Xtream veya birden fazla kaynak varsa görünür) -->
+                    <!-- Row 0: Sources -->
                     <Border Grid.Row="0" Margin="0,0,0,10" Padding="0,0,0,8" BorderBrush="#334155" BorderThickness="0,0,0,1"
                             Visibility="{Binding HasMultipleSources, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
@@ -135,7 +292,7 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button Margin="0,0,8,0" Padding="14,6" Height="34" FontSize="12" FontWeight="Bold"
+                                        <Button Margin="0,0,8,0" Padding="14,6" Height="32" FontSize="12" FontWeight="Bold"
                                                 Click="SourceChip_Click" Tag="{Binding Id}" Cursor="Hand"
                                                 ToolTip="Sağ tık: Sağlayıcıyı Güncelle veya Sil">
                                             <Button.ContextMenu>
@@ -182,27 +339,35 @@
                         </ScrollViewer>
                     </Border>
 
+                    <!-- Row 1: Category Buttons & Right Tools -->
                     <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel x:Name="CategoryPanel" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="85"/>
-                            <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="105" Background="#334155"/>
-                            <Button Content="TV" Tag="TV" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="75" Background="#334155"/>
-                            <Button Content="Filmler" Tag="Movies" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="85" Background="#334155"/>
-                            <Button Content="Diziler" Tag="Series" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="85" Background="#334155"/>
-                            <Button Content="Radyo" Tag="Radio" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Width="85" Background="#334155"/>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="☰ Gruplar" Click="ToggleSidebar_Click" Height="34" Padding="12,0" Margin="0,0,10,0"
+                                    Style="{StaticResource PrimaryButtonStyle}" Background="#0f172a" Foreground="#38bdf8"
+                                    Visibility="{Binding CanToggleGroupSidebar, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                    ToolTip="Sol Grup Panelini Aç / Gizle"/>
+
+                            <StackPanel x:Name="CategoryPanel" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_All]}" Tag="All" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="82" Height="34"/>
+                                <Button Content="{Binding Source={x:Static utils:LocalizationManager.Instance}, Path=[Home_Favorites]}" Tag="Favorites" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="100" Height="34" Background="#334155"/>
+                                <Button Content="⏯ Devam Et" Tag="ContinueWatching" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="102" Height="34" Background="#334155"/>
+                                <Button Content="TV" Tag="TV" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="70" Height="34" Background="#334155"/>
+                                <Button Content="Filmler" Tag="Movies" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="82" Height="34" Background="#334155"/>
+                                <Button Content="Diziler" Tag="Series" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" Width="82" Height="34" Background="#334155"/>
+                                <Button Content="Radyo" Tag="Radio" Click="Category_Click" Style="{StaticResource PrimaryButtonStyle}" Width="82" Height="34" Background="#334155"/>
+                            </StackPanel>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
-                            <!-- Doğrula & Tüm Grubu Kapsa Kontrolleri -->
-                            <Button Content="▦/▤" ToolTip="Görünümü Değiştir (Grid/List)" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Height="35" Width="40" Margin="0,0,12,0" Click="ToggleView_Click"/>
-                            <CheckBox Content="Tüm grubu kapsa" IsChecked="{Binding ValidateAllInGroup}" Foreground="#94a3b8" VerticalAlignment="Center" Margin="0,0,12,0" FontSize="11" ToolTip="İşaretlenirse sadece ekrandaki sayfayı değil, mevcut arama/kategori/grubun tamamını doğrular"/>
-                            <Button Content="⚡ Doğrula" Style="{StaticResource PrimaryButtonStyle}" Background="#e11d48" Foreground="White" FontWeight="Bold" Height="35" Padding="14,0" Margin="0,0,12,0" Click="ValidateChannels_Click" ToolTip="Kanalları test eder ve yayını olmayan ölü kanalları kalıcı olarak siler" Cursor="Hand"/>
-                            <ComboBox Width="140" Height="35" x:Name="SortComboBox" SelectionChanged="Sort_SelectionChanged">
+                            <Button Content="▦/▤" ToolTip="Görünümü Değiştir (Grid/List)" Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Height="34" Width="40" Margin="0,0,10,0" Click="ToggleView_Click"/>
+                            <CheckBox Content="Tüm grubu kapsa" IsChecked="{Binding ValidateAllInGroup}" Foreground="#94a3b8" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11" ToolTip="İşaretlenirse sadece ekrandaki sayfayı değil, mevcut arama/kategori/grubun tamamını doğrular"/>
+                            <Button Content="⚡ Doğrula" Style="{StaticResource PrimaryButtonStyle}" Background="#e11d48" Foreground="White" FontWeight="Bold" Height="34" Padding="14,0" Margin="0,0,10,0" Click="ValidateChannels_Click" ToolTip="Kanalları test eder ve yayını olmayan ölü kanalları kalıcı olarak siler" Cursor="Hand"/>
+                            <ComboBox Width="140" Height="34" MinHeight="34" x:Name="SortComboBox" SelectionChanged="Sort_SelectionChanged">
                                 <ComboBoxItem Content="Alfabetik (A-Z)" IsSelected="True"/>
                                 <ComboBoxItem Content="Alfabetik (Z-A)"/>
                                 <ComboBoxItem Content="Yeni Eklenenler"/>
@@ -210,166 +375,288 @@
                             </ComboBox>
                         </StackPanel>
                     </Grid>
+                </Grid>
+            </Border>
 
-                    <!-- Group / Category Title Filter Bar -->
-                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="0,8,0,0" BorderBrush="#334155" BorderThickness="0,1,0,0"
-                            Visibility="{Binding HasGroupCategories, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <ItemsControl ItemsSource="{Binding GroupCategories}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
+            <!-- Row 3: Two-Column Workspace (Left Group Sidebar + Right Hero & Grid) -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Vertical Group Sidebar (TiviMate Style) -->
+                <Border Grid.Column="0" Width="236" Margin="0,0,16,0" Background="#0f172a" CornerRadius="12"
+                        BorderBrush="#334155" BorderThickness="1" Padding="10"
+                        Visibility="{Binding ShowGroupSidebar, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0" Margin="4,2,4,8">
+                            <TextBlock Text="Gruplar / Kategoriler" FontSize="13" FontWeight="Bold" Foreground="#e2e8f0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding GroupCategories.Count, StringFormat='{}({0})'}" FontSize="11" Foreground="#64748b" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </DockPanel>
+
+                        <Grid Grid.Row="1" Margin="0,0,0,10">
+                            <TextBox x:Name="GroupSearchBox" Height="34" Padding="28,6,8,6" FontSize="12"
+                                     Text="{Binding GroupSearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="🔎" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="9,0,0,0" Foreground="#64748b" IsHitTestVisible="False"/>
+                            <TextBlock Text="Grup ara..." FontSize="12" Foreground="#64748b" IsHitTestVisible="False" VerticalAlignment="Center" Margin="28,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=GroupSearchBox}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding FilteredGroupCategories}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Button Margin="0,0,6,0" Padding="12,5" Height="30" FontSize="11" FontWeight="SemiBold"
-                                                Click="GroupChip_Click" Tag="{Binding Name}" Cursor="Hand">
+                                        <Button Margin="0,0,0,4" Padding="10,8" Click="GroupChip_Click" Tag="{Binding Name}" Cursor="Hand"
+                                                HorizontalContentAlignment="Stretch">
                                             <Button.Style>
                                                 <Style TargetType="Button">
-                                                    <Setter Property="Background" Value="#0f172a"/>
-                                                    <Setter Property="Foreground" Value="#94a3b8"/>
-                                                    <Setter Property="BorderThickness" Value="1"/>
-                                                    <Setter Property="BorderBrush" Value="#334155"/>
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="Foreground" Value="#cbd5e1"/>
+                                                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                                                    <Setter Property="BorderBrush" Value="Transparent"/>
                                                     <Setter Property="Template">
                                                         <Setter.Value>
                                                             <ControlTemplate TargetType="Button">
                                                                 <Border Background="{TemplateBinding Background}"
                                                                         BorderBrush="{TemplateBinding BorderBrush}"
                                                                         BorderThickness="{TemplateBinding BorderThickness}"
-                                                                        CornerRadius="15" Padding="{TemplateBinding Padding}">
-                                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                                    <ContentPresenter/>
                                                                 </Border>
                                                             </ControlTemplate>
                                                         </Setter.Value>
                                                     </Setter>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                            <Setter Property="Background" Value="#0284c7"/>
+                                                            <Setter Property="Background" Value="#1e3a5f"/>
                                                             <Setter Property="Foreground" Value="White"/>
                                                             <Setter Property="BorderBrush" Value="#38bdf8"/>
+                                                            <Setter Property="FontWeight" Value="Bold"/>
                                                         </DataTrigger>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="BorderBrush" Value="#38bdf8"/>
+                                                            <Setter Property="Background" Value="#1e293b"/>
+                                                            <Setter Property="Foreground" Value="White"/>
                                                         </Trigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Button.Style>
-                                            <TextBlock Text="{Binding DisplayName}"/>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                <Border Grid.Column="1" Background="#1e293b" CornerRadius="10" Padding="7,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Count}" FontSize="10.5" Foreground="#94a3b8"/>
+                                                </Border>
+                                            </Grid>
                                         </Button>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                    </Border>
-                </Grid>
-            </Border>
+                    </Grid>
+                </Border>
 
-            <!-- Library Content -->
-            <Grid Grid.Row="3">
-                <ListView x:Name="ChannelGrid" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
-                          ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListView.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/></ItemsPanelTemplate></ListView.ItemsPanel>
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="#1e293b" CornerRadius="12" Width="180" Height="220" Margin="8" BorderThickness="1" BorderBrush="#334155" x:Name="CardBorder" ClipToBounds="True"
-                                    MouseLeftButtonUp="Card_Click" MouseEnter="Card_MouseEnter" MouseLeave="Card_MouseLeave"
-                                    AllowDrop="True" Drop="Card_Drop" PreviewMouseMove="Card_MouseMove" PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown">
-                                <Border.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
-                                        <MenuItem Header="Düzenle" Click="EditContext_Click" CommandParameter="{Binding}"/>
-                                        <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
-                                        <Separator/>
-                                        <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
-                                    </ContextMenu>
-                                </Border.ContextMenu>
-                                <Grid>
-                                    <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <!-- Right Content Area -->
+                <Grid Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                                    <!-- Logo Area -->
-                                    <Border Grid.Row="0" Background="#0f172a" CornerRadius="10,10,0,0">
-                                        <Grid>
-                                            <Image Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="Uniform" Margin="20"/>
-                                            
-                                            <!-- Favorite Star Button (Top-Right) -->
-                                            <Button x:Name="CardFavBtn" Width="30" Height="30" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6"
-                                                    Click="FavContext_Click" CommandParameter="{Binding}" Cursor="Hand" Background="#800f172a" BorderBrush="Transparent" BorderThickness="0" ToolTip="Favorilere Ekle / Kaldır">
-                                                <TextBlock Text="★" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!-- Row 0: TiviMate / Netflix-Style Hero Preview Banner (VOD Selected) -->
+                    <Border Grid.Row="0" Height="236" Margin="0,0,0,14" Background="#0b1120" CornerRadius="14"
+                            BorderBrush="#334155" BorderThickness="1" ClipToBounds="True"
+                            Visibility="{Binding ShowVodHero, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid>
+                            <!-- Backdrop Image -->
+                            <Image Source="{Binding HeroBackdropUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="UniformToFill" Opacity="0.45"/>
+
+                            <!-- Dark Left-to-Right & Bottom Vignette -->
+                            <Rectangle>
+                                <Rectangle.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#F20b1120" Offset="0"/>
+                                        <GradientStop Color="#CC0b1120" Offset="0.52"/>
+                                        <GradientStop Color="#550b1120" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Rectangle>
+                                <Rectangle.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="Transparent" Offset="0.35"/>
+                                        <GradientStop Color="#E60b1120" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+
+                            <!-- Hero Foreground Content -->
+                            <Grid Margin="18,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- 2:3 Poster Thumbnail -->
+                                <Border Grid.Column="0" Width="134" Height="200" CornerRadius="10" Background="#1e293b"
+                                        BorderBrush="#475569" BorderThickness="1" ClipToBounds="True">
+                                    <Image Source="{Binding HeroPosterUrl, Converter={StaticResource LogoCacheConverter}}" Stretch="UniformToFill"/>
+                                </Border>
+
+                                <!-- Details & Action Buttons -->
+                                <Grid Grid.Column="1" Margin="20,2,8,2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Title -->
+                                    <TextBlock Grid.Row="0" Text="{Binding SelectedHeroItem.PrimaryName}"
+                                               FontSize="23" FontWeight="Bold" Foreground="White"
+                                               TextTrimming="CharacterEllipsis" MaxHeight="34"/>
+
+                                    <!-- Badges Row -->
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,6,0,8">
+                                        <Border Background="#0284c7" CornerRadius="5" Padding="8,3" Margin="0,0,8,0">
+                                            <TextBlock Text="{Binding SelectedHeroItem.Category}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                        </Border>
+                                        <Border Background="#f59e0b" CornerRadius="5" Padding="8,3" Margin="0,0,8,0"
+                                                Visibility="{Binding SelectedHeroItem.HasImdb, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <TextBlock Text="{Binding SelectedHeroItem.ImdbId, StringFormat='IMDb: {0}'}" Foreground="#0f172a" FontSize="11" FontWeight="Bold"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding SelectedHeroItem.HeroMetaSummary}" Foreground="#94a3b8" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+
+                                    <!-- Overview & Cast -->
+                                    <StackPanel Grid.Row="2" VerticalAlignment="Top">
+                                        <TextBlock Text="{Binding HeroOverviewText}" Foreground="#e2e8f0" FontSize="12.5"
+                                                   TextWrapping="Wrap" MaxHeight="56" TextTrimming="CharacterEllipsis" LineHeight="18"/>
+                                        <TextBlock Margin="0,6,0,0" Foreground="#94a3b8" FontSize="11.5" TextTrimming="CharacterEllipsis"
+                                                   Visibility="{Binding SelectedHeroItem.HasCast, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Run Text="Oyuncular: " FontWeight="SemiBold" Foreground="#cbd5e1"/>
+                                            <Run Text="{Binding SelectedHeroItem.Cast}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Actions -->
+                                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                                        <Button Content="{Binding HeroPlayButtonText}" Click="HeroPlay_Click"
+                                                Style="{StaticResource PrimaryButtonStyle}" Height="36" Padding="18,0" FontSize="13"/>
+
+                                        <Button Content="{Binding HeroDetailsButtonText}" Click="HeroDetails_Click"
+                                                Style="{StaticResource PrimaryButtonStyle}" Background="#334155" Height="36" Padding="14,0" Margin="10,0,0,0" FontSize="12.5"/>
+
+                                        <Button Click="HeroFav_Click" Height="36" Padding="14,0" Margin="10,0,0,0" Cursor="Hand"
+                                                Style="{StaticResource PrimaryButtonStyle}" Background="#1e293b">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="★" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="#64748b"/>
+                                                            <Setter Property="Foreground" Value="#94a3b8"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                                <DataTrigger Binding="{Binding SelectedHeroItem.IsFavorite}" Value="True">
                                                                     <Setter Property="Foreground" Value="#f59e0b"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
-                                            </Button>
-
-                                            <!-- Action Overlay (Play) -->
-                                            <Button x:Name="PlayOverlayBtn" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                    Click="DirectPlay_Click" CommandParameter="{Binding}" Cursor="Hand" Opacity="0" Background="Transparent" BorderThickness="0">
-                                                <Border Background="#E60284c7" CornerRadius="20" Width="40" Height="40">
-                                                    <Path Data="{StaticResource GeoPlay}" Fill="White" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </Button>
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Info Area -->
-                                    <StackPanel Grid.Row="1" Margin="10,8">
-                                        <TextBlock Text="{Binding PrimaryName}" FontWeight="Bold" FontSize="13" Foreground="White" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding CurrentEpgTitle}" Foreground="#94a3b8" FontSize="10" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                                <TextBlock Text="Favori" VerticalAlignment="Center" FontSize="12.5"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </Grid>
-                            </Border>
-                            <DataTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#38bdf8"/>
-                                    <Setter TargetName="CardBorder" Property="Background" Value="#334155"/>
-                                    <Setter TargetName="PlayOverlayBtn" Property="Opacity" Value="1"/>
-                                </Trigger>
-                            </DataTemplate.Triggers>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                    <ListView.ItemContainerStyle><Style TargetType="ListViewItem"><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListViewItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style></ListView.ItemContainerStyle>
-                </ListView>
+                            </Grid>
+                        </Grid>
+                    </Border>
 
-                <ListView x:Name="ChannelList" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
-                          Visibility="Collapsed" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="#1e293b" CornerRadius="8" Margin="8,4" Padding="12" BorderThickness="1" BorderBrush="#334155" MouseLeftButtonUp="Card_Click">
-                                <Border.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
-                                        <MenuItem Header="Düzenle" Click="EditContext_Click" CommandParameter="{Binding}"/>
-                                        <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
-                                        <Separator/>
-                                        <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
-                                    </ContextMenu>
-                                </Border.ContextMenu>
-                                <StackPanel Orientation="Horizontal">
-                                    <Image Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Width="40" Height="40" Margin="0,0,15,0"/>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding PrimaryName}" FontWeight="Bold" Foreground="White" FontSize="14"/>
-                                        <TextBlock Text="{Binding CurrentEpgTitle}" Foreground="#94a3b8" FontSize="12"/>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Border>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                    <!-- Row 1: Library Content -->
+                    <Grid Grid.Row="1">
+                        <ListView x:Name="ChannelGrid" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
+                                  ItemTemplateSelector="{StaticResource MediaCardTemplateSelector}"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" HorizontalAlignment="Left"/>
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <ContentPresenter/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+
+                        <ListView x:Name="ChannelList" Background="Transparent" BorderThickness="0" ItemsSource="{Binding DisplayedChannels}"
+                                  Visibility="Collapsed" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#1e293b" CornerRadius="8" Margin="4,4" Padding="12" BorderThickness="1" BorderBrush="#334155"
+                                            MouseLeftButtonUp="Card_Click" PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown" Cursor="Hand">
+                                        <Border.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Oynat" Click="PlayContext_Click" CommandParameter="{Binding}"/>
+                                                <MenuItem Header="Detaylar" Click="DetailsContext_Click" CommandParameter="{Binding}"/>
+                                                <MenuItem Header="Düzenle" Click="EditContext_Click" CommandParameter="{Binding}"/>
+                                                <MenuItem Header="Favori Yap/Kaldır" Click="FavContext_Click" CommandParameter="{Binding}"/>
+                                                <Separator/>
+                                                <MenuItem Header="Sil" Foreground="#ef4444" Click="DeleteContext_Click" CommandParameter="{Binding}"/>
+                                            </ContextMenu>
+                                        </Border.ContextMenu>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Image Grid.Column="0" Source="{Binding PrimaryLogoUrl, Converter={StaticResource LogoCacheConverter}}" Width="42" Height="42" Margin="0,0,14,0" Stretch="Uniform"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding PrimaryName}" FontWeight="Bold" Foreground="White" FontSize="14"/>
+                                                <TextBlock Text="{Binding CurrentEpgTitle}" Foreground="#94a3b8" FontSize="12"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" Text="{Binding GroupTitle}" Foreground="#64748b" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Grid>
+                </Grid>
             </Grid>
 
-            <!-- Pagination -->
-            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                <Button x:Name="PrevBtn" Content="&lt; Önceki" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="40" Margin="0,0,20,0" Click="Prev_Click"/>
-                <TextBlock x:Name="PageText" Text="{Binding CurrentPageText}" VerticalAlignment="Center" Foreground="Gray" FontSize="16" FontWeight="SemiBold"/>
-                <Button x:Name="NextBtn" Content="Sonraki &gt;" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="40" Margin="20,0,0,0" Click="Next_Click"/>
+            <!-- Row 4: Pagination -->
+            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,14,0,0">
+                <Button x:Name="PrevBtn" Content="&lt; Önceki" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="38" Margin="0,0,20,0" Click="Prev_Click"/>
+                <TextBlock x:Name="PageText" Text="{Binding CurrentPageText}" VerticalAlignment="Center" Foreground="Gray" FontSize="15" FontWeight="SemiBold"/>
+                <Button x:Name="NextBtn" Content="Sonraki &gt;" Style="{StaticResource PrimaryButtonStyle}" Width="110" Height="38" Margin="20,0,0,0" Click="Next_Click"/>
             </StackPanel>
         </Grid>
     </Grid>

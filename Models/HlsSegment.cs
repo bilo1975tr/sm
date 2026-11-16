@@ -14,5 +14,6 @@ namespace StreamMesh.Models
         public double EndTimeSeconds => StartTimeSeconds + DurationSeconds;
         public long SequenceNumber { get; set; }
         public DateTime? ProgramDateTime { get; set; }
+        public bool HasDiscontinuity { get; set; }
     }
 }

@@ -15,9 +15,8 @@ namespace StreamMesh.UI.ViewModels
 {
     public class PlayerViewModel : INotifyPropertyChanged
     {
-        private readonly YoutubeEngine _yt = new YoutubeEngine();
-        private readonly AceEngine _ace = new AceEngine();
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly AceEngine _ace = AceEngine.Instance;
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private readonly EpgService _epgService = new EpgService();
 
         private Channel? _currentChannel;
@@ -57,8 +56,10 @@ namespace StreamMesh.UI.ViewModels
 
         public PlayerViewModel()
         {
-            _isAudioNormEnabled = _db.GetSetting("AudioNormEnabled", "true") == "true";
-            _isVideoEnhanceEnabled = _db.GetSetting("VideoEnhanceEnabled", "false") == "true";
+            string audioNormVal = _db.GetSetting("AudioNormEnabled", _db.GetSetting("FlyleafAudioNorm", "false"));
+            string videoEnhanceVal = _db.GetSetting("VideoEnhanceEnabled", _db.GetSetting("FlyleafSharpen", "false"));
+            _isAudioNormEnabled = audioNormVal == "true";
+            _isVideoEnhanceEnabled = videoEnhanceVal == "true";
             _preferredAudioLanguage = _db.GetSetting("PreferredAudioLanguage", "");
         }
 
@@ -196,54 +197,6 @@ namespace StreamMesh.UI.ViewModels
             }
         }
 
-        public async Task<string> PrepareStreamAsync(Channel channel, CancellationToken token, Action<string> onStatusUpdate)
-        {
-            var candidates = await GetSmartOrderedCandidatesAsync(channel, token, onStatusUpdate).ConfigureAwait(false);
-            if (candidates.Count > 0)
-            {
-                return await PrepareSingleStreamUrlAsync(candidates[0], channel, token, onStatusUpdate).ConfigureAwait(false);
-            }
-            return "";
-        }
-
-        private async Task<string> PrepareTimeshiftAsync(string url, Channel? channel, CancellationToken token)
-        {
-            if (url.Contains(".m3u8") || url.Contains("extension=ts"))
-            {
-                try
-                {
-                    HlsProxyEngine.Instance.Start();
-                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
-                    cts.CancelAfter(6000);
-                    var session = await HlsProxyEngine.Instance.InspectAndPrepareHlsAsync(
-                        url,
-                        channel?.HttpUserAgent,
-                        channel?.HttpReferer,
-                        channel?.HttpCookie,
-                        channel?.HttpOrigin,
-                        channel?.CustomHeaders).WaitAsync(cts.Token).ConfigureAwait(false);
-                    if (session != null && session.Segments.Count > 0)
-                    {
-                        return HlsProxyEngine.Instance.GetProxyPlaybackUrl(url);
-                    }
-                    else
-                    {
-                        LogService.LogWarning($"[PLAYBACK] HlsProxyEngine returned null or 0 segments for {url}, falling back to direct stream.");
-                    }
-                }
-                catch (OperationCanceledException) when (token.IsCancellationRequested)
-                {
-                    // User navigated away or switched channel
-                    return "";
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogWarning($"[PLAYBACK] HLS Timeshift preparation exception ({ex.Message}), falling back to direct stream: {url}");
-                }
-            }
-            return url;
-        }
-
         public async Task RefreshEpgAsync(Channel channel)
         {
             try
@@ -258,17 +211,17 @@ namespace StreamMesh.UI.ViewModels
         {
             if (channel == null) return false;
             string cat = (channel.Category ?? "").ToLowerInvariant();
-            if (cat.Contains("film") || cat.Contains("dizi") || cat.Contains("movie") || cat.Contains("series") || cat.Contains("vod")) return true;
+            if (cat.Contains("film") || cat.Contains("dizi") || cat.Contains("movie") || cat.Contains("series") || cat.Contains("vod") || cat == "catchup") return true;
             string url = (channel.Url ?? "").ToLowerInvariant();
             return url.EndsWith(".mp4") || url.EndsWith(".mkv") || url.Contains("/movie/") || url.Contains("/series/");
         }
 
         public void SaveVodPosition(Channel channel, long positionMs)
         {
-            if (channel != null && IsVod(channel))
+            if (channel != null && IsVod(channel) && !(channel.Id?.StartsWith("catchup_", StringComparison.Ordinal) ?? false))
             {
                 channel.LastPositionMs = positionMs;
-                _db.SaveChannelSync(channel);
+                _ = _db.SaveChannelLogoAndPosAsync(channel);
             }
         }
 

@@ -61,7 +61,7 @@ namespace StreamMesh.Core.Plugins
             }
         }
 
-        public override Task<string> ExecuteActionAsync(string actionName, Dictionary<string, object>? parameters = null)
+        public override async Task<string> ExecuteActionAsync(string actionName, Dictionary<string, object>? parameters = null)
         {
             RecordExecution();
             if (actionName == "TestEngine" || actionName == "CheckAceStream")
@@ -70,26 +70,24 @@ namespace StreamMesh.Core.Plugins
                 {
                     int port = GetInt("AcePort", 6878);
                     using var tcp = new System.Net.Sockets.TcpClient();
-                    var connectTask = tcp.ConnectAsync("127.0.0.1", port);
-                    bool ok = connectTask.Wait(1500);
-                    if (ok)
-                    {
-                        SetStatus("Aktif", $"AceStream Engine (Port {port}) çalışıyor.");
-                        return Task.FromResult($"✅ AceStream Engine (127.0.0.1:{port}) aktif ve yanıt veriyor!");
-                    }
-                    else
-                    {
-                        SetStatus("Uyarı", "AceStream motoruna ulaşılamadı.");
-                        return Task.FromResult($"⚠️ AceStream Engine (Port {port}) kapalı veya yanıt vermiyor.");
-                    }
+                    using var cts = new System.Threading.CancellationTokenSource(1500);
+                    await tcp.ConnectAsync("127.0.0.1", port, cts.Token).ConfigureAwait(false);
+                    SetStatus("Aktif", $"AceStream Engine (Port {port}) çalışıyor.");
+                    return $"✅ AceStream Engine (127.0.0.1:{port}) aktif ve yanıt veriyor!";
+                }
+                catch (OperationCanceledException)
+                {
+                    int port = GetInt("AcePort", 6878);
+                    SetStatus("Uyarı", "AceStream motoruna ulaşılamadı.");
+                    return $"⚠️ AceStream Engine (Port {port}) kapalı veya yanıt vermiyor.";
                 }
                 catch (Exception ex)
                 {
-                    return Task.FromResult($"❌ Bağlantı başarısız: {ex.Message}");
+                    return $"❌ Bağlantı başarısız: {ex.Message}";
                 }
             }
 
-            return base.ExecuteActionAsync(actionName, parameters);
+            return await base.ExecuteActionAsync(actionName, parameters).ConfigureAwait(false);
         }
 
         public override Dictionary<string, string> GetStatistics()

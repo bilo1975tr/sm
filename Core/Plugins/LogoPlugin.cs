@@ -38,33 +38,39 @@ namespace StreamMesh.Core.Plugins
             return Task.CompletedTask;
         }
 
-        public override Task<string> ExecuteActionAsync(string actionName, Dictionary<string, object>? parameters = null)
+        public override async Task<string> ExecuteActionAsync(string actionName, Dictionary<string, object>? parameters = null)
         {
             RecordExecution();
             if (actionName == "ClearLogoCache" || actionName == "ResetCache")
             {
                 try
                 {
-                    string cacheDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos", "cache");
                     int deleted = 0;
-                    if (Directory.Exists(cacheDir))
+                    var cacheDirs = new[]
                     {
-                        var files = Directory.GetFiles(cacheDir);
-                        foreach (var f in files)
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logos", "cache"),
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StreamMesh", "logos", "cache")
+                    };
+                    foreach (var cacheDir in cacheDirs)
+                    {
+                        if (!Directory.Exists(cacheDir)) continue;
+                        foreach (var f in Directory.GetFiles(cacheDir))
                         {
                             try { File.Delete(f); deleted++; } catch { }
                         }
                     }
+
+                    int cleanedTv = await StreamMesh.Core.Database.DatabaseEngine.Instance.CleanupPollutedTvLogosAsync().ConfigureAwait(false);
                     SetStatus("Aktif", $"{deleted} önbellek logosu temizlendi.");
-                    return Task.FromResult($"✅ Logo disk önbelleği başarıyla temizlendi ({deleted} dosya silindi).");
+                    return $"✅ Logo önbelleği temizlendi ({deleted} dosya, {cleanedTv} TV kaydı düzeltildi).";
                 }
                 catch (Exception ex)
                 {
-                    return Task.FromResult($"❌ Temizleme hatası: {ex.Message}");
+                    return $"❌ Temizleme hatası: {ex.Message}";
                 }
             }
 
-            return base.ExecuteActionAsync(actionName, parameters);
+            return await base.ExecuteActionAsync(actionName, parameters);
         }
 
         public override Dictionary<string, string> GetStatistics()

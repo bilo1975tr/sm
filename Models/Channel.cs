@@ -43,7 +43,8 @@ namespace StreamMesh.Models
             set { if (_isSelected != value) { _isSelected = value; OnPropertyChanged(); } }
         }
 
-        public long LastPositionMs { get => _lastPositionMs; set { _lastPositionMs = value; OnPropertyChanged(); } }
+        public long LastPositionMs { get => _lastPositionMs; set { _lastPositionMs = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasResumePosition)); } }
+        public bool HasResumePosition => _lastPositionMs > 0;
 
         private int _preferredNameIndex = 0;
         private int _preferredUrlIndex = 0;
@@ -111,7 +112,15 @@ namespace StreamMesh.Models
         public string Overview
         {
             get => _overview;
-            set { if (_overview != value) { _overview = value; OnPropertyChanged(); } }
+            set
+            {
+                if (_overview != value)
+                {
+                    _overview = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(HasOverview));
+                }
+            }
         }
 
         public string BackdropUrl
@@ -123,7 +132,15 @@ namespace StreamMesh.Models
         public string Cast
         {
             get => _cast;
-            set { if (_cast != value) { _cast = value; OnPropertyChanged(); } }
+            set
+            {
+                if (_cast != value)
+                {
+                    _cast = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(HasCast));
+                }
+            }
         }
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -269,13 +286,24 @@ namespace StreamMesh.Models
         public string GroupTitle
         {
             get => _groupTitle;
-            set { if (_groupTitle != value) { _groupTitle = value; OnPropertyChanged(); } }
+            set { if (_groupTitle != value) { _groupTitle = value; OnPropertyChanged(); OnPropertyChanged(nameof(HeroMetaSummary)); } }
         }
 
         public string Category
         {
             get => _category;
-            set { if (_category != value) { _category = value; OnPropertyChanged(); OnPropertyChanged(nameof(CleanName)); } }
+            set
+            {
+                if (_category != value)
+                {
+                    _category = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CleanName));
+                    OnPropertyChanged(nameof(IsVodMedia));
+                    OnPropertyChanged(nameof(IsLiveTvMedia));
+                    OnPropertyChanged(nameof(HeroMetaSummary));
+                }
+            }
         }
 
         public string Language
@@ -289,6 +317,7 @@ namespace StreamMesh.Models
                     _language = normalized;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(LanguageDisplayName));
+                    OnPropertyChanged(nameof(HeroMetaSummary));
                 }
             }
         }
@@ -437,6 +466,36 @@ namespace StreamMesh.Models
         public bool HasImdb => !string.IsNullOrEmpty(ImdbId);
         public bool HasMovieYear => !string.IsNullOrEmpty(MovieYear);
         public bool HasMovieGenre => !string.IsNullOrEmpty(MovieGenre);
+        public bool HasOverview => !string.IsNullOrWhiteSpace(Overview);
+        public bool HasCast => !string.IsNullOrWhiteSpace(Cast);
+
+        public bool IsVodMedia
+        {
+            get
+            {
+                if (this is SeriesGroup) return true;
+                string c = (Category ?? "").Trim().ToLowerInvariant();
+                return c == "film" || c == "movie" || c == "filmler" || c == "movies" || c == "vod" ||
+                       c == "dizi" || c == "series" || c == "diziler" ||
+                       c.Contains("film") || c.Contains("movie") || c.Contains("dizi") || c.Contains("series");
+            }
+        }
+
+        public bool IsLiveTvMedia => !IsVodMedia;
+
+        public string HeroMetaSummary
+        {
+            get
+            {
+                var parts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(Category)) parts.Add(Category);
+                if (this is SeriesGroup && !string.IsNullOrWhiteSpace(GroupTitle)) parts.Add(GroupTitle);
+                else if (!string.IsNullOrWhiteSpace(GroupTitle) && !string.Equals(GroupTitle, "Genel", StringComparison.OrdinalIgnoreCase)) parts.Add(GroupTitle);
+                if (!string.IsNullOrWhiteSpace(MovieYear)) parts.Add(MovieYear);
+                if (!string.IsNullOrWhiteSpace(Language) && !string.Equals(Language, "und", StringComparison.OrdinalIgnoreCase)) parts.Add(LanguageDisplayName);
+                return string.Join("  •  ", parts);
+            }
+        }
 
         // Smart Extraction Logic
         private string? _cachedCleanName;

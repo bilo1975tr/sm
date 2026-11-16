@@ -1,10 +1,15 @@
 using System;
-using System.IO;
 using System.Diagnostics;
+using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.IO.Compression;
+using Newtonsoft.Json.Linq;
+using SharpCompress.Archives;
+using SharpCompress.Common;
 using SkiaSharp;
+using StreamMesh.Core.Database;
+using StreamMesh.Core.Media.Mpv;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core
@@ -15,7 +20,7 @@ namespace StreamMesh.Core
         {
             GenerateAssetsIfMissing();
             EnsureFirewallAndAntivirusRules();
-            Task.Run(async () => await CheckAndInstallFFmpegAsync());
+            _ = Task.Run(CheckAndInstallMpvAsync);
         }
 
         public static void EnsureFirewallAndAntivirusRules()
@@ -27,18 +32,20 @@ namespace StreamMesh.Core
                     string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                     string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? Path.Combine(baseDir, "StreamMesh.exe");
 
-                    // 1. Windows Firewall Kuralı - StreamMesh Exe
-                    RunHiddenCmd($"netsh advfirewall firewall add rule name=\"StreamMesh\" dir=in action=allow program=\"{exePath}\" enable=yes profile=any");
+                    // Run netsh rules only once per executable path so startup doesn't spawn 4 cmd.exe processes every boot
+                    var db = DatabaseEngine.Instance;
+                    string configuredPath = db.GetSetting("FirewallConfiguredPath", "");
+                    if (string.Equals(configuredPath, exePath, StringComparison.OrdinalIgnoreCase))
+                        return;
 
-                    // 2. Windows Firewall Kuralı - MediaServer Port 8088
-                    RunHiddenCmd("netsh advfirewall firewall add rule name=\"StreamMesh Port 8088\" dir=in action=allow protocol=TCP localport=8088 profile=any");
+                    string combinedCmd =
+                        $"netsh advfirewall firewall add rule name=\"StreamMesh\" dir=in action=allow program=\"{exePath}\" enable=yes profile=any & " +
+                        "netsh advfirewall firewall add rule name=\"StreamMesh Port 8088\" dir=in action=allow protocol=TCP localport=8088 profile=any & " +
+                        "netsh advfirewall firewall add rule name=\"StreamMesh HLS Timeshift\" dir=in action=allow protocol=TCP localport=48931-48950 profile=any & " +
+                        "netsh advfirewall firewall add rule name=\"AceStream Ports\" dir=in action=allow protocol=TCP localport=6878,8621 profile=any";
 
-                    // 3. Windows Firewall Kuralı - HLS Timeshift Portları 48931-48950
-                    RunHiddenCmd("netsh advfirewall firewall add rule name=\"StreamMesh HLS Timeshift\" dir=in action=allow protocol=TCP localport=48931-48950 profile=any");
-
-                    // 4. Windows Firewall Kuralı - AceStream Motor Portları 6878 & 8621
-                    RunHiddenCmd("netsh advfirewall firewall add rule name=\"AceStream Ports\" dir=in action=allow protocol=TCP localport=6878,8621 profile=any");
-
+                    RunHiddenCmd(combinedCmd);
+                    db.SetSetting("FirewallConfiguredPath", exePath);
                     LogService.LogInfo("[FIREWALL] Güvenlik duvarı kuralları başarıyla denetlendi ve kaydedildi.");
                 }
                 catch (Exception ex)
@@ -66,75 +73,117 @@ namespace StreamMesh.Core
             catch { }
         }
 
-        private static async Task CheckAndInstallFFmpegAsync()
+        private static string GetWritableMpvDir()
+        {
+            string baseMpv = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mpv");
+            try
+            {
+                Directory.CreateDirectory(baseMpv);
+                string probe = Path.Combine(baseMpv, ".write_test");
+                File.WriteAllText(probe, "ok");
+                File.Delete(probe);
+                return baseMpv;
+            }
+            catch
+            {
+                string localMpv = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "StreamMesh", "mpv");
+                Directory.CreateDirectory(localMpv);
+                return localMpv;
+            }
+        }
+
+        public static async Task CheckAndInstallMpvAsync()
         {
             try
             {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                string ffmpegDir = Path.Combine(baseDir, "ffmpeg");
-
-                // Robust DLL check: check for any core ffmpeg dlls (avcodec, avformat, avutil)
-                string[] coreDlls = { "avcodec-61.dll", "avcodec-60.dll", "avformat-61.dll", "avutil-58.dll" };
-                bool dllsFound = false;
-                if (Directory.Exists(ffmpegDir))
+                if (MpvPlayerEngine.IsLibraryAvailable())
                 {
-                    foreach (var d in coreDlls) { if (File.Exists(Path.Combine(ffmpegDir, d))) { dllsFound = true; break; } }
-                }
-
-                if (dllsFound)
-                {
-                    LogService.LogInfo("BAKIM: FFmpeg kütüphanesi hazır.");
+                    LogService.LogInfo("BAKIM: libmpv oynatıcı motoru hazır.");
                     return;
                 }
 
-                LogService.LogInfo("BAKIM: FFmpeg kütüphanesi eksik, indiriliyor...");
-                if (!Directory.Exists(ffmpegDir)) Directory.CreateDirectory(ffmpegDir);
+                string mpvDir = GetWritableMpvDir();
+                LogService.LogInfo("BAKIM: libmpv-2.dll eksik, indiriliyor...");
 
-                // Source: GyanD FFmpeg 7.0.2 Shared
-                string downloadUrl = "https://github.com/GyanD/codexffmpeg/releases/download/7.0.2/ffmpeg-7.0.2-full_build-shared.zip";
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromMinutes(15));
+                using var apiReq = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest");
+                apiReq.Headers.UserAgent.ParseAdd("StreamMesh/1.1");
+                apiReq.Headers.Accept.ParseAdd("application/vnd.github+json");
 
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromMinutes(20);
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.1");
-
-                var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
-                if (response.IsSuccessStatusCode)
+                string? downloadUrl = null;
+                using (var apiResp = await MediaHttpClient.Client.SendAsync(apiReq, cts.Token).ConfigureAwait(false))
                 {
-                    string zipPath = Path.Combine(ffmpegDir, "ffmpeg_temp.zip");
-                    using (var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    if (apiResp.IsSuccessStatusCode)
                     {
-                        await response.Content.CopyToAsync(fs);
-                    }
-
-                    LogService.LogInfo("BAKIM: FFmpeg paketi indirildi (yaklaşık 100MB), ayıklanıyor...");
-                    ZipFile.ExtractToDirectory(zipPath, ffmpegDir, true);
-                    File.Delete(zipPath);
-
-                    // Robust Scan: Move ALL .dll files found in any subfolder to the ffmpegDir root
-                    var allFiles = Directory.GetFiles(ffmpegDir, "*", SearchOption.AllDirectories);
-                    int movedCount = 0;
-                    foreach (var file in allFiles)
-                    {
-                        if (file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                        string json = await apiResp.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
+                        var release = JObject.Parse(json);
+                        var assets = release["assets"] as JArray;
+                        if (assets != null)
                         {
-                            string fileName = Path.GetFileName(file);
-                            string targetPath = Path.Combine(ffmpegDir, fileName);
-                            if (file != targetPath)
+                            foreach (var asset in assets)
                             {
-                                File.Copy(file, targetPath, true);
-                                movedCount++;
+                                string name = asset["name"]?.ToString() ?? "";
+                                if (name.StartsWith("mpv-dev-x86_64-", StringComparison.OrdinalIgnoreCase) &&
+                                    !name.Contains("-v3-", StringComparison.OrdinalIgnoreCase) &&
+                                    name.EndsWith(".7z", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    downloadUrl = asset["browser_download_url"]?.ToString();
+                                    break;
+                                }
                             }
                         }
                     }
+                }
 
-                    LogService.LogInfo($"BAKIM: FFmpeg motoru başarıyla kuruldu. ({movedCount} DLL yapılandırıldı)");
-                }
-                else
+                if (string.IsNullOrWhiteSpace(downloadUrl))
                 {
-                    LogService.LogError($"BAKIM: FFmpeg indirme sunucu hatası (HTTP {response.StatusCode})");
+                    LogService.LogError("BAKIM: libmpv indirme adresi GitHub Releases üzerinden alınamadı.");
+                    return;
                 }
+
+                using var req = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
+                req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.1");
+
+                using var response = await MediaHttpClient.Client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+                if (!response.IsSuccessStatusCode)
+                {
+                    LogService.LogError($"BAKIM: libmpv indirme sunucu hatası (HTTP {response.StatusCode})");
+                    return;
+                }
+
+                string archivePath = Path.Combine(mpvDir, "mpv_temp.7z");
+                await using (var fs = new FileStream(archivePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await response.Content.CopyToAsync(fs, cts.Token).ConfigureAwait(false);
+                }
+
+                int extractedDlls = 0;
+                using (var archive = ArchiveFactory.OpenArchive(archivePath))
+                {
+                    foreach (var entry in archive.Entries)
+                    {
+                        if (entry.IsDirectory) continue;
+                        string key = entry.Key ?? "";
+                        if (!key.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        string fileName = Path.GetFileName(key);
+                        if (string.IsNullOrEmpty(fileName)) continue;
+
+                        string destPath = Path.Combine(mpvDir, fileName);
+                        entry.WriteToFile(destPath, new ExtractionOptions { ExtractFullPath = false, Overwrite = true });
+                        extractedDlls++;
+                    }
+                }
+
+                try { File.Delete(archivePath); } catch { }
+                LogService.LogInfo($"BAKIM: libmpv motoru başarıyla kuruldu. ({extractedDlls} DLL yapılandırıldı -> {mpvDir})");
             }
-            catch (Exception ex) { LogService.LogError("BAKIM: FFmpeg kurulumu sırasında kritik hata", ex); }
+            catch (Exception ex)
+            {
+                LogService.LogError("BAKIM: libmpv kurulumu sırasında kritik hata", ex);
+            }
         }
 
         private static void GenerateAssetsIfMissing()
@@ -143,74 +192,50 @@ namespace StreamMesh.Core
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string logosDir = Path.Combine(baseDir, "logos");
-                if (!Directory.Exists(logosDir)) Directory.CreateDirectory(logosDir);
+                Directory.CreateDirectory(logosDir);
 
-                string logoPath = Path.Combine(logosDir, "StreamMesh_Logo.png");
-                if (!File.Exists(logoPath)) GenerateLogoPng(logoPath);
+                string logoPath = Path.Combine(logosDir, "StreamMesh_logo.png");
+                if (!File.Exists(logoPath)) File.WriteAllBytes(logoPath, RenderBadgePng(512, 40, 432, 80, 200, 330));
 
                 string streamMeshIconPath = Path.Combine(logosDir, "StreamMesh_Icon.ico");
-                if (!File.Exists(streamMeshIconPath)) GenerateAppIcon(streamMeshIconPath);
+                if (!File.Exists(streamMeshIconPath)) WriteIcoFromPng(streamMeshIconPath, RenderBadgePng(256, 20, 216, 40, 100, 165));
 
                 string iconPath = Path.Combine(baseDir, "app_icon.ico");
-                if (!File.Exists(iconPath)) GenerateAppIcon(iconPath);
+                if (!File.Exists(iconPath)) WriteIcoFromPng(iconPath, RenderBadgePng(256, 20, 216, 40, 100, 165));
             }
             catch { }
         }
 
-        private static void GenerateLogoPng(string path)
+        private static byte[] RenderBadgePng(int size, float margin, float rectSize, float radius, float fontSize, float textY)
         {
-            var info = new SKImageInfo(512, 512);
-            using (var surface = SKSurface.Create(info))
-            {
-                var canvas = surface.Canvas;
-                canvas.Clear(SKColors.Transparent);
-                using (var paint = new SKPaint())
-                {
-                    paint.Shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(512, 512),
-                        new[] { SKColor.Parse("#0284c7"), SKColor.Parse("#38bdf8") }, null, SKShaderTileMode.Clamp);
-                    canvas.DrawRoundRect(40, 40, 432, 432, 80, 80, paint);
+            using var surface = SKSurface.Create(new SKImageInfo(size, size));
+            var canvas = surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
 
-                    paint.Shader = null;
-                    paint.Color = SKColors.White;
-                    paint.TextSize = 200;
-                    paint.IsAntialias = true;
-                    paint.FakeBoldText = true;
-                    paint.TextAlign = SKTextAlign.Center;
-                    canvas.DrawText("SM", 256, 330, paint);
-                }
-                using (var image = surface.Snapshot())
-                using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
-                using (var stream = File.OpenWrite(path)) { data.SaveTo(stream); }
-            }
+            using var paint = new SKPaint
+            {
+                Shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(size, size),
+                    new[] { SKColor.Parse("#0284c7"), SKColor.Parse("#38bdf8") }, null, SKShaderTileMode.Clamp)
+            };
+            canvas.DrawRoundRect(margin, margin, rectSize, rectSize, radius, radius, paint);
+
+            paint.Shader = null;
+            paint.Color = SKColors.White;
+            paint.TextSize = fontSize;
+            paint.IsAntialias = true;
+            paint.FakeBoldText = true;
+            paint.TextAlign = SKTextAlign.Center;
+            canvas.DrawText("SM", size / 2f, textY, paint);
+
+            using var image = surface.Snapshot();
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            return data.ToArray();
         }
 
-        private static void GenerateAppIcon(string path)
+        private static void WriteIcoFromPng(string path, byte[] pngBytes)
         {
             try
             {
-                var info = new SKImageInfo(256, 256);
-                using var surface = SKSurface.Create(info);
-                var canvas = surface.Canvas;
-                canvas.Clear(SKColors.Transparent);
-                using (var paint = new SKPaint())
-                {
-                    paint.Shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(256, 256),
-                        new[] { SKColor.Parse("#0284c7"), SKColor.Parse("#38bdf8") }, null, SKShaderTileMode.Clamp);
-                    canvas.DrawRoundRect(20, 20, 216, 216, 40, 40, paint);
-
-                    paint.Shader = null;
-                    paint.Color = SKColors.White;
-                    paint.TextSize = 100;
-                    paint.IsAntialias = true;
-                    paint.FakeBoldText = true;
-                    paint.TextAlign = SKTextAlign.Center;
-                    canvas.DrawText("SM", 128, 165, paint);
-                }
-
-                using var image = surface.Snapshot();
-                using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-                byte[] pngBytes = data.ToArray();
-
                 using var stream = File.OpenWrite(path);
                 using var writer = new BinaryWriter(stream);
                 writer.Write((ushort)0);

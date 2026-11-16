@@ -37,9 +37,20 @@ namespace StreamMesh.Core.Plugins
 
             try
             {
-                _ssdp = new SsdpService();
-                _ssdp.Start();
-                SetStatus("Aktif", "Ağda UPnP / SSDP yayını yapılıyor (Port 1900).");
+                int srvPort = StreamMesh.App.Server?.Port ?? 8088;
+                if (StreamMesh.App.Ssdp != null)
+                {
+                    // App.Ssdp already owns the UDP 1900 socket; reuse it instead of binding twice
+                    _ssdp = StreamMesh.App.Ssdp;
+                    SetStatus("Aktif", $"Ağda UPnP / SSDP yayını yapılıyor (Port 1900 → HTTP {srvPort}).");
+                }
+                else
+                {
+                    _ssdp = new SsdpService();
+                    _ssdp.Start(srvPort);
+                    StreamMesh.App.Ssdp = _ssdp;
+                    SetStatus("Aktif", $"Ağda UPnP / SSDP yayını yapılıyor (Port 1900 → HTTP {srvPort}).");
+                }
             }
             catch (Exception ex)
             {
@@ -55,6 +66,10 @@ namespace StreamMesh.Core.Plugins
             try
             {
                 _ssdp?.Stop();
+                if (ReferenceEquals(StreamMesh.App.Ssdp, _ssdp))
+                {
+                    StreamMesh.App.Ssdp = null;
+                }
                 _ssdp = null;
             }
             catch { }
@@ -68,11 +83,17 @@ namespace StreamMesh.Core.Plugins
             {
                 try
                 {
+                    int srvPort = StreamMesh.App.Server?.Port ?? 8088;
                     _ssdp?.Stop();
+                    if (StreamMesh.App.Ssdp != null && !ReferenceEquals(StreamMesh.App.Ssdp, _ssdp))
+                    {
+                        StreamMesh.App.Ssdp.Stop();
+                    }
                     _ssdp = new SsdpService();
-                    _ssdp.Start();
-                    SetStatus("Aktif", "Tüm yerel ağa SSDP varlık paketi gönderildi.");
-                    return Task.FromResult("✅ SSDP NOTIFY paketi yerel ağa başarıyla anons edildi.");
+                    _ssdp.Start(srvPort);
+                    StreamMesh.App.Ssdp = _ssdp;
+                    SetStatus("Aktif", $"Tüm yerel ağa SSDP varlık paketi gönderildi (Port {srvPort}).");
+                    return Task.FromResult($"✅ SSDP NOTIFY paketi yerel ağa başarıyla anons edildi (HTTP {srvPort}).");
                 }
                 catch (Exception ex)
                 {

@@ -48,6 +48,8 @@ namespace StreamMesh.Models
                     this.GroupTitle = $"{this.EpisodeCount} Bölüm / Parça";
                 }
                 this.BackdropUrl = first.BackdropUrl;
+                this.Overview = first.Overview;
+                this.Cast = first.Cast;
                 this.ImdbId = first.ImdbId;
                 this.PlaylistUrl = first.PlaylistUrl;
                 this.M3uLineNumber = first.M3uLineNumber;

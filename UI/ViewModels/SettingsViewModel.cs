@@ -16,9 +16,8 @@ namespace StreamMesh.UI.ViewModels
 {
     public class SettingsViewModel : INotifyPropertyChanged
     {
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private readonly GitHubSyncEngine _sync = new GitHubSyncEngine();
-        private readonly AiEngine _ai = new AiEngine();
 
         public ObservableCollection<M3uSourceDisplay> Sources { get; } = new ObservableCollection<M3uSourceDisplay>();
         public ObservableCollection<IptvAccount> IptvAccounts { get; } = new ObservableCollection<IptvAccount>();
@@ -32,9 +31,11 @@ namespace StreamMesh.UI.ViewModels
         {
             "Tümü",
             "Yayın & Oynatıcı",
+            "Medya & Çalma",
             "Ağ & Paylaşım",
             "Veri & Rehber",
-            "Yapay Zeka & Meta",
+            "Veri & Senkron",
+            "Meta Veri",
             "Sistem & Bakım"
         };
 
@@ -118,15 +119,6 @@ namespace StreamMesh.UI.ViewModels
         public int TotalPluginsCount => PluginManager.Instance.Plugins.Count;
         public int ActivePluginsCount => PluginManager.Instance.Plugins.Count(p => p.IsEnabled);
 
-        private string _aiUrl = "";
-        public string AiUrl { get => _aiUrl; set { _aiUrl = value; OnPropertyChanged(); } }
-
-        private string _aiModel = "";
-        public string AiModel { get => _aiModel; set { _aiModel = value; OnPropertyChanged(); } }
-
-        private string _tmdbApiKey = "";
-        public string TmdbApiKey { get => _tmdbApiKey; set { _tmdbApiKey = value; OnPropertyChanged(); } }
-
         private string _serverPort = "8080";
         public string ServerPort { get => _serverPort; set { _serverPort = value; OnPropertyChanged(); } }
 
@@ -155,20 +147,12 @@ namespace StreamMesh.UI.ViewModels
             }
         }
 
-        public void LoadSettings()
-        {
-            _ = LoadSettingsAsync();
-        }
-
         public async Task LoadSettingsAsync()
         {
             await Task.Run(() =>
             {
                 try
                 {
-                    string aiUrl = _db.GetSetting("AiUrl", "http://localhost:11434/api/chat");
-                    string aiModel = _db.GetSetting("AiModel", "llama3");
-                    string tmdbKey = _db.GetSetting("TmdbApiKey", "3fd2be6f0c70a2a598f084dd23308883");
                     string serverPort = _db.GetSetting("ServerPort", "8080");
 
                     var sourcesList = LoadSourcesInternal();
@@ -179,9 +163,6 @@ namespace StreamMesh.UI.ViewModels
 
                     System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
                     {
-                        AiUrl = aiUrl;
-                        AiModel = aiModel;
-                        TmdbApiKey = tmdbKey;
                         ServerPort = serverPort;
 
                         Sources.Clear();
@@ -204,9 +185,6 @@ namespace StreamMesh.UI.ViewModels
 
         public void SaveSettings()
         {
-            _db.SetSetting("AiUrl", AiUrl);
-            _db.SetSetting("AiModel", AiModel);
-            _db.SetSetting("TmdbApiKey", TmdbApiKey);
             _db.SetSetting("ServerPort", ServerPort);
         }
 
@@ -457,14 +435,6 @@ namespace StreamMesh.UI.ViewModels
             {
                 System.Windows.MessageBox.Show("EPG adresi eklenirken bir hata oluştu.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-        public void SaveIptvAccountFormat(IptvAccount? account, string format)
-        {
-            if (account == null) return;
-            account.PreferredStreamFormat = format;
-            _db.SaveIptvAccount(account);
-            LogService.LogInfo($"[SettingsViewModel] Account '{account.Name}' preferred format updated to: {format}");
         }
 
         public async Task StartCloudSyncAsync()

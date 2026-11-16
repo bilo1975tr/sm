@@ -26,13 +26,27 @@ namespace StreamMesh.UI.Views
     public partial class SettingsView : System.Windows.Controls.UserControl
     {
         public SettingsViewModel ViewModel { get; } = new SettingsViewModel();
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
         private readonly XtreamService _xtream = new XtreamService();
 
         private bool _isServerRunning = false;
         private System.Threading.CancellationTokenSource? _validationCts;
 
         private bool _isLoadedOnce = false;
+
+        private static System.Windows.Media.SolidColorBrush CreateFrozenBrush(byte r, byte g, byte b)
+        {
+            var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+            brush.Freeze();
+            return brush;
+        }
+
+        private static readonly System.Windows.Media.Brush LanBgStopped = CreateFrozenBrush(0x33, 0x41, 0x55);
+        private static readonly System.Windows.Media.Brush LanFgStopped = CreateFrozenBrush(0x94, 0xa3, 0xb8);
+        private static readonly System.Windows.Media.Brush LanBgActive = CreateFrozenBrush(0x06, 0x4e, 0x3b);
+        private static readonly System.Windows.Media.Brush LanFgActive = CreateFrozenBrush(0xa7, 0xf3, 0xd0);
+        private static readonly System.Windows.Media.Brush LanBgWarn = CreateFrozenBrush(0x85, 0x4d, 0x0e);
+        private static readonly System.Windows.Media.Brush LanFgWarn = CreateFrozenBrush(0xfe, 0xf0, 0x8a);
 
         public SettingsView()
         {
@@ -60,12 +74,12 @@ namespace StreamMesh.UI.Views
 
         private async Task LoadSettingsAsync()
         {
-            // 1. Asynchronously load ViewModel properties (AI, TMDB, sources with fast batch counts, IPTV accounts)
+            // 1. Asynchronously load ViewModel properties (sources with fast batch counts, IPTV accounts)
             await ViewModel.LoadSettingsAsync();
 
             // 2. Asynchronously load additional player & UI settings
             await Task.Run(() => {
-                string cache = _db.GetSetting("FlyleafCache", "1000");
+                string cache = _db.GetSetting("FlyleafCache", "3500");
                 bool hw = _db.GetSetting("FlyleafHwAccel", "true") == "true";
                 bool audioNorm = _db.GetSetting("FlyleafAudioNorm", "false") == "true";
                 bool sharpen = _db.GetSetting("FlyleafSharpen", "false") == "true";
@@ -156,6 +170,56 @@ namespace StreamMesh.UI.Views
             }
         }
 
+        private async void ConnectStalker_Click(object sender, RoutedEventArgs e)
+        {
+            string portalUrl = StalkerPortalUrlBox?.Text?.Trim() ?? "";
+            string mac = StalkerMacBox?.Text?.Trim() ?? "";
+
+            if (string.IsNullOrWhiteSpace(portalUrl) || string.IsNullOrWhiteSpace(mac))
+            {
+                System.Windows.MessageBox.Show("Lütfen Stalker Portal URL ve MAC adresini girin.", "Eksik Bilgi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (ConnectStalkerBtn != null)
+            {
+                ConnectStalkerBtn.IsEnabled = false;
+                ConnectStalkerBtn.Content = "⏳ Bağlanıyor...";
+            }
+
+            try
+            {
+                var (success, channels, message) = await StalkerPortalService.FetchChannelsAsync(portalUrl, mac);
+                if (!success || channels.Count == 0)
+                {
+                    System.Windows.MessageBox.Show(message, "Stalker Portal Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                string playlistKey = channels[0].PlaylistUrl ?? $"stalker://{StalkerPortalService.NormalizePortalEndpoint(portalUrl)}|{StalkerPortalService.NormalizeMac(mac)}";
+                _db.AddM3uSource(playlistKey);
+                await _db.SaveChannelsBatchAsync(channels, clearFirst: false, notifyUpdated: true);
+                RefreshSourcesList();
+
+                System.Windows.MessageBox.Show(message, "Stalker Portal Eklendi", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (StalkerPortalUrlBox != null) StalkerPortalUrlBox.Clear();
+                if (StalkerMacBox != null) StalkerMacBox.Clear();
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("SettingsView.ConnectStalker_Click error", ex);
+                System.Windows.MessageBox.Show("Stalker Portal hatası: " + ex.Message, "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                if (ConnectStalkerBtn != null)
+                {
+                    ConnectStalkerBtn.IsEnabled = true;
+                    ConnectStalkerBtn.Content = "📡 MAC Portal Bağla";
+                }
+            }
+        }
+
         private void RemoveIptv_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button b && b.CommandParameter is string id)
@@ -179,14 +243,21 @@ namespace StreamMesh.UI.Views
             }
         }
 
+        private async Task<(bool Success, int Count, string Message)> ImportAccountInternalAsync(IptvAccount acc)
+        {
+            var accInfo = IptvAccountInfo.FromAccount(acc);
+            var res = await Task.Run(() => IptvAccountHelper.FetchAndImportFullAccountAsync(accInfo, null));
+            await _xtream.SyncAccountAsync(acc);
+            return res;
+        }
+
         private async void ImportAccountChannels_Click(object sender, RoutedEventArgs e)
         {
             var btn = sender as Button;
             string? accId = btn?.CommandParameter as string;
             if (string.IsNullOrEmpty(accId)) return;
 
-            var accounts = _db.GetAllIptvAccounts();
-            var acc = accounts.FirstOrDefault(a => a.Id == accId);
+            var acc = _db.GetAllIptvAccounts().FirstOrDefault(a => a.Id == accId);
             if (acc == null) return;
 
             if (btn != null)
@@ -197,29 +268,7 @@ namespace StreamMesh.UI.Views
 
             try
             {
-                string host = "";
-                try
-                {
-                    host = new Uri(acc.ServerUrl).Authority;
-                }
-                catch
-                {
-                    host = acc.ServerUrl.Replace("http://", "").Replace("https://", "").TrimEnd('/');
-                }
-
-                var accInfo = new IptvAccountInfo
-                {
-                    HostWithPort = host,
-                    Username = acc.Username,
-                    Password = acc.Password
-                };
-
-                var (success, count, msg) = await Task.Run(async () =>
-                {
-                    return await IptvAccountHelper.FetchAndImportFullAccountAsync(accInfo, null);
-                });
-
-                await _xtream.SyncAccountAsync(acc);
+                var (success, count, msg) = await ImportAccountInternalAsync(acc);
                 RefreshIptvList();
                 DatabaseEngine.NotifyDatabaseUpdated();
 
@@ -271,34 +320,12 @@ namespace StreamMesh.UI.Views
                 {
                     try
                     {
-                        string host = "";
-                        try
-                        {
-                            host = new Uri(acc.ServerUrl).Authority;
-                        }
-                        catch
-                        {
-                            host = acc.ServerUrl.Replace("http://", "").Replace("https://", "").TrimEnd('/');
-                        }
-
-                        var accInfo = new IptvAccountInfo
-                        {
-                            HostWithPort = host,
-                            Username = acc.Username,
-                            Password = acc.Password
-                        };
-
-                        var (success, count, _) = await Task.Run(async () =>
-                        {
-                            return await IptvAccountHelper.FetchAndImportFullAccountAsync(accInfo, null);
-                        });
-
+                        var (success, count, _) = await ImportAccountInternalAsync(acc);
                         if (success)
                         {
                             totalAdded += count;
                             successCount++;
                         }
-                        await _xtream.SyncAccountAsync(acc);
                     }
                     catch { }
                 }
@@ -431,20 +458,20 @@ namespace StreamMesh.UI.Views
             {
                 if (!isRunning)
                 {
-                    LanStatusBorder.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#334155"));
-                    LanStatusText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#94a3b8"));
+                    LanStatusBorder.Background = LanBgStopped;
+                    LanStatusText.Foreground = LanFgStopped;
                     LanStatusText.Text = "🔴 Sunucu Kapalı";
                 }
                 else if (isLanAccessible)
                 {
-                    LanStatusBorder.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#064e3b"));
-                    LanStatusText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#a7f3d0"));
+                    LanStatusBorder.Background = LanBgActive;
+                    LanStatusText.Foreground = LanFgActive;
                     LanStatusText.Text = $"🟢 Ağ Erişimi Aktif ({bindingMode})";
                 }
                 else
                 {
-                    LanStatusBorder.Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#854d0e"));
-                    LanStatusText.Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#fef08a"));
+                    LanStatusBorder.Background = LanBgWarn;
+                    LanStatusText.Foreground = LanFgWarn;
                     LanStatusText.Text = "⚠️ Yerel Ağ Kısıtlı (Sadece Localhost - Onar Butonuna Tıklayın)";
                 }
             }
@@ -632,13 +659,17 @@ namespace StreamMesh.UI.Views
         private void SaveSettings_Click(object sender, RoutedEventArgs e)
         {
             ViewModel.SaveSettings();
-            _db.SetSetting("FlyleafCache", CachingBox.Text ?? "1000");
+            string audioNorm = AudioNormCheck.IsChecked == true ? "true" : "false";
+            string sharpen = VideoSharpenCheck.IsChecked == true ? "true" : "false";
+            _db.SetSetting("FlyleafCache", CachingBox.Text ?? "2500");
             _db.SetSetting("FlyleafHwAccel", HwAccelCheck.IsChecked == true ? "true" : "false");
-            _db.SetSetting("FlyleafAudioNorm", AudioNormCheck.IsChecked == true ? "true" : "false");
-            _db.SetSetting("FlyleafSharpen", VideoSharpenCheck.IsChecked == true ? "true" : "false");
+            _db.SetSetting("FlyleafAudioNorm", audioNorm);
+            _db.SetSetting("AudioNormEnabled", audioNorm);
+            _db.SetSetting("FlyleafSharpen", sharpen);
+            _db.SetSetting("VideoEnhanceEnabled", sharpen);
             _db.SetSetting("FlyleafUserAgent", UserAgentBox.Text ?? "");
             _db.SetSetting("TvMode", TvModeCheck.IsChecked == true ? "true" : "false");
-            System.Windows.MessageBox.Show("Ayarlar kaydedildi. (Uygulamayı yeniden başlatmanız gerekebilir)");
+            System.Windows.MessageBox.Show("Ayarlar kaydedildi. Değişiklikler sonraki kanal açılışında uygulanacaktır.");
         }
 
         private async void AddSource_Click(object sender, RoutedEventArgs e)
@@ -1025,11 +1056,10 @@ namespace StreamMesh.UI.Views
             {
                 string defaultAction = ViewModel.SelectedPlugin.Id switch
                 {
-                    "ai_assistant" => "TestAiConnection",
                     "epg_guide" => "CleanOldData",
                     "stream_resolution" => "ResetBuffer",
                     "local_network_server" => "TestPortAvailability",
-                    "metadata_enricher" => "TestTmdbKey",
+                    "metadata_enricher" => "TestMetadataConnection",
                     "logo_manager" => "ClearLogoCache",
                     "xtream_client" => "TestAllAccounts",
                     "github_sync" => "StartSync",

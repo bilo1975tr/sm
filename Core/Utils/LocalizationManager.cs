@@ -69,10 +69,9 @@ namespace StreamMesh.Core.Utils
             _currentDictionary["Set_Title"] = "Ayarlar";
             _currentDictionary["Set_TabResource"] = "Yayın Kaynakları";
             _currentDictionary["Set_TabEpg"] = "EPG Rehber";
-            _currentDictionary["Set_TabApp"] = "Uygulama & AI";
+            _currentDictionary["Set_TabApp"] = "Uygulama";
             _currentDictionary["Set_TabNetwork"] = "Ağ / P2P";
             _currentDictionary["Set_TabAuto"] = "Oto Güncelle";
-            _currentDictionary["Ai_Thinking"] = "AI Düşünüyor...";
 
             if (lang == "en")
             {
@@ -94,10 +93,9 @@ namespace StreamMesh.Core.Utils
                 _currentDictionary["Set_Title"] = "Settings";
                 _currentDictionary["Set_TabResource"] = "Stream Sources";
                 _currentDictionary["Set_TabEpg"] = "EPG Guide";
-                _currentDictionary["Set_TabApp"] = "App & AI";
+                _currentDictionary["Set_TabApp"] = "App";
                 _currentDictionary["Set_TabNetwork"] = "Network / P2P";
                 _currentDictionary["Set_TabAuto"] = "Auto Update";
-                _currentDictionary["Ai_Thinking"] = "AI Thinking...";
             }
         }
 

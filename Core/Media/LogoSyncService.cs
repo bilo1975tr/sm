@@ -8,23 +8,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using StreamMesh.Core.Database;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.Core.Media
 {
     public class LogoSyncService
     {
-        private static readonly HttpClient _client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         public async Task SyncIfNecessaryAsync()
         {
             // 1. Always scan local logos folder first (instant)
             ScanLocalLogosFolder();
 
-            // 2. Check if remote sync was performed within the last 30 days
+            // 2. Check if remote sync with v3 iptv-org + tv-logos was performed within the last 30 days
+            string syncVer = _db.GetSetting("LogoSyncVersion", "");
             string last = _db.GetSetting("LogoSyncDate", "");
-            if (DateTime.TryParse(last, out DateTime dt) && (DateTime.Now - dt).TotalDays < 30)
+            if (syncVer == "v3-iptvorg" && DateTime.TryParse(last, out DateTime dt) && (DateTime.Now - dt).TotalDays < 30)
             {
                 LogService.LogInfo($"[LogoSync] Son logo senkronizasyon tarihi: {dt:yyyy-MM-dd}. Periyodik tarama atlandı.");
                 return;
@@ -46,7 +47,7 @@ namespace StreamMesh.Core.Media
 
                 var validExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
-                    ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp"
+                    ".png", ".jpg", ".jpeg", ".ico", ".webp"
                 };
 
                 foreach (var dir in baseDirs.Distinct())
@@ -61,20 +62,16 @@ namespace StreamMesh.Core.Media
 
                         string fileNameNoExt = Path.GetFileNameWithoutExtension(file);
                         string normalizedKey = fileNameNoExt.ToLowerInvariant().Replace(" ", "-").Trim('-');
-
-                        // Relative path from base directory or pack / direct file path
                         string relativePath = "logos/" + Path.GetRelativePath(dir, file).Replace("\\", "/");
                         
                         localLogos.Add((normalizedKey, relativePath));
 
-                        // Add clean name key
                         string rawClean = ChannelUtils.ToNormalizedKey(fileNameNoExt);
                         if (!string.IsNullOrEmpty(rawClean) && rawClean != normalizedKey)
                         {
                             localLogos.Add((rawClean, relativePath));
                         }
 
-                        // Add slug without special characters
                         string slug = Regex.Replace(fileNameNoExt.ToLowerInvariant().Replace("&", "and").Replace("+", "plus").Replace(" ", "-"), @"[^a-z0-9-]", "").Trim('-');
                         if (!string.IsNullOrEmpty(slug) && slug != normalizedKey && slug != rawClean)
                         {
@@ -101,82 +98,153 @@ namespace StreamMesh.Core.Media
             }
         }
 
+        private static string ToLogoSlug(string name)
+        {
+            string s = (name ?? "").ToLowerInvariant().Replace("&", "and").Replace("+", "plus").Replace(".", "-");
+            s = Regex.Replace(s, @"\s+", "-");
+            s = Regex.Replace(s, @"[^a-z0-9-]", "");
+            s = Regex.Replace(s, @"-{2,}", "-");
+            return s.Trim('-');
+        }
+
         public async Task SyncNowAsync()
         {
             try
             {
-                // Local scan first
                 ScanLocalLogosFolder();
+                var allLogos = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-                LogService.LogInfo("[LogoSync] GitHub (tv-logos) üzerinden logo verileri güncelleniyor...");
-
-                _client.DefaultRequestHeaders.UserAgent.Clear();
-                _client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
-
-                string[] countries = { "turkey", "germany", "united-kingdom", "united-states", "france", "italy", "spain", "azerbaijan", "netherlands" };
-                var allLogos = new List<(string key, string file)>();
-
-                foreach (var country in countries)
+                // 1. iptv-org public static JSON database (No API key, no rate limit, exact country & alt_names)
+                try
                 {
-                    try
+                    LogService.LogInfo("[LogoSync] iptv-org açık logo veritabanı indiriliyor...");
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(25));
+                    string channelsJson = await MediaHttpClient.GetStringAsync("https://iptv-org.github.io/api/channels.json", 20, cts.Token).ConfigureAwait(false);
+                    string logosJson = await MediaHttpClient.GetStringAsync("https://iptv-org.github.io/api/logos.json", 20, cts.Token).ConfigureAwait(false);
+
+                    if (!string.IsNullOrWhiteSpace(channelsJson) && !string.IsNullOrWhiteSpace(logosJson))
                     {
-                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-                        var response = await _client.GetStringAsync($"https://api.github.com/repos/tv-logo/tv-logos/contents/countries/{country}", cts.Token);
-                        var items = JArray.Parse(response);
-                        foreach (var item in items)
+                        var bestLogoByChannelId = new Dictionary<string, (string Url, int Score)>(StringComparer.OrdinalIgnoreCase);
+                        var logosArr = JArray.Parse(logosJson);
+                        foreach (var l in logosArr)
                         {
-                            string fileName = item["name"]?.ToString() ?? "";
-                            if (fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                            string chId = l["channel"]?.ToString() ?? "";
+                            string url = l["url"]?.ToString() ?? "";
+                            string fmt = l["format"]?.ToString() ?? "";
+                            if (string.IsNullOrWhiteSpace(chId) || string.IsNullOrWhiteSpace(url)) continue;
+
+                            // WPF BitmapImage decodes PNG/JPG/WebP natively; strongly prefer non-SVG
+                            bool isSvg = fmt.Equals("SVG", StringComparison.OrdinalIgnoreCase) || url.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
+                            if (isSvg) continue;
+
+                            int score = fmt.Equals("PNG", StringComparison.OrdinalIgnoreCase) ? 100 : 80;
+                            if (!bestLogoByChannelId.TryGetValue(chId, out var existing) || score > existing.Score)
                             {
-                                string baseName = fileName.Substring(0, fileName.Length - 4);
-                                string rawKey = baseName.ToLowerInvariant();
-                                string downloadUrl = item["download_url"]?.ToString() 
-                                    ?? $"https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/{country}/{fileName}";
+                                bestLogoByChannelId[chId] = (url, score);
+                            }
+                        }
 
-                                allLogos.Add((rawKey, downloadUrl));
+                        var channelsArr = JArray.Parse(channelsJson);
+                        foreach (var ch in channelsArr)
+                        {
+                            string chId = ch["id"]?.ToString() ?? "";
+                            if (!bestLogoByChannelId.TryGetValue(chId, out var logoEntry)) continue;
 
-                                // Add normalized key variant
-                                string normKey = ChannelUtils.ToNormalizedKey(baseName);
-                                if (!string.IsNullOrEmpty(normKey) && normKey != rawKey)
+                            string country = (ch["country"]?.ToString() ?? "").Trim().ToLowerInvariant();
+                            string name = ch["name"]?.ToString() ?? "";
+                            var names = new List<string>();
+                            if (!string.IsNullOrWhiteSpace(name)) names.Add(name);
+                            if (ch["alt_names"] is JArray alts)
+                            {
+                                foreach (var a in alts)
                                 {
-                                    allLogos.Add((normKey, downloadUrl));
+                                    string alt = a?.ToString() ?? "";
+                                    if (!string.IsNullOrWhiteSpace(alt)) names.Add(alt);
                                 }
+                            }
 
-                                // Add slug variant
-                                string slug = Regex.Replace(baseName.ToLowerInvariant().Replace("&", "and").Replace("+", "plus").Replace(" ", "-"), @"[^a-z0-9-]", "").Trim('-');
-                                if (!string.IsNullOrEmpty(slug) && slug != rawKey && slug != normKey)
+                            foreach (var n in names)
+                            {
+                                string slug = ToLogoSlug(n);
+                                string compact = Regex.Replace(n.ToLowerInvariant().Replace("&", "and").Replace("+", "plus"), @"[^a-z0-9]", "");
+                                if (!string.IsNullOrEmpty(country))
                                 {
-                                    allLogos.Add((slug, downloadUrl));
+                                    if (!string.IsNullOrEmpty(slug)) allLogos.TryAdd($"{slug}-{country}", logoEntry.Url);
+                                    if (!string.IsNullOrEmpty(compact)) allLogos.TryAdd($"{compact}-{country}", logoEntry.Url);
                                 }
+                                if (!string.IsNullOrEmpty(slug)) allLogos.TryAdd(slug, logoEntry.Url);
+                                if (!string.IsNullOrEmpty(compact)) allLogos.TryAdd(compact, logoEntry.Url);
+                            }
+                        }
+                        LogService.LogInfo($"[LogoSync] iptv-org üzerinden {allLogos.Count} logo anahtarı hazırlandı.");
+                    }
+                }
+                catch (Exception iptvEx)
+                {
+                    LogService.LogWarning($"[LogoSync] iptv-org logo veritabanı alınamadı: {iptvEx.Message}");
+                }
+
+                // 2. tv-logo/tv-logos full repository tree in a single GitHub API request (overrides with crisp transparent PNGs)
+                try
+                {
+                    LogService.LogInfo("[LogoSync] tv-logos indeksi güncelleniyor...");
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+                    using var req = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/tv-logo/tv-logos/git/trees/main?recursive=1");
+                    req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) StreamMesh/1.0");
+                    using var resp = await MediaHttpClient.Client.SendAsync(req, cts.Token).ConfigureAwait(false);
+                    if (resp.IsSuccessStatusCode)
+                    {
+                        var body = await resp.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
+                        var treeObj = JObject.Parse(body);
+                        if (treeObj["tree"] is JArray treeArr)
+                        {
+                            foreach (var node in treeArr)
+                            {
+                                string path = node["path"]?.ToString() ?? "";
+                                if (!path.StartsWith("countries/", StringComparison.OrdinalIgnoreCase) ||
+                                    !path.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                                    continue;
+
+                                string fileName = Path.GetFileNameWithoutExtension(path);
+                                string downloadUrl = $"https://raw.githubusercontent.com/tv-logo/tv-logos/main/{path}";
+                                string rawKey = fileName.ToLowerInvariant();
+                                string slug = ToLogoSlug(fileName);
+                                string compact = Regex.Replace(rawKey, @"[^a-z0-9]", "");
+
+                                if (!string.IsNullOrEmpty(rawKey)) allLogos[rawKey] = downloadUrl;
+                                if (!string.IsNullOrEmpty(slug)) allLogos[slug] = downloadUrl;
+                                if (!string.IsNullOrEmpty(compact)) allLogos.TryAdd(compact, downloadUrl);
                             }
                         }
                     }
-                    catch (Exception countryEx)
-                    {
-                        LogService.LogWarning($"[LogoSync] {country} logoları indirilemedi: {countryEx.Message}");
-                    }
+                }
+                catch (Exception tvLogoEx)
+                {
+                    LogService.LogWarning($"[LogoSync] tv-logos ağacı alınamadı: {tvLogoEx.Message}");
                 }
 
                 if (allLogos.Count > 0)
                 {
-                    _db.UpdateLogoIndex(allLogos);
+                    var batch = allLogos.Select(kvp => (kvp.Key, kvp.Value)).ToList();
+                    _db.UpdateLogoIndex(batch);
                     ChannelEnricher.InvalidateLogoCache();
                     _db.SetSetting("LogoSyncDate", DateTime.Now.ToString("o"));
-                    LogService.LogInfo($"[LogoSync] {allLogos.Count} adet yeni standart logo indeksi kaydedildi.");
+                    _db.SetSetting("LogoSyncVersion", "v3-iptvorg");
+                    LogService.LogInfo($"[LogoSync] {batch.Count} adet standart TV logo indeksi kaydedildi.");
 
-                    // Auto-enrich any existing channels that currently have empty LogoUrl
+                    // Auto-enrich live TV channels missing LogoUrl
                     try
                     {
-                        var channels = await _db.GetAllChannelsAsync();
-                        var missingLogos = channels.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl)).ToList();
+                        var channels = await _db.GetAllChannelsAsync().ConfigureAwait(false);
+                        var missingLogos = channels.Where(c => string.IsNullOrWhiteSpace(c.LogoUrl) && MetadataEngine.IsLikelyLiveTv(c)).ToList();
                         if (missingLogos.Count > 0)
                         {
                             var enricher = new ChannelEnricher();
-                            await enricher.EnrichChannelsAsync(missingLogos);
+                            await enricher.EnrichChannelsAsync(missingLogos).ConfigureAwait(false);
                             int enrichedCount = missingLogos.Count(c => !string.IsNullOrWhiteSpace(c.LogoUrl));
                             if (enrichedCount > 0)
                             {
-                                LogService.LogInfo($"[LogoSync] {enrichedCount} kanalın logosu indeks üzerinden otomatik tamamlandı.");
+                                LogService.LogInfo($"[LogoSync] {enrichedCount} canlı TV kanalının logosu tamamlandı.");
                                 DatabaseEngine.NotifyDatabaseUpdated();
                             }
                         }
@@ -188,7 +256,7 @@ namespace StreamMesh.Core.Media
                 }
                 else
                 {
-                    LogService.LogWarning("[LogoSync] Yeni logo bulunamadı veya API erişim sınırı aşıldı. Mevcut logo veritabanı korundu.");
+                    LogService.LogWarning("[LogoSync] Yeni logo alınamadı. Mevcut logo veritabanı korundu.");
                 }
             }
             catch (Exception ex)

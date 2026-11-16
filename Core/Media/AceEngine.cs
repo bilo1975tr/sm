@@ -28,7 +28,6 @@ namespace StreamMesh.Core.Media
 
         // ID / Hash Extraction
         public bool IsAceStreamUrl(string? url) => AceIdExtractor.IsAceStreamUrl(url);
-        public bool IsAceStream(string? url) => AceIdExtractor.IsAceStreamUrl(url);
         public string ExtractPid(string url) => AceIdExtractor.ExtractPid(url);
         public string ExtractAceId(string url) => AceIdExtractor.ExtractAceId(url);
         public string ExtractHash(string url) => AceIdExtractor.ExtractAceId(url);

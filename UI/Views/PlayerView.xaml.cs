@@ -1,24 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Linq;
-using System.Reflection;
-using FlyleafLib;
-using FlyleafLib.MediaPlayer;
-using FlyleafLib.Controls.WPF;
-using StreamMesh.Models;
-using StreamMesh.Core.Media;
-using StreamMesh.Converters;
-using StreamMesh.Core.Utils;
-using StreamMesh.Core.Database;
-using System.ComponentModel;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text;
-
+using System.Windows;
+using System.Windows.Media;
+using StreamMesh.Core;
+using StreamMesh.Core.Database;
+using StreamMesh.Core.Media;
+using StreamMesh.Core.Media.Iptv;
+using StreamMesh.Core.Media.Mpv;
+using StreamMesh.Core.Network;
+using StreamMesh.Core.Plugins;
+using StreamMesh.Core.Utils;
+using StreamMesh.Models;
 using StreamMesh.UI.ViewModels;
 
 namespace StreamMesh.UI.Views
@@ -27,310 +24,392 @@ namespace StreamMesh.UI.Views
     {
         public PlayerViewModel ViewModel { get; } = new PlayerViewModel();
 
-        private Player? _player;
-        private Config? _config;
+        private MpvPlayerEngine? _mpv;
         private readonly TaskCompletionSource<bool> _initTcs = new();
+        private readonly AceEngine _ace = AceEngine.Instance;
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
+        private readonly SemaphoreSlim _playSemaphore = new(1, 1);
 
-        private readonly AceEngine _ace = new AceEngine();
-        private readonly DatabaseEngine _db = new DatabaseEngine();
-        private static readonly LogoCacheConverter LogoConverter = new LogoCacheConverter();
-        private readonly System.Threading.SemaphoreSlim _playSemaphore = new System.Threading.SemaphoreSlim(1, 1);
+        private CancellationTokenSource? _recordCts;
+        private bool _isRecording;
+        private string? _recordFilePath;
 
-        private readonly EpgService _epgService = new EpgService();
         private System.Windows.Threading.DispatcherTimer? _osdTimer;
         private System.Windows.Threading.DispatcherTimer? _positionTimer;
         private System.Windows.Threading.DispatcherTimer? _viewersTimer;
+        private System.Windows.Threading.DispatcherTimer? _toastTimer;
         private string? _currentPlayingUrl;
 
-        private bool _isUserDraggingSlider = false;
-        private bool _isMouseOverOsd = false;
+        private bool _isUserDraggingSlider;
+        private bool _isMouseOverOsd;
         private DateTime _streamStartTime = DateTime.UtcNow;
-        private static readonly SolidColorBrush LiveRedBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(220, 38, 38));
-        private static readonly SolidColorBrush DelayedAmberBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 158, 11));
-        private static readonly SolidColorBrush VodBlueBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(37, 99, 235));
 
-        private static readonly SolidColorBrush[] MonogramPalette = new SolidColorBrush[]
+        private static readonly SolidColorBrush LiveRedBrush = CreateFrozenBrush(220, 38, 38);
+        private static readonly SolidColorBrush DelayedAmberBrush = CreateFrozenBrush(245, 158, 11);
+        private static readonly SolidColorBrush VodBlueBrush = CreateFrozenBrush(37, 99, 235);
+        private static readonly SolidColorBrush SlateBtnBrush = CreateFrozenBrush(51, 65, 85);
+        private static readonly SolidColorBrush SlateBorderBrush = CreateFrozenBrush(255, 255, 255, 51);
+        private static readonly SolidColorBrush NormActiveBrush = CreateFrozenBrush(5, 150, 105);
+        private static readonly SolidColorBrush NormBorderBrush = CreateFrozenBrush(52, 211, 153);
+        private static readonly SolidColorBrush SharpenActiveBrush = CreateFrozenBrush(217, 119, 6);
+        private static readonly SolidColorBrush SharpenBorderBrush = CreateFrozenBrush(251, 191, 36);
+        private static readonly SolidColorBrush RecordActiveIconBrush = CreateFrozenBrush(239, 68, 68);
+
+        private static SolidColorBrush CreateFrozenBrush(byte r, byte g, byte b, byte a = 255)
         {
-            new SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 64, 175)), // Blue
-            new SolidColorBrush(System.Windows.Media.Color.FromRgb(5, 150, 105)),  // Emerald
-            new SolidColorBrush(System.Windows.Media.Color.FromRgb(124, 58, 237)), // Purple
-            new SolidColorBrush(System.Windows.Media.Color.FromRgb(190, 24, 93)),  // Rose
-            new SolidColorBrush(System.Windows.Media.Color.FromRgb(217, 119, 6)),  // Amber
-            new SolidColorBrush(System.Windows.Media.Color.FromRgb(13, 148, 136)), // Teal
-            new SolidColorBrush(System.Windows.Media.Color.FromRgb(79, 70, 229))   // Indigo
-        };
+            var brush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(a, r, g, b));
+            brush.Freeze();
+            return brush;
+        }
 
+        // Unified playback / timeshift state
         private DateTime _lastSeekTime = DateTime.MinValue;
-        private long _effectivePositionMs = 0;
-        private bool _isTimeshiftMode = false;
-        private long _timeshiftStartDvrMs = 0;
-        private long _pausedDvrPosMs = 0;
-        private System.Threading.CancellationTokenSource? _loadCts;
-        private long _playbackSessionId = 0;
-        private bool _isFallbackActive = false;
-        private int _clockLogTickCount = 0;
-        private long _lastReportedCurTimeMs = -1;
-        private bool _wasPausedByMinimize = false;
-        private bool _hasReceivedFirstFrame = false;
-        private int _softRetriggerCount = 0;
+        private long _effectivePositionMs;
+        private bool _isTimeshiftMode;
+        private long _timeshiftStartDvrMs;
+        private DateTime _timeshiftPlayAnchorUtc = DateTime.MinValue;
+        private long _timeshiftAccumulatedPlayMs;
+        private long _pausedDvrPosMs;
+        private bool _hasPausedDvrPos;
+        private bool _userPaused;
+        private DateTime _livePauseStartedUtc = DateTime.MinValue;
+        private long _accumulatedLiveLagMs;
 
-        // Audio & Video DSP / Enhancement States
-        private bool _isAudioNormEnabled = true;
-        private bool _isVideoEnhanceEnabled = false;
-        private System.Windows.Threading.DispatcherTimer? _toastTimer;
+        private HlsSessionInfo? _activeProxySession;
+        private CancellationTokenSource? _loadCts;
+        private long _playbackSessionId;
+        private bool _wasPausedByMinimize;
+        private bool _hasReceivedFirstFrame;
+        private bool _mpvDownloadTriggered;
+
+        // UI deduplication caches
+        private DateTime _lastMouseOsdResetUtc = DateTime.MinValue;
+        private string _lastTimeCurrentText = "";
+        private string _lastTimeTotalText = "";
+        private string _lastLiveBadgeText = "";
+        private string _lastGoLiveText = "";
+        private string _lastCurrentEpgText = "";
+        private string _lastNextEpgText = "";
+
+        // Audio & Video DSP States
+        private bool _isAudioNormEnabled;
+        private bool _isVideoEnhanceEnabled;
         private readonly List<AudioTrackModel> _detectedAudioTracks = new();
-        private int _selectedAudioTrackIndex = -1;
-        private string _selectedAudioTrackLangCode = "";
+        private int _selectedAudioTrackId = -1;
         private string _lastLoadedChannelId = "";
+        private IptvAccountInfo? _currentDeadAccountDetected;
+
+        // 4-Screen Multi-View State
+        private bool _isMultiViewActive;
+        private int _focusedMultiViewSlot;
+        private MultiViewSlotState[]? _multiViewSlots;
+        private static readonly SolidColorBrush TileActiveBorderBrush = CreateFrozenBrush(56, 189, 248);
+        private static readonly SolidColorBrush TileInactiveBorderBrush = CreateFrozenBrush(30, 41, 59);
+        private static readonly SolidColorBrush TileMuteOnBrush = CreateFrozenBrush(2, 132, 199);
+        private static readonly SolidColorBrush TileMuteOffBrush = CreateFrozenBrush(30, 41, 59);
 
         public PlayerView()
         {
             InitializeComponent();
-            LoadAudioVideoSettings();
+            _isAudioNormEnabled = ViewModel.IsAudioNormEnabled;
+            _isVideoEnhanceEnabled = ViewModel.IsVideoEnhanceEnabled;
 
-            this.Loaded += (s, e) =>
+            VideoPlayer.VideoMouseActivity += (_, _) =>
             {
-                InitializePlayer();
-                // Global fare dinleyicisi ekle
-                System.Windows.Input.InputManager.Current.PostProcessInput += GlobalMouseTracker;
+                if ((DateTime.UtcNow - _lastMouseOsdResetUtc).TotalMilliseconds >= 250 || OsdPanel?.Visibility != Visibility.Visible)
+                    ShowOsdTemporary();
             };
-            this.Unloaded += (s, e) =>
-            {
-                // Bellek sızıntısını önlemek için dinleyiciyi kaldır
-                System.Windows.Input.InputManager.Current.PostProcessInput -= GlobalMouseTracker;
-            };
+            VideoPlayer.VideoDoubleClick += (_, _) => Fullscreen_Click(this, new RoutedEventArgs());
 
-            InitializeOsdTimer();
-            InitializePositionTimer();
-            InitializeViewersTimer();
-            this.Focusable = true;
-        }
+            Loaded += (_, _) => InitializePlayer();
 
-        private System.Windows.Point _lastMousePos;
-        private void GlobalMouseTracker(object sender, System.Windows.Input.ProcessInputEventArgs e)
-        {
-            if (e.StagingItem.Input is System.Windows.Input.MouseEventArgs mouseArgs)
-            {
-                // Sadece fare hareket ettiğinde veya tıklandığında işlem yap
-                if (mouseArgs.RoutedEvent == System.Windows.Input.Mouse.MouseMoveEvent ||
-                    mouseArgs.RoutedEvent == System.Windows.Input.Mouse.MouseDownEvent)
-                {
-                    System.Windows.Point currentPos = mouseArgs.GetPosition(this);
-
-                    // Fare bu kontrolün sınırları içindeyse
-                    if (currentPos.X >= 0 && currentPos.Y >= 0 &&
-                        currentPos.X <= this.ActualWidth && currentPos.Y <= this.ActualHeight)
-                    {
-                        // Fare gerçekten hareket ettiyse OSD'yi göster
-                        if (currentPos != _lastMousePos)
-                        {
-                            _lastMousePos = currentPos;
-                            ShowOsdTemporary();
-                        }
-                    }
-                }
-            }
-        }
-
-        private void InitializeOsdTimer()
-        {
             _osdTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4.5) };
-            _osdTimer.Tick += (s, e) =>
+            _osdTimer.Tick += (_, _) =>
             {
                 if (_isUserDraggingSlider || _isMouseOverOsd) return;
-
                 if (OsdPanel != null) OsdPanel.Visibility = Visibility.Collapsed;
                 _osdTimer.Stop();
             };
+
+            _positionTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _positionTimer.Tick += PositionTimer_Tick;
+            _positionTimer.Start();
+
+            InitializeViewersTimer();
+            Focusable = true;
         }
 
         public void ShowOsdTemporary()
         {
-            Dispatcher.Invoke(() =>
+            void ApplyShow()
             {
-                if (OsdPanel != null) OsdPanel.Visibility = Visibility.Visible;
+                _lastMouseOsdResetUtc = DateTime.UtcNow;
+                bool opening = OsdPanel != null && OsdPanel.Visibility != Visibility.Visible;
+                if (opening && OsdPanel != null)
+                {
+                    OsdPanel.Visibility = Visibility.Visible;
+                    RefreshOsdPlaybackState();
+                }
                 _osdTimer?.Stop();
                 _osdTimer?.Start();
-            });
+            }
+
+            if (Dispatcher.CheckAccess()) ApplyShow();
+            else Dispatcher.InvokeAsync(ApplyShow);
         }
 
         private void OsdPanel_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e) { _isMouseOverOsd = true; _osdTimer?.Stop(); }
         private void OsdPanel_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e) { _isMouseOverOsd = false; _osdTimer?.Start(); }
-        private void Player_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) { ShowOsdTemporary(); }
 
-        private bool IsCurrentStreamVod()
+        private HlsSessionInfo? GetActiveProxySession()
         {
-            return ViewModel.IsVod(ViewModel.CurrentChannel);
+            if (_activeProxySession != null && _activeProxySession.Segments.Count > 0)
+                return _activeProxySession;
+
+            var found = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
+                        ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+
+            if (found != null) _activeProxySession = found;
+            return found;
         }
 
-        private void InitializePositionTimer()
+        private static string FormatDelay(long delayMs)
         {
-            _positionTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-            _positionTimer.Tick += (s, e) =>
+            var delay = TimeSpan.FromMilliseconds(Math.Max(0, delayMs));
+            return delay.TotalHours >= 1 ? $"-{delay:hh\\:mm\\:ss}" : $"-{delay:mm\\:ss}";
+        }
+
+        private void SetLiveBadgeState(SolidColorBrush brush, string text, string goLiveText, string totalText, string currentText)
+        {
+            if (TimeCurrentText != null && _lastTimeCurrentText != currentText)
             {
-                if (_player == null || _player.Status == Status.Stopped || _isUserDraggingSlider) return;
+                _lastTimeCurrentText = currentText;
+                TimeCurrentText.Text = currentText;
+            }
+            if (TimeTotalText != null && _lastTimeTotalText != totalText)
+            {
+                _lastTimeTotalText = totalText;
+                TimeTotalText.Text = totalText;
+            }
+            if (LiveBadge != null && !ReferenceEquals(LiveBadge.Background, brush))
+                LiveBadge.Background = brush;
+            if (LiveBadgeText != null && _lastLiveBadgeText != text)
+            {
+                _lastLiveBadgeText = text;
+                LiveBadgeText.Text = text;
+            }
+            if (GoLiveBtn != null && !ReferenceEquals(GoLiveBtn.Background, brush))
+                GoLiveBtn.Background = brush;
+            if (GoLiveText != null && _lastGoLiveText != goLiveText)
+            {
+                _lastGoLiveText = goLiveText;
+                GoLiveText.Text = goLiveText;
+            }
+        }
 
-                try
+        private void PositionTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_mpv == null || ViewModel.CurrentChannel == null || _isUserDraggingSlider) return;
+            if (_mpv.Status == MpvPlaybackStatus.Stopped && !_userPaused) return;
+
+            try
+            {
+                long timeMs = _mpv.PositionMs;
+                bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
+
+                if (!isVod && _mpv.Status == MpvPlaybackStatus.Playing && !_userPaused && !_hasReceivedFirstFrame && timeMs > 0)
                 {
-                    long timeMs = _player.CurTime / 10000;
-                    long lengthMs = _player.Duration / 10000;
-                    bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
-
-                    // Siyah ekran ve ilk video karesi takip mekanizmasi (First Frame & Soft Re-trigger)
-                    if (!isVod && ViewModel.CurrentChannel != null && _player.Status == Status.Playing)
+                    _hasReceivedFirstFrame = true;
+                    if (OsdTitle != null && ViewModel.CurrentChannel != null)
                     {
-                        if (!_hasReceivedFirstFrame)
-                        {
-                            if (timeMs > 0)
-                            {
-                                _hasReceivedFirstFrame = true;
-                                LogService.LogInfo($"[PLAYBACK] Ilk video karesi ekrana ulasti (CurTime: {timeMs}ms).");
-                                EnsureVideoStreamSelected();
-                                if (OsdTitle != null && ViewModel.CurrentChannel != null)
-                                {
-                                    OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
-                                    ShowOsdTemporary();
-                                }
-                            }
-                            else if ((DateTime.UtcNow - _streamStartTime).TotalSeconds >= 4.5 && _softRetriggerCount < 2)
-                            {
-                                _softRetriggerCount++;
-                                LogService.LogInfo($"[PLAYBACK] Siyah ekran kurtarma (Soft Re-trigger #{_softRetriggerCount}): Akis indiriliyor fakat ilk kare takildi. Oynatici tetikleniyor...");
-                                EnsureVideoStreamSelected();
-                                try { _player.Play(); } catch { }
-
-                                if (_softRetriggerCount == 2 && !string.IsNullOrEmpty(_currentPlayingUrl))
-                                {
-                                    LogService.LogInfo($"[PLAYBACK] Canli akis soketi tazeleniyor -> {_currentPlayingUrl}");
-                                    _player.Open(_currentPlayingUrl);
-                                    _player.Play();
-                                }
-                            }
-                        }
-                    }
-
-                    _clockLogTickCount++;
-                    if (_clockLogTickCount % 4 == 0) // Every ~2 seconds
-                    {
-                        long delta = _lastReportedCurTimeMs >= 0 ? (timeMs - _lastReportedCurTimeMs) : 0;
-                        bool isAdvancing = delta > 0 || (_lastReportedCurTimeMs < 0 && timeMs > 0);
-                        _lastReportedCurTimeMs = timeMs;
-                        LogService.LogInfo($"[PLAYBACK CLOCK] Status={_player.Status} CurTime={timeMs}ms Duration={lengthMs}ms Advancing={isAdvancing} (delta={delta}ms/2s, IsVod={isVod})");
-                    }
-
-                    // Seek koruması: Motor henüz yeni hedefe ulaşmamışsa eski zamana geri zıplamayı engelle (maksimum 2.0 saniye)
-                    if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0)
-                    {
-                        if (isVod)
-                        {
-                            if (_effectivePositionMs > 0 && Math.Abs(timeMs - _effectivePositionMs) < 1200)
-                            {
-                                _lastSeekTime = DateTime.MinValue;
-                            }
-                            else
-                            {
-                                return;
-                            }
-                        }
-                    }
-
-                    if (isVod)
-                    {
-                        if (LiveBadge != null) LiveBadge.Background = VodBlueBrush;
-                        if (LiveBadgeText != null) LiveBadgeText.Text = "🎬 VOD";
-
-                        if (lengthMs > 0)
-                        {
-                            TimeSlider.IsEnabled = true;
-                            TimeSlider.Minimum = 0;
-                            TimeSlider.Maximum = lengthMs;
-                            _effectivePositionMs = timeMs;
-                            if (!_isUserDraggingSlider) TimeSlider.Value = Math.Clamp(timeMs, 0, lengthMs);
-
-                            TimeCurrentText.Text = TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss");
-                            TimeTotalText.Text = TimeSpan.FromMilliseconds(lengthMs).ToString(@"hh\:mm\:ss");
-                        }
-                        else
-                        {
-                            TimeSlider.IsEnabled = false;
-                            TimeCurrentText.Text = TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss");
-                            TimeTotalText.Text = "--:--:--";
-                        }
-                    }
-                    else
-                    {
-                        // Sync Slider with Timeshift HLS/TS Proxy Session for DVR
-                        var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
-                                           ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
-
-                        if (proxySession != null && proxySession.Segments.Count > 0)
-                        {
-                            var segments = proxySession.Segments;
-                            double earliestSec = segments.Count > 0 ? segments[0].StartTimeSeconds : 0;
-                            double latestSec = proxySession.TotalDurationSeconds;
-                            long earliestMs = (long)(earliestSec * 1000);
-                            long latestMs = (long)(latestSec * 1000);
-
-                            TimeSlider.IsEnabled = true;
-                            TimeSlider.Minimum = earliestMs;
-                            TimeSlider.Maximum = Math.Max(earliestMs + 1000, latestMs);
-
-                            long currentDvrPosMs;
-                            if (_player.Status == Status.Paused && _pausedDvrPosMs > 0)
-                            {
-                                currentDvrPosMs = _pausedDvrPosMs;
-                            }
-                            else if (_isTimeshiftMode)
-                            {
-                                currentDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + timeMs, earliestMs, latestMs);
-                                long delayFromLive = latestMs - currentDvrPosMs;
-                                if (delayFromLive <= 3000)
-                                {
-                                    _isTimeshiftMode = false;
-                                    _timeshiftStartDvrMs = 0;
-                                    currentDvrPosMs = latestMs;
-                                }
-                            }
-                            else
-                            {
-                                currentDvrPosMs = latestMs;
-                            }
-
-                            _effectivePositionMs = currentDvrPosMs;
-                            if (!_isUserDraggingSlider)
-                            {
-                                TimeSlider.Value = currentDvrPosMs;
-                            }
-
-                            UpdateOsdTimeAndBadge(currentDvrPosMs, latestMs, proxySession.StartWallClockTime);
-                        }
-                        else
-                        {
-                            TimeSlider.IsEnabled = false;
-                            TimeSlider.Minimum = 0;
-                            TimeSlider.Maximum = 100;
-                            if (!_isUserDraggingSlider) TimeSlider.Value = 100;
-                            TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
-                            TimeTotalText.Text = "CANLI YAYIN";
-                            if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
-                            if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
-                            if (GoLiveBtn != null) GoLiveBtn.Background = LiveRedBrush;
-                            if (GoLiveText != null) GoLiveText.Text = "CANLI";
-                            UpdateOsdEpgForTime(DateTime.Now);
-                        }
+                        OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
+                        ShowOsdTemporary();
                     }
                 }
-                catch { }
-            };
-            _positionTimer.Start();
+
+                // Skip all OSD/EPG/Slider UI mutations when OSD is collapsed to avoid overlay churn
+                if (OsdPanel == null || OsdPanel.Visibility != Visibility.Visible)
+                    return;
+
+                RefreshOsdPlaybackState();
+            }
+            catch { }
+        }
+
+        private void RefreshOsdPlaybackState()
+        {
+            if (_mpv == null || ViewModel.CurrentChannel == null || _isUserDraggingSlider) return;
+
+            long timeMs = _mpv.PositionMs;
+            long lengthMs = _mpv.DurationMs;
+            bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
+            bool isPaused = _userPaused || _mpv.Status == MpvPlaybackStatus.Paused;
+
+            if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0 && isVod)
+            {
+                if (_effectivePositionMs > 0 && Math.Abs(timeMs - _effectivePositionMs) < 1200)
+                    _lastSeekTime = DateTime.MinValue;
+                else
+                    return;
+            }
+
+            if (isVod)
+            {
+                bool isCatchup = ViewModel.CurrentChannel?.Id?.StartsWith("catchup_", StringComparison.Ordinal) == true;
+                string badge = isCatchup ? "⏮️ CATCH-UP" : "🎬 VOD";
+                if (LiveBadge != null && !ReferenceEquals(LiveBadge.Background, VodBlueBrush)) LiveBadge.Background = VodBlueBrush;
+                if (LiveBadgeText != null && _lastLiveBadgeText != badge) { _lastLiveBadgeText = badge; LiveBadgeText.Text = badge; }
+
+                if (lengthMs > 0)
+                {
+                    TimeSlider.IsEnabled = true;
+                    TimeSlider.Minimum = 0;
+                    TimeSlider.Maximum = lengthMs;
+                    _effectivePositionMs = timeMs;
+                    TimeSlider.Value = Math.Clamp(timeMs, 0, lengthMs);
+                    SetTextIfChanged(TimeCurrentText, ref _lastTimeCurrentText, TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss"));
+                    SetTextIfChanged(TimeTotalText, ref _lastTimeTotalText, TimeSpan.FromMilliseconds(lengthMs).ToString(@"hh\:mm\:ss"));
+                }
+                else
+                {
+                    TimeSlider.IsEnabled = false;
+                    SetTextIfChanged(TimeCurrentText, ref _lastTimeCurrentText, TimeSpan.FromMilliseconds(timeMs).ToString(@"hh\:mm\:ss"));
+                    SetTextIfChanged(TimeTotalText, ref _lastTimeTotalText, "--:--:--");
+                }
+                return;
+            }
+
+            var proxySession = GetActiveProxySession();
+            if (proxySession != null && proxySession.Segments.Count > 0)
+            {
+                var (earliestMs, latestMs, currentDvrPosMs) = ComputeHlsLiveState(proxySession, isPaused);
+
+                TimeSlider.IsEnabled = true;
+                TimeSlider.Minimum = earliestMs;
+                TimeSlider.Maximum = Math.Max(earliestMs + 1000, latestMs);
+                TimeSlider.Value = currentDvrPosMs;
+                _effectivePositionMs = currentDvrPosMs;
+
+                UpdateOsdTimeAndBadge(currentDvrPosMs, latestMs, proxySession.StartWallClockTime, isPaused);
+            }
+            else
+            {
+                long liveDelayMs = _accumulatedLiveLagMs;
+                if (isPaused && _livePauseStartedUtc != DateTime.MinValue)
+                    liveDelayMs += Math.Max(0, (long)(DateTime.UtcNow - _livePauseStartedUtc).TotalMilliseconds);
+
+                if (lengthMs > 2000)
+                {
+                    TimeSlider.IsEnabled = true;
+                    TimeSlider.Minimum = 0;
+                    TimeSlider.Maximum = lengthMs;
+                    TimeSlider.Value = Math.Clamp(timeMs, 0, lengthMs);
+                    if (liveDelayMs <= 0 && !isPaused && (lengthMs - timeMs) > 3000)
+                        liveDelayMs = lengthMs - timeMs;
+                }
+                else
+                {
+                    TimeSlider.IsEnabled = false;
+                    TimeSlider.Minimum = 0;
+                    TimeSlider.Maximum = 100;
+                    TimeSlider.Value = 100;
+                }
+
+                if (isPaused || liveDelayMs > 3000)
+                {
+                    string delayStr = FormatDelay(liveDelayMs);
+                    DateTime airedTime = DateTime.Now.AddMilliseconds(-liveDelayMs);
+                    SetLiveBadgeState(DelayedAmberBrush, isPaused ? $"⏸ {delayStr}" : delayStr, $"⚡ {delayStr}", $"GERİDE ({delayStr})", airedTime.ToString("HH:mm:ss"));
+                    UpdateOsdEpgForTime(airedTime);
+                }
+                else
+                {
+                    SetLiveBadgeState(LiveRedBrush, "🔴 CANLI", "CANLI", "CANLI YAYIN", DateTime.Now.ToString("HH:mm:ss"));
+                    UpdateOsdEpgForTime(DateTime.Now);
+                }
+            }
+        }
+
+        private (long earliestMs, long latestMs, long currentMs) ComputeHlsLiveState(HlsSessionInfo proxySession, bool isPaused)
+        {
+            long earliestMs = (long)(proxySession.Segments[0].StartTimeSeconds * 1000);
+            long latestMs = (long)(proxySession.TotalDurationSeconds * 1000);
+
+            if (isPaused && _hasPausedDvrPos && _livePauseStartedUtc != DateTime.MinValue)
+            {
+                long pausedElapsedMs = Math.Max(0, (long)(DateTime.UtcNow - _livePauseStartedUtc).TotalMilliseconds);
+                latestMs = Math.Max(latestMs, _pausedDvrPosMs + _accumulatedLiveLagMs + pausedElapsedMs);
+            }
+
+            long currentDvrPosMs;
+            if (isPaused && _hasPausedDvrPos)
+            {
+                currentDvrPosMs = Math.Clamp(_pausedDvrPosMs, earliestMs, latestMs);
+            }
+            else if (_isTimeshiftMode)
+            {
+                long playedMs = _timeshiftAccumulatedPlayMs;
+                if (_timeshiftPlayAnchorUtc != DateTime.MinValue)
+                    playedMs += Math.Max(0, (long)(DateTime.UtcNow - _timeshiftPlayAnchorUtc).TotalMilliseconds);
+
+                currentDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + playedMs, earliestMs, latestMs);
+                if (latestMs - currentDvrPosMs <= 2500)
+                {
+                    _isTimeshiftMode = false;
+                    _timeshiftStartDvrMs = 0;
+                    _timeshiftAccumulatedPlayMs = 0;
+                    _timeshiftPlayAnchorUtc = DateTime.MinValue;
+                    currentDvrPosMs = latestMs;
+                }
+            }
+            else
+            {
+                currentDvrPosMs = latestMs;
+            }
+
+            return (earliestMs, latestMs, currentDvrPosMs);
+        }
+
+        private static void SetTextIfChanged(System.Windows.Controls.TextBlock? tb, ref string cache, string value)
+        {
+            if (tb == null || cache == value) return;
+            cache = value;
+            tb.Text = value;
+        }
+
+        private void UpdateOsdTimeAndBadge(long currentMs, long totalMs, DateTime startWallTime, bool isPaused = false)
+        {
+            if (TimeCurrentText == null) return;
+            long offsetMs = Math.Max(0, totalMs - currentMs);
+
+            if (isPaused || offsetMs > 3000)
+            {
+                DateTime airedTime = startWallTime == DateTime.MinValue
+                    ? DateTime.Now.AddMilliseconds(-offsetMs)
+                    : startWallTime.AddMilliseconds(currentMs);
+                if (airedTime > DateTime.Now) airedTime = DateTime.Now.AddMilliseconds(-offsetMs);
+
+                string delayStr = FormatDelay(offsetMs);
+                SetLiveBadgeState(DelayedAmberBrush, isPaused ? $"⏸ {delayStr}" : delayStr, $"⚡ {delayStr}", $"GERİDE ({delayStr})", airedTime.ToString("HH:mm:ss"));
+                UpdateOsdEpgForTime(airedTime);
+            }
+            else
+            {
+                SetLiveBadgeState(LiveRedBrush, "🔴 CANLI", "CANLI", "CANLI YAYIN", DateTime.Now.ToString("HH:mm:ss"));
+                UpdateOsdEpgForTime(DateTime.Now);
+            }
         }
 
         private void InitializeViewersTimer()
         {
-            _viewersTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-            _viewersTimer.Tick += async (s, e) =>
+            var p2pPlugin = PluginManager.Instance.GetPluginById("p2p_stats") as P2PStatsPlugin;
+            int pollSec = Math.Clamp(p2pPlugin?.GetInt("PollIntervalSeconds", 3) ?? 3, 2, 30);
+
+            _viewersTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(pollSec) };
+            _viewersTimer.Tick += async (_, _) =>
             {
-                if (_player == null || _player.Status != Status.Playing || ViewModel.CurrentChannel == null)
+                if (_mpv == null || _mpv.Status != MpvPlaybackStatus.Playing || ViewModel.CurrentChannel == null ||
+                    OsdPanel == null || OsdPanel.Visibility != Visibility.Visible)
                 {
                     if (OsdViewersBadge != null) OsdViewersBadge.Visibility = Visibility.Collapsed;
                     return;
@@ -341,7 +420,14 @@ namespace StreamMesh.UI.Views
                     string currentUrl = ViewModel.CurrentChannel.Url ?? "";
                     if (_ace.IsAceStreamUrl(currentUrl) || currentUrl.Contains(":6878/ace/"))
                     {
-                        int peers = await _ace.GetStreamPeersAsync(currentUrl);
+                        var activeP2p = PluginManager.Instance.GetPluginById("p2p_stats") as P2PStatsPlugin;
+                        if (activeP2p != null && !activeP2p.IsEnabled)
+                        {
+                            if (OsdViewersBadge != null) OsdViewersBadge.Visibility = Visibility.Collapsed;
+                            return;
+                        }
+
+                        int peers = activeP2p != null ? await activeP2p.GetPeersAsync(currentUrl) : await _ace.GetStreamPeersAsync(currentUrl);
                         if (peers > 0)
                         {
                             OsdViewersText.Text = $"{peers} Eş";
@@ -351,8 +437,7 @@ namespace StreamMesh.UI.Views
                     }
                     else if (currentUrl.Contains("youtube.com") || currentUrl.Contains("youtu.be"))
                     {
-                        var yt = new YoutubeEngine();
-                        int viewers = await yt.GetActiveLiveViewersAsync(currentUrl);
+                        int viewers = await new YoutubeEngine().GetActiveLiveViewersAsync(currentUrl);
                         if (viewers > 0)
                         {
                             OsdViewersText.Text = viewers > 1000 ? $"{viewers / 1000.0:0.#}k İzleyici" : $"{viewers} İzleyici";
@@ -368,384 +453,184 @@ namespace StreamMesh.UI.Views
             _viewersTimer.Start();
         }
 
-        private void UpdateOsdTimeAndBadge(long currentMs, long totalMs, DateTime startWallTime)
+        private (bool hwAccel, int cacheMs, string userAgent) ReadEngineSettings()
         {
-            if (TimeCurrentText == null) return;
+            bool hwAccel = _db.GetSetting("FlyleafHwAccel", "true") == "true";
+            int cacheMs = Math.Clamp(int.TryParse(_db.GetSetting("FlyleafCache", "3500"), out int parsed) ? parsed : 3500, 2500, 15000);
+            string defaultUa = _db.GetSetting("FlyleafUserAgent", "");
+            if (string.IsNullOrWhiteSpace(defaultUa))
+                defaultUa = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
-            long offsetMs = Math.Max(0, totalMs - currentMs);
+            return (hwAccel, cacheMs, defaultUa);
+        }
 
-            if (offsetMs > 3000)
+        private void ConfigureMpvForUrl(string url, Channel channel)
+        {
+            if (_mpv != null) ConfigureMpvEngineForUrl(_mpv, url, channel);
+        }
+
+        private void ConfigureMpvEngineForUrl(MpvPlayerEngine engine, string url, Channel channel)
+        {
+            var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
+
+            string ua = !string.IsNullOrWhiteSpace(channel.HttpUserAgent) ? channel.HttpUserAgent : defaultUa;
+            bool isLocalProxy = url.Contains("127.0.0.1:48931", StringComparison.OrdinalIgnoreCase) || url.Contains("localhost:48931", StringComparison.OrdinalIgnoreCase);
+            bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || isLocalProxy;
+            bool isAceStream = channel.SourceType == "ACESTREAM" || url.Contains("session=ace_") || url.Contains(":6878/ace/");
+
+            var headers = new List<string>();
+            if (!string.IsNullOrWhiteSpace(channel.HttpReferer)) headers.Add($"Referer: {channel.HttpReferer}");
+            if (!string.IsNullOrWhiteSpace(channel.HttpCookie)) headers.Add($"Cookie: {channel.HttpCookie}");
+            if (!string.IsNullOrWhiteSpace(channel.HttpOrigin)) headers.Add($"Origin: {channel.HttpOrigin}");
+            if (channel.CustomHeaders != null)
             {
-                DateTime airedTime = startWallTime.AddMilliseconds(currentMs);
-                TimeCurrentText.Text = airedTime.ToString("HH:mm:ss");
-
-                TimeSpan delay = TimeSpan.FromMilliseconds(offsetMs);
-                string delayStr = delay.TotalHours >= 1 
-                    ? $"-{delay:hh\\:mm\\:ss}" 
-                    : $"-{delay:mm\\:ss}";
-
-                if (LiveBadge != null) LiveBadge.Background = DelayedAmberBrush;
-                if (LiveBadgeText != null) LiveBadgeText.Text = delayStr;
-                if (GoLiveBtn != null) GoLiveBtn.Background = DelayedAmberBrush;
-                if (GoLiveText != null) GoLiveText.Text = $"⚡ {delayStr}";
-                if (TimeTotalText != null) TimeTotalText.Text = $"GERİDE ({delayStr})";
-                UpdateOsdEpgForTime(airedTime);
+                foreach (var kv in channel.CustomHeaders)
+                {
+                    if (!string.IsNullOrWhiteSpace(kv.Key) && !string.IsNullOrWhiteSpace(kv.Value))
+                        headers.Add($"{kv.Key}: {kv.Value}");
+                }
             }
-            else
-            {
-                TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
-                if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
-                if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
-                if (GoLiveBtn != null) GoLiveBtn.Background = LiveRedBrush;
-                if (GoLiveText != null) GoLiveText.Text = "CANLI";
-                if (TimeTotalText != null) TimeTotalText.Text = "CANLI YAYIN";
-                UpdateOsdEpgForTime(DateTime.Now);
-            }
+
+            engine.ConfigureRuntimeOptions(hwAccel, cacheMs, ua, headers, isAceStream, isHls);
         }
 
         private void InitializePlayer()
         {
-            if (_player != null)
+            if (_mpv != null)
             {
-                VideoPlayer.Player = _player;
+                VideoPlayer.SyncOverlayBounds();
+                return;
+            }
+
+            if (!MpvPlayerEngine.IsLibraryAvailable())
+            {
+                LogService.LogWarning("Player: libmpv-2.dll henüz hazır değil, arka planda indiriliyor/bekleniyor...");
+                if (!_mpvDownloadTriggered)
+                {
+                    _mpvDownloadTriggered = true;
+                    _ = Task.Run(MaintenanceEngine.CheckAndInstallMpvAsync);
+                }
+
+                _ = Task.Run(async () =>
+                {
+                    for (int i = 0; i < 60; i++)
+                    {
+                        await Task.Delay(1500).ConfigureAwait(false);
+                        if (MpvPlayerEngine.IsLibraryAvailable())
+                        {
+                            await Dispatcher.InvokeAsync(InitializePlayer);
+                            break;
+                        }
+                    }
+                });
                 return;
             }
 
             try
             {
-                FlyleafHelper.SafeStart();
+                var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
+                IntPtr hwnd = VideoPlayer.VideoHandle;
 
-                _config = new Config();
-                try
+                var engine = new MpvPlayerEngine();
+                engine.Initialize(hwnd, hwAccel, cacheMs, defaultUa);
+                engine.SetAudioNormalization(_isAudioNormEnabled);
+                engine.SetVideoEnhancement(_isVideoEnhanceEnabled);
+
+                engine.OpenCompleted += (_, err) =>
                 {
-                    // Demuxer Network, Buffering & Timestamp Regeneration Configurations
-                    _config.Demuxer.FormatOpt["user_agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-                    _config.Demuxer.FormatOpt["reorder_queue_size"] = "1000";
-                    _config.Demuxer.FormatOpt["fflags"] = "+genpts+discardcorrupt";
-                    _config.Demuxer.FormatOpt["ts_discont_detect"] = "1";
-                    _config.Demuxer.FormatOpt["max_delay"] = "5000000";
-                    _config.Demuxer.FormatOpt["probesize"] = "5000000";
-                    _config.Demuxer.FormatOpt["analyzeduration"] = "5000000";
+                    LogService.LogInfo($"[PLAYBACK/MPV] OpenCompleted: Error={err ?? "None"}");
+                };
+                engine.StatusChanged += Mpv_StatusChanged;
+                engine.TracksChanged += RefreshAudioTracks;
 
-                    _config.Demuxer.BufferDuration = 4000 * 10000; // 4.0s buffer for smooth, jitter-free playback
-                    _config.Player.AutoPlay = true;
-
-                    // Apply Audio Normalization & Video Enhancement initial filter
-                    ApplyAudioNormalization();
-                    ApplyVideoEnhancement();
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogError("Player: Config setup exception", ex);
-                }
-
-                _player = new Player(_config);
-                VideoPlayer.Player = _player;
+                _mpv = engine;
                 _initTcs.TrySetResult(true);
 
-                _player.OpenCompleted += (s, e) =>
+                Dispatcher.InvokeAsync(() =>
                 {
-                    LogService.LogInfo($"[PLAYBACK] Player.OpenCompleted: Success={e.Success}, Error={e.Error ?? "None"}, Status={_player?.Status}");
-                };
-
-                _player.PropertyChanged += (s, e) =>
-                {
-                    if (e.PropertyName == nameof(Player.Status))
-                    {
-                        long curMs = _player?.CurTime / 10000 ?? 0;
-                        long durMs = _player?.Duration / 10000 ?? 0;
-                        LogService.LogInfo($"[PLAYBACK] Player.Status changed: {_player?.Status} (CurTime: {curMs}ms, Duration: {durMs}ms)");
-                        if (_player?.Status == Status.Playing)
-                        {
-                            LogService.LogInfo($"[PLAYBACK] Playback started successfully (Status: Playing, CurTime: {curMs}ms)");
-                        }
-
-                        Dispatcher.InvokeAsync(() =>
-                        {
-                            if (_player == null) return;
-                            if (_player.Status == Status.Playing)
-                            {
-                                UpdatePlayPauseIcon(true);
-                                RefreshAudioTracks();
-                                EnsureVideoStreamSelected();
-
-                                _ = Task.Run(async () =>
-                                {
-                                    await Task.Delay(1500);
-                                    await Dispatcher.InvokeAsync(() => { if (_player?.Status == Status.Playing) RefreshAudioTracks(); });
-                                    await Task.Delay(2000);
-                                    await Dispatcher.InvokeAsync(() => { if (_player?.Status == Status.Playing) RefreshAudioTracks(); });
-                                });
-                            }
-                            else if (_player.Status == Status.Paused)
-                            {
-                                // Initial buffer fill / opening window: keep stream playing
-                                if ((DateTime.UtcNow - _streamStartTime).TotalSeconds < 10)
-                                {
-                                    LogService.LogInfo("[PLAYBACK] Player entered Paused during startup window; triggering Play().");
-                                    try { _player.Play(); } catch { }
-                                    UpdatePlayPauseIcon(true);
-                                }
-                                else
-                                {
-                                    UpdatePlayPauseIcon(false);
-                                }
-                            }
-                            else if (_player.Status == Status.Stopped)
-                            {
-                                UpdatePlayPauseIcon(false);
-                            }
-                            else if (_player.Status == Status.Ended)
-                            {
-                                UpdatePlayPauseIcon(false);
-                                long endCurMs = _player?.CurTime / 10000 ?? 0;
-                                LogService.LogWarning($"[PLAYBACK] Stream ended (CurTime: {endCurMs}ms).");
-
-                                // Canlı yayında veya AceStream'de başlangıçta yaşanan tampon boşluğu durumunda otomatik yeniden bağlan
-                                if (ViewModel.CurrentChannel != null && !ViewModel.IsVod(ViewModel.CurrentChannel) && !string.IsNullOrEmpty(_currentPlayingUrl))
-                                {
-                                    string reconnectUrl = _currentPlayingUrl;
-                                    LogService.LogInfo($"[PLAYBACK] Canli yayin icin otomatik kurtarma (1.2 sn sonra) -> {reconnectUrl}");
-                                    _ = Task.Run(async () =>
-                                    {
-                                        await Task.Delay(1200);
-                                        if (_player != null && (_player.Status == Status.Ended || _player.Status == Status.Stopped))
-                                        {
-                                            await Dispatcher.InvokeAsync(() =>
-                                            {
-                                                if (_player != null && (_player.Status == Status.Ended || _player.Status == Status.Stopped))
-                                                {
-                                                    LogService.LogInfo($"[PLAYBACK] Otomatik kurtarma akisi yeniden aciyor -> {reconnectUrl}");
-                                                    _player.Open(reconnectUrl);
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
-                            }
-                            else if (_player.Status == Status.Failed)
-                            {
-                                UpdatePlayPauseIcon(false);
-                                if (ViewModel.CurrentChannel != null && !_isFallbackActive)
-                                {
-                                    OsdTitle.Text = $"{ViewModel.CurrentChannel.PrimaryName} (Sinyal Yok / Bağlantı Koptu)";
-                                    ShowOsdTemporary();
-                                }
-                            }
-                        });
-                    }
-                };
-
-                VideoPlayer.Player = _player;
-
-                LogService.LogInfo("Player: Flyleaf initialized successfully");
-                Dispatcher.Invoke(() => {
-                    OsdTitle.Text = "Sistem Hazır.";
+                    if (string.IsNullOrEmpty(OsdTitle.Text) || OsdTitle.Text == "Kanal Yükleniyor...")
+                        OsdTitle.Text = "Sistem Hazır (libmpv).";
                     OsdPanel.Visibility = Visibility.Visible;
                     UpdateAudioNormButtonUI();
                     UpdateVideoEnhanceButtonUI();
                     ShowOsdTemporary();
+                    VideoPlayer.SyncOverlayBounds();
                 });
             }
             catch (Exception ex)
             {
-                LogService.LogWarning($"Player: Flyleaf henüz hazır değil ({ex.Message}), arka planda yeniden denenecek.");
-                _ = Task.Run(async () =>
-                {
-                    string ffmpegPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ffmpeg");
-                    for (int waitSec = 0; waitSec < 30; waitSec++)
-                    {
-                        await Task.Delay(2000);
-                        if (Directory.Exists(ffmpegPath) && Directory.GetFiles(ffmpegPath, "avcodec*.dll").Length > 0)
-                        {
-                            await Dispatcher.InvokeAsync(() => InitializePlayer());
-                            break;
-                        }
-                    }
-                });
+                LogService.LogError("[PLAYBACK/MPV] Başlatma hatası", ex);
             }
         }
 
-        public void PrewarmPlayer()
+        private void Mpv_StatusChanged(MpvPlaybackStatus status)
         {
-            if (_player == null)
+            Dispatcher.InvokeAsync(() =>
             {
-                InitializePlayer();
-            }
-        }
+                if (_mpv == null) return;
 
-        private void EnsureVideoStreamSelected()
-        {
-            try
-            {
-                if (_player == null) return;
-                var videoProp = _player.GetType().GetProperty("Video")?.GetValue(_player);
-                if (videoProp != null)
+                if (status == MpvPlaybackStatus.Playing)
                 {
-                    var curStream = videoProp.GetType().GetProperty("Stream")?.GetValue(videoProp);
-                    if (curStream == null)
+                    UpdatePlayPauseIcon(true);
+                }
+                else if (status == MpvPlaybackStatus.Paused)
+                {
+                    if (!_userPaused && (DateTime.UtcNow - _streamStartTime).TotalSeconds < 6)
                     {
-                        var streams = videoProp.GetType().GetProperty("Streams")?.GetValue(videoProp) as System.Collections.IList;
-                        if (streams != null && streams.Count > 0)
-                        {
-                            LogService.LogInfo($"[PLAYBACK] Video.Stream null idi, ilk video akisi ({streams[0]}) seciliyor.");
-                            videoProp.GetType().GetProperty("Stream")?.SetValue(videoProp, streams[0]);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogWarning($"[PLAYBACK] EnsureVideoStreamSelected hatasi: {ex.Message}");
-            }
-        }
-
-        private bool SwitchAudioTrack(int targetIdx, object? rawStream = null)
-        {
-            if (_player == null || _player.Audio == null) return false;
-            try
-            {
-                var audioProp = _player.Audio;
-                var type = audioProp.GetType();
-                var streamsProp = type.GetProperty("Streams", BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-                var streamsList = streamsProp?.GetValue(audioProp) as System.Collections.IList;
-
-                if (streamsList == null || streamsList.Count == 0)
-                {
-                    LogService.LogWarning("[AUDIO_SWITCH] Streams list is empty or null.");
-                    return false;
-                }
-
-                if (targetIdx < 0 || targetIdx >= streamsList.Count)
-                {
-                    targetIdx = 0;
-                }
-
-                object? targetStream = rawStream ?? streamsList[targetIdx];
-                if (targetStream == null) return false;
-
-                LogService.LogInfo($"[AUDIO_SWITCH] Switching audio track directly to StreamIndex = {targetIdx} (Total Streams: {streamsList.Count})");
-
-                bool switched = false;
-
-                // 1. Set via direct Player.Audio.Stream property (Flyleaf standard API)
-                try
-                {
-                    dynamic dAudio = audioProp;
-                    dAudio.Stream = targetStream;
-                    switched = true;
-                    LogService.LogInfo($"[AUDIO_SWITCH] Successfully assigned dAudio.Stream to target track #{targetIdx}");
-                }
-                catch (Exception exDirect)
-                {
-                    LogService.LogWarning($"[AUDIO_SWITCH] Direct dAudio.Stream assign fallback: {exDirect.Message}");
-                }
-
-                // 2. Reflection fallback for Stream or SelectedStream
-                if (!switched)
-                {
-                    var streamProp = type.GetProperty("Stream", BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy) ??
-                                     type.GetProperty("SelectedStream", BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-
-                    if (streamProp != null && streamProp.CanWrite)
-                    {
-                        streamProp.SetValue(audioProp, targetStream);
-                        switched = true;
+                        _mpv.Play();
+                        UpdatePlayPauseIcon(true);
                     }
                     else
                     {
-                        var setStreamMethod = type.GetMethod("SetStream", BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-                        if (setStreamMethod != null)
-                        {
-                            setStreamMethod.Invoke(audioProp, new object[] { targetStream });
-                            switched = true;
-                        }
+                        UpdatePlayPauseIcon(false);
                     }
                 }
-
-                // 3. Update StreamIndex if present
-                var curIndexProp = type.GetProperty("StreamIndex", BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-                if (curIndexProp != null && curIndexProp.CanWrite)
+                else if (status == MpvPlaybackStatus.Stopped)
                 {
-                    curIndexProp.SetValue(audioProp, targetIdx);
+                    UpdatePlayPauseIcon(false);
                 }
-
-                // 4. Update demuxer options for subsequent read
-                if (_config != null && _config.Demuxer != null)
+                else if (status == MpvPlaybackStatus.Ended)
                 {
-                    _config.Demuxer.FormatOpt["audio_stream"] = targetIdx.ToString();
-                    _config.Demuxer.FormatOpt["ast"] = targetIdx.ToString();
-                    _config.Demuxer.FormatOpt["aid"] = (targetIdx + 1).ToString();
-                }
-
-                // 5. Ensure unmuted
-                try
-                {
-                    var muteProp = type.GetProperty("Mute", BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
-                    if (muteProp != null && (bool)(muteProp.GetValue(audioProp) ?? false) == true)
+                    UpdatePlayPauseIcon(false);
+                    if (!_userPaused && ViewModel.CurrentChannel != null && !ViewModel.IsVod(ViewModel.CurrentChannel) && !string.IsNullOrEmpty(_currentPlayingUrl))
                     {
-                        muteProp.SetValue(audioProp, false);
+                        string reconnectUrl = _currentPlayingUrl;
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(1200).ConfigureAwait(false);
+                            if (!_userPaused && _mpv != null && (_mpv.Status == MpvPlaybackStatus.Ended || _mpv.Status == MpvPlaybackStatus.Stopped))
+                            {
+                                await Dispatcher.InvokeAsync(() =>
+                                {
+                                    if (!_userPaused && _mpv != null && (_mpv.Status == MpvPlaybackStatus.Ended || _mpv.Status == MpvPlaybackStatus.Stopped))
+                                        _mpv.Open(reconnectUrl);
+                                });
+                            }
+                        });
                     }
                 }
-                catch { }
-
-                if (switched)
+                else if (status == MpvPlaybackStatus.Failed)
                 {
-                    LogService.LogInfo($"[AUDIO_SWITCH] Audio track successfully switched to #{targetIdx}.");
+                    UpdatePlayPauseIcon(false);
+                    if (ViewModel.CurrentChannel != null)
+                    {
+                        OsdTitle.Text = $"{ViewModel.CurrentChannel.PrimaryName} (Sinyal Yok / Bağlantı Koptu)";
+                        ShowOsdTemporary();
+                    }
                 }
-
-                return switched;
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("[AUDIO_SWITCH] General exception in SwitchAudioTrack", ex);
-                return false;
-            }
-        }
-
-
-
-
-
-        private void EnsureAudioStreamSelected()
-        {
-            try
-            {
-                if (_player == null || _player.Audio == null) return;
-                if (_selectedAudioTrackIndex > 0)
-                {
-                    SwitchAudioTrack(_selectedAudioTrackIndex);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogWarning($"[PLAYBACK] EnsureAudioStreamSelected hatasi: {ex.Message}");
-            }
-        }
-
-
-        private void EnsureAvStreamsSelected()
-        {
-            EnsureVideoStreamSelected();
-            EnsureAudioStreamSelected();
+            });
         }
 
         private void UpdateChannelLogo(Channel channel)
         {
             if (channel == null || OsdLogo == null || OsdLogoFallback == null) return;
 
-            // 1. Instantly display monogram fallback on UI (0ms latency, zero freezing)
-            string cleanName = ChannelUtils.GetCleanName(channel.PrimaryName ?? channel.Name ?? "TV");
-            string monogram = ChannelLogoManager.GenerateMonogram(cleanName);
-            int hash = Math.Abs(cleanName.GetHashCode());
-            var bg = ChannelLogoManager.MonogramPalette[hash % ChannelLogoManager.MonogramPalette.Length];
-
-            OsdLogoFallbackText.Text = monogram;
-            OsdLogoFallback.Background = bg;
+            string displayBase = ChannelUtils.GetDisplayBaseName(channel.PrimaryName ?? channel.Name ?? "TV");
+            OsdLogoFallbackText.Text = ChannelLogoManager.GenerateMonogram(displayBase);
+            OsdLogoFallback.Background = ChannelLogoManager.MonogramPalette[Math.Abs(displayBase.GetHashCode()) % ChannelLogoManager.MonogramPalette.Length];
             OsdLogo.Visibility = Visibility.Collapsed;
             OsdLogoFallback.Visibility = Visibility.Visible;
 
-            // 2. Fetch and apply remote logo asynchronously in background without touching UI thread
             _ = Task.Run(async () =>
             {
                 try
@@ -768,37 +653,112 @@ namespace StreamMesh.UI.Views
             });
         }
 
+        private static bool PromptParentalPin(string channelName, UserAuthPlugin authPlugin)
+        {
+            var win = new Window
+            {
+                Title = "Ebeveyn Koruması - PIN Gerekli",
+                Width = 360,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = UI.Windows.MainWindow.Instance,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(15, 23, 42)),
+                Foreground = System.Windows.Media.Brushes.White
+            };
+
+            var stack = new System.Windows.Controls.StackPanel { Margin = new Thickness(20) };
+            stack.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = $"🔒 '{channelName}' kilitli kanal. Devam etmek için 4 haneli PIN girin:",
+                TextWrapping = TextWrapping.Wrap,
+                Foreground = System.Windows.Media.Brushes.White,
+                Margin = new Thickness(0, 0, 0, 12)
+            });
+
+            var pinBox = new System.Windows.Controls.PasswordBox { Height = 34, FontSize = 16, Padding = new Thickness(8, 4, 8, 4), Margin = new Thickness(0, 0, 0, 14) };
+            stack.Children.Add(pinBox);
+
+            var btnPanel = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = System.Windows.HorizontalAlignment.Right };
+            var cancelBtn = new System.Windows.Controls.Button { Content = "İptal", Width = 80, Height = 32, Margin = new Thickness(0, 0, 8, 0) };
+            var okBtn = new System.Windows.Controls.Button { Content = "Doğrula", Width = 90, Height = 32, IsDefault = true };
+            cancelBtn.Click += (_, _) => win.DialogResult = false;
+            okBtn.Click += (_, _) =>
+            {
+                if (authPlugin.VerifyPin(pinBox.Password)) win.DialogResult = true;
+                else
+                {
+                    System.Windows.MessageBox.Show("Hatalı PIN kodu!", "Erişim Engellendi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    pinBox.Clear();
+                    pinBox.Focus();
+                }
+            };
+            btnPanel.Children.Add(cancelBtn);
+            btnPanel.Children.Add(okBtn);
+            stack.Children.Add(btnPanel);
+            win.Content = stack;
+            win.Loaded += (_, _) => pinBox.Focus();
+            return win.ShowDialog() == true;
+        }
+
+        private void ResetTimeshiftState()
+        {
+            _userPaused = false;
+            _hasPausedDvrPos = false;
+            _pausedDvrPosMs = 0;
+            _livePauseStartedUtc = DateTime.MinValue;
+            _accumulatedLiveLagMs = 0;
+            _isTimeshiftMode = false;
+            _timeshiftStartDvrMs = 0;
+            _timeshiftPlayAnchorUtc = DateTime.MinValue;
+            _timeshiftAccumulatedPlayMs = 0;
+            _effectivePositionMs = 0;
+        }
+
         public void LoadChannel(Channel channel)
         {
             if (channel == null) return;
-            LogService.LogInfo($"[PLAYBACK] CHANNEL SELECTED: {channel.Name} (ID: {channel.Id}, Category: {channel.Category}, Url: {channel.Url})");
+
+            var authPlugin = PluginManager.Instance.GetPluginById("user_auth") as UserAuthPlugin;
+            if (channel.IsLocked && authPlugin is { IsEnabled: true } && authPlugin.GetBool("EnableParentalPin"))
+            {
+                bool authorized = Dispatcher.Invoke(() => PromptParentalPin(channel.PrimaryName, authPlugin));
+                if (!authorized) return;
+            }
+
+            if (_isMultiViewActive)
+            {
+                Dispatcher.Invoke(() => ExitMultiViewMode(restoreChannel: null, stopAceIfUnused: false));
+            }
+
+            if (_isRecording) StopRecording();
 
             ViewModel.CurrentChannel = channel;
-
             _loadCts?.Cancel();
             _loadCts?.Dispose();
-            _loadCts = new System.Threading.CancellationTokenSource();
+            _loadCts = new CancellationTokenSource();
             var token = _loadCts.Token;
             long sessionId = Interlocked.Increment(ref _playbackSessionId);
 
             _currentPlayingUrl = null;
+            _activeProxySession = null;
             _streamStartTime = DateTime.UtcNow;
             _hasReceivedFirstFrame = false;
-            _softRetriggerCount = 0;
-            _isTimeshiftMode = false;
-            _timeshiftStartDvrMs = 0;
-            _pausedDvrPosMs = 0;
-            _effectivePositionMs = 0;
+            ResetTimeshiftState();
+
             bool isAce = channel.SourceType == "ACESTREAM" ||
                          channel.Url?.Contains("acestream://", StringComparison.OrdinalIgnoreCase) == true ||
                          channel.Url?.Contains(":6878/ace/", StringComparison.OrdinalIgnoreCase) == true;
-            string initialStatus = isAce ? $"{channel.PrimaryName} (Görüntü Hazırlanıyor / Tamponlanıyor...)" : $"{channel.PrimaryName} (Bağlanıyor...)";
 
-            _ = Dispatcher.InvokeAsync(() => {
-                OsdTitle.Text = initialStatus;
+            _ = Dispatcher.InvokeAsync(() =>
+            {
+                OsdTitle.Text = !MpvPlayerEngine.IsLibraryAvailable()
+                    ? $"{channel.PrimaryName} (libmpv motoru hazırlanıyor...)"
+                    : (isAce ? $"{channel.PrimaryName} (P2P Tamponlanıyor...)" : $"{channel.PrimaryName} (Bağlanıyor...)");
                 OsdCategory.Text = channel.Category;
                 OsdCurrentEpg.Text = "Yayın akışı bilgisi yükleniyor...";
                 OsdNextEpg.Text = "Sıradaki: --:--";
+                DeadAccountAlertCard.Visibility = Visibility.Collapsed;
                 ShowOsdTemporary();
                 UpdatePlayPauseIcon(true);
                 UpdateChannelLogo(channel);
@@ -808,64 +768,39 @@ namespace StreamMesh.UI.Views
             {
                 if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
 
-                // Wait for Player initialization (Flyleaf/FFmpeg setup)
                 try
                 {
-                    if (_player == null)
-                    {
-                        await Dispatcher.InvokeAsync(InitializePlayer);
-                    }
-                    else
-                    {
-                        _initTcs.TrySetResult(true);
-                    }
+                    if (_mpv == null) await Dispatcher.InvokeAsync(InitializePlayer);
+                    else _initTcs.TrySetResult(true);
 
-                    LogService.LogInfo("[PLAYBACK] Waiting for Player Init...");
-                    using var initTimeout = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(6));
-                    using var linkedInit = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(token, initTimeout.Token);
+                    using var initTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+                    using var linkedInit = CancellationTokenSource.CreateLinkedTokenSource(token, initTimeout.Token);
                     await _initTcs.Task.WaitAsync(linkedInit.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
-                    if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
-                    LogService.LogError("[PLAYBACK] Player Init TIMEOUT");
-                    _ = Dispatcher.InvokeAsync(() => {
-                        OsdTitle.Text = "Görüntü motoru başlatılamadı (Zaman aşımı)";
-                        ShowOsdTemporary();
-                    });
+                    if (!token.IsCancellationRequested && sessionId == _playbackSessionId)
+                        _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = "Görüntü motoru (libmpv) başlatılamadı"; ShowOsdTemporary(); });
                     return;
                 }
 
-                if (_player == null || token.IsCancellationRequested || sessionId != _playbackSessionId) return;
-
-                LogService.LogInfo("[PLAYBACK] Waiting for Play Semaphore...");
-                bool acquired = await _playSemaphore.WaitAsync(10000, token).ConfigureAwait(false);
-                if (!acquired || token.IsCancellationRequested || sessionId != _playbackSessionId)
-                {
-                    LogService.LogWarning("[PLAYBACK] Play Semaphore Timeout or Cancelled");
-                    return;
-                }
+                if (_mpv == null || token.IsCancellationRequested || sessionId != _playbackSessionId) return;
+                if (!await _playSemaphore.WaitAsync(10000, token).ConfigureAwait(false)) return;
 
                 try
                 {
                     if (ViewModel.IsVod(channel))
-                    {
-                        ViewModel.SaveVodPosition(channel, _player.CurTime / 10000);
-                    }
+                        ViewModel.SaveVodPosition(channel, _mpv.PositionMs);
 
-                    // Removed StopAllStreamsAsync/StopAllSessions to prevent killing P2P engine session during channel load.
-                    _player.Stop();
+                    _mpv.Stop();
                     HlsProxyEngine.Instance.ClearChannelCache();
 
                     if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
 
-                    bool isSameChannel = (_lastLoadedChannelId == channel.Id);
-                    _lastLoadedChannelId = channel.Id;
-
-                    if (!isSameChannel)
+                    if (_lastLoadedChannelId != channel.Id)
                     {
-                        _selectedAudioTrackIndex = -1;
-                        _selectedAudioTrackLangCode = "";
+                        _lastLoadedChannelId = channel.Id;
+                        _selectedAudioTrackId = -1;
                     }
 
                     _ = Task.Run(async () =>
@@ -874,20 +809,17 @@ namespace StreamMesh.UI.Views
                         _ = Dispatcher.InvokeAsync(() => UpdateOsdEpgForTime(DateTime.Now));
                     });
 
-                    ApplyAudioNormalization();
-                    ApplyVideoEnhancement();
+                    _mpv.SetAudioNormalization(_isAudioNormEnabled);
+                    _mpv.SetVideoEnhancement(_isVideoEnhanceEnabled);
 
-                    LogService.LogInfo("[PLAYBACK] Getting candidate stream URLs...");
-                    var candidateUrls = await ViewModel.GetSmartOrderedCandidatesAsync(channel, token, (status) => {
-                        _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = status; ShowOsdTemporary(); });
-                    }).ConfigureAwait(false);
+                    var candidateUrls = await ViewModel.GetSmartOrderedCandidatesAsync(channel, token, status =>
+                        _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = status; ShowOsdTemporary(); })).ConfigureAwait(false);
 
                     if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
-
-                    if (candidateUrls == null || candidateUrls.Count == 0)
+                    if (candidateUrls.Count == 0)
                     {
-                        LogService.LogWarning("[PLAYBACK] No candidate URLs found for channel");
-                        _ = Dispatcher.InvokeAsync(() => {
+                        _ = Dispatcher.InvokeAsync(() =>
+                        {
                             OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Zayıf veya Adres Geçersiz)";
                             UpdatePlayPauseIcon(false);
                             ShowOsdTemporary();
@@ -895,72 +827,47 @@ namespace StreamMesh.UI.Views
                         return;
                     }
 
+                    var resPlugin = PluginManager.Instance.GetPluginById("stream_resolution") as StreamResolutionPlugin;
+                    bool allowFallback = resPlugin == null || !resPlugin.IsEnabled || resPlugin.GetBool("AutoFallbackOnFail");
+                    int customTimeoutSec = resPlugin is { IsEnabled: true } ? Math.Clamp(resPlugin.GetInt("ConnectionTimeoutSeconds", 8), 5, 45) : 15;
+                    int maxTries = allowFallback ? candidateUrls.Count : 1;
+
                     bool playbackSucceeded = false;
                     string successfulPreparedUrl = "";
 
-                    for (int i = 0; i < candidateUrls.Count; i++)
+                    for (int i = 0; i < maxTries; i++)
                     {
                         if (token.IsCancellationRequested || sessionId != _playbackSessionId) break;
-
                         string rawCandidate = candidateUrls[i];
                         if (i > 0)
                         {
-                            _ = Dispatcher.InvokeAsync(() => {
+                            _ = Dispatcher.InvokeAsync(() =>
+                            {
                                 OsdTitle.Text = $"{channel.PrimaryName} (Alternatif {i + 1}/{candidateUrls.Count} deneniyor...)";
                                 ShowOsdTemporary();
                             });
                         }
 
-                        LogService.LogInfo($"[SmartRouter] Trying candidate {i + 1}/{candidateUrls.Count}: '{rawCandidate}'");
-
-                        string preparedUrl = await ViewModel.PrepareSingleStreamUrlAsync(rawCandidate, channel, token, (status) => {
-                            _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = status; ShowOsdTemporary(); });
-                        }).ConfigureAwait(false);
+                        string preparedUrl = await ViewModel.PrepareSingleStreamUrlAsync(rawCandidate, channel, token, status =>
+                            _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = status; ShowOsdTemporary(); })).ConfigureAwait(false);
 
                         if (token.IsCancellationRequested || sessionId != _playbackSessionId) break;
+                        if (string.IsNullOrEmpty(preparedUrl)) continue;
 
-                        if (string.IsNullOrEmpty(preparedUrl))
-                        {
-                            LogService.LogWarning($"[SmartRouter] Candidate {i + 1}/{candidateUrls.Count} could not be prepared (empty URL).");
-                            continue;
-                        }
+                        bool isAceCandidate = channel.SourceType == "ACESTREAM" || preparedUrl.Contains(":6878/ace/") || preparedUrl.Contains("session=ace_");
+                        int watchdogMs = isAceCandidate ? 35000 : customTimeoutSec * 1000;
 
-                        // Per-candidate watchdog (15s for IPTV/Direct, 35s for AceStream P2P tracker and peer discovery)
-                        bool isAceStreamCandidate = channel.SourceType == "ACESTREAM" ||
-                                                    rawCandidate.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase) ||
-                                                    rawCandidate.Contains(":6878/ace/") ||
-                                                    rawCandidate.Contains("session=ace_") ||
-                                                    preparedUrl.Contains(":6878/ace/") ||
-                                                    preparedUrl.Contains("session=ace_");
-                        int watchdogMs = isAceStreamCandidate ? 35000 : 15000;
-
-                        if (isAceStreamCandidate)
-                        {
-                            _ = Dispatcher.InvokeAsync(() => {
-                                OsdTitle.Text = $"{channel.PrimaryName} (P2P Eşleri Aranıyor & Bağlanıyor...)";
-                                ShowOsdTemporary();
-                            });
-                        }
-
-                        _currentPlayingUrl = preparedUrl; // Erken tampon boşluğunda Status.Ended tetiklenirse auto-recovery'nin hemen devreye girmesi için
-
-                        bool candidateStarted = await OpenAndAwaitPlaybackAsync(preparedUrl, channel, watchdogMs, token, sessionId).ConfigureAwait(false);
-
-                        if (token.IsCancellationRequested || sessionId != _playbackSessionId) break;
-
-                        if (candidateStarted)
+                        _currentPlayingUrl = preparedUrl;
+                        if (await OpenAndAwaitPlaybackAsync(preparedUrl, channel, watchdogMs, token, sessionId).ConfigureAwait(false))
                         {
                             playbackSucceeded = true;
                             successfulPreparedUrl = preparedUrl;
-                            LogService.LogInfo($"[SmartRouter] Playback started successfully on candidate {i + 1}/{candidateUrls.Count} -> {preparedUrl}");
+                            resPlugin?.NotifyStreamResolved(preparedUrl, i > 0);
                             break;
                         }
-                        else
-                        {
-                            _currentPlayingUrl = null;
-                            LogService.LogWarning($"[SmartRouter] Candidate {i + 1}/{candidateUrls.Count} failed (Status: {_player?.Status}). Moving to next alternative...");
-                            try { _player?.Stop(); } catch { }
-                        }
+
+                        _currentPlayingUrl = null;
+                        try { _mpv?.Stop(); } catch { }
                     }
 
                     if (token.IsCancellationRequested || sessionId != _playbackSessionId) return;
@@ -968,24 +875,34 @@ namespace StreamMesh.UI.Views
                     if (playbackSucceeded)
                     {
                         _currentPlayingUrl = successfulPreparedUrl;
-                        _ = Dispatcher.InvokeAsync(() => {
-                            if (ViewModel.CurrentChannel != null) OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
-                            UpdatePlayPauseIcon(true);
-                            ShowOsdTemporary();
-                        });
+                        _activeProxySession = HlsProxyEngine.Instance.GetSession(successfulPreparedUrl) ?? HlsProxyEngine.Instance.GetSession(channel.Url ?? "");
 
-                        if (ViewModel.IsVod(channel) && channel.LastPositionMs > 0 && _player != null)
+                        if (!(channel.Id?.StartsWith("catchup_", StringComparison.Ordinal) ?? false))
                         {
-                            try { _player.Seek((int)channel.LastPositionMs); _lastSeekTime = DateTime.Now; _effectivePositionMs = channel.LastPositionMs; } catch { }
+                            channel.PersonalWatchCount++;
+                            _ = _db.SaveChannelAsync(channel, notifyUpdated: false);
                         }
 
-                        _ = Dispatcher.InvokeAsync(() => _positionTimer?.Start());
+                        if (ViewModel.IsVod(channel) && channel.LastPositionMs > 0)
+                        {
+                            try { _mpv?.SeekMs(channel.LastPositionMs); _lastSeekTime = DateTime.Now; _effectivePositionMs = channel.LastPositionMs; } catch { }
+                        }
+
+                        _ = Dispatcher.InvokeAsync(() =>
+                        {
+                            if (ViewModel.CurrentChannel != null) OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
+                            UpdatePlayPauseIcon(true);
+                            _positionTimer?.Start();
+                            RefreshAudioTracks();
+                            RefreshOsdPlaybackState();
+                            ShowOsdTemporary();
+                        });
                     }
                     else
                     {
                         _currentPlayingUrl = null;
-                        LogService.LogWarning($"[SmartRouter] All {candidateUrls.Count} candidate URLs failed for channel '{channel.Name}'.");
-                        _ = Dispatcher.InvokeAsync(() => {
+                        _ = Dispatcher.InvokeAsync(() =>
+                        {
                             OsdTitle.Text = $"{channel.PrimaryName} (Sinyal Yok / Tüm Kaynaklar Başarısız)";
                             UpdatePlayPauseIcon(false);
                             ShowOsdTemporary();
@@ -995,646 +912,583 @@ namespace StreamMesh.UI.Views
                 }
                 catch (Exception ex)
                 {
-                    LogService.LogError("[PLAYBACK] CRITICAL ERROR", ex);
-                    if (!token.IsCancellationRequested && sessionId == _playbackSessionId)
-                    {
-                        _ = Dispatcher.InvokeAsync(() => {
-                            OsdTitle.Text = $"{channel.PrimaryName} (Hata: {ex.Message})";
-                            ShowOsdTemporary();
-                        });
-                    }
+                    LogService.LogError("[PLAYBACK] Error loading channel", ex);
                 }
                 finally
                 {
-                    _isFallbackActive = false;
                     _playSemaphore.Release();
-                    LogService.LogInfo("[PLAYBACK] Play Semaphore Released");
                 }
             }, token);
         }
 
         private async Task<bool> OpenAndAwaitPlaybackAsync(string url, Channel channel, int watchdogMs, CancellationToken token, long sessionId)
         {
-            if (_player == null || token.IsCancellationRequested || sessionId != _playbackSessionId)
+            if (_mpv == null || token.IsCancellationRequested || sessionId != _playbackSessionId)
                 return false;
 
             var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            PropertyChangedEventHandler statusHandler = (s, e) =>
+            Action<MpvPlaybackStatus> statusHandler = status =>
             {
-                if (e.PropertyName == nameof(Player.Status))
-                {
-                    if (sessionId != _playbackSessionId)
-                    {
-                        tcs.TrySetResult(false);
-                        return;
-                    }
-
-                    if (_player.Status == Status.Playing)
-                    {
-                        tcs.TrySetResult(true);
-                    }
-                    else if (_player.Status == Status.Paused)
-                    {
-                        Dispatcher.InvokeAsync(() => {
-                            try { if (_player?.Status == Status.Paused) _player.Play(); } catch { }
-                        });
-                        tcs.TrySetResult(true);
-                    }
-                    else if (_player.Status == Status.Failed)
-                    {
-                        tcs.TrySetResult(false);
-                    }
-                }
+                if (sessionId != _playbackSessionId) { tcs.TrySetResult(false); return; }
+                if (status == MpvPlaybackStatus.Playing) tcs.TrySetResult(true);
+                else if (status == MpvPlaybackStatus.Failed) tcs.TrySetResult(false);
             };
 
-            EventHandler<OpenCompletedArgs>? openHandler = null;
-            openHandler = (s, e) =>
+            Action<bool, string?> openHandler = (success, _) =>
             {
-                if (sessionId != _playbackSessionId)
+                if (sessionId != _playbackSessionId) { tcs.TrySetResult(false); return; }
+                if (success)
                 {
-                    tcs.TrySetResult(false);
-                    return;
-                }
-
-                if (e.Success)
-                {
-                    LogService.LogInfo($"[PLAYBACK] OpenCompleted successfully! Status={_player?.Status}. Ensuring playback is started.");
-                    Dispatcher.InvokeAsync(() => {
-                        try
-                        {
-                            if (_player != null && (_player.Status == Status.Paused || _player.Status == Status.Stopped))
-                            {
-                                _player.Play();
-                            }
-                            EnsureVideoStreamSelected();
-                            EnsureAudioStreamSelected();
-                            RefreshAudioTracks();
-                        }
-                        catch { }
-                    });
+                    if (_selectedAudioTrackId > 0)
+                        _mpv?.SwitchAudioTrack(_selectedAudioTrackId);
                     tcs.TrySetResult(true);
                 }
                 else
                 {
-                    LogService.LogWarning($"[PLAYBACK] OpenCompleted failed: {e.Error}");
                     tcs.TrySetResult(false);
                 }
             };
 
-            _player.PropertyChanged += statusHandler;
-            _player.OpenCompleted += openHandler;
+            _mpv.StatusChanged += statusHandler;
+            _mpv.OpenCompleted += openHandler;
 
             try
             {
-                var sw = System.Diagnostics.Stopwatch.StartNew();
+                ConfigureMpvForUrl(url, channel);
 
-                if (_config != null)
-                {
-                    // 1. Channel User-Agent (örn: Firefox, VLC, Chrome vb.)
-                    string ua = !string.IsNullOrWhiteSpace(channel.HttpUserAgent)
-                        ? channel.HttpUserAgent
-                        : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
-                    _config.Demuxer.FormatOpt["user_agent"] = ua;
-                    
-                    bool isAceStreamStream = channel.SourceType == "ACESTREAM" ||
-                                             url.Contains("session=ace_") ||
-                                             url.Contains(":6878/ace/") ||
-                                             url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase);
+                if (channel.SourceType == "ACESTREAM" || url.Contains("session=ace_") || url.Contains(":6878/ace/"))
+                    await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
 
-                    // Timeout ve demuxer ayarları (Çoklu dil ve ses izlerinin eksiksiz algılanması için geniş probe profili)
-                    if (isAceStreamStream)
-                    {
-                        _config.Demuxer.FormatOpt["stimeout"] = "30000000";
-                        _config.Demuxer.FormatOpt["reconnect"] = "1";
-                        _config.Demuxer.FormatOpt["reconnect_at_eof"] = "1";
-                        _config.Demuxer.FormatOpt["reconnect_streamed"] = "1";
-                        _config.Demuxer.FormatOpt["reconnect_delay_max"] = "2";
-                        _config.Demuxer.FormatOpt["timeout"] = "30000000";
-                        _config.Demuxer.FormatOpt["probesize"] = "10000000";       // 10 MB (Tüm ses izlerinin ve PMT PIDs haritasının tam okunması için)
-                        _config.Demuxer.FormatOpt["analyzeduration"] = "10000000"; // 10 saniye
-                        _config.Demuxer.FormatOpt["fflags"] = "+genpts+igndts+discardcorrupt";
-                        _config.Demuxer.FormatOpt["flush_packets"] = "1";
-                        _config.Demuxer.FormatOpt["ts_discont_detect"] = "1";
-                        _config.Demuxer.FormatOpt["rw_timeout"] = "30000000";
-                        _config.Demuxer.BufferDuration = 3000 * 10000;
-                    }
-                    else
-                    {
-                        _config.Demuxer.FormatOpt["stimeout"] = "15000000";
-                        _config.Demuxer.FormatOpt["reconnect"] = "1";
-                        _config.Demuxer.FormatOpt["reconnect_at_eof"] = "1";
-                        _config.Demuxer.FormatOpt["reconnect_streamed"] = "1";
-                        _config.Demuxer.FormatOpt["reconnect_delay_max"] = "2";
-                        _config.Demuxer.FormatOpt["timeout"] = "15000000";
-                        _config.Demuxer.FormatOpt["probesize"] = "10000000";       // 10 MB (MPEG-TS çift/çoklu dil kanallarının tüm ses PID'lerini bulması için)
-                        _config.Demuxer.FormatOpt["analyzeduration"] = "5000000";  // 5 saniye
-                        _config.Demuxer.FormatOpt["fflags"] = "+genpts+igndts+discardcorrupt";
-                        _config.Demuxer.FormatOpt["flush_packets"] = "1";
-                        _config.Demuxer.FormatOpt["ts_discont_detect"] = "1";
-                        _config.Demuxer.FormatOpt["rw_timeout"] = "15000000";
-                        _config.Demuxer.BufferDuration = 3000 * 10000;
-                    }
-
-                    // 2. Channel HTTP Headers (Referer, Cookie, Origin vb.)
-                    var customHeaders = new System.Text.StringBuilder();
-                    if (!string.IsNullOrWhiteSpace(channel.HttpReferer))
-                        customHeaders.Append($"Referer: {channel.HttpReferer}\r\n");
-                    if (!string.IsNullOrWhiteSpace(channel.HttpCookie))
-                        customHeaders.Append($"Cookie: {channel.HttpCookie}\r\n");
-                    if (!string.IsNullOrWhiteSpace(channel.HttpOrigin))
-                        customHeaders.Append($"Origin: {channel.HttpOrigin}\r\n");
-                    if (channel.CustomHeaders != null)
-                    {
-                        foreach (var kv in channel.CustomHeaders)
-                        {
-                            if (!string.IsNullOrWhiteSpace(kv.Key) && !string.IsNullOrWhiteSpace(kv.Value))
-                                customHeaders.Append($"{kv.Key}: {kv.Value}\r\n");
-                        }
-                    }
-
-                    if (customHeaders.Length > 0)
-                    {
-                        _config.Demuxer.FormatOpt["headers"] = customHeaders.ToString();
-                    }
-                    else
-                    {
-                        _config.Demuxer.FormatOpt.Remove("headers");
-                    }
-
-                    // 3. Audio stream selection index for multi-audio tracks (e.g. MPEG-TS / AceStream)
-                    if (_selectedAudioTrackIndex >= 0)
-                    {
-                        _config.Demuxer.FormatOpt["audio_stream"] = _selectedAudioTrackIndex.ToString();
-                        _config.Demuxer.FormatOpt["ast"] = _selectedAudioTrackIndex.ToString();
-                        _config.Demuxer.FormatOpt["aid"] = (_selectedAudioTrackIndex + 1).ToString();
-                    }
-                    else
-                    {
-                        _config.Demuxer.FormatOpt.Remove("audio_stream");
-                        _config.Demuxer.FormatOpt.Remove("ast");
-                        _config.Demuxer.FormatOpt.Remove("aid");
-                    }
-                }
-
-                var openTask = Task.Run(async () =>
-                {
-                    try
-                    {
-                        bool isAceStream = channel.SourceType == "ACESTREAM" ||
-                                           url.Contains("session=ace_") ||
-                                           url.Contains(":6878/ace/") ||
-                                           url.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase);
-                        if (isAceStream)
-                        {
-                            // AceStream motorunun çalıştığından ve HTTP portunun hazır olduğundan emin ol (stop_all gönderip motoru meşgule DÜŞÜRMEZ!)
-                            await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
-                        }
-
-                        await Dispatcher.InvokeAsync(() =>
-                        {
-                            _player.Open(url);
-                            if (_player.Status == Status.Paused)
-                            {
-                                try { _player.Play(); } catch { }
-                            }
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        LogService.LogError($"[PLAYBACK] Player.Open Exception for {url}", ex);
-                        tcs.TrySetResult(false);
-                    }
-                }, token);
-
-                if (_player.Status == Status.Playing || _player.Status == Status.Paused)
-                {
-                    if (_player.Status == Status.Paused)
-                    {
-                        _ = Dispatcher.InvokeAsync(() => { try { _player?.Play(); } catch { } });
-                    }
-                    return true;
-                }
+                _mpv.Open(url);
 
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
-                var timeoutTask = Task.Delay(watchdogMs, linkedCts.Token);
-
-                var completed = await Task.WhenAny(tcs.Task, timeoutTask).ConfigureAwait(false);
-                sw.Stop();
-
-                if (token.IsCancellationRequested || sessionId != _playbackSessionId)
-                    return false;
+                var completed = await Task.WhenAny(tcs.Task, Task.Delay(watchdogMs, linkedCts.Token)).ConfigureAwait(false);
+                if (token.IsCancellationRequested || sessionId != _playbackSessionId) return false;
 
                 if (completed == tcs.Task)
                 {
                     linkedCts.Cancel();
-                    bool isSuccess = await tcs.Task.ConfigureAwait(false);
-                    LogService.LogInfo($"[SmartRouter] Candidate response in {sw.ElapsedMilliseconds}ms -> Success: {isSuccess}, Player.Status: {_player.Status}");
-                    return isSuccess;
+                    return await tcs.Task.ConfigureAwait(false);
                 }
-                else
-                {
-                    LogService.LogWarning($"[SmartRouter] Candidate watchdog timeout after {sw.ElapsedMilliseconds}ms ({watchdogMs}ms limit) for {url}");
-                    return false;
-                }
+                return false;
             }
             finally
             {
-                _player.PropertyChanged -= statusHandler;
-                _player.OpenCompleted -= openHandler;
+                _mpv.StatusChanged -= statusHandler;
+                _mpv.OpenCompleted -= openHandler;
             }
         }
 
         public async void Stop()
         {
+            if (_isMultiViewActive)
+            {
+                Dispatcher.Invoke(() => ExitMultiViewMode(restoreChannel: null, stopAceIfUnused: true));
+            }
+
+            if (_isRecording) StopRecording();
             _wasPausedByMinimize = false;
             _loadCts?.Cancel();
             _positionTimer?.Stop();
 
             var ch = ViewModel.CurrentChannel;
-            if (IsCurrentStreamVod() && ch != null && _player != null)
+            if (ch != null && ViewModel.IsVod(ch) && _mpv != null && !(ch.Id?.StartsWith("catchup_", StringComparison.Ordinal) ?? false))
             {
-                try
-                {
-                    ch.LastPositionMs = _player.CurTime / 10000;
-                    _ = _db.SaveChannelAsync(ch);
-                }
-                catch { }
+                try { ch.LastPositionMs = _mpv.PositionMs; _ = _db.SaveChannelAsync(ch); } catch { }
             }
 
-            _player?.Stop();
-            _effectivePositionMs = 0;
-            _pausedDvrPosMs = 0;
-            _isTimeshiftMode = false;
-            _timeshiftStartDvrMs = 0;
+            _mpv?.Stop();
+            _activeProxySession = null;
+            ResetTimeshiftState();
             HlsProxyEngine.Instance.ClearChannelCache();
-            if (ch?.SourceType == "ACESTREAM" || (ch?.Url?.Contains("acestream://") == true))
+
+            if (ch?.SourceType == "ACESTREAM" || ch?.Url?.Contains("acestream://") == true)
             {
                 await _ace.StopAllStreamsAsync();
                 AceStreamService.Instance.StopAllSessions();
             }
         }
 
+        public void PlayCatchupProgram(Channel channel, EpgProgram program)
+        {
+            if (channel == null || program == null) return;
+            string? timeshiftUrl = XtreamCatchupHelper.BuildCatchupUrl(channel, program);
+            if (string.IsNullOrWhiteSpace(timeshiftUrl))
+            {
+                System.Windows.MessageBox.Show("Bu kanal için Xtream Catch-up (Timeshift) bağlantısı oluşturulamadı.", "Catch-up Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            LoadChannel(new Channel
+            {
+                Id = $"catchup_{channel.Id}_{program.StartTime:yyyyMMddHHmm}",
+                Name = $"{channel.PrimaryName} [Catch-up: {program.Title}]",
+                Url = timeshiftUrl,
+                LogoUrl = channel.LogoUrl,
+                Category = "Catchup",
+                GroupTitle = channel.GroupTitle,
+                SourceType = channel.SourceType,
+                HttpUserAgent = channel.HttpUserAgent,
+                HttpReferer = channel.HttpReferer,
+                HttpCookie = channel.HttpCookie,
+                HttpOrigin = channel.HttpOrigin
+            });
+        }
+
+        private void RecordBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isRecording) StopRecording();
+            else StartRecording();
+        }
+
+        private void StartRecording()
+        {
+            string? streamUrl = _currentPlayingUrl ?? ViewModel.CurrentChannel?.PrimaryUrl;
+            if (string.IsNullOrWhiteSpace(streamUrl) || !streamUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                ShowOsdToast("Kayıt başlatılamadı: Aktif HTTP yayını yok", "GeoRecord");
+                return;
+            }
+
+            try
+            {
+                string recDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "StreamMesh Recordings");
+                Directory.CreateDirectory(recDir);
+
+                string chName = ViewModel.CurrentChannel?.PrimaryName ?? "Yayin";
+                foreach (var c in Path.GetInvalidFileNameChars()) chName = chName.Replace(c, '_');
+                string fileName = $"{chName}_{DateTime.Now:yyyyMMdd_HHmmss}.ts";
+                _recordFilePath = Path.Combine(recDir, fileName);
+
+                _recordCts?.Cancel();
+                _recordCts = new CancellationTokenSource();
+                _isRecording = true;
+
+                if (RecordBtn != null) RecordBtn.Background = LiveRedBrush;
+                if (RecordBtnIcon != null) RecordBtnIcon.Fill = System.Windows.Media.Brushes.White;
+                ShowOsdToast($"● Kayıt Başladı: {fileName}", "GeoRecord");
+
+                _ = Task.Run(() => RecordStreamLoopAsync(streamUrl, _recordFilePath, _recordCts.Token), _recordCts.Token);
+            }
+            catch (Exception ex)
+            {
+                _isRecording = false;
+                ShowOsdToast($"Kayıt hatası: {ex.Message}", "GeoRecord");
+            }
+        }
+
+        private async Task RecordStreamLoopAsync(string url, string outputPath, CancellationToken ct)
+        {
+            try
+            {
+                using var req = new HttpRequestMessage(HttpMethod.Get, url);
+                req.Headers.TryAddWithoutValidation("User-Agent", "Mozilla/5.0");
+                using var resp = await MediaHttpClient.Client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+                resp.EnsureSuccessStatusCode();
+
+                await using var netStream = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+                await using var fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read, 65536, useAsync: true);
+                byte[] buffer = new byte[65536];
+                while (!ct.IsCancellationRequested)
+                {
+                    int read = await netStream.ReadAsync(buffer, ct).ConfigureAwait(false);
+                    if (read <= 0) break;
+                    await fileStream.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+                }
+            }
+            catch { }
+        }
+
+        private void StopRecording()
+        {
+            if (!_isRecording) return;
+            _isRecording = false;
+            try { _recordCts?.Cancel(); } catch { }
+            _ = Dispatcher.InvokeAsync(() =>
+            {
+                if (RecordBtn != null) RecordBtn.Background = SlateBtnBrush;
+                if (RecordBtnIcon != null) RecordBtnIcon.Fill = RecordActiveIconBrush;
+                string savedName = !string.IsNullOrEmpty(_recordFilePath) ? Path.GetFileName(_recordFilePath) : "dosya";
+                ShowOsdToast($"■ Kayıt Kaydedildi: Documents\\StreamMesh Recordings\\{savedName}", "GeoRecord");
+            });
+        }
+
+        private void MultiViewBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isMultiViewActive)
+            {
+                ExitMultiViewMode(restoreChannel: GetFocusedOrFirstMultiViewChannel());
+            }
+            else
+            {
+                EnterMultiViewMode();
+            }
+        }
+
         public void PauseForMinimize()
         {
-            if (_player == null || ViewModel.CurrentChannel == null) return;
+            if (_isMultiViewActive && _multiViewSlots != null)
+            {
+                foreach (var slot in _multiViewSlots)
+                {
+                    if (slot.Engine != null && slot.Engine.Status == MpvPlaybackStatus.Playing)
+                    {
+                        try { slot.Engine.Pause(); slot.PausedByMinimize = true; } catch { }
+                    }
+                }
+                return;
+            }
 
-            if (_player.Status == Status.Playing)
+            if (_mpv != null && ViewModel.CurrentChannel != null && _mpv.Status == MpvPlaybackStatus.Playing)
             {
                 _wasPausedByMinimize = true;
                 TogglePause();
-                LogService.LogInfo("[WINDOW] Yayının oynatılması pencere simge durumuna küçültüldüğü için geçici olarak duraklatıldı.");
             }
         }
 
         public void ResumeFromMinimize()
         {
-            if (_player == null || ViewModel.CurrentChannel == null) return;
+            if (_isMultiViewActive && _multiViewSlots != null)
+            {
+                foreach (var slot in _multiViewSlots)
+                {
+                    if (slot.Engine != null && slot.PausedByMinimize)
+                    {
+                        slot.PausedByMinimize = false;
+                        try { if (slot.Engine.Status == MpvPlaybackStatus.Paused) slot.Engine.Play(); } catch { }
+                    }
+                }
+                return;
+            }
 
-            if (_wasPausedByMinimize)
+            if (_mpv != null && ViewModel.CurrentChannel != null && _wasPausedByMinimize)
             {
                 _wasPausedByMinimize = false;
-                if (_player.Status == Status.Paused)
-                {
-                    TogglePause();
-                    LogService.LogInfo("[WINDOW] Pencere tekrar açıldı, yayın duraklatıldığı yerden devam ettiriliyor.");
-                }
+                if (_mpv.Status == MpvPlaybackStatus.Paused) TogglePause();
             }
         }
 
-        public void PlayPause_Click(object sender, RoutedEventArgs e) { TogglePause(); }
-        public void Stop_Click(object sender, RoutedEventArgs e)
-        {
-            Stop();
-            ShowOsdToast("⏹ Yayın Durduruldu", "GeoStop");
-            ShowOsdTemporary();
-        }
+        public void PlayPause_Click(object sender, RoutedEventArgs e) => TogglePause();
+        public void Stop_Click(object sender, RoutedEventArgs e) { Stop(); ShowOsdToast("⏹ Yayın Durduruldu", "GeoStop"); ShowOsdTemporary(); }
 
         private void UpdatePlayPauseIcon(bool isPlaying)
         {
             if (PlayPauseBtn == null) return;
-            var geo = TryFindResource(isPlaying ? "GeoPause" : "GeoPlay") as Geometry;
-            if (geo != null)
+            if (TryFindResource(isPlaying ? "GeoPause" : "GeoPlay") is Geometry geo)
             {
-                PlayPauseBtn.Content = new System.Windows.Shapes.Path
-                {
-                    Data = geo,
-                    Fill = System.Windows.Media.Brushes.White,
-                    Width = 20,
-                    Height = 20,
-                    Stretch = System.Windows.Media.Stretch.Uniform
-                };
+                PlayPauseBtn.Content = new System.Windows.Shapes.Path { Data = geo, Fill = System.Windows.Media.Brushes.White, Width = 20, Height = 20, Stretch = Stretch.Uniform };
             }
         }
 
         private void UpdateMuteIcon(bool isMuted)
         {
             if (MuteBtn == null) return;
-            var geo = TryFindResource(isMuted ? "GeoVolumeMute" : "GeoVolume") as Geometry;
-            if (geo != null)
+            if (TryFindResource(isMuted ? "GeoVolumeMute" : "GeoVolume") is Geometry geo)
             {
-                MuteBtn.Content = new System.Windows.Shapes.Path
-                {
-                    Data = geo,
-                    Fill = System.Windows.Media.Brushes.White,
-                    Width = 18,
-                    Height = 18,
-                    Stretch = System.Windows.Media.Stretch.Uniform
-                };
+                MuteBtn.Content = new System.Windows.Shapes.Path { Data = geo, Fill = System.Windows.Media.Brushes.White, Width = 18, Height = 18, Stretch = Stretch.Uniform };
             }
         }
 
         public void TogglePause()
         {
-            if (_player == null || ViewModel.CurrentChannel == null) return;
+            if (_mpv == null || ViewModel.CurrentChannel == null) return;
             ShowOsdTemporary();
 
             bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
+            bool currentlyPaused = _userPaused || _mpv.Status == MpvPlaybackStatus.Paused;
+            var proxySession = isVod ? null : GetActiveProxySession();
 
-            if (_player.Status == Status.Playing)
+            if (!currentlyPaused && _mpv.Status != MpvPlaybackStatus.Stopped)
             {
-                if (!isVod)
-                {
-                    // Canlı yayında duraklatılan DVR zamanını sakla
-                    var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
-                                       ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+                _userPaused = true;
+                _livePauseStartedUtc = DateTime.UtcNow;
 
-                    if (proxySession != null && proxySession.Segments.Count > 0)
+                if (proxySession != null && proxySession.Segments.Count > 0)
+                {
+                    HlsProxyEngine.Instance.SetSessionPaused(proxySession, true);
+                    var (earliestMs, latestMs, currentMs) = ComputeHlsLiveState(proxySession, isPaused: false);
+                    _pausedDvrPosMs = Math.Clamp(currentMs, earliestMs, latestMs);
+                    _hasPausedDvrPos = true;
+
+                    if (_isTimeshiftMode)
                     {
-                        var segments = proxySession.Segments;
-                        double earliestSec = segments.Count > 0 ? segments[0].StartTimeSeconds : 0;
-                        double latestSec = proxySession.TotalDurationSeconds;
-                        long earliestMs = (long)(earliestSec * 1000);
-                        long latestMs = (long)(latestSec * 1000);
-
-                        if (_isTimeshiftMode)
-                        {
-                            long curMs = _player.CurTime / 10000;
-                            _pausedDvrPosMs = Math.Clamp(_timeshiftStartDvrMs + curMs, earliestMs, latestMs);
-                        }
-                        else
-                        {
-                            _pausedDvrPosMs = _effectivePositionMs > 0 ? Math.Clamp(_effectivePositionMs, earliestMs, latestMs) : latestMs;
-                        }
+                        if (_timeshiftPlayAnchorUtc != DateTime.MinValue)
+                            _timeshiftAccumulatedPlayMs += Math.Max(0, (long)(DateTime.UtcNow - _timeshiftPlayAnchorUtc).TotalMilliseconds);
+                        _timeshiftPlayAnchorUtc = DateTime.MinValue;
                     }
-                }
-
-                _player.Pause();
-                UpdatePlayPauseIcon(false);
-            }
-            else
-            {
-                if (!isVod && _pausedDvrPosMs > 0)
-                {
-                    // Canlı yayında duraklatıldığı noktadan mevcut Timeshift zinciriyle devam et
-                    long resumeTargetMs = _pausedDvrPosMs;
-                    _pausedDvrPosMs = 0;
-                    SeekAbsolute(resumeTargetMs);
                 }
                 else
                 {
-                    _player.Play();
+                    _hasPausedDvrPos = false;
                 }
+
+                try { _mpv.Pause(); } catch { }
+                UpdatePlayPauseIcon(false);
+                RefreshOsdPlaybackState();
+            }
+            else
+            {
+                _userPaused = false;
+                long pauseDurationMs = _livePauseStartedUtc != DateTime.MinValue
+                    ? Math.Max(0, (long)(DateTime.UtcNow - _livePauseStartedUtc).TotalMilliseconds)
+                    : 0;
+                _livePauseStartedUtc = DateTime.MinValue;
+
+                if (proxySession != null && proxySession.Segments.Count > 0 && _hasPausedDvrPos)
+                {
+                    HlsProxyEngine.Instance.SetSessionPaused(proxySession, false);
+                    long resumeTargetMs = _pausedDvrPosMs;
+                    _hasPausedDvrPos = false;
+                    _pausedDvrPosMs = 0;
+
+                    if (pauseDurationMs < 8000 && _mpv.Status == MpvPlaybackStatus.Paused)
+                    {
+                        _isTimeshiftMode = true;
+                        _timeshiftStartDvrMs = resumeTargetMs;
+                        _timeshiftAccumulatedPlayMs = 0;
+                        _timeshiftPlayAnchorUtc = DateTime.UtcNow;
+                        try { _mpv.Play(); } catch { }
+                    }
+                    else
+                    {
+                        SeekAbsolute(resumeTargetMs);
+                    }
+                }
+                else if (!isVod)
+                {
+                    _accumulatedLiveLagMs += pauseDurationMs;
+                    if ((_mpv.Status == MpvPlaybackStatus.Ended || _mpv.Status == MpvPlaybackStatus.Stopped) && !string.IsNullOrEmpty(_currentPlayingUrl))
+                    {
+                        _accumulatedLiveLagMs = 0;
+                        _mpv.Open(_currentPlayingUrl);
+                    }
+                    else
+                    {
+                        try { _mpv.Play(); } catch { }
+                    }
+                }
+                else
+                {
+                    try { _mpv.Play(); } catch { }
+                }
+
                 UpdatePlayPauseIcon(true);
+                RefreshOsdPlaybackState();
             }
         }
 
         public void SeekRelative(int deltaMs)
         {
-            if (_player == null || ViewModel.CurrentChannel == null) return;
+            if (_mpv == null || ViewModel.CurrentChannel == null) return;
 
             if (ViewModel.IsVod(ViewModel.CurrentChannel))
             {
-                long currentPosMs;
-                if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0 && _effectivePositionMs > 0)
-                {
-                    currentPosMs = _effectivePositionMs;
-                }
-                else
-                {
-                    currentPosMs = _player.CurTime / 10000;
-                }
+                long curMs = ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0 && _effectivePositionMs > 0)
+                    ? _effectivePositionMs
+                    : _mpv.PositionMs;
+                SeekAbsolute(curMs + deltaMs);
+                return;
+            }
 
-                long targetMs = currentPosMs + deltaMs;
-                PerformSeek(targetMs);
+            var proxySession = GetActiveProxySession();
+            if (proxySession != null && proxySession.Segments.Count > 0)
+            {
+                var (_, _, currentMs) = ComputeHlsLiveState(proxySession, _userPaused || _mpv.Status == MpvPlaybackStatus.Paused);
+                if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0 && _effectivePositionMs > 0 && !_userPaused)
+                    currentMs = _effectivePositionMs;
+                SeekAbsolute(currentMs + deltaMs);
+            }
+            else if (_mpv.DurationMs > 0)
+            {
+                long lengthMs = _mpv.DurationMs;
+                SeekAbsolute(Math.Clamp(_mpv.PositionMs + deltaMs, 0, lengthMs));
             }
             else
             {
-                var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
-                                   ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
-
-                if (proxySession != null && proxySession.Segments.Count > 0)
-                {
-                    long totalMsDvr = (long)(proxySession.TotalDurationSeconds * 1000);
-                    long currentDvrPosMs;
-
-                    if (_isTimeshiftMode)
-                    {
-                        if ((DateTime.Now - _lastSeekTime).TotalSeconds < 2.0 && _effectivePositionMs > 0)
-                            currentDvrPosMs = _effectivePositionMs;
-                        else
-                            currentDvrPosMs = _timeshiftStartDvrMs + (_player.CurTime / 10000);
-                    }
-                    else
-                    {
-                        currentDvrPosMs = totalMsDvr;
-                    }
-
-                    long targetMs = currentDvrPosMs + deltaMs;
-                    PerformSeek(targetMs);
-                }
+                ShowOsdToast("Bu canlı akış formatı sadece duraklatmayı destekliyor", "GeoReplay10");
             }
         }
 
         public void SeekAbsolute(long targetMs)
         {
-            PerformSeek(targetMs);
-        }
+            if (_mpv == null || ViewModel.CurrentChannel == null) return;
 
-        private void PerformSeek(long targetMs)
-        {
-            if (_player == null || ViewModel.CurrentChannel == null) return;
-
-            bool isVod = ViewModel.IsVod(ViewModel.CurrentChannel);
-
-            if (isVod)
+            if (ViewModel.IsVod(ViewModel.CurrentChannel))
             {
-                long lengthMs = _player.Duration / 10000;
+                long lengthMs = _mpv.DurationMs;
                 if (lengthMs <= 0) return;
-
                 targetMs = Math.Clamp(targetMs, 0, lengthMs);
-
                 try
                 {
-                    _player.Seek((int)targetMs);
+                    _mpv.SeekMs(targetMs);
                     _lastSeekTime = DateTime.Now;
                     _effectivePositionMs = targetMs;
-
-                    TimeSlider.Value = targetMs;
-                    TimeCurrentText.Text = TimeSpan.FromMilliseconds(targetMs).ToString(@"hh\:mm\:ss");
+                    RefreshOsdPlaybackState();
                     ShowOsdTemporary();
                 }
-                catch (Exception ex)
-                {
-                    LogService.LogError($"Player: VOD Seek to {targetMs}ms failed", ex);
-                    _effectivePositionMs = _player.CurTime / 10000;
-                }
+                catch { _effectivePositionMs = _mpv.PositionMs; }
+                return;
             }
-            else
+
+            var proxySession = GetActiveProxySession();
+            if (proxySession != null && proxySession.Segments.Count > 0)
             {
-                var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
-                                   ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+                var (earliestMs, latestMs, _) = ComputeHlsLiveState(proxySession, _userPaused);
+                targetMs = Math.Clamp(targetMs, earliestMs, latestMs);
 
-                if (proxySession != null && proxySession.Segments.Count > 0)
+                if (latestMs - targetMs <= 2500)
                 {
-                    var segments = proxySession.Segments;
-                    double earliestSec = segments.Count > 0 ? segments[0].StartTimeSeconds : 0;
-                    double latestSec = proxySession.TotalDurationSeconds;
-                    long earliestMs = (long)(earliestSec * 1000);
-                    long latestMs = (long)(latestSec * 1000);
-
-                    targetMs = Math.Clamp(targetMs, earliestMs, latestMs);
-                    long offsetMs = latestMs - targetMs;
-
-                    if (offsetMs <= 3000)
-                    {
-                        GoLive();
-                        return;
-                    }
-
-                    try
-                    {
-                        string sourceUrl = ViewModel.CurrentChannel?.Url ?? _currentPlayingUrl ?? "";
-                        if (string.IsNullOrEmpty(sourceUrl) || _player == null) return;
-
-                        int targetSec = (int)(targetMs / 1000);
-                        string timeshiftUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(sourceUrl, targetSec);
-
-                        _isTimeshiftMode = true;
-                        _timeshiftStartDvrMs = targetMs;
-                        _lastSeekTime = DateTime.Now;
-                        _effectivePositionMs = targetMs;
-
-                        _player.Open(timeshiftUrl);
-
-                        TimeSlider.Value = targetMs;
-                        UpdateOsdTimeAndBadge(targetMs, latestMs, proxySession.StartWallClockTime);
-                        ShowOsdTemporary();
-                        LogService.LogInfo($"Player: Seeked DVR buffer to {targetSec}s (offset: -{TimeSpan.FromMilliseconds(offsetMs):hh\\:mm\\:ss})");
-                    }
-                    catch (Exception ex)
-                    {
-                        LogService.LogError($"Player: DVR Seek to {targetMs}ms failed", ex);
-                        _effectivePositionMs = _player.CurTime / 10000;
-                    }
+                    GoLive();
+                    return;
                 }
-                else
-                {
-                    LogService.LogInfo("Player: Live stream has no DVR buffer, seek ignored.");
-                }
+
+                string sourceUrl = (!string.IsNullOrEmpty(_currentPlayingUrl) && _currentPlayingUrl.Contains("session="))
+                    ? _currentPlayingUrl
+                    : (!string.IsNullOrEmpty(proxySession.OriginalUrl) ? proxySession.OriginalUrl : (ViewModel.CurrentChannel.Url ?? ""));
+                if (string.IsNullOrEmpty(sourceUrl)) return;
+
+                HlsProxyEngine.Instance.SetSessionPaused(proxySession, false);
+                ResetTimeshiftState();
+                _isTimeshiftMode = true;
+                _timeshiftStartDvrMs = targetMs;
+                _timeshiftPlayAnchorUtc = DateTime.UtcNow;
+                _lastSeekTime = DateTime.Now;
+                _effectivePositionMs = targetMs;
+
+                string timeshiftUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(sourceUrl, (int)(targetMs / 1000));
+                _mpv.Open(timeshiftUrl);
+                UpdatePlayPauseIcon(true);
+                RefreshOsdPlaybackState();
+                ShowOsdTemporary();
+            }
+            else if (_mpv.DurationMs > 0)
+            {
+                long lengthMs = _mpv.DurationMs;
+                targetMs = Math.Clamp(targetMs, 0, lengthMs);
+                _userPaused = false;
+                _livePauseStartedUtc = DateTime.MinValue;
+                _accumulatedLiveLagMs = Math.Max(0, lengthMs - targetMs);
+                _mpv.SeekMs(targetMs);
+                if (_mpv.Status == MpvPlaybackStatus.Paused) _mpv.Play();
+                UpdatePlayPauseIcon(true);
+                _lastSeekTime = DateTime.Now;
+                _effectivePositionMs = targetMs;
+                RefreshOsdPlaybackState();
+                ShowOsdTemporary();
             }
         }
 
-        public void Rewind(int ms) { SeekRelative(-ms); }
-        public void Forward(int ms) { SeekRelative(ms); }
-        public void ChangeVolume(int delta) { if (_player != null) _player.Audio.Volume = Math.Clamp(_player.Audio.Volume + delta, 0, 100); ShowOsdTemporary(); }
+        public void Rewind(int ms) => SeekRelative(-ms);
+        public void Forward(int ms) => SeekRelative(ms);
+        public void ChangeVolume(int delta) { if (_mpv != null) _mpv.SetVolume(_mpv.Volume + delta); ShowOsdTemporary(); }
+
         public void ToggleMute()
         {
-            if (_player != null)
+            if (_isMultiViewActive && _multiViewSlots != null)
             {
-                _player.Audio.Mute = !_player.Audio.Mute;
-                UpdateMuteIcon(_player.Audio.Mute);
+                var slot = _multiViewSlots[_focusedMultiViewSlot];
+                slot.IsMuted = !slot.IsMuted;
+                try { slot.Engine?.SetMute(slot.IsMuted); } catch { }
+                RefreshMultiViewSlotVisuals();
+                return;
+            }
+
+            if (_mpv != null)
+            {
+                _mpv.SetMute(!_mpv.IsMuted);
+                UpdateMuteIcon(_mpv.IsMuted);
             }
             ShowOsdTemporary();
         }
 
-        private void TimeSlider_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) { _isUserDraggingSlider = true; }
+        private void TimeSlider_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) => _isUserDraggingSlider = true;
 
         private void TimeSlider_PreviewMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             _isUserDraggingSlider = false;
-            ApplySliderSeek(TimeSlider.Value);
+            SeekAbsolute((long)TimeSlider.Value);
         }
 
         private void TimeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (_isUserDraggingSlider)
+            if (!_isUserDraggingSlider || ViewModel.CurrentChannel == null) return;
+
+            if (ViewModel.IsVod(ViewModel.CurrentChannel))
             {
-                if (ViewModel.IsVod(ViewModel.CurrentChannel))
-                {
-                    TimeCurrentText.Text = TimeSpan.FromMilliseconds((long)e.NewValue).ToString(@"hh\:mm\:ss");
-                }
-                else
-                {
-                    var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel?.Url ?? "")
-                                       ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
-                    if (proxySession != null)
-                    {
-                        UpdateOsdTimeAndBadge((long)e.NewValue, (long)(proxySession.TotalDurationSeconds * 1000), proxySession.StartWallClockTime);
-                    }
-                }
+                SetTextIfChanged(TimeCurrentText, ref _lastTimeCurrentText, TimeSpan.FromMilliseconds((long)e.NewValue).ToString(@"hh\:mm\:ss"));
+                return;
+            }
+
+            var proxySession = GetActiveProxySession();
+            if (proxySession != null && proxySession.Segments.Count > 0)
+            {
+                UpdateOsdTimeAndBadge((long)e.NewValue, (long)(proxySession.TotalDurationSeconds * 1000), proxySession.StartWallClockTime, _userPaused);
+            }
+            else if (_mpv != null && _mpv.DurationMs > 0)
+            {
+                long lenMs = _mpv.DurationMs;
+                long delayMs = Math.Max(0, lenMs - (long)e.NewValue);
+                string delayStr = FormatDelay(delayMs);
+                DateTime aired = DateTime.Now.AddMilliseconds(-delayMs);
+                SetLiveBadgeState(delayMs > 2500 ? DelayedAmberBrush : LiveRedBrush,
+                    delayMs > 2500 ? delayStr : "🔴 CANLI",
+                    delayMs > 2500 ? $"⚡ {delayStr}" : "CANLI",
+                    delayMs > 2500 ? $"GERİDE ({delayStr})" : "CANLI YAYIN",
+                    aired.ToString("HH:mm:ss"));
             }
         }
 
-        private void ApplySliderSeek(double value)
-        {
-            SeekAbsolute((long)value);
-        }
-
-        public void Rewind10_Click(object sender, RoutedEventArgs e) { Rewind(10000); }
-        public void Forward10_Click(object sender, RoutedEventArgs e) { Forward(10000); }
+        public void Rewind10_Click(object sender, RoutedEventArgs e) => Rewind(10000);
+        public void Forward10_Click(object sender, RoutedEventArgs e) => Forward(10000);
 
         public void GoLive()
         {
-            if (_player == null || ViewModel.CurrentChannel == null) return;
+            if (_mpv == null || ViewModel.CurrentChannel == null) return;
 
-            var proxySession = HlsProxyEngine.Instance.GetSession(ViewModel.CurrentChannel.Url ?? "")
-                               ?? (_currentPlayingUrl != null ? HlsProxyEngine.Instance.GetSession(_currentPlayingUrl) : null);
+            var proxySession = GetActiveProxySession();
+            HlsProxyEngine.Instance.SetSessionPaused(proxySession, false);
+            ResetTimeshiftState();
+
             if (proxySession != null && proxySession.Segments.Count > 0)
             {
                 long totalMs = (long)(proxySession.TotalDurationSeconds * 1000);
-                _isTimeshiftMode = false;
-                _timeshiftStartDvrMs = 0;
                 _effectivePositionMs = totalMs;
-
-                string liveSourceUrl = ViewModel.CurrentChannel.Url ?? _currentPlayingUrl ?? "";
-                string liveUrl = HlsProxyEngine.Instance.GetProxyPlaybackUrl(liveSourceUrl, -1);
-                _player.Open(liveUrl);
-
-                TimeSlider.Value = totalMs;
-                TimeCurrentText.Text = DateTime.Now.ToString("HH:mm:ss");
-                if (LiveBadge != null) LiveBadge.Background = LiveRedBrush;
-                if (LiveBadgeText != null) LiveBadgeText.Text = "🔴 CANLI";
-                if (GoLiveBtn != null) GoLiveBtn.Background = LiveRedBrush;
-                if (GoLiveText != null) GoLiveText.Text = "CANLI";
-                TimeTotalText.Text = "CANLI YAYIN";
-                UpdateOsdEpgForTime(DateTime.Now);
-
-                LogService.LogInfo($"Player: Returned to Live Edge at {totalMs / 1000}s");
+                string liveSourceUrl = (!string.IsNullOrEmpty(_currentPlayingUrl) && _currentPlayingUrl.Contains("session="))
+                    ? _currentPlayingUrl
+                    : (!string.IsNullOrEmpty(proxySession.OriginalUrl) ? proxySession.OriginalUrl : (ViewModel.CurrentChannel.Url ?? ""));
+                _mpv.Open(HlsProxyEngine.Instance.GetProxyPlaybackUrl(liveSourceUrl, -1));
             }
-            else if (_player.Duration > 0 && !ViewModel.IsVod(ViewModel.CurrentChannel))
+            else if (!ViewModel.IsVod(ViewModel.CurrentChannel))
             {
-                long durationMs = _player.Duration / 10000;
-                _player.Seek((int)durationMs);
+                if (_mpv.DurationMs > 0)
+                {
+                    _mpv.SeekMs(_mpv.DurationMs);
+                    if (_mpv.Status == MpvPlaybackStatus.Paused) _mpv.Play();
+                }
+                else if (!string.IsNullOrEmpty(_currentPlayingUrl))
+                {
+                    _mpv.Open(_currentPlayingUrl);
+                }
             }
+
+            UpdatePlayPauseIcon(true);
+            RefreshOsdPlaybackState();
             ShowOsdTemporary();
         }
 
-        public void GoLive_Click(object sender, RoutedEventArgs e) { GoLive(); }
-        public void LiveBadge_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) { GoLive(); }
-        public void Mute_Click(object sender, RoutedEventArgs e) { ToggleMute(); }
+        public void GoLive_Click(object sender, RoutedEventArgs e) => GoLive();
+        public void LiveBadge_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) => GoLive();
+        public void Mute_Click(object sender, RoutedEventArgs e) => ToggleMute();
 
-        #region Audio Tracks / Language Selection (Çoklu Dil & Ses İzi)
+        #region Audio Tracks / Language Selection
 
         public void AudioTrackBtn_Click(object sender, RoutedEventArgs e)
         {
             ShowOsdTemporary();
             if (AudioTracksFlyout == null) return;
             AudioTracksFlyout.Visibility = AudioTracksFlyout.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-            if (AudioTracksFlyout.Visibility == Visibility.Visible)
-            {
-                RefreshAudioTracks();
-            }
+            if (AudioTracksFlyout.Visibility == Visibility.Visible) RefreshAudioTracks();
         }
 
         public void CloseAudioTracksFlyout_Click(object sender, RoutedEventArgs e)
@@ -1644,44 +1498,23 @@ namespace StreamMesh.UI.Views
 
         public void AudioTrackItem_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is System.Windows.Controls.Button btn && btn.Tag is AudioTrackModel item)
+            if (sender is not System.Windows.Controls.Button btn || btn.Tag is not AudioTrackModel item) return;
+
+            _selectedAudioTrackId = item.TrackId;
+            bool switched = _mpv?.SwitchAudioTrack(item.TrackId) == true;
+            if (!string.IsNullOrEmpty(_lastLoadedChannelId))
+                ViewModel.SavePreferredLanguageForChannel(_lastLoadedChannelId, item.LangCode);
+
+            foreach (var t in _detectedAudioTracks) t.IsSelected = (t.TrackId == item.TrackId);
+            if (AudioTracksItemsList != null)
             {
-                try
-                {
-                    _selectedAudioTrackIndex = item.Index;
-                    _selectedAudioTrackLangCode = item.LangCode;
-
-                    bool switched = SwitchAudioTrack(item.Index, item.RawStream);
-                    if (switched)
-                    {
-                        LogService.LogInfo($"Player: Audio track switched successfully to {item.DisplayName} ({item.LangCode})");
-                    }
-                    else
-                    {
-                        LogService.LogWarning($"Player: Audio track switch returned false for {item.DisplayName}");
-                    }
-
-                    if (!string.IsNullOrEmpty(_lastLoadedChannelId))
-                    {
-                        ViewModel.SavePreferredLanguageForChannel(_lastLoadedChannelId, item.LangCode);
-                    }
-
-                    foreach (var t in _detectedAudioTracks) t.IsSelected = (t.Index == item.Index);
-                    if (AudioTracksItemsList != null)
-                    {
-                        AudioTracksItemsList.ItemsSource = null;
-                        AudioTracksItemsList.ItemsSource = _detectedAudioTracks;
-                    }
-                    if (AudioTrackBtnText != null) AudioTrackBtnText.Text = item.LangCode;
-
-                    ShowOsdToast($"🌐 Ses İzi: {item.DisplayName} seçildi", "GeoLanguage");
-                    if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
-                }
-                catch (Exception ex)
-                {
-                    LogService.LogError("Player: Select AudioTrack exception", ex);
-                }
+                AudioTracksItemsList.ItemsSource = null;
+                AudioTracksItemsList.ItemsSource = _detectedAudioTracks;
             }
+            if (AudioTrackBtnText != null) AudioTrackBtnText.Text = item.LangCode;
+
+            ShowOsdToast(switched ? $"🌐 Ses İzi: {item.DisplayName} aktif" : $"⚠️ Ses izi seçilemedi: {item.DisplayName}", "GeoLanguage");
+            if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
         }
 
         public void RefreshAudioTracks()
@@ -1689,124 +1522,74 @@ namespace StreamMesh.UI.Views
             Dispatcher.InvokeAsync(() =>
             {
                 _detectedAudioTracks.Clear();
-                if (_player == null) return;
-
-                try
+                var tracks = _mpv?.GetAudioTracks();
+                if (tracks != null && tracks.Count > 0)
                 {
-                    var audioProp = _player.Audio;
-                    if (audioProp != null)
+                    for (int i = 0; i < tracks.Count; i++)
                     {
-                        var streamsProp = audioProp.GetType().GetProperty("Streams");
-                        var streamsList = streamsProp?.GetValue(audioProp) as System.Collections.IEnumerable;
-                        var curStream = audioProp.GetType().GetProperty("Stream")?.GetValue(audioProp);
+                        var s = tracks[i];
+                        var (langName, langCode) = ParseLanguageInfo(s.Lang, s.Title, i);
+                        string codecStr = string.IsNullOrWhiteSpace(s.Codec) ? "AAC" : s.Codec.ToUpperInvariant();
+                        string details = $"{codecStr} • {(s.Channels == 6 ? "5.1 Surround" : s.Channels == 2 ? "Stereo" : $"{s.Channels} Kanal")}";
+                        if (s.BitRate > 0) details += $" • {s.BitRate / 1000} kbps";
 
-                        int i = 0;
-                        if (streamsList != null)
-                        {
-                            foreach (var s in streamsList)
-                            {
-                                if (s == null) continue;
-                                var sType = s.GetType();
-                                var langObj = sType.GetProperty("Language")?.GetValue(s);
-                                string langStr = langObj != null ? langObj.ToString() ?? "" : "";
-                                string titleStr = sType.GetProperty("Title")?.GetValue(s)?.ToString() ?? "";
-                                string codecStr = sType.GetProperty("Codec")?.GetValue(s)?.ToString() ?? "AAC";
-                                int channels = 2;
-                                if (int.TryParse(sType.GetProperty("Channels")?.GetValue(s)?.ToString(), out int chVal)) channels = chVal;
-                                long bitRate = 0;
-                                if (long.TryParse(sType.GetProperty("BitRate")?.GetValue(s)?.ToString(), out long brVal)) bitRate = brVal;
-
-                                var (langName, langCode) = ParseLanguageInfo(langStr, titleStr, i);
-                                
-                                bool isCur = false;
-                                if (_selectedAudioTrackIndex >= 0)
-                                {
-                                    isCur = (i == _selectedAudioTrackIndex);
-                                }
-                                else if (curStream != null)
-                                {
-                                    isCur = (s == curStream);
-                                }
-                                else
-                                {
-                                    isCur = (i == 0);
-                                }
-
-                                string details = $"{codecStr} • {(channels == 6 ? "5.1 Surround" : channels == 2 ? "Stereo" : $"{channels} Kanal")}";
-                                if (bitRate > 0) details += $" • {bitRate / 1000} kbps";
-
-                                _detectedAudioTracks.Add(new AudioTrackModel
-                                {
-                                    Index = i,
-                                    DisplayName = $"{i + 1}. {langName}",
-                                    Details = details,
-                                    LangCode = langCode,
-                                    IsSelected = isCur,
-                                    RawStream = s
-                                });
-                                i++;
-                            }
-                        }
-                    }
-
-                    if (_detectedAudioTracks.Count == 0)
-                    {
                         _detectedAudioTracks.Add(new AudioTrackModel
                         {
-                            Index = 0,
-                            DisplayName = "1. Ana Yayın Sesi",
-                            Details = "Varsayılan Ses Akışı (Stereo)",
-                            LangCode = "TR",
-                            IsSelected = true,
-                            RawStream = null
+                            Index = i,
+                            TrackId = s.Id,
+                            DisplayName = $"{i + 1}. {langName}",
+                            Details = details,
+                            LangCode = langCode,
+                            IsSelected = s.Selected
                         });
                     }
+                }
 
-                    // Automatic language preference matching for multi-audio streams
-                    string preferredLang = ViewModel.GetPreferredLanguageForChannel(_lastLoadedChannelId);
-                    if (_selectedAudioTrackIndex < 0 && !string.IsNullOrEmpty(preferredLang) && _detectedAudioTracks.Count > 1)
+                if (_detectedAudioTracks.Count == 0)
+                {
+                    _detectedAudioTracks.Add(new AudioTrackModel
                     {
-                        var matchingTrack = _detectedAudioTracks.FirstOrDefault(t => string.Equals(t.LangCode, preferredLang, StringComparison.OrdinalIgnoreCase))
-                                            ?? _detectedAudioTracks.FirstOrDefault(t => t.DisplayName.Contains(preferredLang, StringComparison.OrdinalIgnoreCase));
-                        if (matchingTrack != null && matchingTrack.Index != 0)
-                        {
-                            _selectedAudioTrackIndex = matchingTrack.Index;
-                            _selectedAudioTrackLangCode = matchingTrack.LangCode;
-                            SwitchAudioTrack(matchingTrack.Index, matchingTrack.RawStream);
-                            foreach (var t in _detectedAudioTracks) t.IsSelected = (t.Index == matchingTrack.Index);
-                        }
-                    }
+                        Index = 0,
+                        TrackId = 1,
+                        DisplayName = "1. Ana Yayın Sesi",
+                        Details = "Varsayılan Ses Akışı",
+                        LangCode = "TR",
+                        IsSelected = true
+                    });
+                }
 
-                    if (AudioTracksItemsList != null)
+                string preferredLang = ViewModel.GetPreferredLanguageForChannel(_lastLoadedChannelId);
+                if (_selectedAudioTrackId < 0 && !string.IsNullOrEmpty(preferredLang) && _detectedAudioTracks.Count > 1)
+                {
+                    var matchingTrack = _detectedAudioTracks.FirstOrDefault(t => string.Equals(t.LangCode, preferredLang, StringComparison.OrdinalIgnoreCase))
+                                        ?? _detectedAudioTracks.FirstOrDefault(t => t.DisplayName.Contains(preferredLang, StringComparison.OrdinalIgnoreCase));
+                    if (matchingTrack != null && !matchingTrack.IsSelected && _mpv != null)
                     {
-                        AudioTracksItemsList.ItemsSource = null;
-                        AudioTracksItemsList.ItemsSource = _detectedAudioTracks;
-                    }
-
-                    var selected = _detectedAudioTracks.FirstOrDefault(t => t.IsSelected) ?? _detectedAudioTracks.FirstOrDefault();
-                    if (AudioTrackBtnText != null && selected != null)
-                    {
-                        AudioTrackBtnText.Text = selected.LangCode;
-                    }
-
-                    if (AudioTrackCountBadge != null && AudioTrackCountText != null)
-                    {
-                        if (_detectedAudioTracks.Count > 1)
-                        {
-                            AudioTrackCountBadge.Visibility = Visibility.Visible;
-                            AudioTrackCountText.Text = _detectedAudioTracks.Count.ToString();
-                            if (AudioTracksInfoFooter != null) AudioTracksInfoFooter.Text = $"🎉 Çoklu Dil: {_detectedAudioTracks.Count} ses izi mevcut";
-                        }
-                        else
-                        {
-                            AudioTrackCountBadge.Visibility = Visibility.Collapsed;
-                            if (AudioTracksInfoFooter != null) AudioTracksInfoFooter.Text = "Tek ses izi algılandı";
-                        }
+                        _selectedAudioTrackId = matchingTrack.TrackId;
+                        _mpv.SwitchAudioTrack(matchingTrack.TrackId);
+                        foreach (var t in _detectedAudioTracks) t.IsSelected = (t.TrackId == matchingTrack.TrackId);
                     }
                 }
-                catch (Exception ex)
+
+                if (!_detectedAudioTracks.Any(t => t.IsSelected))
+                    _detectedAudioTracks[0].IsSelected = true;
+
+                if (AudioTracksItemsList != null)
                 {
-                    LogService.LogError("Player: RefreshAudioTracks error", ex);
+                    AudioTracksItemsList.ItemsSource = null;
+                    AudioTracksItemsList.ItemsSource = _detectedAudioTracks;
+                }
+
+                var selected = _detectedAudioTracks.FirstOrDefault(t => t.IsSelected) ?? _detectedAudioTracks[0];
+                if (AudioTrackBtnText != null) AudioTrackBtnText.Text = selected.LangCode;
+
+                if (AudioTrackCountBadge != null && AudioTrackCountText != null)
+                {
+                    bool multi = _detectedAudioTracks.Count > 1;
+                    AudioTrackCountBadge.Visibility = multi ? Visibility.Visible : Visibility.Collapsed;
+                    AudioTrackCountText.Text = _detectedAudioTracks.Count.ToString();
+                    if (AudioTracksInfoFooter != null)
+                        AudioTracksInfoFooter.Text = multi ? $"🎉 Çoklu Dil: {_detectedAudioTracks.Count} ses izi mevcut" : "Tek ses izi algılandı";
                 }
             });
         }
@@ -1815,263 +1598,91 @@ namespace StreamMesh.UI.Views
         {
             string l = (lang ?? "").Trim().ToLowerInvariant();
             string t = (title ?? "").Trim().ToLowerInvariant();
+            string combined = $"{l} {t}";
 
-            if (l == "deu" || l == "ger" || l == "de" || t.Contains("german") || t.Contains("almanca"))
+            if (l is "deu" or "ger" or "de" or "german" or "deutsch" || combined.Contains("german") || combined.Contains("almanca") || combined.Contains("deutsch"))
                 return ("Almanca", "DE");
-            if (l == "eng" || l == "en" || t.Contains("english") || t.Contains("ingilizce"))
+            if (l is "eng" or "en" or "english" || combined.Contains("english") || combined.Contains("ingilizce"))
                 return ("İngilizce", "EN");
-            if (l == "tur" || l == "tr" || t.Contains("türkçe") || t.Contains("turkce"))
+            if (l is "tur" or "tr" or "turkish" || combined.Contains("turkish") || combined.Contains("türkçe") || combined.Contains("turkce"))
                 return ("Türkçe", "TR");
-            if (l == "fra" || l == "fre" || l == "fr" || t.Contains("french") || t.Contains("fransızca"))
+            if (l is "fra" or "fre" or "fr" or "french" || combined.Contains("french") || combined.Contains("fransızca"))
                 return ("Fransızca", "FR");
-            if (l == "ita" || l == "it" || t.Contains("italian") || t.Contains("italyanca"))
+            if (l is "ita" or "it" or "italian" || combined.Contains("italian") || combined.Contains("italyanca"))
                 return ("İtalyanca", "IT");
-            if (l == "spa" || l == "es" || t.Contains("spanish") || t.Contains("ispanyolca"))
+            if (l is "spa" or "es" or "spanish" || combined.Contains("spanish") || combined.Contains("ispanyolca"))
                 return ("İspanyolca", "ES");
-            if (l == "rus" || l == "ru" || t.Contains("russian") || t.Contains("rusça"))
+            if (l is "rus" or "ru" or "russian" || combined.Contains("russian") || combined.Contains("rusça"))
                 return ("Rusça", "RU");
-            if (l == "ara" || l == "ar" || t.Contains("arabic") || t.Contains("arapça"))
+            if (l is "ara" or "ar" or "arabic" || combined.Contains("arabic") || combined.Contains("arapça"))
                 return ("Arapça", "AR");
-            if (l == "aze" || l == "az" || t.Contains("azerbaijani") || t.Contains("azerice"))
+            if (l is "aze" or "az" or "azerbaijani" || combined.Contains("azerbaijani") || combined.Contains("azerice"))
                 return ("Azerice", "AZ");
-            if (l == "jpn" || l == "ja" || t.Contains("japanese") || t.Contains("japonca"))
-                return ("Japonca", "JA");
-            if (l == "kor" || l == "ko" || t.Contains("korean") || t.Contains("korece"))
-                return ("Korece", "KO");
-            if (l == "chi" || l == "zho" || l == "zh" || t.Contains("chinese") || t.Contains("çince"))
-                return ("Çince", "ZH");
-            if (l == "por" || l == "pt" || t.Contains("portuguese") || t.Contains("portekizce"))
+            if (l is "nld" or "dut" or "nl" or "dutch" || combined.Contains("dutch") || combined.Contains("felemenkçe"))
+                return ("Felemenkçe", "NL");
+            if (l is "por" or "pt" or "portuguese" || combined.Contains("portuguese") || combined.Contains("portekizce"))
                 return ("Portekizce", "PT");
+            if (l is "pol" or "pl" or "polish" || combined.Contains("polish") || combined.Contains("lehçe"))
+                return ("Lehçe", "PL");
 
+            if (!string.IsNullOrWhiteSpace(l) && l is not "und" and not "unknown" and not "mis" and not "zxx")
+            {
+                string code = l.Length <= 3 ? l.ToUpperInvariant() : l.Substring(0, 2).ToUpperInvariant();
+                string label = !string.IsNullOrWhiteSpace(title) ? title : code;
+                return (label, code);
+            }
             if (!string.IsNullOrWhiteSpace(title))
                 return (title, title.Length <= 3 ? title.ToUpperInvariant() : "SES");
 
-            return ($"Ses İzi {index + 1}", $"SES {index + 1}");
+            return ($"Ses İzi {index + 1}", $"S{index + 1}");
         }
 
         #endregion
 
-        #region Audio Normalization & Video Enhancer (Ses Normalizasyonu & Görüntü Netleştirici)
-
-        private void LoadAudioVideoSettings()
-        {
-            _isAudioNormEnabled = ViewModel.IsAudioNormEnabled;
-            _isVideoEnhanceEnabled = ViewModel.IsVideoEnhanceEnabled;
-        }
+        #region Audio Normalization & Video Enhancer (Instant Zero-Reconnect Runtime DSP)
 
         private void UpdateAudioNormButtonUI()
         {
             if (AudioNormBtn == null) return;
-            if (_isAudioNormEnabled)
-            {
-                AudioNormBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(5, 150, 105)); // Emerald Green
-                AudioNormBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(52, 211, 153));
-                AudioNormBtn.ToolTip = "Ses Normalizasyonu: AÇIK (EBU R128 & Dinamik DSP Seviye Dengeleme)";
-            }
-            else
-            {
-                AudioNormBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 65, 85)); // Slate
-                AudioNormBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(51, 255, 255, 255));
-                AudioNormBtn.ToolTip = "Ses Normalizasyonu: KAPALI (Ham Ses)";
-            }
+            AudioNormBtn.Background = _isAudioNormEnabled ? NormActiveBrush : SlateBtnBrush;
+            AudioNormBtn.BorderBrush = _isAudioNormEnabled ? NormBorderBrush : SlateBorderBrush;
+            AudioNormBtn.ToolTip = _isAudioNormEnabled
+                ? "Ses Normalizasyonu: AÇIK (Anlık Dinamik DSP Seviye Dengeleme)"
+                : "Ses Normalizasyonu: KAPALI (Ham Ses)";
         }
 
         private void UpdateVideoEnhanceButtonUI()
         {
             if (VideoEnhanceBtn == null) return;
-            if (_isVideoEnhanceEnabled)
-            {
-                VideoEnhanceBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(217, 119, 6)); // Amber Gold
-                VideoEnhanceBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(251, 191, 36));
-                VideoEnhanceBtn.ToolTip = "Görüntü Netleştirici: AÇIK (GPU Hibrit Keskinlik & D3D11 Kontrast)";
-            }
-            else
-            {
-                VideoEnhanceBtn.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 65, 85)); // Slate
-                VideoEnhanceBtn.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(51, 255, 255, 255));
-                VideoEnhanceBtn.ToolTip = "Görüntü Netleştirici: KAPALI (Standart Görüntü)";
-            }
+            VideoEnhanceBtn.Background = _isVideoEnhanceEnabled ? SharpenActiveBrush : SlateBtnBrush;
+            VideoEnhanceBtn.BorderBrush = _isVideoEnhanceEnabled ? SharpenBorderBrush : SlateBorderBrush;
+            VideoEnhanceBtn.ToolTip = _isVideoEnhanceEnabled
+                ? "Görüntü Netleştirici: AÇIK (Anlık GPU Keskinlik & Kontrast)"
+                : "Görüntü Netleştirici: KAPALI (Standart Görüntü)";
         }
 
         public void AudioNormBtn_Click(object sender, RoutedEventArgs e)
         {
             _isAudioNormEnabled = !_isAudioNormEnabled;
-            _db.SetSetting("AudioNormEnabled", _isAudioNormEnabled ? "true" : "false");
+            string val = _isAudioNormEnabled ? "true" : "false";
+            _db.SetSetting("AudioNormEnabled", val);
+            _db.SetSetting("FlyleafAudioNorm", val);
             UpdateAudioNormButtonUI();
-            FastReloadCurrentStream();
-            ShowOsdToast(_isAudioNormEnabled ? "🔊 Ses Normalizasyonu: AÇIK (Dengeli Düzey)" : "🔇 Ses Normalizasyonu: KAPALI (Ham Ses)", "GeoSoundWave");
+            _mpv?.SetAudioNormalization(_isAudioNormEnabled);
+            ShowOsdToast(_isAudioNormEnabled ? "🔊 Ses Normalizasyonu: AÇIK (Kesintisiz)" : "🔇 Ses Normalizasyonu: KAPALI", "GeoSoundWave");
             ShowOsdTemporary();
-        }
-
-        private void ApplyAudioNormalization()
-        {
-            try
-            {
-                if (_config != null)
-                {
-                    var audioObj = _config.Audio;
-                    if (audioObj != null)
-                    {
-                        var filtersProp = audioObj.GetType().GetProperty("Filters");
-                        if (filtersProp?.GetValue(audioObj) is System.Collections.IList filtersList)
-                        {
-                            filtersList.Clear();
-                            if (_isAudioNormEnabled)
-                            {
-                                var filterInst = CreateFlyleafFilter("dynaudnorm=f=150:g=15:m=10.0:r=0.9:b=1");
-                                if (filterInst != null)
-                                {
-                                    filtersList.Add(filterInst);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("Player: ApplyAudioNormalization error", ex);
-            }
         }
 
         public void VideoEnhanceBtn_Click(object sender, RoutedEventArgs e)
         {
             _isVideoEnhanceEnabled = !_isVideoEnhanceEnabled;
-            _db.SetSetting("VideoEnhanceEnabled", _isVideoEnhanceEnabled ? "true" : "false");
+            string val = _isVideoEnhanceEnabled ? "true" : "false";
+            _db.SetSetting("VideoEnhanceEnabled", val);
+            _db.SetSetting("FlyleafSharpen", val);
             UpdateVideoEnhanceButtonUI();
-            FastReloadCurrentStream();
-            ShowOsdToast(_isVideoEnhanceEnabled ? "✨ Görüntü Netleştirici: AÇIK (HD Keskinlik)" : "📺 Görüntü Netleştirici: KAPALI", "GeoSparkle");
+            _mpv?.SetVideoEnhancement(_isVideoEnhanceEnabled);
+            ShowOsdToast(_isVideoEnhanceEnabled ? "✨ Görüntü Netleştirici: AÇIK (Kesintisiz)" : "📺 Görüntü Netleştirici: KAPALI", "GeoSparkle");
             ShowOsdTemporary();
-        }
-
-        private void ApplyVideoEnhancement()
-        {
-            try
-            {
-                if (_config != null)
-                {
-                    var videoObj = _config.Video;
-                    if (videoObj != null)
-                    {
-                        SetDynamicProperty(videoObj, "Contrast", _isVideoEnhanceEnabled ? 1.15f : 1.0f);
-                        SetDynamicProperty(videoObj, "Saturation", _isVideoEnhanceEnabled ? 1.10f : 1.0f);
-                        SetDynamicProperty(videoObj, "Brightness", _isVideoEnhanceEnabled ? 0.02f : 0.0f);
-
-                        var filtersProp = videoObj.GetType().GetProperty("Filters");
-                        if (filtersProp?.GetValue(videoObj) is System.Collections.IList filtersList)
-                        {
-                            filtersList.Clear();
-                            if (_isVideoEnhanceEnabled)
-                            {
-                                var filterInst = CreateFlyleafFilter("unsharp=5:5:0.8:5:5:0.0");
-                                if (filterInst != null)
-                                {
-                                    filtersList.Add(filterInst);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (_player != null)
-                {
-                    var videoObj = _player.GetType().GetProperty("Video")?.GetValue(_player);
-                    if (videoObj != null)
-                    {
-                        SetDynamicProperty(videoObj, "Contrast", _isVideoEnhanceEnabled ? 1.15f : 1.0f);
-                        SetDynamicProperty(videoObj, "Saturation", _isVideoEnhanceEnabled ? 1.10f : 1.0f);
-                        SetDynamicProperty(videoObj, "Brightness", _isVideoEnhanceEnabled ? 0.02f : 0.0f);
-                        SetDynamicProperty(videoObj, "Sharpness", _isVideoEnhanceEnabled ? 1.2f : 0.0f);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("Player: ApplyVideoEnhancement error", ex);
-            }
-        }
-
-
-
-
-        private void FastReloadCurrentStream()
-        {
-            if (ViewModel.CurrentChannel == null || _player == null) return;
-
-            try
-            {
-                long currentPosMs = 0;
-                if (ViewModel.IsVod(ViewModel.CurrentChannel))
-                {
-                    currentPosMs = _player.CurTime / 10000;
-                    ViewModel.CurrentChannel.LastPositionMs = currentPosMs;
-                }
-
-                ApplyAudioNormalization();
-                ApplyVideoEnhancement();
-
-                LogService.LogInfo($"Player: Fast reloading current stream for '{ViewModel.CurrentChannel.PrimaryName}' to apply filters/reconnect (VOD pos: {currentPosMs}ms)");
-                LoadChannel(ViewModel.CurrentChannel);
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("Player: FastReloadCurrentStream error", ex);
-            }
-        }
-
-        private object? CreateFlyleafFilter(string filterStr)
-        {
-            try
-            {
-                var filterType = typeof(FlyleafLib.Engine).Assembly.GetType("FlyleafLib.MediaFramework.MediaDecoder.Filter")
-                                 ?? typeof(FlyleafLib.Config).Assembly.GetType("FlyleafLib.MediaFramework.MediaDecoder.Filter")
-                                 ?? AppDomain.CurrentDomain.GetAssemblies()
-                                    .SelectMany(a => { try { return a.GetTypes(); } catch { return Array.Empty<Type>(); } })
-                                    .FirstOrDefault(t => t.FullName == "FlyleafLib.MediaFramework.MediaDecoder.Filter" || t.Name == "Filter");
-
-                if (filterType == null) return null;
-
-                // Try single string constructor
-                var strCtor = filterType.GetConstructor(new[] { typeof(string) });
-                if (strCtor != null)
-                {
-                    return strCtor.Invoke(new object[] { filterStr });
-                }
-
-                // Try default constructor and setting properties
-                var defaultCtor = filterType.GetConstructor(Type.EmptyTypes);
-                if (defaultCtor != null)
-                {
-                    var inst = defaultCtor.Invoke(null);
-                    var prop = filterType.GetProperty("FilterStr") 
-                               ?? filterType.GetProperty("Filter") 
-                               ?? filterType.GetProperty("Name") 
-                               ?? filterType.GetProperty("Value")
-                               ?? filterType.GetProperty("Text");
-                    prop?.SetValue(inst, filterStr);
-                    return inst;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError($"Player: CreateFlyleafFilter failed for '{filterStr}'", ex);
-            }
-            return null;
-        }
-
-        private static void SetDynamicProperty(object target, string propName, object value)
-        {
-            try
-            {
-                var prop = target.GetType().GetProperty(propName);
-                if (prop != null && prop.CanWrite)
-                {
-                    var targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                    object convertedValue = Convert.ChangeType(value, targetType);
-                    prop.SetValue(target, convertedValue);
-                }
-            }
-            catch { }
         }
 
         public void ShowOsdToast(string message, string iconGeoKey)
@@ -2079,17 +1690,13 @@ namespace StreamMesh.UI.Views
             Dispatcher.InvokeAsync(() =>
             {
                 if (OsdToastBorder == null || OsdToastText == null || OsdToastIcon == null) return;
-
                 OsdToastText.Text = message;
-                if (TryFindResource(iconGeoKey) is Geometry geo)
-                {
-                    OsdToastIcon.Data = geo;
-                }
+                if (TryFindResource(iconGeoKey) is Geometry geo) OsdToastIcon.Data = geo;
 
                 OsdToastBorder.Visibility = Visibility.Visible;
                 _toastTimer?.Stop();
                 _toastTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
-                _toastTimer.Tick += (s, e) =>
+                _toastTimer.Tick += (_, _) =>
                 {
                     if (OsdToastBorder != null) OsdToastBorder.Visibility = Visibility.Collapsed;
                     _toastTimer?.Stop();
@@ -2102,41 +1709,33 @@ namespace StreamMesh.UI.Views
 
         public void Fullscreen_Click(object sender, RoutedEventArgs e)
         {
+            var mainWin = Window.GetWindow(this) as UI.Windows.MainWindow ?? UI.Windows.MainWindow.Instance;
+            if (mainWin != null) { mainWin.ToggleFullscreen(); return; }
+
             var win = Window.GetWindow(this);
             if (win == null) return;
-            if (win.WindowStyle == WindowStyle.None)
-            {
-                win.WindowStyle = WindowStyle.SingleBorderWindow;
-                win.WindowState = WindowState.Normal;
-            }
-            else
-            {
-                win.WindowStyle = WindowStyle.None;
-                win.WindowState = WindowState.Maximized;
-            }
+            win.WindowStyle = win.WindowStyle == WindowStyle.None ? WindowStyle.SingleBorderWindow : WindowStyle.None;
+            win.WindowState = win.WindowStyle == WindowStyle.None ? WindowState.Maximized : WindowState.Normal;
         }
-
-        private void Player_MouseMove(object sender, System.Windows.Input.MouseEventArgs e) { ShowOsdTemporary(); }
 
         private void UpdateOsdEpgForTime(DateTime targetTime)
         {
             if (ViewModel.CurrentChannel == null || OsdCurrentEpg == null || OsdNextEpg == null) return;
-            if (ViewModel.EpgList != null && ViewModel.EpgList.Count > 0)
-            {
-                var matching = ViewModel.EpgList.Where(p => targetTime >= p.StartTime && targetTime <= p.EndTime).FirstOrDefault();
-                OsdCurrentEpg.Text = matching != null ? $"{matching.StartTime:HH:mm} - {matching.EndTime:HH:mm} {matching.Title}" : "Yayın akışı bilgisi yok";
+            string curText = "Yayın akışı bilgisi yok";
+            string nextText = "Sıradaki: --:-- Bilgi yok";
 
-                var future = ViewModel.EpgList.Where(p => p.StartTime > targetTime).OrderBy(p => p.StartTime).FirstOrDefault();
-                OsdNextEpg.Text = future != null ? $"Sıradaki: {future.StartTime:HH:mm} {future.Title}" : "Sıradaki: --:-- Bilgi yok";
-            }
-            else
+            if (ViewModel.EpgList?.Count > 0)
             {
-                OsdCurrentEpg.Text = "Yayın akışı bilgisi yok";
-                OsdNextEpg.Text = "Sıradaki: --:-- Bilgi yok";
+                var matching = ViewModel.EpgList.FirstOrDefault(p => targetTime >= p.StartTime && targetTime <= p.EndTime);
+                if (matching != null) curText = $"{matching.StartTime:HH:mm} - {matching.EndTime:HH:mm} {matching.Title}";
+
+                var future = ViewModel.EpgList.FirstOrDefault(p => p.StartTime > targetTime);
+                if (future != null) nextText = $"Sıradaki: {future.StartTime:HH:mm} {future.Title}";
             }
+
+            SetTextIfChanged(OsdCurrentEpg, ref _lastCurrentEpgText, curText);
+            SetTextIfChanged(OsdNextEpg, ref _lastNextEpgText, nextText);
         }
-
-        private IptvAccountInfo? _currentDeadAccountDetected = null;
 
         private async void CheckAndShowDeadAccountAlert(List<string> candidateUrls)
         {
@@ -2151,15 +1750,10 @@ namespace StreamMesh.UI.Views
                     if (foundAccount != null && !string.IsNullOrEmpty(foundAccount.Username)) break;
                 }
 
-                if (foundAccount == null)
-                {
-                    DeadAccountAlertCard.Visibility = Visibility.Collapsed;
-                    return;
-                }
+                if (foundAccount == null) { DeadAccountAlertCard.Visibility = Visibility.Collapsed; return; }
 
                 _currentDeadAccountDetected = foundAccount;
                 var counts = await IptvAccountHelper.CountAccountOccurrencesAsync(foundAccount);
-
                 if (counts.totalChannels > 1 || counts.totalUrls > 1)
                 {
                     DeadAccountAlertText.Text = $"Bu yayın `{foundAccount.Username}` (@{foundAccount.HostWithPort}) hesabına bağlı ve yanıt vermiyor. Veritabanında bu hesaba ait toplam {counts.totalUrls} adet link ({counts.totalChannels} kanal/içerik) var. Bu hesaba ait tüm linkleri topluca temizlemek ister misiniz?";
@@ -2172,79 +1766,775 @@ namespace StreamMesh.UI.Views
         private async void BtnPurgeDeadAccount_Click(object sender, RoutedEventArgs e)
         {
             if (_currentDeadAccountDetected == null) return;
-
             var acc = _currentDeadAccountDetected;
             DeadAccountAlertCard.Visibility = Visibility.Collapsed;
 
-            var res = System.Windows.MessageBox.Show(
+            if (System.Windows.MessageBox.Show(
                 $"'{acc.Username}' (@{acc.HostWithPort}) hesabına ait tüm IPTV yayınları ve bu hesaba özel kanallar veritabanından kalıcı olarak silinecektir.\n\nOnaylıyor musunuz?",
-                "Ölü IPTV Hesabını Temizle",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+                "Ölü IPTV Hesabını Temizle", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
 
-            if (res == MessageBoxResult.Yes)
+            try
+            {
+                var purgeResult = await IptvAccountHelper.PurgeAccountFromDatabaseAsync(acc);
+                ShowOsdToast($"Ölü Hesap Temizlendi: {purgeResult.TotalUrlsRemoved} URL, {purgeResult.ChannelsDeletedEntirely} Kanal Silindi", "GeoTrash");
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Temizleme hatası: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnCloseDeadAccountAlert_Click(object sender, RoutedEventArgs e) => DeadAccountAlertCard.Visibility = Visibility.Collapsed;
+
+        #region 4-Screen Simultaneous Multi-View
+
+        private sealed class MultiViewSlotState
+        {
+            public int Index;
+            public long SessionId;
+            public CancellationTokenSource? LoadCts;
+            public MpvPlayerEngine? Engine;
+            public System.Windows.Forms.Integration.WindowsFormsHost? WfHost;
+            public System.Windows.Forms.Panel? VideoPanel;
+            public Channel? ActiveChannel;
+            public string? ActiveRawUrl;
+            public string? ActivePreparedUrl;
+            public string ActiveServerKey = "";
+            public string ActiveServerLabel = "";
+            public bool IsAceStream;
+            public bool IsMuted = true;
+            public bool PausedByMinimize;
+
+            public System.Windows.Controls.Border Border = null!;
+            public System.Windows.Controls.TextBlock TitleText = null!;
+            public System.Windows.Controls.TextBlock ServerText = null!;
+            public System.Windows.Controls.Button MuteBtn = null!;
+            public System.Windows.Controls.Grid VideoContainer = null!;
+            public System.Windows.Controls.Grid EmptyPanel = null!;
+
+            public IntPtr EnsureVideoHandle()
+            {
+                if (VideoPanel == null) return IntPtr.Zero;
+                if (!VideoPanel.IsHandleCreated) VideoPanel.CreateControl();
+                return VideoPanel.Handle;
+            }
+        }
+
+        private void EnsureMultiViewSlotsInitialized()
+        {
+            if (_multiViewSlots != null) return;
+
+            var borders = new[] { TileBorder0, TileBorder1, TileBorder2, TileBorder3 };
+            var titles = new[] { TileTitle0, TileTitle1, TileTitle2, TileTitle3 };
+            var servers = new[] { TileServer0, TileServer1, TileServer2, TileServer3 };
+            var muteBtns = new[] { TileMuteBtn0, TileMuteBtn1, TileMuteBtn2, TileMuteBtn3 };
+            var videoContainers = new[] { TileVideoContainer0, TileVideoContainer1, TileVideoContainer2, TileVideoContainer3 };
+            var emptyPanels = new[] { TileEmpty0, TileEmpty1, TileEmpty2, TileEmpty3 };
+
+            _multiViewSlots = new MultiViewSlotState[4];
+            for (int i = 0; i < 4; i++)
+            {
+                int slotIdx = i;
+                var panel = new System.Windows.Forms.Panel
+                {
+                    BackColor = System.Drawing.Color.Black,
+                    Dock = System.Windows.Forms.DockStyle.Fill,
+                    Margin = System.Windows.Forms.Padding.Empty,
+                    TabStop = false
+                };
+                panel.MouseDown += (_, _) => Dispatcher.InvokeAsync(() => SetMultiViewAudioFocus(slotIdx));
+
+                var wfHost = new System.Windows.Forms.Integration.WindowsFormsHost
+                {
+                    Child = panel,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Stretch
+                };
+
+                videoContainers[i].Children.Clear();
+                videoContainers[i].Children.Add(wfHost);
+
+                _multiViewSlots[i] = new MultiViewSlotState
+                {
+                    Index = i,
+                    IsMuted = i != 0,
+                    WfHost = wfHost,
+                    VideoPanel = panel,
+                    Border = borders[i],
+                    TitleText = titles[i],
+                    ServerText = servers[i],
+                    MuteBtn = muteBtns[i],
+                    VideoContainer = videoContainers[i],
+                    EmptyPanel = emptyPanels[i]
+                };
+            }
+        }
+
+        private void EnterMultiViewMode()
+        {
+            var mainWin = Window.GetWindow(this) as UI.Windows.MainWindow ?? UI.Windows.MainWindow.Instance;
+            mainWin?.SetMiniPlayer(false);
+
+            EnsureMultiViewSlotsInitialized();
+
+            Channel? transferChannel = ViewModel.CurrentChannel;
+            long transferVodPosMs = 0;
+            if (transferChannel != null && _mpv != null && ViewModel.IsVod(transferChannel))
             {
                 try
                 {
-                    var purgeResult = await IptvAccountHelper.PurgeAccountFromDatabaseAsync(acc);
-                    ShowOsdToast($"Ölü Hesap Temizlendi: {purgeResult.TotalUrlsRemoved} URL, {purgeResult.ChannelsDeletedEntirely} Kanal Silindi", "GeoTrash");
+                    transferVodPosMs = _mpv.PositionMs;
+                    ViewModel.SaveVodPosition(transferChannel, transferVodPosMs);
                 }
+                catch { }
+            }
+
+            if (_isRecording) StopRecording();
+            _loadCts?.Cancel();
+            _positionTimer?.Stop();
+            _osdTimer?.Stop();
+            if (OsdPanel != null) OsdPanel.Visibility = Visibility.Collapsed;
+            if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
+
+            try { _mpv?.Stop(); } catch { }
+            _activeProxySession = null;
+            ResetTimeshiftState();
+
+            _isMultiViewActive = true;
+            _focusedMultiViewSlot = 0;
+            VideoPlayer.Visibility = Visibility.Collapsed;
+            MultiViewContainer.Visibility = Visibility.Visible;
+            VideoPlayer.SyncOverlayBounds();
+
+            SetMultiViewAudioFocus(0);
+
+            if (transferChannel != null)
+            {
+                _ = LoadMultiViewSlotAsync(0, transferChannel, transferVodPosMs);
+            }
+            else
+            {
+                UpdateMultiViewHeaderStatus();
+            }
+        }
+
+        private void ExitMultiViewMode(Channel? restoreChannel, bool stopAceIfUnused = true)
+        {
+            if (!_isMultiViewActive) return;
+
+            bool restoreIsAce = restoreChannel != null && MultiViewConflictHelper.IsAceStreamUrl(restoreChannel.Url, restoreChannel);
+            bool anySlotUsedAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
+
+            StopAllMultiViewSlots(disposeEngines: false);
+
+            _isMultiViewActive = false;
+            MultiViewContainer.Visibility = Visibility.Collapsed;
+            VideoPlayer.Visibility = Visibility.Visible;
+            VideoPlayer.SyncOverlayBounds();
+
+            if (anySlotUsedAce && stopAceIfUnused && !restoreIsAce)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
+                    AceStreamService.Instance.StopAllSessions();
+                });
+            }
+
+            if (restoreChannel != null)
+            {
+                LoadChannel(restoreChannel);
+            }
+            else
+            {
+                ViewModel.CurrentChannel = null;
+                _currentPlayingUrl = null;
+                UpdateMultiViewHeaderStatus();
+            }
+        }
+
+        private Channel? GetFocusedOrFirstMultiViewChannel()
+        {
+            if (_multiViewSlots == null) return null;
+            if (_focusedMultiViewSlot >= 0 && _focusedMultiViewSlot < _multiViewSlots.Length && _multiViewSlots[_focusedMultiViewSlot].ActiveChannel != null)
+                return _multiViewSlots[_focusedMultiViewSlot].ActiveChannel;
+            return _multiViewSlots.FirstOrDefault(s => s.ActiveChannel != null)?.ActiveChannel;
+        }
+
+        private (HashSet<string> blockedKeys, bool blockAce) GetMultiViewConflictsExcluding(int excludedSlotIndex)
+        {
+            var blockedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            bool blockAce = false;
+
+            if (_multiViewSlots == null) return (blockedKeys, false);
+
+            foreach (var s in _multiViewSlots)
+            {
+                if (s.Index == excludedSlotIndex || s.ActiveChannel == null) continue;
+
+                if (s.IsAceStream || MultiViewConflictHelper.IsAceStreamUrl(s.ActivePreparedUrl ?? s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel))
+                {
+                    blockAce = true;
+                    blockedKeys.Add(MultiViewConflictHelper.AceStreamServerKey);
+                }
+
+                if (!string.IsNullOrWhiteSpace(s.ActiveServerKey))
+                {
+                    blockedKeys.Add(s.ActiveServerKey);
+                }
+                else
+                {
+                    string fallbackKey = MultiViewConflictHelper.GetNormalizedServerKey(s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel);
+                    if (!string.IsNullOrWhiteSpace(fallbackKey))
+                        blockedKeys.Add(fallbackKey);
+                }
+            }
+
+            return (blockedKeys, blockAce);
+        }
+
+        private void SetMultiViewAudioFocus(int slotIndex)
+        {
+            if (_multiViewSlots == null || slotIndex < 0 || slotIndex >= _multiViewSlots.Length) return;
+            _focusedMultiViewSlot = slotIndex;
+
+            for (int i = 0; i < _multiViewSlots.Length; i++)
+            {
+                var slot = _multiViewSlots[i];
+                slot.IsMuted = (i != slotIndex);
+                try { slot.Engine?.SetMute(slot.IsMuted); } catch { }
+            }
+
+            RefreshMultiViewSlotVisuals();
+        }
+
+        private void RefreshMultiViewSlotVisuals()
+        {
+            if (_multiViewSlots == null) return;
+            for (int i = 0; i < _multiViewSlots.Length; i++)
+            {
+                var slot = _multiViewSlots[i];
+                bool isFocused = (i == _focusedMultiViewSlot);
+                slot.Border.BorderBrush = isFocused ? TileActiveBorderBrush : TileInactiveBorderBrush;
+                slot.MuteBtn.Content = slot.IsMuted ? "🔇" : "🔊";
+                slot.MuteBtn.Background = slot.IsMuted ? TileMuteOffBrush : TileMuteOnBrush;
+                slot.MuteBtn.Foreground = slot.IsMuted ? System.Windows.Media.Brushes.LightGray : System.Windows.Media.Brushes.White;
+            }
+        }
+
+        private void UpdateMultiViewHeaderStatus()
+        {
+            if (MultiViewStatusText == null || _multiViewSlots == null) return;
+            int activeCount = _multiViewSlots.Count(s => s.ActiveChannel != null);
+            var locks = new List<string>();
+            if (_multiViewSlots.Any(s => s.ActiveChannel != null && s.IsAceStream))
+                locks.Add("AceStream P2P (Tekil)");
+
+            foreach (var s in _multiViewSlots)
+            {
+                if (s.ActiveChannel != null && !s.IsAceStream && !string.IsNullOrWhiteSpace(s.ActiveServerKey))
+                    locks.Add(s.ActiveServerKey);
+            }
+
+            string lockInfo = locks.Count > 0 ? $" • Kilitli Sunucular: {string.Join(", ", locks.Distinct(StringComparer.OrdinalIgnoreCase))}" : "";
+            MultiViewStatusText.Text = $"{activeCount}/4 Ekran Aktif{lockInfo} • Sesi geçirmek için ekrana tıklayın";
+        }
+
+        private async Task LoadMultiViewSlotAsync(int slotIndex, Channel channel, long startPositionMs = 0)
+        {
+            if (_multiViewSlots == null || slotIndex < 0 || slotIndex >= _multiViewSlots.Length || channel == null) return;
+
+            var authPlugin = PluginManager.Instance.GetPluginById("user_auth") as UserAuthPlugin;
+            if (channel.IsLocked && authPlugin is { IsEnabled: true } && authPlugin.GetBool("EnableParentalPin"))
+            {
+                bool authorized = Dispatcher.Invoke(() => PromptParentalPin(channel.PrimaryName, authPlugin));
+                if (!authorized) return;
+            }
+
+            var slot = _multiViewSlots[slotIndex];
+            slot.LoadCts?.Cancel();
+            slot.LoadCts?.Dispose();
+            slot.LoadCts = new CancellationTokenSource();
+            var token = slot.LoadCts.Token;
+            long sessionId = Interlocked.Increment(ref slot.SessionId);
+
+            bool wasAce = slot.IsAceStream;
+            slot.ActiveChannel = channel;
+            slot.ActiveRawUrl = null;
+            slot.ActivePreparedUrl = null;
+            slot.ActiveServerKey = "";
+            slot.ActiveServerLabel = "";
+            slot.IsAceStream = MultiViewConflictHelper.IsAceStreamUrl(channel.Url, channel);
+
+            await Dispatcher.InvokeAsync(() =>
+            {
+                slot.EmptyPanel.Visibility = Visibility.Collapsed;
+                slot.VideoContainer.Visibility = Visibility.Visible;
+                slot.TitleText.Text = $"{channel.PrimaryName} (Bağlanıyor...)";
+                slot.ServerText.Text = "";
+                UpdateMultiViewHeaderStatus();
+            });
+
+            if (wasAce && !slot.IsAceStream && !_multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream))
+            {
+                _ = Task.Run(async () =>
+                {
+                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
+                    AceStreamService.Instance.StopAllSessions();
+                });
+            }
+
+            await Task.Run(async () =>
+            {
+                if (token.IsCancellationRequested || sessionId != slot.SessionId) return;
+
+                try
+                {
+                    if (!MpvPlayerEngine.IsLibraryAvailable())
+                    {
+                        await Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} (libmpv bekleniyor...)");
+                        for (int w = 0; w < 20 && !MpvPlayerEngine.IsLibraryAvailable() && !token.IsCancellationRequested; w++)
+                            await Task.Delay(1000, token).ConfigureAwait(false);
+                    }
+
+                    if (!MpvPlayerEngine.IsLibraryAvailable() || token.IsCancellationRequested || sessionId != slot.SessionId)
+                        return;
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        if (slot.Engine == null)
+                        {
+                            IntPtr hwnd = slot.EnsureVideoHandle();
+                            if (hwnd == IntPtr.Zero) return;
+                            var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
+                            var eng = new MpvPlayerEngine();
+                            eng.Initialize(hwnd, hwAccel, cacheMs, defaultUa);
+                            eng.SetMute(slot.IsMuted);
+                            slot.Engine = eng;
+                        }
+                        else
+                        {
+                            try { slot.Engine.Stop(); } catch { }
+                        }
+                    });
+
+                    if (slot.Engine == null || token.IsCancellationRequested || sessionId != slot.SessionId) return;
+
+                    var (blockedKeys, blockAce) = GetMultiViewConflictsExcluding(slotIndex);
+                    var rawCandidates = await ViewModel.GetSmartOrderedCandidatesAsync(channel, token).ConfigureAwait(false);
+                    var filteredCandidates = MultiViewConflictHelper.FilterNonConflictingUrls(rawCandidates, channel, blockedKeys, blockAce);
+
+                    if (filteredCandidates.Count == 0)
+                    {
+                        await Dispatcher.InvokeAsync(() =>
+                        {
+                            slot.ActiveChannel = null;
+                            slot.ActiveServerKey = "";
+                            slot.IsAceStream = false;
+                            slot.VideoContainer.Visibility = Visibility.Collapsed;
+                            slot.EmptyPanel.Visibility = Visibility.Visible;
+                            slot.TitleText.Text = "Çakışan Sunucu / AceStream Kısıtı";
+                            slot.ServerText.Text = "";
+                            UpdateMultiViewHeaderStatus();
+                        });
+                        return;
+                    }
+
+                    var resPlugin = PluginManager.Instance.GetPluginById("stream_resolution") as StreamResolutionPlugin;
+                    int customTimeoutSec = resPlugin is { IsEnabled: true } ? Math.Clamp(resPlugin.GetInt("ConnectionTimeoutSeconds", 8), 5, 45) : 15;
+
+                    bool succeeded = false;
+                    string successRaw = "";
+                    string successPrepared = "";
+                    string successKey = "";
+                    bool successIsAce = false;
+
+                    for (int i = 0; i < filteredCandidates.Count; i++)
+                    {
+                        if (token.IsCancellationRequested || sessionId != slot.SessionId) break;
+                        string rawCandidate = filteredCandidates[i];
+
+                        // Re-check conflicts right before resolving in case another slot loaded concurrently
+                        var (latestBlocked, latestBlockAce) = GetMultiViewConflictsExcluding(slotIndex);
+                        if (!MultiViewConflictHelper.IsUrlAllowed(rawCandidate, channel, latestBlocked, latestBlockAce))
+                            continue;
+
+                        if (i > 0)
+                        {
+                            await Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} (Alternatif {i + 1}/{filteredCandidates.Count}...)");
+                        }
+
+                        string preparedUrl = await ViewModel.PrepareSingleStreamUrlAsync(rawCandidate, channel, token).ConfigureAwait(false);
+                        if (token.IsCancellationRequested || sessionId != slot.SessionId || string.IsNullOrWhiteSpace(preparedUrl))
+                            continue;
+
+                        bool isAceCandidate = MultiViewConflictHelper.IsAceStreamUrl(preparedUrl, channel) || MultiViewConflictHelper.IsAceStreamUrl(rawCandidate, channel);
+                        string candidateKey = isAceCandidate
+                            ? MultiViewConflictHelper.AceStreamServerKey
+                            : MultiViewConflictHelper.GetNormalizedServerKey(rawCandidate, channel);
+
+                        slot.IsAceStream = isAceCandidate;
+                        slot.ActiveServerKey = candidateKey;
+
+                        int watchdogMs = isAceCandidate ? 35000 : customTimeoutSec * 1000;
+                        if (await OpenAndAwaitSlotPlaybackAsync(slot, preparedUrl, channel, watchdogMs, token, sessionId).ConfigureAwait(false))
+                        {
+                            succeeded = true;
+                            successRaw = rawCandidate;
+                            successPrepared = preparedUrl;
+                            successKey = candidateKey;
+                            successIsAce = isAceCandidate;
+                            break;
+                        }
+
+                        try { slot.Engine?.Stop(); } catch { }
+                    }
+
+                    if (token.IsCancellationRequested || sessionId != slot.SessionId) return;
+
+                    if (succeeded)
+                    {
+                        slot.ActiveRawUrl = successRaw;
+                        slot.ActivePreparedUrl = successPrepared;
+                        slot.ActiveServerKey = successKey;
+                        slot.IsAceStream = successIsAce;
+                        slot.ActiveServerLabel = successIsAce ? "AceStream P2P" : (string.IsNullOrEmpty(successKey) ? channel.SourceType : successKey);
+
+                        if (startPositionMs > 0 && ViewModel.IsVod(channel))
+                        {
+                            try { slot.Engine?.SeekMs(startPositionMs); } catch { }
+                        }
+
+                        await Dispatcher.InvokeAsync(() =>
+                        {
+                            slot.TitleText.Text = channel.PrimaryName;
+                            slot.ServerText.Text = slot.ActiveServerLabel;
+                            slot.Engine?.SetMute(slot.IsMuted);
+                            RefreshMultiViewSlotVisuals();
+                            UpdateMultiViewHeaderStatus();
+                        });
+                    }
+                    else
+                    {
+                        await Dispatcher.InvokeAsync(() =>
+                        {
+                            slot.ActiveChannel = null;
+                            slot.ActiveServerKey = "";
+                            slot.IsAceStream = false;
+                            slot.TitleText.Text = $"{channel.PrimaryName} (Sinyal Yok)";
+                            slot.ServerText.Text = "";
+                            slot.VideoContainer.Visibility = Visibility.Collapsed;
+                            slot.EmptyPanel.Visibility = Visibility.Visible;
+                            UpdateMultiViewHeaderStatus();
+                        });
+                    }
+                }
+                catch (OperationCanceledException) { }
                 catch (Exception ex)
                 {
-                    System.Windows.MessageBox.Show($"Temizleme hatası: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                    LogService.LogError($"[MultiView] Slot {slotIndex + 1} playback error", ex);
+                }
+            }, token);
+        }
+
+        private async Task<bool> OpenAndAwaitSlotPlaybackAsync(
+            MultiViewSlotState slot,
+            string url,
+            Channel channel,
+            int watchdogMs,
+            CancellationToken token,
+            long sessionId)
+        {
+            var eng = slot.Engine;
+            if (eng == null || token.IsCancellationRequested || sessionId != slot.SessionId)
+                return false;
+
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            Action<MpvPlaybackStatus> statusHandler = status =>
+            {
+                if (sessionId != slot.SessionId) { tcs.TrySetResult(false); return; }
+                if (status == MpvPlaybackStatus.Playing) tcs.TrySetResult(true);
+                else if (status == MpvPlaybackStatus.Failed) tcs.TrySetResult(false);
+            };
+
+            Action<bool, string?> openHandler = (success, _) =>
+            {
+                if (sessionId != slot.SessionId) { tcs.TrySetResult(false); return; }
+                tcs.TrySetResult(success);
+            };
+
+            eng.StatusChanged += statusHandler;
+            eng.OpenCompleted += openHandler;
+
+            try
+            {
+                ConfigureMpvEngineForUrl(eng, url, channel);
+                eng.SetMute(slot.IsMuted);
+
+                if (MultiViewConflictHelper.IsAceStreamUrl(url, channel))
+                    await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
+
+                eng.Open(url);
+
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                var completed = await Task.WhenAny(tcs.Task, Task.Delay(watchdogMs, linkedCts.Token)).ConfigureAwait(false);
+                if (token.IsCancellationRequested || sessionId != slot.SessionId) return false;
+
+                if (completed == tcs.Task)
+                {
+                    linkedCts.Cancel();
+                    return await tcs.Task.ConfigureAwait(false);
+                }
+                return false;
+            }
+            finally
+            {
+                eng.StatusChanged -= statusHandler;
+                eng.OpenCompleted -= openHandler;
+            }
+        }
+
+        private void ClearMultiViewSlot(int slotIndex)
+        {
+            if (_multiViewSlots == null || slotIndex < 0 || slotIndex >= _multiViewSlots.Length) return;
+            var slot = _multiViewSlots[slotIndex];
+            bool wasAce = slot.IsAceStream;
+
+            Interlocked.Increment(ref slot.SessionId);
+            slot.LoadCts?.Cancel();
+            slot.LoadCts?.Dispose();
+            slot.LoadCts = null;
+
+            if (slot.ActiveChannel != null && slot.Engine != null && ViewModel.IsVod(slot.ActiveChannel))
+            {
+                try { ViewModel.SaveVodPosition(slot.ActiveChannel, slot.Engine.PositionMs); } catch { }
+            }
+
+            try { slot.Engine?.Stop(); } catch { }
+
+            slot.ActiveChannel = null;
+            slot.ActiveRawUrl = null;
+            slot.ActivePreparedUrl = null;
+            slot.ActiveServerKey = "";
+            slot.ActiveServerLabel = "";
+            slot.IsAceStream = false;
+
+            slot.VideoContainer.Visibility = Visibility.Collapsed;
+            slot.EmptyPanel.Visibility = Visibility.Visible;
+            slot.TitleText.Text = "Boş Ekran";
+            slot.ServerText.Text = "";
+
+            if (wasAce && !_multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream))
+            {
+                _ = Task.Run(async () =>
+                {
+                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
+                    AceStreamService.Instance.StopAllSessions();
+                });
+            }
+
+            UpdateMultiViewHeaderStatus();
+        }
+
+        private void StopAllMultiViewSlots(bool disposeEngines)
+        {
+            if (_multiViewSlots == null) return;
+
+            foreach (var slot in _multiViewSlots)
+            {
+                Interlocked.Increment(ref slot.SessionId);
+                slot.LoadCts?.Cancel();
+                slot.LoadCts?.Dispose();
+                slot.LoadCts = null;
+
+                if (slot.ActiveChannel != null && slot.Engine != null && ViewModel.IsVod(slot.ActiveChannel))
+                {
+                    try { ViewModel.SaveVodPosition(slot.ActiveChannel, slot.Engine.PositionMs); } catch { }
+                }
+
+                try { slot.Engine?.Stop(); } catch { }
+                if (disposeEngines)
+                {
+                    try { slot.Engine?.Dispose(); } catch { }
+                    slot.Engine = null;
+                    try { slot.WfHost?.Dispose(); } catch { }
+                    slot.WfHost = null;
+                    try { slot.VideoPanel?.Dispose(); } catch { }
+                    slot.VideoPanel = null;
+                }
+
+                slot.ActiveChannel = null;
+                slot.ActiveRawUrl = null;
+                slot.ActivePreparedUrl = null;
+                slot.ActiveServerKey = "";
+                slot.ActiveServerLabel = "";
+                slot.IsAceStream = false;
+
+                if (!disposeEngines)
+                {
+                    slot.VideoContainer.Visibility = Visibility.Collapsed;
+                    slot.EmptyPanel.Visibility = Visibility.Visible;
+                    slot.TitleText.Text = "Boş Ekran";
+                    slot.ServerText.Text = "";
                 }
             }
         }
 
-        private void BtnCloseDeadAccountAlert_Click(object sender, RoutedEventArgs e)
+        private static int ParseSlotTag(object sender)
         {
-            DeadAccountAlertCard.Visibility = Visibility.Collapsed;
+            if (sender is FrameworkElement fe && fe.Tag != null && int.TryParse(fe.Tag.ToString(), out int idx))
+                return idx;
+            return -1;
         }
+
+        private void MultiViewTileHeader_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            int idx = ParseSlotTag(sender);
+            if (idx >= 0) SetMultiViewAudioFocus(idx);
+        }
+
+        private void MultiViewTileMute_Click(object sender, RoutedEventArgs e)
+        {
+            int idx = ParseSlotTag(sender);
+            if (_multiViewSlots == null || idx < 0 || idx >= _multiViewSlots.Length) return;
+
+            var slot = _multiViewSlots[idx];
+            if (slot.IsMuted)
+            {
+                SetMultiViewAudioFocus(idx);
+            }
+            else
+            {
+                slot.IsMuted = true;
+                try { slot.Engine?.SetMute(true); } catch { }
+                RefreshMultiViewSlotVisuals();
+            }
+        }
+
+        private void MultiViewTilePick_Click(object sender, RoutedEventArgs e)
+        {
+            int idx = ParseSlotTag(sender);
+            if (idx < 0 || idx > 3) return;
+
+            var (blockedKeys, blockAce) = GetMultiViewConflictsExcluding(idx);
+            var picker = new UI.Windows.MultiViewChannelPickerWindow(idx, blockedKeys, blockAce)
+            {
+                Owner = Window.GetWindow(this) ?? UI.Windows.MainWindow.Instance
+            };
+
+            if (picker.ShowDialog() == true && picker.SelectedChannel != null)
+            {
+                SetMultiViewAudioFocus(idx);
+                _ = LoadMultiViewSlotAsync(idx, picker.SelectedChannel);
+            }
+        }
+
+        private void MultiViewTileExpand_Click(object sender, RoutedEventArgs e)
+        {
+            int idx = ParseSlotTag(sender);
+            if (_multiViewSlots == null || idx < 0 || idx >= _multiViewSlots.Length) return;
+            var ch = _multiViewSlots[idx].ActiveChannel;
+            ExitMultiViewMode(restoreChannel: ch ?? GetFocusedOrFirstMultiViewChannel());
+        }
+
+        private void MultiViewTileClose_Click(object sender, RoutedEventArgs e)
+        {
+            int idx = ParseSlotTag(sender);
+            if (idx >= 0) ClearMultiViewSlot(idx);
+        }
+
+        private void MultiViewStopAllBtn_Click(object sender, RoutedEventArgs e)
+        {
+            bool anyAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
+            StopAllMultiViewSlots(disposeEngines: false);
+            if (anyAce)
+            {
+                _ = Task.Run(async () =>
+                {
+                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
+                    AceStreamService.Instance.StopAllSessions();
+                });
+            }
+            UpdateMultiViewHeaderStatus();
+        }
+
+        private void MultiViewExitBtn_Click(object sender, RoutedEventArgs e)
+        {
+            ExitMultiViewMode(restoreChannel: GetFocusedOrFirstMultiViewChannel());
+        }
+
+        #endregion
 
         public void Dispose()
         {
+            if (_isRecording) StopRecording();
+            _recordCts?.Dispose();
+            _recordCts = null;
             _loadCts?.Cancel();
             _loadCts?.Dispose();
             _loadCts = null;
             _positionTimer?.Stop();
             _osdTimer?.Stop();
+            _viewersTimer?.Stop();
             _toastTimer?.Stop();
-            if (_player != null)
+
+            bool anyMultiViewAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
+            StopAllMultiViewSlots(disposeEngines: true);
+
+            if (_mpv != null)
             {
                 try
                 {
                     var ch = ViewModel.CurrentChannel;
-                    if (ch != null && IsCurrentStreamVod())
-                    {
-                        ViewModel.SaveVodPosition(ch, _player.CurTime / 10000);
-                    }
-                    _player.Stop();
+                    if (ch != null && ViewModel.IsVod(ch))
+                        ViewModel.SaveVodPosition(ch, _mpv.PositionMs);
+                    _mpv.Stop();
 
-                    if (ch?.SourceType == "ACESTREAM" || (ch?.Url?.Contains("acestream://") == true))
-                    {
+                    if (anyMultiViewAce || ch?.SourceType == "ACESTREAM" || ch?.Url?.Contains("acestream://") == true)
                         Task.Run(async () => await _ace.StopAllStreamsAsync());
-                    }
 
-                    _player.Dispose();
+                    _mpv.Dispose();
                 }
                 catch { }
-                _player = null;
+                _mpv = null;
             }
+            else if (anyMultiViewAce)
+            {
+                Task.Run(async () => await _ace.StopAllStreamsAsync());
+            }
+
+            try { VideoPlayer.Dispose(); } catch { }
         }
     }
 
     public class AudioTrackModel
     {
+        private static readonly SolidColorBrush SelectedBg = CreateFrozen(60, 56, 189, 248);
+        private static readonly SolidColorBrush DefaultBg = CreateFrozen(20, 255, 255, 255);
+        private static readonly SolidColorBrush SelectedBorder = CreateFrozen(255, 56, 189, 248);
+        private static readonly SolidColorBrush DefaultBorder = CreateFrozen(40, 255, 255, 255);
+        private static readonly SolidColorBrush SelectedBadge = CreateFrozen(255, 56, 189, 248);
+        private static readonly SolidColorBrush DefaultBadge = CreateFrozen(255, 30, 41, 59);
+
+        private static SolidColorBrush CreateFrozen(byte a, byte r, byte g, byte b)
+        {
+            var brush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(a, r, g, b));
+            brush.Freeze();
+            return brush;
+        }
+
         public int Index { get; set; }
+        public int TrackId { get; set; } = 1;
         public string DisplayName { get; set; } = "";
         public string Details { get; set; } = "";
         public string LangCode { get; set; } = "TR";
         public bool IsSelected { get; set; }
-        public System.Windows.Visibility CheckmarkVisibility => IsSelected ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-        public System.Windows.Media.Brush BackgroundBrush => IsSelected ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(60, 56, 189, 248)) : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 255, 255, 255));
-        public System.Windows.Media.Brush BorderBrush => IsSelected ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(56, 189, 248)) : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 255, 255, 255));
-        public System.Windows.Media.Brush BadgeBackground => IsSelected ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(56, 189, 248)) : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 41, 59));
+        public Visibility CheckmarkVisibility => IsSelected ? Visibility.Visible : Visibility.Collapsed;
+        public System.Windows.Media.Brush BackgroundBrush => IsSelected ? SelectedBg : DefaultBg;
+        public System.Windows.Media.Brush BorderBrush => IsSelected ? SelectedBorder : DefaultBorder;
+        public System.Windows.Media.Brush BadgeBackground => IsSelected ? SelectedBadge : DefaultBadge;
         public System.Windows.Media.Brush BadgeForeground => IsSelected ? System.Windows.Media.Brushes.Black : System.Windows.Media.Brushes.White;
-        public object? RawStream { get; set; }
     }
 }

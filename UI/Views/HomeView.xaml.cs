@@ -3,21 +3,33 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Linq;
 using StreamMesh.Models;
 using StreamMesh.UI.ViewModels;
 using StreamMesh.UI.Windows;
-using StreamMesh.Core.Database;
-using StreamMesh.Core.Media;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.UI.Views
 {
+    public class MediaCardTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate? TvTemplate { get; set; }
+        public DataTemplate? VodTemplate { get; set; }
+
+        public override DataTemplate? SelectTemplate(object item, DependencyObject container)
+        {
+            if (item is Channel ch && ch.IsVodMedia)
+            {
+                return VodTemplate ?? base.SelectTemplate(item, container);
+            }
+            return TvTemplate ?? base.SelectTemplate(item, container);
+        }
+    }
+
     public partial class HomeView : System.Windows.Controls.UserControl
     {
         private HomeViewModel _vm;
         private System.Windows.Point _dragStartPoint;
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private bool _suppressNextMouseUp;
 
         public HomeView()
         {
@@ -28,43 +40,46 @@ namespace StreamMesh.UI.Views
 
         private void Card_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (sender is FrameworkElement fe && fe.DataContext is Channel item)
+            if (!_vm.ShowVodHero && sender is FrameworkElement fe && fe.DataContext is Channel item)
             {
-                _vm.CurrentBackdrop = !string.IsNullOrEmpty(item.BackdropUrl) ? item.BackdropUrl : item.LogoUrl;
+                _vm.CurrentBackdrop = !string.IsNullOrEmpty(item.BackdropUrl) ? item.BackdropUrl : item.PrimaryLogoUrl;
             }
         }
 
-        private void Card_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e) { }
-
-        private void Card_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void OpenVodItem(Channel item)
         {
+            if (item is SeriesGroup series)
+            {
+                var seriesWin = new SeriesDetailsWindow(series);
+                seriesWin.Owner = Window.GetWindow(this);
+                seriesWin.ShowDialog();
+                return;
+            }
+
+            var details = new MediaDetailsWindow(item);
+            details.Owner = Window.GetWindow(this);
+            details.Show();
+        }
+
+        private void Card_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (_suppressNextMouseUp)
+            {
+                _suppressNextMouseUp = false;
+                return;
+            }
+
             try
             {
                 if (sender is FrameworkElement fe && fe.DataContext is Channel item)
                 {
-                    if (item is SeriesGroup series)
+                    if (item.IsVodMedia)
                     {
-                        var seriesWin = new SeriesDetailsWindow(series);
-                        seriesWin.Owner = Window.GetWindow(this);
-                        seriesWin.ShowDialog();
+                        _vm.SelectHeroItem(item, enrichIfMissing: true);
                         return;
                     }
 
-                    string cat = (item.Category ?? "").Trim().ToUpperInvariant();
-                    bool isLiveOrP2p = cat.Contains("TV") || cat.Contains("CANLI") || cat.Contains("LIVE") || 
-                                       cat.Contains("RADYO") || cat.Contains("RADIO") || cat == "GENEL" ||
-                                       string.Equals(item.SourceType, "ACESTREAM", StringComparison.OrdinalIgnoreCase) ||
-                                       (item.Url != null && item.Url.Contains("acestream://", StringComparison.OrdinalIgnoreCase));
-
-                    if (isLiveOrP2p)
-                    {
-                        MainWindow.Instance?.LoadChannelToPlayer(item);
-                        return;
-                    }
-
-                    var details = new MediaDetailsWindow(item);
-                    details.Owner = Window.GetWindow(this);
-                    details.Show();
+                    MainWindow.Instance?.LoadChannelToPlayer(item);
                 }
             }
             catch (Exception ex)
@@ -74,36 +89,24 @@ namespace StreamMesh.UI.Views
             }
         }
 
-        private void LiveRefresh_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                _vm.RequestLoadData(0);
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("HomeView.LiveRefresh_Click error", ex);
-            }
-        }
-
-        private async void ManualSync_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var sync = new GitHubSyncEngine();
-                await sync.PullFromGitHubAsync();
-            }
-            catch (Exception ex)
-            {
-                LogService.LogError("HomeView.ManualSync_Click error", ex);
-                System.Windows.MessageBox.Show($"Güncelleme başlatılırken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
-        }
-
-        // Drag and Drop Merge Logic
+        // Drag & Drop Merge Logic (Live TV) + Double-click Detection (VOD)
         private void Card_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             _dragStartPoint = e.GetPosition(null);
+
+            if (e.ClickCount >= 2 && sender is FrameworkElement fe && fe.DataContext is Channel item && item.IsVodMedia)
+            {
+                _suppressNextMouseUp = true;
+                e.Handled = true;
+                try
+                {
+                    OpenVodItem(item);
+                }
+                catch (Exception ex)
+                {
+                    LogService.LogError("HomeView.DoubleClick open VOD error", ex);
+                }
+            }
         }
 
         private void Card_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -114,7 +117,7 @@ namespace StreamMesh.UI.Views
                 if (Math.Abs(pos.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
                     Math.Abs(pos.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
                 {
-                    if (sender is FrameworkElement fe && fe.DataContext is Channel ch)
+                    if (sender is FrameworkElement fe && fe.DataContext is Channel ch && !(ch is SeriesGroup))
                     {
                         System.Windows.DragDrop.DoDragDrop(fe, ch, System.Windows.DragDropEffects.Move);
                     }
@@ -133,6 +136,41 @@ namespace StreamMesh.UI.Views
                     await _vm.MergeChannelsAsync(source, target);
                 }
             }
+        }
+
+        private void HeroPlay_Click(object sender, RoutedEventArgs e)
+        {
+            var item = _vm.SelectedHeroItem;
+            if (item == null) return;
+
+            if (item is SeriesGroup series)
+            {
+                var seriesWin = new SeriesDetailsWindow(series);
+                seriesWin.Owner = Window.GetWindow(this);
+                seriesWin.ShowDialog();
+                return;
+            }
+
+            MainWindow.Instance?.LoadChannelToPlayer(item);
+        }
+
+        private void HeroDetails_Click(object sender, RoutedEventArgs e)
+        {
+            var item = _vm.SelectedHeroItem;
+            if (item == null) return;
+            OpenVodItem(item);
+        }
+
+        private async void HeroFav_Click(object sender, RoutedEventArgs e)
+        {
+            var item = _vm.SelectedHeroItem;
+            if (item == null) return;
+            await _vm.ToggleFavoriteAsync(item);
+        }
+
+        private void ToggleSidebar_Click(object sender, RoutedEventArgs e)
+        {
+            _vm.ToggleGroupSidebar();
         }
 
         private void Category_Click(object sender, RoutedEventArgs e)
@@ -174,7 +212,7 @@ namespace StreamMesh.UI.Views
             string? sourceId = null;
             if (sender is FrameworkElement fe)
             {
-                if (fe.DataContext is StreamMesh.Models.SourceFilterItem sfi) sourceId = sfi.Id;
+                if (fe.DataContext is SourceFilterItem sfi) sourceId = sfi.Id;
                 else if (fe.Tag is string s) sourceId = s;
             }
 
@@ -189,7 +227,7 @@ namespace StreamMesh.UI.Views
             string? sourceId = null;
             if (sender is FrameworkElement fe)
             {
-                if (fe.DataContext is StreamMesh.Models.SourceFilterItem sfi) sourceId = sfi.Id;
+                if (fe.DataContext is SourceFilterItem sfi) sourceId = sfi.Id;
                 else if (fe.Tag is string s) sourceId = s;
             }
 
@@ -216,22 +254,28 @@ namespace StreamMesh.UI.Views
         }
 
         private void Sort_SelectionChanged(object sender, SelectionChangedEventArgs e) { _vm?.SetSort(SortComboBox.SelectedIndex); }
-        private void Refresh_Click(object sender, RoutedEventArgs e) { _ = _vm.LoadDataAsync(); }
         private void Prev_Click(object sender, RoutedEventArgs e) { _vm.PrevPage(); }
         private void Next_Click(object sender, RoutedEventArgs e) { _vm.NextPage(); }
 
-        private void SearchBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void PlayContext_Click(object sender, RoutedEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Tab && !string.IsNullOrWhiteSpace(SearchBox.Text))
+            if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
             {
-                e.Handled = true;
-                System.Windows.MessageBox.Show("AI Asistanı üzerinden gelişmiş sorgu yapabilirsiniz.");
+                if (ch is SeriesGroup series)
+                {
+                    OpenVodItem(series);
+                    return;
+                }
+                MainWindow.Instance?.LoadChannelToPlayer(ch);
             }
         }
 
-        private void PlayContext_Click(object sender, RoutedEventArgs e)
+        private void DetailsContext_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is MenuItem mi && mi.CommandParameter is Channel ch) MainWindow.Instance?.LoadChannelToPlayer(ch);
+            if (sender is MenuItem mi && mi.CommandParameter is Channel ch)
+            {
+                OpenVodItem(ch);
+            }
         }
 
         private void EditContext_Click(object sender, RoutedEventArgs e)
@@ -250,6 +294,7 @@ namespace StreamMesh.UI.Views
 
         private async void FavContext_Click(object sender, RoutedEventArgs e)
         {
+            e.Handled = true;
             Channel? ch = null;
             if (sender is MenuItem mi && mi.CommandParameter is Channel c1) ch = c1;
             else if (sender is System.Windows.Controls.Button btn && btn.CommandParameter is Channel c2) ch = c2;

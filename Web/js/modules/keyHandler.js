@@ -1,16 +1,47 @@
 import { togglePlayPause, toggleFullscreen, toggleMute, seekVideo } from './player.js';
 import { navigateDpad, activateDpadFocusedItem } from './ui.js';
+import { closePluginsModal } from './pluginsManager.js';
+import { closeEpgGuideModal } from './epgGuide.js';
 
 /**
  * Initializes global TV remote D-Pad & keyboard hotkeys.
  */
 export function initKeyHandler() {
     window.addEventListener('keydown', (e) => {
-        // Ignore when typing inside search or input
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-            if (e.key === 'Escape') {
-                e.target.blur();
+        const pluginsModal = document.getElementById('pluginsModal');
+        const epgModal = document.getElementById('epgGuideModal');
+        const isPluginsOpen = pluginsModal && pluginsModal.style.display !== 'none';
+        const isEpgOpen = epgModal && epgModal.style.display !== 'none';
+        const isModalOpen = isPluginsOpen || isEpgOpen;
+
+        if (e.key === 'Escape') {
+            if (isPluginsOpen) {
+                e.preventDefault();
+                closePluginsModal();
+                return;
             }
+            if (isEpgOpen) {
+                e.preventDefault();
+                closeEpgGuideModal();
+                return;
+            }
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+                return;
+            }
+            if (document.activeElement && document.activeElement !== document.body) {
+                document.activeElement.blur();
+            }
+            return;
+        }
+
+        // Do not hijack player/D-Pad keys while a modal dialog is open
+        if (isModalOpen) {
+            return;
+        }
+
+        // Ignore when typing inside search, input, or select controls
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
             return;
         }
 

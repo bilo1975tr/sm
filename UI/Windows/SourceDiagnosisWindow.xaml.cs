@@ -12,6 +12,7 @@ using Clipboard = System.Windows.Clipboard;
 using StreamMesh.Models;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media;
+using StreamMesh.Core.Network;
 using StreamMesh.Core.Utils;
 
 namespace StreamMesh.UI.Windows
@@ -19,7 +20,7 @@ namespace StreamMesh.UI.Windows
     public partial class SourceDiagnosisWindow : Window
     {
         private readonly Channel _channel;
-        private readonly DatabaseEngine _db = new DatabaseEngine();
+        private readonly DatabaseEngine _db = DatabaseEngine.Instance;
 
         public class EpisodeDiagItem
         {
@@ -175,8 +176,8 @@ namespace StreamMesh.UI.Windows
                 }
                 else if (pathOrUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || pathOrUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
-                    using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(25) };
-                    string content = await client.GetStringAsync(pathOrUrl);
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(25));
+                    string content = await MediaHttpClient.Client.GetStringAsync(pathOrUrl, cts.Token);
                     lines = content.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
                 }
                 else
@@ -497,7 +498,7 @@ namespace StreamMesh.UI.Windows
                 _channel.RawM3uBlock = newRaw;
 
                 // Re-parse the updated block to extract channel metadata
-                var parsedChannels = M3uEngine.ParseM3u(newRaw, _channel.PlaylistUrl);
+                var parsedChannels = await new M3uEngine().ParseM3uContentAsync(newRaw, _channel.PlaylistUrl ?? "");
                 var parsed = parsedChannels.FirstOrDefault();
 
                 if (parsed != null)

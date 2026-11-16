@@ -1,14 +1,83 @@
 import { FALLBACK_B64 } from './constants.js';
 import { appState } from './state.js';
-import { showToast } from './ui.js';
+import { showToast, escapeHtml } from './ui.js';
 import { updateActiveFavButton } from './favorites.js';
 import { switchMediaTab } from './categoryFilter.js';
+
+let videoEventsBound = false;
+let lastSavedProgressAt = 0;
+
+const CONTINUE_STORAGE_KEY = 'streammesh_continue_watching';
+
+export function initContinueWatching() {
+    try {
+        const raw = localStorage.getItem(CONTINUE_STORAGE_KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        appState.continueWatchingMap = new Map();
+        if (Array.isArray(list)) {
+            list.forEach((entry) => {
+                if (entry && entry.id) {
+                    appState.continueWatchingMap.set(entry.id, {
+                        id: entry.id,
+                        timestamp: Number(entry.timestamp) || Date.now(),
+                        lastTimeSec: Number(entry.lastTimeSec) || 0
+                    });
+                }
+            });
+        }
+    } catch {
+        appState.continueWatchingMap = new Map();
+    }
+}
+
+function persistContinueWatching() {
+    try {
+        const list = [...appState.continueWatchingMap.values()]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 30);
+        appState.continueWatchingMap = new Map(list.map((e) => [e.id, e]));
+        localStorage.setItem(CONTINUE_STORAGE_KEY, JSON.stringify(list));
+    } catch {}
+}
+
+function recordWatchHistory(ch, timeSec = null) {
+    if (!ch || !ch.id) return;
+    const prev = appState.continueWatchingMap.get(ch.id);
+    const nextSec = typeof timeSec === 'number' && !Number.isNaN(timeSec)
+        ? Math.floor(timeSec)
+        : (prev ? prev.lastTimeSec : 0);
+    appState.continueWatchingMap.set(ch.id, {
+        id: ch.id,
+        timestamp: Date.now(),
+        lastTimeSec: nextSec
+    });
+    persistContinueWatching();
+}
 
 /**
  * Gets video element safely.
  */
-export function getVideoElement() {
+function getVideoElement() {
     return document.getElementById('playerVideo');
+}
+
+function syncTransportButtons(video) {
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const muteBtn = document.getElementById('muteBtn');
+    if (playPauseBtn && video) {
+        playPauseBtn.innerText = video.paused ? '▶ Oynat' : '⏸ Duraklat';
+    }
+    if (muteBtn && video) {
+        muteBtn.innerText = (video.muted || video.volume === 0) ? '🔇 Sessiz' : '🔊 Ses';
+    }
+}
+
+function bindVideoStateEvents(video) {
+    if (!video || videoEventsBound) return;
+    videoEventsBound = true;
+    video.addEventListener('play', () => syncTransportButtons(video));
+    video.addEventListener('pause', () => syncTransportButtons(video));
+    video.addEventListener('volumechange', () => syncTransportButtons(video));
 }
 
 /**
@@ -16,11 +85,13 @@ export function getVideoElement() {
  */
 export function playMedia(ch) {
     appState.activeChannel = ch;
+    recordWatchHistory(ch);
     if (window.renderChannelList) window.renderChannelList();
     updateActiveFavButton();
 
     const video = getVideoElement();
     if (!video) return;
+    bindVideoStateEvents(video);
 
     const overlay = document.getElementById('playerOverlay');
     const icon = document.getElementById('overlayIcon');
@@ -39,27 +110,43 @@ export function playMedia(ch) {
     const epgNextTitle = document.getElementById('epgNextTitle');
 
     if (activeTitle) activeTitle.innerText = ch.name;
-    if (activeLogo) activeLogo.src = ch.logo && ch.logo.trim() !== '' ? ch.logo : FALLBACK_B64;
-    if (activeSub) activeSub.innerHTML = `Kategori: <strong>${ch.group || ch.category}</strong> • ${ch.quality} • ${ch.sourceType}`;
+    if (activeLogo) {
+        activeLogo.onerror = () => {
+            if (activeLogo.src !== FALLBACK_B64) activeLogo.src = FALLBACK_B64;
+        };
+        activeLogo.src = ch.logo && ch.logo.trim() !== '' ? ch.logo : FALLBACK_B64;
+    }
+    if (activeSub) {
+        activeSub.innerHTML = `Kategori: <strong>${escapeHtml(ch.group || ch.category)}</strong> • ${escapeHtml(ch.quality)} • ${escapeHtml(ch.sourceType)}`;
+    }
     if (liveTagText) liveTagText.innerText = ch.isLive ? 'CANLI YAYIN' : 'VOD VİDEO';
     if (resolutionBadge) resolutionBadge.innerText = ch.quality + ' · ' + (ch.url && ch.url.endsWith('.mp4') ? 'MP4' : 'HLS/VOD');
 
-    if (epgNowTitle) epgNowTitle.innerText = ch.epg || 'Canlı Yayın';
+    if (epgNowTitle) epgNowTitle.innerText = ch.epg || (ch.isLive ? 'Canlı Yayın' : ch.name);
     if (epgNowTime) epgNowTime.innerText = ch.epgTime ? `(${ch.epgTime})` : '';
-    if (epgNextTitle) epgNextTitle.innerText = ch.nextEpg ? `Sonraki: ${ch.nextEpg}` : 'Sonraki: Akşam Kuşağı';
+    if (epgNextTitle) {
+        epgNextTitle.innerText = ch.nextEpg
+            ? `Sonraki: ${ch.nextEpg}`
+            : (ch.isLive ? 'Sonraki: Yayın Akışı' : 'İsteğe Bağlı İçerik (VOD)');
+    }
 
     // Clean previous Hls.js instance
     if (appState.hlsInstance) {
-        try { appState.hlsInstance.destroy(); } catch(e) {}
+        try { appState.hlsInstance.destroy(); } catch (e) {}
         appState.hlsInstance = null;
     }
 
     video.pause();
     video.removeAttribute('src');
     video.load();
+    syncTransportButtons(video);
 
-    // Display loading overlay
-    if (overlay) overlay.style.display = 'flex';
+    // Display loading overlay without clickable error/resume trap
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.cursor = 'default';
+        overlay.onclick = null;
+    }
     if (icon) icon.style.display = 'none';
     if (spinner) spinner.style.display = 'block';
     if (btn) btn.style.display = 'none';
@@ -75,7 +162,7 @@ export function playMedia(ch) {
         if (hash.includes('infohash=')) {
             hash = hash.split('infohash=')[1].split('&')[0];
         }
-        candidates.push(`http://127.0.0.1:6878/ace/getstream?infohash=${hash}`);
+        candidates.push(`http://127.0.0.1:6878/ace/getstream?infohash=${encodeURIComponent(hash)}`);
         if (ch.streamUrl) candidates.push(ch.streamUrl);
     } else {
         // 2. Regular TV / VOD
@@ -88,30 +175,49 @@ export function playMedia(ch) {
 
     function hideOverlay() {
         const ov = document.getElementById('playerOverlay');
-        if (ov) ov.style.display = 'none';
+        if (ov) {
+            ov.style.display = 'none';
+            ov.onclick = null;
+        }
     }
 
-    video.onplaying = () => hideOverlay();
+    video.onplaying = () => {
+        hideOverlay();
+        syncTransportButtons(video);
+        const saved = appState.continueWatchingMap.get(ch.id);
+        if (saved && !ch.isLive && saved.lastTimeSec > 5 && video.currentTime < 2 && Number.isFinite(video.duration) && saved.lastTimeSec < video.duration - 10) {
+            try { video.currentTime = saved.lastTimeSec; } catch {}
+        }
+    };
     video.oncanplay = () => hideOverlay();
-    video.ontimeupdate = () => { if (video.currentTime > 0) hideOverlay(); };
+    video.ontimeupdate = () => {
+        if (video.currentTime > 0) hideOverlay();
+        if (!ch.isLive && video.currentTime > 5) {
+            const nowMs = Date.now();
+            if (nowMs - lastSavedProgressAt >= 5000) {
+                lastSavedProgressAt = nowMs;
+                recordWatchHistory(ch, video.currentTime);
+            }
+        }
+    };
 
     function startPlaybackWithGracefulFallback() {
         video.play().then(() => {
             hideOverlay();
+            syncTransportButtons(video);
         }).catch(err => {
             console.warn('[StreamMesh Player] Sesli otomatik oynatma kısıtlandı, sessiz deneniyor...', err);
             video.muted = true;
-            const muteBtn = document.getElementById('muteBtn');
-            if (muteBtn) muteBtn.innerText = '🔇 Sessiz';
+            syncTransportButtons(video);
             video.play().then(() => {
                 hideOverlay();
+                syncTransportButtons(video);
                 showToast('Otomatik oynatma için ses kısıldı. Açmak için [🔊 Ses] butonuna dokunun.');
             }).catch(handleAutoplayBlock);
         });
     }
 
     function loadDirectVideo(streamUrl, onFail) {
-        video.src = streamUrl;
         let loaded = false;
 
         video.onloadeddata = () => {
@@ -127,14 +233,13 @@ export function playMedia(ch) {
             if (!loaded) onFail(msg);
         };
 
-        video.play().catch((e) => {
-            if (!loaded) handleAutoplayBlock(e);
-        });
+        video.src = streamUrl;
+        video.load();
     }
 
     function loadStreamUrl(streamUrl, onFail) {
         if (appState.hlsInstance) {
-            try { appState.hlsInstance.destroy(); } catch(e) {}
+            try { appState.hlsInstance.destroy(); } catch (e) {}
             appState.hlsInstance = null;
         }
 
@@ -153,7 +258,7 @@ export function playMedia(ch) {
                 maxMaxBufferLength: 60
             });
 
-            appState.hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, (event, data) => {
+            appState.hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
                 hasResolved = true;
                 hideOverlay();
                 startPlaybackWithGracefulFallback();
@@ -173,20 +278,26 @@ export function playMedia(ch) {
                 if (data.fatal) {
                     switch (data.type) {
                         case window.Hls.ErrorTypes.NETWORK_ERROR:
-                            appState.hlsInstance.startLoad();
+                            if (!hasResolved) {
+                                try { appState.hlsInstance.destroy(); } catch (e) {}
+                                appState.hlsInstance = null;
+                                onFail(data.details || 'Ağ Hatası');
+                            } else {
+                                appState.hlsInstance.startLoad();
+                            }
                             break;
                         case window.Hls.ErrorTypes.MEDIA_ERROR:
                             appState.hlsInstance.recoverMediaError();
                             break;
                         default:
                             if (data.details === 'manifestParsingError') {
-                                try { appState.hlsInstance.destroy(); } catch(e) {}
+                                try { appState.hlsInstance.destroy(); } catch (e) {}
                                 appState.hlsInstance = null;
                                 loadDirectVideo(streamUrl, onFail);
                                 return;
                             }
                             if (!hasResolved) {
-                                try { appState.hlsInstance.destroy(); } catch(e) {}
+                                try { appState.hlsInstance.destroy(); } catch (e) {}
                                 appState.hlsInstance = null;
                                 onFail(data.details || 'HLS Akış Hatası');
                             }
@@ -236,13 +347,24 @@ export function handleAutoplayBlock() {
     const desc = document.getElementById('overlayDesc');
     const btn = document.getElementById('overlayBtn');
 
-    if (overlay) overlay.style.display = 'flex';
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.cursor = 'pointer';
+        overlay.onclick = resumeActivePlayback;
+    }
     if (icon) {
         icon.style.display = 'block';
         icon.innerText = '▶';
     }
     if (spinner) spinner.style.display = 'none';
-    if (btn) btn.style.display = 'inline-block';
+    if (btn) {
+        btn.style.display = 'inline-block';
+        btn.innerText = 'Oynat';
+        btn.onclick = (e) => {
+            if (e && e.stopPropagation) e.stopPropagation();
+            resumeActivePlayback();
+        };
+    }
     if (title) title.innerText = 'Oynatmak İçin Dokunun';
     if (desc) desc.innerText = 'Tarayıcı güvenlik kısıtı nedeniyle yayını başlatmak için lütfen ekrana veya butona tıklayın.';
 }
@@ -250,12 +372,15 @@ export function handleAutoplayBlock() {
 export function resumeActivePlayback() {
     const video = getVideoElement();
     const overlay = document.getElementById('playerOverlay');
-    if (overlay) overlay.style.display = 'none';
+    if (overlay) {
+        overlay.style.display = 'none';
+        overlay.onclick = null;
+    }
     if (video) {
         video.muted = false;
-        video.play().catch(() => {
+        video.play().then(() => syncTransportButtons(video)).catch(() => {
             video.muted = true;
-            video.play().catch(() => {});
+            video.play().then(() => syncTransportButtons(video)).catch(() => {});
         });
     }
 }
@@ -268,7 +393,11 @@ export function showOverlayError(titleText, descText) {
     const desc = document.getElementById('overlayDesc');
     const btn = document.getElementById('overlayBtn');
 
-    if (overlay) overlay.style.display = 'flex';
+    if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.style.cursor = 'default';
+        overlay.onclick = null;
+    }
     if (icon) {
         icon.style.display = 'block';
         icon.innerText = '⚠️';
@@ -289,14 +418,12 @@ export function showOverlayError(titleText, descText) {
 export function togglePlayPause() {
     const video = getVideoElement();
     if (!video) return;
-    const btn = document.getElementById('playPauseBtn');
     if (video.paused) {
-        video.play();
-        if (btn) btn.innerText = '⏸ Duraklat';
+        video.play().catch(handleAutoplayBlock);
     } else {
         video.pause();
-        if (btn) btn.innerText = '▶ Oynat';
     }
+    syncTransportButtons(video);
 }
 
 export function seekVideo(seconds) {
@@ -310,8 +437,7 @@ export function toggleMute() {
     const video = getVideoElement();
     if (!video) return;
     video.muted = !video.muted;
-    const btn = document.getElementById('muteBtn');
-    if (btn) btn.innerText = video.muted ? '🔇 Sessiz' : '🔊 Ses';
+    syncTransportButtons(video);
 }
 
 export function cycleAspectRatio() {
@@ -385,8 +511,8 @@ export function playManualStream() {
             group: 'AceStream Manuel',
             sourceType: 'ACESTREAM',
             quality: 'HD',
-            url: `http://127.0.0.1:6878/ace/getstream?infohash=${cleanHash}`,
-            streamUrl: `/stream/ace?infohash=${cleanHash}`,
+            url: `http://127.0.0.1:6878/ace/getstream?infohash=${encodeURIComponent(cleanHash)}`,
+            streamUrl: `/stream/ace?infohash=${encodeURIComponent(cleanHash)}`,
             epg: 'Kullanıcı Tanımlı AceStream Akışı',
             isLive: true,
             logo: FALLBACK_B64
@@ -396,17 +522,18 @@ export function playManualStream() {
         playMedia(customCh);
         showToast('AceStream akışı başlatılıyor ⚡');
     } else if (urlInput) {
+        const isMp4 = urlInput.toLowerCase().includes('.mp4');
         const customCh = {
             id: 'manual_url_' + Math.random().toString(36).substring(2, 6),
-            name: 'Özel Akış (' + (urlInput.endsWith('.mp4') ? 'MP4' : 'HLS') + ')',
-            category: urlInput.endsWith('.mp4') ? 'Filmler' : 'TV',
+            name: 'Özel Akış (' + (isMp4 ? 'MP4' : 'HLS') + ')',
+            category: isMp4 ? 'Filmler' : 'TV',
             group: 'Manuel Link',
             sourceType: 'DIRECT',
             quality: 'HD',
             url: urlInput,
             streamUrl: urlInput,
             epg: 'Manuel Akış Yayını',
-            isLive: !urlInput.endsWith('.mp4'),
+            isLive: !isMp4,
             logo: FALLBACK_B64
         };
         appState.allChannels.unshift(customCh);

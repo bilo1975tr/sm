@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using FlyleafLib;
-using FlyleafLib.MediaPlayer;
+using StreamMesh.Core.Media.Mpv;
 using StreamMesh.Models;
 using System.Linq;
 using System.IO;
@@ -33,7 +32,6 @@ namespace StreamMesh.Core.Utils
     {
         public StreamValidator()
         {
-            FlyleafHelper.SafeStart();
         }
 
         public async Task<ValidationResult> ValidateAsync(Channel channel, ValidationLevel level, IProgress<string>? logger = null, CancellationToken ct = default)
@@ -186,31 +184,33 @@ namespace StreamMesh.Core.Utils
 
             try
             {
-                logger?.Report($"[{channel.PrimaryName}] Flyleaf ile analiz yapılıyor...");
+                if (!MpvPlayerEngine.IsLibraryAvailable())
+                {
+                    result.Status = "Aktif (HTTP Doğrulandı)";
+                    return result;
+                }
 
-                using var player = new Player();
+                logger?.Report($"[{channel.PrimaryName}] libmpv ile analiz yapılıyor...");
+
+                using var player = new MpvPlayerEngine();
+                player.Initialize(IntPtr.Zero, hwAccel: false, cacheMs: 2500, userAgent: "Mozilla/5.0", headless: true);
                 player.Open(url);
 
                 bool started = false;
-                // 100ms aralıklarla en fazla 5 saniye bekle; başladığı anda çık
                 for (int t = 0; t < 50; t++)
                 {
                     if (ct.IsCancellationRequested) break;
                     await Task.Delay(100, ct).ConfigureAwait(false);
 
-                    if (player.Status == Status.Playing)
+                    if (player.Status == MpvPlaybackStatus.Playing)
                     {
                         started = true;
-                        if (level == ValidationLevel.Full && player.Video != null && player.Video.Width > 0)
-                        {
+                        if (level == ValidationLevel.Full && player.VideoWidth > 0)
                             break;
-                        }
-                        else if (level == ValidationLevel.Detailed)
-                        {
+                        if (level == ValidationLevel.Detailed)
                             break;
-                        }
                     }
-                    else if (player.Status == Status.Failed || player.Status == Status.Ended)
+                    else if (player.Status == MpvPlaybackStatus.Failed || player.Status == MpvPlaybackStatus.Ended)
                     {
                         break;
                     }
@@ -219,11 +219,11 @@ namespace StreamMesh.Core.Utils
                 if (started)
                 {
                     result.Status = "Oynatılabilir";
-                    if (level == ValidationLevel.Full && player.Video != null)
+                    if (level == ValidationLevel.Full)
                     {
-                        result.Resolution = $"{player.Video.Width}x{player.Video.Height}";
-                        result.VideoCodec = player.Video.Codec ?? "";
-                        result.AudioCodec = player.Audio?.Codec ?? "";
+                        result.Resolution = $"{player.VideoWidth}x{player.VideoHeight}";
+                        result.VideoCodec = player.VideoCodec;
+                        result.AudioCodec = player.AudioCodec;
                         result.Status = (string.IsNullOrWhiteSpace(result.Resolution) || result.Resolution == "0x0")
                             ? "Oynatılabilir"
                             : $"Analiz Tamam: {result.Resolution}";
@@ -236,7 +236,7 @@ namespace StreamMesh.Core.Utils
                 }
                 player.Stop();
             }
-            catch (Exception ex) { result.Error = $"Flyleaf Hatası: {ex.Message}"; }
+            catch (Exception ex) { result.Error = $"libmpv Hatası: {ex.Message}"; }
 
             return result;
         }

@@ -45,6 +45,9 @@ namespace StreamMesh.Core.Database
         private static readonly TaskCompletionSource<bool> _initTcs = new();
         private static bool _isInitializing = false;
 
+        private static readonly Lazy<DatabaseEngine> _lazy = new(() => new DatabaseEngine());
+        public static DatabaseEngine Instance => _lazy.Value;
+
         public DatabaseEngine()
         {
             // V1.8.5: Database is now kept in the application folder for better reliability and speed.
@@ -95,6 +98,13 @@ namespace StreamMesh.Core.Database
 
         private async Task PostStartupMaintenanceAsync()
         {
+            if (GetSetting("FixLiveTvCategoryAndPollutedLogosV4Done", "") != "true")
+            {
+                await Task.Delay(8000);
+                await CleanupPollutedTvLogosAsync().ConfigureAwait(false);
+                SetSetting("FixLiveTvCategoryAndPollutedLogosV4Done", "true");
+            }
+
             if (GetSetting("InitialStartupMaintenanceV2Done", "false") == "true")
             {
                 return; // Bakım daha önce yapılmış, her açılışta sistemi yorma
@@ -112,7 +122,7 @@ namespace StreamMesh.Core.Database
                     await EnsureDataMigrationAsync();
                 }
 
-                // 2. Kütüphane kategori ve dil normalizasyon düzeltmesi
+                // 2. Kütüphane kategori ve dil normalizasyon düzeltmesi (Sadece kesin VOD URL'lerini Film/Dizi yapar)
                 if (GetSetting("FixTvMoviesAndLanguagesDone", "") != "true")
                 {
                     try
@@ -125,14 +135,11 @@ namespace StreamMesh.Core.Database
                                 UPDATE Channels 
                                 SET Category = 'Film' 
                                 WHERE (Category = 'TV' OR Category IS NULL OR Category = '') 
-                                  AND (Url LIKE '%.mkv%' OR Url LIKE '%.mp4%' OR Url LIKE '%/movie/%' OR Url LIKE '%/movies/%' OR Url LIKE '%/vod/%'
-                                       OR GroupTitle LIKE '%ACTION%' OR GroupTitle LIKE '%AKSIYON%' OR GroupTitle LIKE '%HORROR%' OR GroupTitle LIKE '%KORKU%'
-                                       OR GroupTitle LIKE '%KOMEDI%' OR GroupTitle LIKE '%COMEDY%' OR GroupTitle LIKE '%FILM%' OR GroupTitle LIKE '%MOVIE%'
-                                       OR GroupTitle LIKE '%SINEMA%' OR GroupTitle LIKE '%THRILLER%' OR GroupTitle LIKE '%DRAMA%' OR GroupTitle LIKE '%ABENTEUER%');
+                                  AND (Url LIKE '%.mkv%' OR Url LIKE '%.mp4%' OR Url LIKE '%.avi%' OR Url LIKE '%/movie/%' OR Url LIKE '%/movies/%' OR Url LIKE '%/vod/%');
                                 
                                 UPDATE Channels 
                                 SET Category = 'Dizi' 
-                                WHERE Category = 'TV' AND (Url LIKE '%/series/%' OR GroupTitle LIKE '%DIZI%' OR GroupTitle LIKE '%SERIES%');
+                                WHERE Category = 'TV' AND Url LIKE '%/series/%';
 
                                 UPDATE Channels SET Language = 'de' WHERE (Language = 'und' OR Language IS NULL) AND (GroupTitle LIKE 'DE•%' OR GroupTitle LIKE 'DE:%' OR GroupTitle LIKE 'DE -%' OR GroupTitle LIKE '%[DE]%' OR GroupTitle LIKE '%DEUTSCH%');
                                 UPDATE Channels SET Language = 'tr' WHERE (Language = 'und' OR Language IS NULL) AND (GroupTitle LIKE 'TR•%' OR GroupTitle LIKE 'TR:%' OR GroupTitle LIKE 'TR -%' OR GroupTitle LIKE '%[TR]%' OR GroupTitle LIKE '%TURK%');
@@ -432,7 +439,7 @@ namespace StreamMesh.Core.Database
         public List<Channel> GetChannelsBySource(string url) => _channels.GetChannelsBySource(url);
         public void DeleteChannelById(string channelId) { _channels.DeleteChannelById(channelId); NotifyDatabaseUpdated(); }
         public async Task DeleteChannelsAsync(List<string> ids) { await _channels.DeleteChannelsAsync(ids); NotifyDatabaseUpdated(); }
-        public void SaveChannelSync(Channel ch, bool notifyUpdated = false) => _channels.SaveChannelSync(ch, notifyUpdated);
+        public async Task SaveChannelLogoAndPosAsync(Channel ch, bool notifyUpdated = false) => await _channels.SaveChannelLogoAndPosAsync(ch, notifyUpdated);
         public async Task CleanupDuplicatesAsync() => await _channels.CleanupDuplicatesAsync();
         public async Task<int> CountChannelsByAccountAsync(string hostWithPort, string username) => await _channels.CountChannelsByAccountAsync(hostWithPort, username);
         public async Task<List<Channel>> GetChannelsByAccountAsync(string hostWithPort, string username) => await _channels.GetChannelsByAccountAsync(hostWithPort, username);
@@ -445,6 +452,7 @@ namespace StreamMesh.Core.Database
         public async Task SaveEpgChannelsBatchAsync(List<(string epgId, string name, string logo, string url)> channels) => await _epg.SaveEpgChannelsBatchAsync(channels);
         public async Task<List<EpgChannelSearchResult>> SearchEpgChannelsAsync(string query, bool allSources) => await _epg.SearchEpgChannelsAsync(query, allSources, GetEpgSources());
         public async Task<List<EpgProgram>> GetCurrentEpgProgramsAsync() => await _epg.GetCurrentEpgProgramsAsync();
+        public async Task<List<EpgProgram>> GetEpgProgramsInRangeAsync(DateTime start, DateTime end) => await _epg.GetEpgProgramsInRangeAsync(start, end);
         public async Task<List<EpgProgram>> GetEpgForChannelsAsync(List<string> channelNames) => await _epg.GetEpgForChannelsAsync(channelNames);
         public List<string> GetEpgSources() => _epg.GetEpgSources();
         public List<EpgSourceItem> GetEpgSourceItems() => _epg.GetEpgSourceItems();
@@ -453,6 +461,96 @@ namespace StreamMesh.Core.Database
         public void UpdateEpgSourceStats(string url, string status, int channelCount, int programCount, long lastUpdated, string errorMessage) => _epg.UpdateEpgSourceStats(url, status, channelCount, programCount, lastUpdated, errorMessage);
         public void SetEpgSourceTimeShift(string url, int timeShiftHours) => _epg.SetEpgSourceTimeShift(url, timeShiftHours);
         public int GetEpgSourceTimeShift(string url) => _epg.GetEpgSourceTimeShift(url);
+        public async Task<List<(string EpgId, string Name, string LogoUrl)>> GetEpgLogoLookupAsync() => await _epg.GetEpgLogoLookupAsync();
+
+        public async Task<int> CleanupPollutedTvLogosAsync()
+        {
+            int affected = 0;
+            try
+            {
+                using var conn = new SqliteConnection(ConnectionString);
+                await conn.OpenAsync().ConfigureAwait(false);
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = @"
+                    UPDATE Channels
+                    SET Category = 'TV'
+                    WHERE lower(Category) IN ('film', 'movie', 'filmler', 'movies')
+                      AND lower(Url) NOT LIKE '%.mkv%'
+                      AND lower(Url) NOT LIKE '%.mp4%'
+                      AND lower(Url) NOT LIKE '%.avi%'
+                      AND lower(Url) NOT LIKE '%/movie/%'
+                      AND lower(Url) NOT LIKE '%/movies/%'
+                      AND lower(Url) NOT LIKE '%/vod/%'
+                      AND lower(Url) NOT LIKE '%/series/%'
+                      AND (
+                          lower(Url) LIKE '%/live/%'
+                          OR lower(Url) LIKE '%.ts%'
+                          OR lower(Url) LIKE '%.m3u8%'
+                          OR lower(Url) LIKE 'acestream://%'
+                          OR (EpgId IS NOT NULL AND trim(EpgId) != '')
+                          OR upper(GroupTitle) NOT LIKE '%VOD%'
+                      );
+
+                    UPDATE Channels
+                    SET Category = 'TV', Overview = '', BackdropUrl = '', [Cast] = '', ImdbId = ''
+                    WHERE lower(Category) IN ('dizi', 'diziler', 'series')
+                      AND lower(Url) NOT LIKE '%.mkv%'
+                      AND lower(Url) NOT LIKE '%.mp4%'
+                      AND lower(Url) NOT LIKE '%.avi%'
+                      AND lower(Url) NOT LIKE '%/series/%'
+                      AND lower(Url) NOT LIKE '%/movie/%'
+                      AND lower(Url) NOT LIKE '%/vod/%'
+                      AND Name NOT GLOB '*[Ss][0-9]*[Ee][0-9]*'
+                      AND lower(Name) NOT LIKE '%bölüm%'
+                      AND lower(Name) NOT LIKE '%bolum%'
+                      AND lower(Name) NOT LIKE '%sezon%'
+                      AND (
+                          lower(Url) LIKE '%/live/%'
+                          OR lower(Url) LIKE '%.ts%'
+                          OR lower(Url) LIKE '%.m3u8%'
+                          OR lower(Url) LIKE 'acestream://%'
+                          OR (EpgId IS NOT NULL AND trim(EpgId) != '')
+                          OR (
+                              upper(GroupTitle) NOT LIKE '%DIZ%'
+                              AND upper(GroupTitle) NOT LIKE '%DİZ%'
+                              AND upper(GroupTitle) NOT LIKE '%SERIES%'
+                              AND upper(GroupTitle) NOT LIKE '%VOD%'
+                          )
+                      );
+
+                    UPDATE Channels
+                    SET LogoUrl = '', Overview = '', BackdropUrl = '', [Cast] = '', ImdbId = ''
+                    WHERE lower(Category) IN ('tv', 'canli', 'live', 'radyo', 'radio', 'genel')
+                      AND (
+                          lower(LogoUrl) LIKE '%m.media-amazon.com%'
+                          OR lower(LogoUrl) LIKE '%image.tmdb.org%'
+                          OR lower(LogoUrl) LIKE '%upload.wikimedia.org%'
+                          OR lower(LogoUrl) LIKE '%tvmaze.com%'
+                          OR lower(LogoUrl) LIKE '%clearbit.com%'
+                      );
+
+                    UPDATE Channels
+                    SET Overview = '', BackdropUrl = '', [Cast] = '', ImdbId = ''
+                    WHERE lower(Category) IN ('tv', 'canli', 'live', 'radyo', 'radio', 'genel')
+                      AND (
+                          (Overview IS NOT NULL AND trim(Overview) != '')
+                          OR (BackdropUrl IS NOT NULL AND trim(BackdropUrl) != '')
+                          OR (ImdbId IS NOT NULL AND trim(ImdbId) != '')
+                      );
+                ";
+                affected = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+                LogService.LogInfo($"[DatabaseEngine] Canlı TV kategori & kirli logo temizliği tamamlandı (Etkilenen: {affected}).");
+                if (affected > 0 && !SuppressEvents)
+                {
+                    NotifyDatabaseUpdated();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogWarning($"[DatabaseEngine] CleanupPollutedTvLogosAsync uyarısı: {ex.Message}");
+            }
+            return affected;
+        }
 
 
         // Metadata delegators
