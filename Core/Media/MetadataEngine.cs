@@ -74,7 +74,7 @@ namespace StreamMesh.Core.Media
             if (pooled != null && pooled.Count > 0)
             {
                 ApplyMetadata(channel, pooled[0]);
-                await _db.SaveChannelAsync(channel).ConfigureAwait(false);
+                await _db.SaveChannelAsync(channel, notifyUpdated: false).ConfigureAwait(false);
                 return;
             }
 
@@ -145,7 +145,7 @@ namespace StreamMesh.Core.Media
                     var metaResults = new List<MetadataResult> { combined };
                     await _db.SaveMetadataPoolResultsAsync(query, metaResults).ConfigureAwait(false);
                     ApplyMetadata(channel, combined);
-                    await _db.SaveChannelAsync(channel).ConfigureAwait(false);
+                    await _db.SaveChannelAsync(channel, notifyUpdated: false).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)

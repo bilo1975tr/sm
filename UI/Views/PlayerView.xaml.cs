@@ -80,7 +80,9 @@ namespace StreamMesh.UI.Views
         private long _playbackSessionId;
         private bool _wasPausedByMinimize;
         private bool _hasReceivedFirstFrame;
-        private bool _mpvDownloadTriggered;
+        private string? _lastMpvInitError;
+        private readonly object _mpvEnsureLock = new();
+        private Task<bool>? _mpvEnsureTask;
 
         // UI deduplication caches
         private DateTime _lastMouseOsdResetUtc = DateTime.MinValue;
@@ -121,7 +123,7 @@ namespace StreamMesh.UI.Views
             };
             VideoPlayer.VideoDoubleClick += (_, _) => Fullscreen_Click(this, new RoutedEventArgs());
 
-            Loaded += (_, _) => InitializePlayer();
+            Loaded += (_, _) => _ = EnsureMpvReadyAsync(null, 0, CancellationToken.None);
 
             _osdTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4.5) };
             _osdTimer.Tick += (_, _) =>
@@ -494,43 +496,96 @@ namespace StreamMesh.UI.Views
             engine.ConfigureRuntimeOptions(hwAccel, cacheMs, ua, headers, isAceStream, isHls);
         }
 
-        private void InitializePlayer()
+        private Task<bool> EnsureMpvReadyAsync(string? channelName, long sessionId, CancellationToken token)
+        {
+            if (_mpv != null)
+            {
+                _initTcs.TrySetResult(true);
+                _ = Dispatcher.InvokeAsync(() => VideoPlayer.SyncOverlayBounds());
+                return Task.FromResult(true);
+            }
+
+            Task<bool> sharedTask;
+            lock (_mpvEnsureLock)
+            {
+                if (_mpvEnsureTask == null || _mpvEnsureTask.IsCompleted)
+                {
+                    _mpvEnsureTask = EnsureMpvReadyCoreAsync(channelName, sessionId);
+                }
+                sharedTask = _mpvEnsureTask;
+            }
+
+            if (token.CanBeCanceled)
+                return sharedTask.WaitAsync(token);
+
+            return sharedTask;
+        }
+
+        private async Task<bool> EnsureMpvReadyCoreAsync(string? initialChannelName, long initialSessionId)
+        {
+            try
+            {
+                if (!MpvPlayerEngine.IsLibraryAvailable())
+                {
+                    LogService.LogWarning("Player: libmpv-2.dll henüz hazır değil, indiriliyor/bekleniyor...");
+                    bool installed = await MaintenanceEngine.EnsureMpvInstalledAsync((_, msg) =>
+                    {
+                        _ = Dispatcher.InvokeAsync(() =>
+                        {
+                            string activeName = ViewModel.CurrentChannel?.PrimaryName ?? initialChannelName ?? "Kanal";
+                            if (OsdTitle != null)
+                            {
+                                OsdTitle.Text = $"{activeName} ({msg})";
+                                ShowOsdTemporary();
+                            }
+                        });
+                    }).ConfigureAwait(false);
+
+                    if (!installed || !MpvPlayerEngine.IsLibraryAvailable())
+                    {
+                        _lastMpvInitError = MaintenanceEngine.LastMpvInstallError ?? "libmpv-2.dll indirilemedi.";
+                        LogService.LogError($"[PLAYBACK/MPV] Kurulum başarısız: {_lastMpvInitError}");
+                        return false;
+                    }
+                }
+
+                // Wait briefly on UI dispatcher for Win32 VideoHandle to be valid if view just loaded
+                bool created = false;
+                for (int attempt = 0; attempt < 10 && !created; attempt++)
+                {
+                    created = await Dispatcher.InvokeAsync(TryCreateMpvEngine);
+                    if (!created && _mpv == null)
+                        await Task.Delay(120).ConfigureAwait(false);
+                }
+
+                return _mpv != null;
+            }
+            catch (Exception ex)
+            {
+                _lastMpvInitError = ex.Message;
+                LogService.LogError("[PLAYBACK/MPV] EnsureMpvReadyCoreAsync hatası", ex);
+                return false;
+            }
+        }
+
+        private bool TryCreateMpvEngine()
         {
             if (_mpv != null)
             {
                 VideoPlayer.SyncOverlayBounds();
-                return;
+                return true;
             }
 
             if (!MpvPlayerEngine.IsLibraryAvailable())
-            {
-                LogService.LogWarning("Player: libmpv-2.dll henüz hazır değil, arka planda indiriliyor/bekleniyor...");
-                if (!_mpvDownloadTriggered)
-                {
-                    _mpvDownloadTriggered = true;
-                    _ = Task.Run(MaintenanceEngine.CheckAndInstallMpvAsync);
-                }
-
-                _ = Task.Run(async () =>
-                {
-                    for (int i = 0; i < 60; i++)
-                    {
-                        await Task.Delay(1500).ConfigureAwait(false);
-                        if (MpvPlayerEngine.IsLibraryAvailable())
-                        {
-                            await Dispatcher.InvokeAsync(InitializePlayer);
-                            break;
-                        }
-                    }
-                });
-                return;
-            }
+                return false;
 
             try
             {
-                var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
                 IntPtr hwnd = VideoPlayer.VideoHandle;
+                if (hwnd == IntPtr.Zero)
+                    return false;
 
+                var (hwAccel, cacheMs, defaultUa) = ReadEngineSettings();
                 var engine = new MpvPlayerEngine();
                 engine.Initialize(hwnd, hwAccel, cacheMs, defaultUa);
                 engine.SetAudioNormalization(_isAudioNormEnabled);
@@ -544,22 +599,23 @@ namespace StreamMesh.UI.Views
                 engine.TracksChanged += RefreshAudioTracks;
 
                 _mpv = engine;
+                _lastMpvInitError = null;
                 _initTcs.TrySetResult(true);
 
-                Dispatcher.InvokeAsync(() =>
-                {
-                    if (string.IsNullOrEmpty(OsdTitle.Text) || OsdTitle.Text == "Kanal Yükleniyor...")
-                        OsdTitle.Text = "Sistem Hazır (libmpv).";
-                    OsdPanel.Visibility = Visibility.Visible;
-                    UpdateAudioNormButtonUI();
-                    UpdateVideoEnhanceButtonUI();
-                    ShowOsdTemporary();
-                    VideoPlayer.SyncOverlayBounds();
-                });
+                if (string.IsNullOrEmpty(OsdTitle.Text) || OsdTitle.Text == "Kanal Yükleniyor...")
+                    OsdTitle.Text = "Sistem Hazır (libmpv).";
+                OsdPanel.Visibility = Visibility.Visible;
+                UpdateAudioNormButtonUI();
+                UpdateVideoEnhanceButtonUI();
+                ShowOsdTemporary();
+                VideoPlayer.SyncOverlayBounds();
+                return true;
             }
             catch (Exception ex)
             {
+                _lastMpvInitError = ex.Message;
                 LogService.LogError("[PLAYBACK/MPV] Başlatma hatası", ex);
+                return false;
             }
         }
 
@@ -770,17 +826,26 @@ namespace StreamMesh.UI.Views
 
                 try
                 {
-                    if (_mpv == null) await Dispatcher.InvokeAsync(InitializePlayer);
-                    else _initTcs.TrySetResult(true);
-
-                    using var initTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
-                    using var linkedInit = CancellationTokenSource.CreateLinkedTokenSource(token, initTimeout.Token);
-                    await _initTcs.Task.WaitAsync(linkedInit.Token).ConfigureAwait(false);
+                    bool ready = await EnsureMpvReadyAsync(channel.PrimaryName, sessionId, token).ConfigureAwait(false);
+                    if (!ready || _mpv == null)
+                    {
+                        if (!token.IsCancellationRequested && sessionId == _playbackSessionId)
+                        {
+                            string detail = !string.IsNullOrWhiteSpace(_lastMpvInitError)
+                                ? _lastMpvInitError
+                                : (MaintenanceEngine.LastMpvInstallError ?? "DLL yüklenemedi");
+                            _ = Dispatcher.InvokeAsync(() =>
+                            {
+                                OsdTitle.Text = $"Görüntü motoru (libmpv) başlatılamadı: {detail}";
+                                UpdatePlayPauseIcon(false);
+                                ShowOsdTemporary();
+                            });
+                        }
+                        return;
+                    }
                 }
                 catch (OperationCanceledException)
                 {
-                    if (!token.IsCancellationRequested && sessionId == _playbackSessionId)
-                        _ = Dispatcher.InvokeAsync(() => { OsdTitle.Text = "Görüntü motoru (libmpv) başlatılamadı"; ShowOsdTemporary(); });
                     return;
                 }
 
@@ -2093,9 +2158,12 @@ namespace StreamMesh.UI.Views
                 {
                     if (!MpvPlayerEngine.IsLibraryAvailable())
                     {
-                        await Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} (libmpv bekleniyor...)");
-                        for (int w = 0; w < 20 && !MpvPlayerEngine.IsLibraryAvailable() && !token.IsCancellationRequested; w++)
-                            await Task.Delay(1000, token).ConfigureAwait(false);
+                        await Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} (libmpv indiriliyor...)");
+                        bool installed = await MaintenanceEngine.EnsureMpvInstalledAsync((_, msg) =>
+                        {
+                            _ = Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} ({msg})");
+                        }).WaitAsync(token).ConfigureAwait(false);
+                        if (!installed) return;
                     }
 
                     if (!MpvPlayerEngine.IsLibraryAvailable() || token.IsCancellationRequested || sessionId != slot.SessionId)

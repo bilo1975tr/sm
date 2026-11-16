@@ -313,7 +313,7 @@ namespace StreamMesh.UI.ViewModels
                         if (string.IsNullOrWhiteSpace(ep0.BackdropUrl) && !string.IsNullOrWhiteSpace(sg.BackdropUrl)) { ep0.BackdropUrl = sg.BackdropUrl; epChanged = true; }
                         if (string.IsNullOrWhiteSpace(ep0.Cast) && !string.IsNullOrWhiteSpace(sg.Cast)) { ep0.Cast = sg.Cast; epChanged = true; }
                         if (string.IsNullOrWhiteSpace(ep0.ImdbId) && !string.IsNullOrWhiteSpace(sg.ImdbId)) { ep0.ImdbId = sg.ImdbId; epChanged = true; }
-                        if (epChanged) await _db.SaveChannelAsync(ep0).ConfigureAwait(false);
+                        if (epChanged) await _db.SaveChannelAsync(ep0, notifyUpdated: false).ConfigureAwait(false);
                     }
                 }
                 catch (OperationCanceledException) { }

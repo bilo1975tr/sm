@@ -16,8 +16,22 @@ namespace StreamMesh.Converters
 {
     public class LogoCacheConverter : IValueConverter
     {
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, BitmapImage> _memoryBitmapCache =
+            new(StringComparer.OrdinalIgnoreCase);
+        private const int MaxMemoryBitmapCacheEntries = 256;
+
         private static string CacheDirectory =>
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StreamMesh", "logos", "cache");
+
+        private static void CacheBitmapInMemory(string key, BitmapImage bmp)
+        {
+            if (string.IsNullOrWhiteSpace(key) || bmp == null || !bmp.IsFrozen) return;
+            if (_memoryBitmapCache.Count >= MaxMemoryBitmapCacheEntries)
+            {
+                _memoryBitmapCache.Clear();
+            }
+            _memoryBitmapCache[key] = bmp;
+        }
 
         public static string GetDiskCachePath(string url)
         {
@@ -48,6 +62,9 @@ namespace StreamMesh.Converters
         {
             try
             {
+                if (_memoryBitmapCache.TryGetValue(pathOrUrl, out var memCached))
+                    return memCached;
+
                 if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uriResult) &&
                     (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                 {
@@ -60,7 +77,11 @@ namespace StreamMesh.Converters
                         if (info.Length > 32 && (DateTime.Now - info.LastWriteTime).TotalDays < 30)
                         {
                             var cachedBmp = DecodeBytesFrozen(await File.ReadAllBytesAsync(cacheFile).ConfigureAwait(false));
-                            if (cachedBmp != null) return cachedBmp;
+                            if (cachedBmp != null)
+                            {
+                                CacheBitmapInMemory(pathOrUrl, cachedBmp);
+                                return cachedBmp;
+                            }
                         }
                     }
 
@@ -90,13 +111,16 @@ namespace StreamMesh.Converters
                             await File.WriteAllBytesAsync(cacheFile, bytes).ConfigureAwait(false);
                         }
                         catch { }
+                        CacheBitmapInMemory(pathOrUrl, bitmap);
                         return bitmap;
                     }
                     return null;
                 }
 
                 // Local / file / pack fallback (already frozen)
-                return TryLoadLocalOnlyBitmap(pathOrUrl);
+                var localBmp = TryLoadLocalOnlyBitmap(pathOrUrl);
+                if (localBmp != null) CacheBitmapInMemory(pathOrUrl, localBmp);
+                return localBmp;
             }
             catch
             {
@@ -215,6 +239,9 @@ namespace StreamMesh.Converters
         {
             try
             {
+                if (_memoryBitmapCache.TryGetValue(pathOrUrl, out var memCached))
+                    return memCached;
+
                 if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uriResult) &&
                     (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
                 {
@@ -228,7 +255,11 @@ namespace StreamMesh.Converters
                         if (info.Length > 32 && (DateTime.Now - info.LastWriteTime).TotalDays < 30)
                         {
                             var cached = DecodeBytesFrozen(File.ReadAllBytes(cacheFile));
-                            if (cached != null) return cached;
+                            if (cached != null)
+                            {
+                                CacheBitmapInMemory(pathOrUrl, cached);
+                                return cached;
+                            }
                         }
                     }
 
@@ -241,7 +272,9 @@ namespace StreamMesh.Converters
                     return bitmap;
                 }
 
-                return TryLoadLocalOnlyBitmap(pathOrUrl);
+                var localBmp = TryLoadLocalOnlyBitmap(pathOrUrl);
+                if (localBmp != null) CacheBitmapInMemory(pathOrUrl, localBmp);
+                return localBmp;
             }
             catch (Exception ex)
             {

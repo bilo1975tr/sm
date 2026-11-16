@@ -80,6 +80,49 @@ namespace StreamMesh.Core.Database.Repositories
             return null;
         }
 
+        public async Task<List<Channel>> GetPendingMetadataChannelsAsync(int limit = 50)
+        {
+            var list = new List<Channel>();
+            try
+            {
+                int sqlLimit = Math.Clamp(limit * 3, 50, 300);
+                using var connection = new SqliteConnection(_connectionString);
+                await connection.OpenAsync().ConfigureAwait(false);
+                var cmd = connection.CreateCommand();
+                cmd.CommandText = @"
+                    SELECT Id, Name, Url, LogoUrl, GroupTitle, Category, Language, IsFavorite, AddedDate, SourceType, PlaylistUrl,
+                           ImdbId, Overview, BackdropUrl, [Cast], PersonalWatchCount, ViewersCount, EpgId, EpgUrl, UrlSpeeds,
+                           PreferredNameIndex, PreferredUrlIndex, PreferredLogoIndex, PreferredEpgIndex, IsWatched, IsVerified,
+                           LastPositionMs, IsEpgLocked, M3uLineNumber, RawM3uBlock
+                    FROM Channels
+                    WHERE (Overview IS NULL OR trim(Overview) = '')
+                      AND (
+                          lower(Category) IN ('film', 'filmler', 'movie', 'movies', 'vod', 'dizi', 'diziler', 'series')
+                          OR lower(Url) LIKE '%/movie/%' OR lower(Url) LIKE '%/movies/%'
+                          OR lower(Url) LIKE '%/vod/%' OR lower(Url) LIKE '%/series/%'
+                          OR lower(Url) LIKE '%.mkv%' OR lower(Url) LIKE '%.mp4%' OR lower(Url) LIKE '%.avi%'
+                      )
+                    LIMIT @Limit";
+                cmd.Parameters.AddWithValue("@Limit", sqlLimit);
+
+                using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var ch = MapReaderToChannel(reader);
+                    if (!MetadataEngine.IsLikelyLiveTv(ch))
+                    {
+                        list.Add(ch);
+                        if (list.Count >= limit) break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.LogError("ChannelRepository.GetPendingMetadataChannelsAsync failed", ex);
+            }
+            return list;
+        }
+
         public async Task SaveChannelAsync(Channel ch, bool notifyUpdated = true)
         {
             await _dbLock.WaitAsync();
