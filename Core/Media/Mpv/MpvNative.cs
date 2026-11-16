@@ -139,7 +139,8 @@ namespace StreamMesh.Core.Media.Mpv
         public static bool IsLibraryAvailable()
         {
             if (_loadedHandle != IntPtr.Zero) return true;
-            return FindLibraryPath() != null || NativeLibrary.TryLoad(DllName, out _);
+            if (FindLibraryPath() != null) return true;
+            return EnsureLoaded() != IntPtr.Zero;
         }
 
         public static IntPtr EnsureLoaded()
@@ -156,14 +157,31 @@ namespace StreamMesh.Core.Media.Mpv
                 string? path = FindLibraryPath();
                 if (!string.IsNullOrEmpty(path))
                 {
-                    // SetDllDirectory briefly so dependent DLLs inside mpv folder resolve cleanly
                     string? dir = Path.GetDirectoryName(path);
                     if (!string.IsNullOrEmpty(dir))
+                    {
+                        try { AddDllDirectory(dir); } catch { }
                         try { SetDllDirectory(dir); } catch { }
+                    }
 
                     if (NativeLibrary.TryLoad(path, out IntPtr handle))
                     {
                         _loadedHandle = handle;
+                        return _loadedHandle;
+                    }
+
+                    // Fallback for .NET PublishSingleFile where SetDefaultDllDirectories may ignore SetDllDirectory
+                    const uint LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR = 0x00000100;
+                    const uint LOAD_LIBRARY_SEARCH_DEFAULT_DIRS = 0x00001000;
+                    const uint LOAD_WITH_ALTERED_SEARCH_PATH = 0x00000008;
+
+                    IntPtr exHandle = LoadLibraryEx(path, IntPtr.Zero, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+                    if (exHandle == IntPtr.Zero)
+                        exHandle = LoadLibraryEx(path, IntPtr.Zero, LOAD_WITH_ALTERED_SEARCH_PATH);
+
+                    if (exHandle != IntPtr.Zero)
+                    {
+                        _loadedHandle = exHandle;
                         return _loadedHandle;
                     }
 
@@ -189,6 +207,12 @@ namespace StreamMesh.Core.Media.Mpv
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern bool SetDllDirectory(string lpPathName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr AddDllDirectory(string newDirectory);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr LoadLibraryEx(string lpLibFileName, IntPtr hFile, uint dwFlags);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr mpv_create();

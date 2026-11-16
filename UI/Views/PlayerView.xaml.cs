@@ -834,6 +834,7 @@ namespace StreamMesh.UI.Views
                             string detail = !string.IsNullOrWhiteSpace(_lastMpvInitError)
                                 ? _lastMpvInitError
                                 : (MaintenanceEngine.LastMpvInstallError ?? "DLL yüklenemedi");
+                            LogService.LogError($"[PLAYBACK/MPV] Görüntü motoru başlatılamadı: {detail}");
                             _ = Dispatcher.InvokeAsync(() =>
                             {
                                 OsdTitle.Text = $"Görüntü motoru (libmpv) başlatılamadı: {detail}";

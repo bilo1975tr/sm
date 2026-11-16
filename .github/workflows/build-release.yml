@@ -9,6 +9,8 @@ on:
       - '**.cs'
       - '**.xaml'
       - 'StreamMesh.csproj'
+      - 'setup.iss'
+      - '.github/workflows/build-release.yml'
       - 'version.txt'
   workflow_dispatch: # Allows manual trigger from Actions tab
 
@@ -77,6 +79,46 @@ jobs:
         run: |
           dotnet clean -c Release
           dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:PublishReadyToRun=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Bundle libmpv Runtime
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $mpvDest = "bin\Release\net8.0-windows\win-x64\publish\mpv"
+          New-Item -ItemType Directory -Path $mpvDest -Force | Out-Null
+
+          $headers = @{ "User-Agent" = "StreamMesh-CI/1.0"; "Accept" = "application/vnd.github+json" }
+          if ($env:GITHUB_TOKEN) { $headers["Authorization"] = "Bearer $($env:GITHUB_TOKEN)" }
+
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest" -Headers $headers
+          $asset = $release.assets | Where-Object { $_.name -like "mpv-dev-x86_64-*.7z" -and $_.name -notlike "*-v3-*" } | Select-Object -First 1
+          if (-not $asset) {
+            $asset = $release.assets | Where-Object { $_.name -like "mpv-dev-x86_64-*.7z" } | Select-Object -First 1
+          }
+          if (-not $asset) {
+            throw "Could not locate mpv-dev-x86_64-*.7z asset in shinchiro/mpv-winbuild-cmake releases!"
+          }
+
+          Write-Host "Downloading libmpv package: $($asset.name)"
+          $tmp7z = Join-Path $env:TEMP "mpv-dev.7z"
+          $tmpExtract = Join-Path $env:TEMP "mpv-extract"
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tmp7z -UseBasicParsing
+          if (Test-Path $tmpExtract) { Remove-Item $tmpExtract -Recurse -Force }
+          & 7z x $tmp7z "-o$tmpExtract" "*.dll" -r -y | Out-Null
+
+          $dlls = Get-ChildItem -Path $tmpExtract -Filter "*.dll" -Recurse
+          foreach ($dll in $dlls) {
+            Copy-Item -Path $dll.FullName -Destination (Join-Path $mpvDest $dll.Name) -Force
+          }
+
+          if (-not (Test-Path (Join-Path $mpvDest "libmpv-2.dll"))) {
+            throw "libmpv-2.dll was not found after extracting $($asset.name)!"
+          }
+
+          Remove-Item $tmp7z -Force -ErrorAction SilentlyContinue
+          Remove-Item $tmpExtract -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host "Bundled $($dlls.Count) libmpv DLL(s) into $mpvDest"
 
       - name: Create Inno Setup Installer EXE
         shell: powershell

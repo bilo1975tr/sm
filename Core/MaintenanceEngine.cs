@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using SharpCompress.Readers;
 using SkiaSharp;
 using StreamMesh.Core.Database;
 using StreamMesh.Core.Media.Mpv;
@@ -232,9 +233,11 @@ namespace StreamMesh.Core
 
                 var stagedFiles = new System.Collections.Generic.List<string>();
                 using (var archive = ArchiveFactory.OpenArchive(archivePath))
+                using (var reader = archive.ExtractAllEntries())
                 {
-                    foreach (var entry in archive.Entries)
+                    while (reader.MoveToNextEntry())
                     {
+                        var entry = reader.Entry;
                         if (entry.IsDirectory) continue;
                         string key = entry.Key ?? "";
                         if (!key.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) continue;
@@ -243,7 +246,7 @@ namespace StreamMesh.Core
                         if (string.IsNullOrEmpty(fileName)) continue;
 
                         string stagedPath = Path.Combine(stagingDir, fileName);
-                        entry.WriteToFile(stagedPath, new ExtractionOptions { ExtractFullPath = false, Overwrite = true });
+                        reader.WriteEntryToFile(stagedPath, new ExtractionOptions { ExtractFullPath = false, Overwrite = true });
                         stagedFiles.Add(stagedPath);
                     }
                 }
