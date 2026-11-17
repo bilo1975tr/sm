@@ -118,6 +118,7 @@ namespace StreamMesh.UI.Views
 
             VideoPlayer.VideoMouseActivity += (_, _) =>
             {
+                if (_isMultiViewActive || !IsVisible) return;
                 if ((DateTime.UtcNow - _lastMouseOsdResetUtc).TotalMilliseconds >= 250 || OsdPanel?.Visibility != Visibility.Visible)
                     ShowOsdTemporary();
             };
@@ -129,7 +130,9 @@ namespace StreamMesh.UI.Views
             _osdTimer.Tick += (_, _) =>
             {
                 if (_isUserDraggingSlider || _isMouseOverOsd) return;
+                _isMouseOverOsd = false;
                 if (OsdPanel != null) OsdPanel.Visibility = Visibility.Collapsed;
+                if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
                 _osdTimer.Stop();
             };
 
@@ -1960,6 +1963,7 @@ namespace StreamMesh.UI.Views
             _loadCts?.Cancel();
             _positionTimer?.Stop();
             _osdTimer?.Stop();
+            _isMouseOverOsd = false;
             if (OsdPanel != null) OsdPanel.Visibility = Visibility.Collapsed;
             if (AudioTracksFlyout != null) AudioTracksFlyout.Visibility = Visibility.Collapsed;
 

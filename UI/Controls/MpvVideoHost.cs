@@ -19,6 +19,9 @@ namespace StreamMesh.UI.Controls
         private Window? _overlayWindow;
         private Window? _ownerWindow;
         private bool _disposed;
+        private System.Drawing.Point _lastCursorScreenPos;
+        private bool _hasLastCursorScreenPos;
+        private const int MouseMovementThresholdPx = 6;
 
         public static readonly DependencyProperty OverlayContentProperty =
             DependencyProperty.Register(
@@ -56,8 +59,8 @@ namespace StreamMesh.UI.Controls
                 TabStop = false
             };
 
-            _videoPanel.MouseMove += (_, _) => VideoMouseActivity?.Invoke(this, EventArgs.Empty);
-            _videoPanel.MouseDown += (_, _) => VideoMouseActivity?.Invoke(this, EventArgs.Empty);
+            _videoPanel.MouseMove += (_, _) => HandleMouseMoveActivity();
+            _videoPanel.MouseDown += (_, _) => HandleMouseClickActivity();
             _videoPanel.DoubleClick += (_, _) => VideoDoubleClick?.Invoke(this, EventArgs.Empty);
 
             _wfHost = new WindowsFormsHost
@@ -74,6 +77,47 @@ namespace StreamMesh.UI.Controls
             SizeChanged += (_, _) => SyncOverlayBounds();
             IsVisibleChanged += (_, _) => SyncOverlayBounds();
             LayoutUpdated += (_, _) => SyncOverlayBounds();
+        }
+
+        private void SnapshotCursorPosition()
+        {
+            try
+            {
+                _lastCursorScreenPos = System.Windows.Forms.Control.MousePosition;
+                _hasLastCursorScreenPos = true;
+            }
+            catch { }
+        }
+
+        private void HandleMouseMoveActivity()
+        {
+            try
+            {
+                var currentPos = System.Windows.Forms.Control.MousePosition;
+                if (!_hasLastCursorScreenPos)
+                {
+                    _lastCursorScreenPos = currentPos;
+                    _hasLastCursorScreenPos = true;
+                    return;
+                }
+
+                if (Math.Abs(currentPos.X - _lastCursorScreenPos.X) < MouseMovementThresholdPx &&
+                    Math.Abs(currentPos.Y - _lastCursorScreenPos.Y) < MouseMovementThresholdPx)
+                {
+                    return;
+                }
+
+                _lastCursorScreenPos = currentPos;
+            }
+            catch { }
+
+            VideoMouseActivity?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void HandleMouseClickActivity()
+        {
+            SnapshotCursorPosition();
+            VideoMouseActivity?.Invoke(this, EventArgs.Empty);
         }
 
         private static void OnOverlayContentChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -94,6 +138,7 @@ namespace StreamMesh.UI.Controls
                 AttachOwnerHooks();
             }
 
+            SnapshotCursorPosition();
             EnsureOverlayWindow();
             SyncOverlayBounds();
         }
@@ -154,10 +199,10 @@ namespace StreamMesh.UI.Controls
                     mainWin.HandleForwardedKeyDown(keyArgs);
             };
 
-            _overlayWindow.MouseMove += (_, _) => VideoMouseActivity?.Invoke(this, EventArgs.Empty);
+            _overlayWindow.MouseMove += (_, _) => HandleMouseMoveActivity();
             _overlayWindow.MouseLeftButtonDown += (_, mouseArgs) =>
             {
-                VideoMouseActivity?.Invoke(this, EventArgs.Empty);
+                HandleMouseClickActivity();
 
                 bool isEmptySurface = mouseArgs.OriginalSource is System.Windows.Controls.Grid g && g.Name == "PlayerOverlay";
                 if (!isEmptySurface) return;
@@ -215,6 +260,7 @@ namespace StreamMesh.UI.Controls
 
                 if (!_overlayWindow.IsVisible)
                 {
+                    SnapshotCursorPosition();
                     _overlayWindow.Show();
                     if (_ownerWindow.IsActive)
                         _ownerWindow.Activate();
