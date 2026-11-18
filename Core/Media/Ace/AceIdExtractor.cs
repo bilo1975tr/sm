@@ -9,12 +9,23 @@ namespace StreamMesh.Core.Media.Ace
     /// </summary>
     public static class AceIdExtractor
     {
+        private static readonly Regex LocalAcePortRegex = new(@":(68(?:7[89]|8\d))/(?:ace|content_id)/", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        public static bool IsLocalAceHttpUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return false;
+            string trimmed = url.Trim();
+            if (LocalAcePortRegex.IsMatch(trimmed)) return true;
+            return trimmed.Contains("/ace/getstream", StringComparison.OrdinalIgnoreCase) ||
+                   trimmed.Contains("/ace/manifest.m3u8", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static bool IsAceStreamUrl(string? url)
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
             string trimmed = url.Trim();
             if (trimmed.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase)) return true;
-            if (trimmed.Contains(":6878/ace/") || trimmed.Contains(":6878/content_id/")) return true;
+            if (IsLocalAceHttpUrl(trimmed)) return true;
             if (trimmed.Contains("channel_id=")) return true;
             if (trimmed.Length == 40 && Regex.IsMatch(trimmed, "^[a-fA-F0-9]{40}$")) return true;
             return false;
@@ -37,7 +48,7 @@ namespace StreamMesh.Core.Media.Ace
             if (match40.Success) return match40.Groups[1].Value.ToLowerInvariant();
 
             // 2. Channel ID in query
-            if (trimmed.Contains(":6878") || trimmed.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
+            if (IsLocalAceHttpUrl(trimmed) || trimmed.Contains(":6878") || trimmed.StartsWith("acestream://", StringComparison.OrdinalIgnoreCase))
             {
                 var matchChannel = Regex.Match(trimmed, @"[?&](?:channel_id|channel)=(\d+)", RegexOptions.IgnoreCase);
                 if (matchChannel.Success) return matchChannel.Groups[1].Value;

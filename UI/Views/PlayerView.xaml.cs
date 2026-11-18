@@ -424,7 +424,7 @@ namespace StreamMesh.UI.Views
                 try
                 {
                     string currentUrl = ViewModel.CurrentChannel.Url ?? "";
-                    if (_ace.IsAceStreamUrl(currentUrl) || currentUrl.Contains(":6878/ace/"))
+                    if (_ace.IsAceStreamUrl(currentUrl) || _ace.IsLocalAceHttpUrl(currentUrl))
                     {
                         var activeP2p = PluginManager.Instance.GetPluginById("p2p_stats") as P2PStatsPlugin;
                         if (activeP2p != null && !activeP2p.IsEnabled)
@@ -482,7 +482,7 @@ namespace StreamMesh.UI.Views
             string ua = !string.IsNullOrWhiteSpace(channel.HttpUserAgent) ? channel.HttpUserAgent : defaultUa;
             bool isLocalProxy = url.Contains("127.0.0.1:48931", StringComparison.OrdinalIgnoreCase) || url.Contains("localhost:48931", StringComparison.OrdinalIgnoreCase);
             bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || isLocalProxy;
-            bool isAceStream = channel.SourceType == "ACESTREAM" || url.Contains("session=ace_") || url.Contains(":6878/ace/");
+            bool isAceStream = channel.SourceType == "ACESTREAM" || url.Contains("session=ace_") || _ace.IsLocalAceHttpUrl(url);
             bool isLive = !ViewModel.IsVod(channel);
 
             var headers = new List<string>();
@@ -855,7 +855,7 @@ namespace StreamMesh.UI.Views
 
             bool isAce = channel.SourceType == "ACESTREAM" ||
                          channel.Url?.Contains("acestream://", StringComparison.OrdinalIgnoreCase) == true ||
-                         channel.Url?.Contains(":6878/ace/", StringComparison.OrdinalIgnoreCase) == true;
+                         _ace.IsLocalAceHttpUrl(channel.Url);
 
             _ = Dispatcher.InvokeAsync(() =>
             {
@@ -971,7 +971,7 @@ namespace StreamMesh.UI.Views
                         if (token.IsCancellationRequested || sessionId != _playbackSessionId) break;
                         if (string.IsNullOrEmpty(preparedUrl)) continue;
 
-                        bool isAceCandidate = channel.SourceType == "ACESTREAM" || preparedUrl.Contains(":6878/ace/") || preparedUrl.Contains("session=ace_");
+                        bool isAceCandidate = channel.SourceType == "ACESTREAM" || _ace.IsLocalAceHttpUrl(preparedUrl) || preparedUrl.Contains("session=ace_");
                         int watchdogMs = isAceCandidate ? 35000 : customTimeoutSec * 1000;
 
                         _currentPlayingUrl = preparedUrl;
@@ -1074,7 +1074,7 @@ namespace StreamMesh.UI.Views
             {
                 ConfigureMpvForUrl(url, channel);
 
-                if (channel.SourceType == "ACESTREAM" || url.Contains("session=ace_") || url.Contains(":6878/ace/"))
+                if (channel.SourceType == "ACESTREAM" || url.Contains("session=ace_") || _ace.IsLocalAceHttpUrl(url))
                     await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
 
                 _mpv.Open(url);
@@ -1922,6 +1922,7 @@ namespace StreamMesh.UI.Views
             public string ActiveServerKey = "";
             public string ActiveServerLabel = "";
             public bool IsAceStream;
+            public int AceHttpPort = 6878;
             public bool IsMuted = true;
             public bool PausedByMinimize;
 
@@ -2045,6 +2046,8 @@ namespace StreamMesh.UI.Views
 
             bool restoreIsAce = restoreChannel != null && MultiViewConflictHelper.IsAceStreamUrl(restoreChannel.Url, restoreChannel);
             bool anySlotUsedAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
+            bool anySlotUsedBasePortAce = _multiViewSlots?.Any(s => s.IsAceStream && s.AceHttpPort == 6878) == true;
+            bool anySlotUsedAuxAce = _multiViewSlots?.Any(s => s.IsAceStream && s.Index > 0) == true;
 
             StopAllMultiViewSlots(disposeEngines: false);
 
@@ -2053,12 +2056,18 @@ namespace StreamMesh.UI.Views
             VideoPlayer.Visibility = Visibility.Visible;
             VideoPlayer.SyncOverlayBounds();
 
-            if (anySlotUsedAce && stopAceIfUnused && !restoreIsAce)
+            if (anySlotUsedAce)
             {
                 _ = Task.Run(async () =>
                 {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
+                    if (anySlotUsedAuxAce)
+                        await _ace.StopAllAuxiliaryEnginesAsync().ConfigureAwait(false);
+
+                    if (stopAceIfUnused && !restoreIsAce && anySlotUsedBasePortAce)
+                    {
+                        await _ace.StopAllStreamsOnPortAsync(6878).ConfigureAwait(false);
+                        AceStreamService.Instance.StopAllSessions();
+                    }
                 });
             }
 
@@ -2085,7 +2094,6 @@ namespace StreamMesh.UI.Views
         private (HashSet<string> blockedKeys, bool blockAce) GetMultiViewConflictsExcluding(int excludedSlotIndex)
         {
             var blockedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            bool blockAce = false;
 
             if (_multiViewSlots == null) return (blockedKeys, false);
 
@@ -2093,25 +2101,23 @@ namespace StreamMesh.UI.Views
             {
                 if (s.Index == excludedSlotIndex || s.ActiveChannel == null) continue;
 
-                if (s.IsAceStream || MultiViewConflictHelper.IsAceStreamUrl(s.ActivePreparedUrl ?? s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel))
-                {
-                    blockAce = true;
-                    blockedKeys.Add(MultiViewConflictHelper.AceStreamServerKey);
-                }
+                // AceStream slots spawn isolated ace_console instances per screen, so AceStream is never blocked across slots.
+                bool slotIsAce = s.IsAceStream || MultiViewConflictHelper.IsAceStreamUrl(s.ActivePreparedUrl ?? s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel);
+                if (slotIsAce)
+                    continue;
 
-                if (!string.IsNullOrWhiteSpace(s.ActiveServerKey))
+                string serverKey = !string.IsNullOrWhiteSpace(s.ActiveServerKey)
+                    ? s.ActiveServerKey
+                    : MultiViewConflictHelper.GetNormalizedServerKey(s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel);
+
+                if (!string.IsNullOrWhiteSpace(serverKey) &&
+                    !string.Equals(serverKey, MultiViewConflictHelper.AceStreamServerKey, StringComparison.OrdinalIgnoreCase))
                 {
-                    blockedKeys.Add(s.ActiveServerKey);
-                }
-                else
-                {
-                    string fallbackKey = MultiViewConflictHelper.GetNormalizedServerKey(s.ActiveRawUrl ?? s.ActiveChannel.Url, s.ActiveChannel);
-                    if (!string.IsNullOrWhiteSpace(fallbackKey))
-                        blockedKeys.Add(fallbackKey);
+                    blockedKeys.Add(serverKey);
                 }
             }
 
-            return (blockedKeys, blockAce);
+            return (blockedKeys, false);
         }
 
         private void SetMultiViewAudioFocus(int slotIndex)
@@ -2147,17 +2153,22 @@ namespace StreamMesh.UI.Views
         {
             if (MultiViewStatusText == null || _multiViewSlots == null) return;
             int activeCount = _multiViewSlots.Count(s => s.ActiveChannel != null);
-            var locks = new List<string>();
-            if (_multiViewSlots.Any(s => s.ActiveChannel != null && s.IsAceStream))
-                locks.Add("AceStream P2P (Tekil)");
+            int aceCount = _multiViewSlots.Count(s => s.ActiveChannel != null && s.IsAceStream);
+            var lockedServers = new List<string>();
 
             foreach (var s in _multiViewSlots)
             {
                 if (s.ActiveChannel != null && !s.IsAceStream && !string.IsNullOrWhiteSpace(s.ActiveServerKey))
-                    locks.Add(s.ActiveServerKey);
+                    lockedServers.Add(s.ActiveServerKey);
             }
 
-            string lockInfo = locks.Count > 0 ? $" • Kilitli Sunucular: {string.Join(", ", locks.Distinct(StringComparer.OrdinalIgnoreCase))}" : "";
+            var infoParts = new List<string>();
+            if (aceCount > 0)
+                infoParts.Add($"{aceCount}x AceStream P2P");
+            if (lockedServers.Count > 0)
+                infoParts.Add($"Kilitli Sunucular: {string.Join(", ", lockedServers.Distinct(StringComparer.OrdinalIgnoreCase))}");
+
+            string lockInfo = infoParts.Count > 0 ? $" • {string.Join(" • ", infoParts)}" : "";
             MultiViewStatusText.Text = $"{activeCount}/4 Ekran Aktif{lockInfo} • Sesi geçirmek için ekrana tıklayın";
         }
 
@@ -2180,12 +2191,14 @@ namespace StreamMesh.UI.Views
             long sessionId = Interlocked.Increment(ref slot.SessionId);
 
             bool wasAce = slot.IsAceStream;
+            int previousAcePort = slot.AceHttpPort;
             slot.ActiveChannel = channel;
             slot.ActiveRawUrl = null;
             slot.ActivePreparedUrl = null;
             slot.ActiveServerKey = "";
             slot.ActiveServerLabel = "";
             slot.IsAceStream = MultiViewConflictHelper.IsAceStreamUrl(channel.Url, channel);
+            slot.AceHttpPort = _ace.GetSlotHttpPort(slotIndex);
 
             await Dispatcher.InvokeAsync(() =>
             {
@@ -2196,12 +2209,19 @@ namespace StreamMesh.UI.Views
                 UpdateMultiViewHeaderStatus();
             });
 
-            if (wasAce && !slot.IsAceStream && !_multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream))
+            if (wasAce && !slot.IsAceStream)
             {
+                bool otherUsesBasePort = _multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream && s.AceHttpPort == 6878);
                 _ = Task.Run(async () =>
                 {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
+                    if (slotIndex > 0)
+                        await _ace.StopSlotEngineAsync(slotIndex).ConfigureAwait(false);
+
+                    if (previousAcePort == 6878 && !otherUsesBasePort)
+                    {
+                        await _ace.StopAllStreamsOnPortAsync(6878).ConfigureAwait(false);
+                        AceStreamService.Instance.StopAllSessions();
+                    }
                 });
             }
 
@@ -2255,9 +2275,10 @@ namespace StreamMesh.UI.Views
                             slot.ActiveChannel = null;
                             slot.ActiveServerKey = "";
                             slot.IsAceStream = false;
+                            slot.AceHttpPort = _ace.GetSlotHttpPort(slotIndex);
                             slot.VideoContainer.Visibility = Visibility.Collapsed;
                             slot.EmptyPanel.Visibility = Visibility.Visible;
-                            slot.TitleText.Text = "Çakışan Sunucu / AceStream Kısıtı";
+                            slot.TitleText.Text = "Çakışan Sunucu Kısıtı";
                             slot.ServerText.Text = "";
                             UpdateMultiViewHeaderStatus();
                         });
@@ -2288,7 +2309,16 @@ namespace StreamMesh.UI.Views
                             await Dispatcher.InvokeAsync(() => slot.TitleText.Text = $"{channel.PrimaryName} (Alternatif {i + 1}/{filteredCandidates.Count}...)");
                         }
 
-                        string preparedUrl = await ViewModel.PrepareSingleStreamUrlAsync(rawCandidate, channel, token).ConfigureAwait(false);
+                        string preparedUrl = await ViewModel.PrepareSingleStreamUrlAsync(
+                            rawCandidate,
+                            channel,
+                            token,
+                            status => _ = Dispatcher.InvokeAsync(() =>
+                            {
+                                if (!token.IsCancellationRequested && sessionId == slot.SessionId)
+                                    slot.TitleText.Text = $"{channel.PrimaryName} ({status})";
+                            }),
+                            aceSlotIndex: slotIndex).ConfigureAwait(false);
                         if (token.IsCancellationRequested || sessionId != slot.SessionId || string.IsNullOrWhiteSpace(preparedUrl))
                             continue;
 
@@ -2318,11 +2348,20 @@ namespace StreamMesh.UI.Views
 
                     if (succeeded)
                     {
+                        int resolvedAcePort = _ace.GetSlotHttpPort(slotIndex);
+                        if (successIsAce && Uri.TryCreate(successPrepared, UriKind.Absolute, out var aceUri) && aceUri.Port > 0)
+                        {
+                            resolvedAcePort = aceUri.Port;
+                        }
+
                         slot.ActiveRawUrl = successRaw;
                         slot.ActivePreparedUrl = successPrepared;
                         slot.ActiveServerKey = successKey;
                         slot.IsAceStream = successIsAce;
-                        slot.ActiveServerLabel = successIsAce ? "AceStream P2P" : (string.IsNullOrEmpty(successKey) ? channel.SourceType : successKey);
+                        slot.AceHttpPort = resolvedAcePort;
+                        slot.ActiveServerLabel = successIsAce
+                            ? $"AceStream P2P (:{resolvedAcePort})"
+                            : (string.IsNullOrEmpty(successKey) ? channel.SourceType : successKey);
 
                         if (startPositionMs > 0 && ViewModel.IsVod(channel))
                         {
@@ -2340,11 +2379,17 @@ namespace StreamMesh.UI.Views
                     }
                     else
                     {
+                        if (slotIndex > 0 && MultiViewConflictHelper.IsAceStreamUrl(channel.Url, channel))
+                        {
+                            _ = Task.Run(() => _ace.StopSlotEngineAsync(slotIndex));
+                        }
+
                         await Dispatcher.InvokeAsync(() =>
                         {
                             slot.ActiveChannel = null;
                             slot.ActiveServerKey = "";
                             slot.IsAceStream = false;
+                            slot.AceHttpPort = _ace.GetSlotHttpPort(slotIndex);
                             slot.TitleText.Text = $"{channel.PrimaryName} (Sinyal Yok)";
                             slot.ServerText.Text = "";
                             slot.VideoContainer.Visibility = Visibility.Collapsed;
@@ -2397,7 +2442,12 @@ namespace StreamMesh.UI.Views
                 eng.SetMute(slot.IsMuted);
 
                 if (MultiViewConflictHelper.IsAceStreamUrl(url, channel))
-                    await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
+                {
+                    if (Uri.TryCreate(url, UriKind.Absolute, out var aceUri) && aceUri.Port > 6878)
+                        await _ace.StartSlotEngineAsync(slot.Index, token).ConfigureAwait(false);
+                    else
+                        await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
+                }
 
                 eng.Open(url);
 
@@ -2424,6 +2474,7 @@ namespace StreamMesh.UI.Views
             if (_multiViewSlots == null || slotIndex < 0 || slotIndex >= _multiViewSlots.Length) return;
             var slot = _multiViewSlots[slotIndex];
             bool wasAce = slot.IsAceStream;
+            int previousAcePort = slot.AceHttpPort;
 
             Interlocked.Increment(ref slot.SessionId);
             slot.LoadCts?.Cancel();
@@ -2443,18 +2494,26 @@ namespace StreamMesh.UI.Views
             slot.ActiveServerKey = "";
             slot.ActiveServerLabel = "";
             slot.IsAceStream = false;
+            slot.AceHttpPort = _ace.GetSlotHttpPort(slotIndex);
 
             slot.VideoContainer.Visibility = Visibility.Collapsed;
             slot.EmptyPanel.Visibility = Visibility.Visible;
             slot.TitleText.Text = "Boş Ekran";
             slot.ServerText.Text = "";
 
-            if (wasAce && !_multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream))
+            if (wasAce)
             {
+                bool otherUsesBasePort = _multiViewSlots.Any(s => s.Index != slotIndex && s.IsAceStream && s.AceHttpPort == 6878);
                 _ = Task.Run(async () =>
                 {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
+                    if (slotIndex > 0)
+                        await _ace.StopSlotEngineAsync(slotIndex).ConfigureAwait(false);
+
+                    if (previousAcePort == 6878 && !otherUsesBasePort)
+                    {
+                        await _ace.StopAllStreamsOnPortAsync(6878).ConfigureAwait(false);
+                        AceStreamService.Instance.StopAllSessions();
+                    }
                 });
             }
 
@@ -2494,6 +2553,7 @@ namespace StreamMesh.UI.Views
                 slot.ActiveServerKey = "";
                 slot.ActiveServerLabel = "";
                 slot.IsAceStream = false;
+                slot.AceHttpPort = _ace.GetSlotHttpPort(slot.Index);
 
                 if (!disposeEngines)
                 {
@@ -2571,13 +2631,21 @@ namespace StreamMesh.UI.Views
         private void MultiViewStopAllBtn_Click(object sender, RoutedEventArgs e)
         {
             bool anyAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
+            bool anyAuxAce = _multiViewSlots?.Any(s => s.IsAceStream && s.Index > 0) == true;
+            bool anyBaseAce = _multiViewSlots?.Any(s => s.IsAceStream && s.AceHttpPort == 6878) == true;
+
             StopAllMultiViewSlots(disposeEngines: false);
             if (anyAce)
             {
                 _ = Task.Run(async () =>
                 {
-                    await _ace.StopAllStreamsAsync().ConfigureAwait(false);
-                    AceStreamService.Instance.StopAllSessions();
+                    if (anyAuxAce)
+                        await _ace.StopAllAuxiliaryEnginesAsync().ConfigureAwait(false);
+                    if (anyBaseAce)
+                    {
+                        await _ace.StopAllStreamsOnPortAsync(6878).ConfigureAwait(false);
+                        AceStreamService.Instance.StopAllSessions();
+                    }
                 });
             }
             UpdateMultiViewHeaderStatus();
@@ -2604,6 +2672,7 @@ namespace StreamMesh.UI.Views
             _toastTimer?.Stop();
 
             bool anyMultiViewAce = _multiViewSlots?.Any(s => s.IsAceStream) == true;
+            bool anyMultiViewAuxAce = _multiViewSlots?.Any(s => s.IsAceStream && s.Index > 0) == true;
             StopAllMultiViewSlots(disposeEngines: true);
 
             if (_mpv != null)
@@ -2615,8 +2684,15 @@ namespace StreamMesh.UI.Views
                         ViewModel.SaveVodPosition(ch, _mpv.PositionMs);
                     _mpv.Stop();
 
-                    if (anyMultiViewAce || ch?.SourceType == "ACESTREAM" || ch?.Url?.Contains("acestream://") == true)
-                        Task.Run(async () => await _ace.StopAllStreamsAsync());
+                    if (anyMultiViewAce || ch?.SourceType == "ACESTREAM" || ch?.Url?.Contains("acestream://") == true || _ace.IsLocalAceHttpUrl(ch?.Url))
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            if (anyMultiViewAuxAce)
+                                await _ace.StopAllAuxiliaryEnginesAsync().ConfigureAwait(false);
+                            await _ace.StopAllStreamsOnPortAsync(6878).ConfigureAwait(false);
+                        });
+                    }
 
                     _mpv.Dispose();
                 }
@@ -2625,7 +2701,12 @@ namespace StreamMesh.UI.Views
             }
             else if (anyMultiViewAce)
             {
-                Task.Run(async () => await _ace.StopAllStreamsAsync());
+                _ = Task.Run(async () =>
+                {
+                    if (anyMultiViewAuxAce)
+                        await _ace.StopAllAuxiliaryEnginesAsync().ConfigureAwait(false);
+                    await _ace.StopAllStreamsOnPortAsync(6878).ConfigureAwait(false);
+                });
             }
 
             try { VideoPlayer.Dispose(); } catch { }

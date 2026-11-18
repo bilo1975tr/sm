@@ -18,7 +18,7 @@ namespace StreamMesh.Core.Media
             if (!string.IsNullOrWhiteSpace(url))
             {
                 if (AceEngine.Instance.IsAceStreamUrl(url) ||
-                    url.Contains(":6878/ace/", StringComparison.OrdinalIgnoreCase) ||
+                    AceEngine.Instance.IsLocalAceHttpUrl(url) ||
                     url.Contains("session=ace_", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
@@ -27,7 +27,7 @@ namespace StreamMesh.Core.Media
 
             if (channel != null &&
                 string.Equals(channel.SourceType, "ACESTREAM", StringComparison.OrdinalIgnoreCase) &&
-                (string.IsNullOrWhiteSpace(url) || !url.StartsWith("http", StringComparison.OrdinalIgnoreCase) || url.Contains(":6878/ace/", StringComparison.OrdinalIgnoreCase)))
+                (string.IsNullOrWhiteSpace(url) || !url.StartsWith("http", StringComparison.OrdinalIgnoreCase) || AceEngine.Instance.IsLocalAceHttpUrl(url)))
             {
                 return true;
             }
@@ -74,7 +74,7 @@ namespace StreamMesh.Core.Media
 
                 if (host == "127.0.0.1" || host == "localhost" || host == "::1")
                 {
-                    if (uri.Port == 6878) return AceStreamServerKey;
+                    if (uri.Port >= 6878 && uri.Port <= 6889) return AceStreamServerKey;
                     return "";
                 }
 

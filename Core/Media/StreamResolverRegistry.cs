@@ -22,23 +22,41 @@ namespace StreamMesh.Core.Media
         public bool CanHandle(string url, Channel channel)
         {
             if (string.IsNullOrWhiteSpace(url)) return false;
-            return _ace.IsAceStreamUrl(url) || 
-                   string.Equals(channel?.SourceType, "ACESTREAM", StringComparison.OrdinalIgnoreCase) || 
+            return _ace.IsAceStreamUrl(url) ||
+                   string.Equals(channel?.SourceType, "ACESTREAM", StringComparison.OrdinalIgnoreCase) ||
                    (url.Length == 40 && Regex.IsMatch(url, @"^[a-fA-F0-9]{40}$"));
         }
 
-        public async Task<string> ResolveAsync(string url, Channel channel, CancellationToken token, Action<string>? onStatusUpdate = null)
+        public Task<string> ResolveAsync(string url, Channel channel, CancellationToken token, Action<string>? onStatusUpdate = null) =>
+            ResolveForSlotAsync(url, channel, 0, token, onStatusUpdate);
+
+        public async Task<string> ResolveForSlotAsync(string url, Channel channel, int aceSlotIndex, CancellationToken token, Action<string>? onStatusUpdate = null)
         {
-            if (url.StartsWith("http://127.0.0.1:6878/ace/", StringComparison.OrdinalIgnoreCase) ||
-                url.StartsWith("http://localhost:6878/ace/", StringComparison.OrdinalIgnoreCase))
+            onStatusUpdate?.Invoke(aceSlotIndex > 0
+                ? $"AceStream (Ekran {aceSlotIndex + 1}): İzole Motor Hazırlanıyor..."
+                : "AceStream: Motor Hazırlanıyor...");
+
+            int targetPort = await _ace.StartSlotEngineAsync(aceSlotIndex, token).ConfigureAwait(false);
+            if (token.IsCancellationRequested) return "";
+
+            if (_ace.IsLocalAceHttpUrl(url))
             {
-                LogService.LogInfo($"[AceStreamResolver] Doğrudan getstream adresi kullanılacak -> {url}");
+                string rewritten = Regex.Replace(
+                    url,
+                    @"^(https?://)(?:127\.0\.0\.1|localhost):\d+",
+                    m => $"{m.Groups[1].Value}127.0.0.1:{targetPort}",
+                    RegexOptions.IgnoreCase);
+
+                if (aceSlotIndex > 0 && !Regex.IsMatch(rewritten, @"[?&]pid=", RegexOptions.IgnoreCase))
+                {
+                    rewritten += (rewritten.Contains('?') ? "&" : "?") + $"pid=mv_slot{aceSlotIndex}";
+                }
+
+                LogService.LogInfo($"[AceStreamResolver] Slot {aceSlotIndex + 1} doğrudan getstream adresi -> {rewritten}");
                 onStatusUpdate?.Invoke("AceStream: P2P Akışı Başlatılıyor...");
-                return url;
+                return rewritten;
             }
 
-            onStatusUpdate?.Invoke("AceStream: Motor Hazırlanıyor...");
-            await _ace.StartEngineIfNotRunningAsync().ConfigureAwait(false);
             string hash = _ace.ExtractAceId(url);
             if (string.IsNullOrEmpty(hash)) hash = url;
 
@@ -48,7 +66,7 @@ namespace StreamMesh.Core.Media
                 onStatusUpdate?.Invoke("AceStream: Kanal Kimliği Çözümleniyor...");
                 try
                 {
-                    string resolved = await _ace.ResolveChannelIdToInfohashAsync(hash).ConfigureAwait(false);
+                    string resolved = await _ace.ResolveChannelIdToInfohashAsync(hash, targetPort).ConfigureAwait(false);
                     if (!string.IsNullOrEmpty(resolved) && resolved.Length == 40)
                     {
                         hash = resolved;
@@ -61,9 +79,11 @@ namespace StreamMesh.Core.Media
             {
                 onStatusUpdate?.Invoke("AceStream: P2P Eşleri Aranıyor & Akış Başlatılıyor...");
                 string pid = _ace.ExtractPid(url);
+                if (string.IsNullOrWhiteSpace(pid) && aceSlotIndex > 0)
+                    pid = $"mv_slot{aceSlotIndex}";
                 string pidParam = !string.IsNullOrWhiteSpace(pid) ? $"&pid={pid}" : "";
-                string resolvedUrl = $"http://127.0.0.1:6878/ace/getstream?infohash={hash.ToLowerInvariant()}{pidParam}";
-                LogService.LogInfo($"[AceStreamResolver] Çözümlendi -> {resolvedUrl}");
+                string resolvedUrl = $"http://127.0.0.1:{targetPort}/ace/getstream?infohash={hash.ToLowerInvariant()}{pidParam}";
+                LogService.LogInfo($"[AceStreamResolver] Slot {aceSlotIndex + 1} çözümlendi -> {resolvedUrl}");
                 return resolvedUrl;
             }
 
@@ -168,7 +188,7 @@ namespace StreamMesh.Core.Media
 
             string lower = url.ToLowerInvariant();
             if (lower.Contains("127.0.0.1:48931") || lower.Contains("localhost:48931") ||
-                lower.Contains(":6878/ace/") || lower.Contains("extension=ts") ||
+                AceEngine.Instance.IsLocalAceHttpUrl(url) || lower.Contains("extension=ts") ||
                 lower.Contains("/movie/") || lower.Contains("/series/") || lower.Contains("/timeshift/"))
                 return true;
 
@@ -188,7 +208,7 @@ namespace StreamMesh.Core.Media
                    lower.Contains("type=m3u8");
         }
 
-        public async Task<string> ResolveStreamAsync(string url, Channel channel, CancellationToken token, Action<string>? onStatusUpdate = null)
+        public async Task<string> ResolveStreamAsync(string url, Channel channel, CancellationToken token, Action<string>? onStatusUpdate = null, int aceSlotIndex = 0)
         {
             if (string.IsNullOrWhiteSpace(url)) return "";
             url = url.Trim();
@@ -200,7 +220,9 @@ namespace StreamMesh.Core.Media
                 {
                     try
                     {
-                        resolved = await resolver.ResolveAsync(url, channel, token, onStatusUpdate).ConfigureAwait(false);
+                        resolved = resolver is AceStreamResolver aceResolver
+                            ? await aceResolver.ResolveForSlotAsync(url, channel, aceSlotIndex, token, onStatusUpdate).ConfigureAwait(false)
+                            : await resolver.ResolveAsync(url, channel, token, onStatusUpdate).ConfigureAwait(false);
                         break;
                     }
                     catch (Exception ex)

@@ -204,7 +204,7 @@ namespace StreamMesh.UI.Windows
                 EmptyStateText.Visibility = Visibility.Collapsed;
             }
 
-            string conflictNote = hiddenByConflict is > 0 ? $" ({hiddenByConflict:N0} kanal aynı sunucu/AceStream kısıtından gizlendi)" : "";
+            string conflictNote = hiddenByConflict is > 0 ? $" ({hiddenByConflict:N0} kanal aynı sunucu kısıtından gizlendi)" : "";
             CountSummaryText.Text = $"{finalList.Count:N0} uygun kanal listelendi{conflictNote}";
         }
 

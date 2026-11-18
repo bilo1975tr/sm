@@ -40,7 +40,7 @@
                     <TextBlock x:Name="ConflictStatusText"
                                Text="Aktif sunucu kilidi yok — tüm kanallar gösteriliyor."
                                Foreground="#38bdf8" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                    <TextBlock Text="Aynı sunucudan eşzamanlı 2. bağlantı engellenir (1 IP / 1 kullanıcı koruması) ve AceStream açıkken diğer AceStream kanalları gizlenir."
+                    <TextBlock Text="Aynı IPTV sunucusundan eşzamanlı 2. bağlantı engellenir (1 IP / 1 kullanıcı koruması). AceStream kanalları ise her ekranda ayrı motor/oturumla açılabilir."
                                Foreground="#94a3b8" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>

@@ -183,12 +183,12 @@ namespace StreamMesh.UI.ViewModels
             return rawUrls;
         }
 
-        public async Task<string> PrepareSingleStreamUrlAsync(string tryUrl, Channel channel, CancellationToken token, Action<string>? onStatusUpdate = null)
+        public async Task<string> PrepareSingleStreamUrlAsync(string tryUrl, Channel channel, CancellationToken token, Action<string>? onStatusUpdate = null, int aceSlotIndex = 0)
         {
             if (string.IsNullOrWhiteSpace(tryUrl)) return "";
             try
             {
-                return await StreamResolverRegistry.Instance.ResolveStreamAsync(tryUrl, channel, token, onStatusUpdate).ConfigureAwait(false);
+                return await StreamResolverRegistry.Instance.ResolveStreamAsync(tryUrl, channel, token, onStatusUpdate, aceSlotIndex).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

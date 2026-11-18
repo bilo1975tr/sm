@@ -1,0 +1,63 @@
+﻿2026-11-18 10:21:27 [INFO] ======================================================================
+2026-11-18 10:21:27 [INFO] === StreamMesh Oturumu Başlatıldı (PID: 5324) ===
+2026-11-18 10:21:27 [INFO] ======================================================================
+2026-11-18 10:21:27 [INFO] App: Başlatılıyor. Process: C:\Users\admin\Downloads\streammesh\bin\Release\net8.0-windows\StreamMesh.exe
+2026-11-18 10:21:28 [INFO] [STARTUP] MainWindow başarıyla açıldı ve gösterildi.
+2026-11-18 10:21:28 [INFO] [STARTUP] Servisler başlatılıyor...
+2026-11-18 10:21:28 [INFO] [STARTUP] Veritabanı başlatılıyor...
+2026-11-18 10:21:28 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-11-18 10:21:28 [INFO] HomeViewModel: 25060 kanal veritabanından okundu.
+2026-11-18 10:21:28 [INFO] [STARTUP] Veritabanı başarıyla hazırlandı.
+2026-11-18 10:21:28 [INFO] MediaServer: Registered localhost & 127.0.0.1 prefixes on port 8080.
+2026-11-18 10:21:28 [INFO] MediaServer: Registered plus-wildcard prefix http://+:8080/
+2026-11-18 10:21:28 [WARN] MediaServer: Wildcard/LAN prefix binding hit Windows HTTP.sys URL ACL restrictions on port 8080. Falling back to localhost/127.0.0.1.
+2026-11-18 10:21:28 [INFO] MediaServer: Started in fallback mode on Port: 8080 [Bound to: localhost, 127.0.0.1].
+2026-11-18 10:21:28 [INFO] [STARTUP] MediaServer 8080 portunda başlatıldı.
+2026-11-18 10:21:28 [INFO] [PluginManager] Initializing 14 plugins...
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Yayın & Çözünürlük Yönlendiricisi (v1.6.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Yerel Ağ Medya Sunucusu (Media Server) (v2.1.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: EPG Elektronik Program Rehberi (v1.4.2) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Film & Dizi Meta Veri Zenginleştirici (v1.6.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Kanal Logoları & Monogram Yöneticisi (v1.3.1) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Xtream Codes / IPTV API İstemcisi (v2.0.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: M3U / M3U8 Oynatma Listesi Motoru (v2.2.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Bulut & GitHub Otomatik Senkronizasyon (v1.8.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: SSDP & UPnP Cihaz Keşif Protokolü (v1.2.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Otomatik Güncelleme & Sürüm Denetleyicisi (v1.4.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: P2P / AceStream Canlı İstatistik Monitörü (v1.3.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Sistem Bakımı, Güvenlik Duvarı & Veritabanı Temizleyici (v2.0.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Kullanıcı Kimlik Doğrulama & Ebeveyn Kontrolü (v1.2.0) - Aktif
+2026-11-18 10:21:28 [INFO] [PluginManager] Plugin loaded: Küresel Çoklu Kaynak Arama Motoru (v1.5.0) - Aktif
+2026-11-18 10:21:28 [INFO] [STARTUP] Bakım kontrolü tamamlandı.
+2026-11-18 10:21:28 [INFO] [STARTUP] AceEngine on-demand modunda: İhtiyaç duyulduğunda başlatılacak.
+2026-11-18 10:21:28 [INFO] [STARTUP] Servis başlatma sekansı tamamlandı.
+2026-11-18 10:21:31 [INFO] [STARTUP] AceStream motoru bulundu, arka planda başlatılıyor...
+2026-11-18 10:21:32 [INFO] [STARTUP] Veritabanında 25060 adet kanal mevcut. Açılışta otomatik internet indirmesi atlandı, yerel liste yüklendi.
+2026-11-18 10:21:33 [INFO] [ACEENGINE] Starting AceStream engine executable once: C:\Users\admin\AppData\Roaming\ACEStream\engine\ace_engine.exe
+2026-11-18 10:21:36 [INFO] [ACEENGINE] AceStream engine successfully started and ready.
+2026-11-18 10:21:36 [INFO] [SmartRouter] AceStream channel '13th Street HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=9b127536c9841e69bf03ff78e15b873b21bc22ab
+2026-11-18 10:21:36 [INFO] [AceStreamResolver] Slot 1 doğrudan getstream adresi -> $1127.0.0.1:6878/ace/getstream?infohash=9b127536c9841e69bf03ff78e15b873b21bc22ab
+2026-11-18 10:21:36 [INFO] [PLAYBACK/MPV] OpenCompleted: Error=loading failed
+2026-11-18 10:21:37 [INFO] EpgRepository: 0 old EPG items cleaned.
+2026-11-18 10:21:53 [INFO] [LogoSync] 8 adet yeni yerel logo anahtarı indekse kaydedildi.
+2026-11-18 10:21:53 [INFO] [LogoSync] iptv-org açık logo veritabanı indiriliyor...
+2026-11-18 10:21:54 [INFO] [LogoSync] iptv-org üzerinden 132552 logo anahtarı hazırlandı.
+2026-11-18 10:21:54 [INFO] [LogoSync] tv-logos indeksi güncelleniyor...
+2026-11-18 10:21:55 [INFO] [LogoSync] 148671 adet standart TV logo indeksi kaydedildi.
+2026-11-18 10:21:56 [INFO] SaveChannelsBatchAsync: COMMIT başarılı. 2786 kanal kaydedildi (clearFirst=False).
+2026-11-18 10:21:56 [INFO] [LogoSync] 2786 canlı TV kanalının logosu tamamlandı.
+2026-11-18 10:21:57 [INFO] HomeViewModel: Kütüphane yükleniyor...
+2026-11-18 10:21:57 [INFO] HomeViewModel: 25060 kanal veritabanından okundu.
+2026-11-18 10:22:42 [INFO] [SmartRouter] AceStream channel '13th Street HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=9b127536c9841e69bf03ff78e15b873b21bc22ab
+2026-11-18 10:22:42 [INFO] [AceStreamResolver] Slot 1 doğrudan getstream adresi -> $1127.0.0.1:6878/ace/getstream?infohash=9b127536c9841e69bf03ff78e15b873b21bc22ab
+2026-11-18 10:22:50 [INFO] [SmartRouter] AceStream channel '3sat HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=88114924ab20f9ce275e816a9a6468126e75d63b
+2026-11-18 10:22:50 [INFO] [AceStreamResolver] Slot 1 doğrudan getstream adresi -> $1127.0.0.1:6878/ace/getstream?infohash=88114924ab20f9ce275e816a9a6468126e75d63b
+2026-11-18 10:22:58 [INFO] [AutoMetadata] 50 adet eksik açıklamalı film/dizi zenginleştiriliyor...
+2026-11-18 10:22:58 [INFO] [SmartRouter] AceStream channel 'ATV [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=f6c93815c2678a6f9e2139d2054f8336eec8596f
+2026-11-18 10:23:00 [INFO] [ACEENGINE] Slot 2 için izole AceStream başlatılıyor (HTTP:6879, P2P:8622): C:\Users\admin\AppData\Roaming\ACEStream\engine\ace_console.exe
+2026-11-18 10:23:11 [INFO] [SmartRouter] AceStream channel 'DMAX HD [DE]' resolved directly to canonical URL: http://127.0.0.1:6878/ace/getstream?infohash=46b0745f35cbc125ba35d4f363c0080164cc783b
+2026-11-18 10:23:13 [INFO] [ACEENGINE] Slot 3 için izole AceStream başlatılıyor (HTTP:6880, P2P:8623): C:\Users\admin\AppData\Roaming\ACEStream\engine\ace_console.exe
+2026-11-18 10:23:16 [INFO] [ACEENGINE] Slot 3 izole motor hazır (http://127.0.0.1:6880).
+2026-11-18 10:23:16 [INFO] [AceStreamResolver] Slot 3 doğrudan getstream adresi -> $1127.0.0.1:6880/ace/getstream?infohash=46b0745f35cbc125ba35d4f363c0080164cc783b&pid=mv_slot2
+2026-11-18 10:23:16 [INFO] [ACEENGINE] Slot 3 izole motoru durduruldu (Port 6880).
+2026-11-18 10:23:19 [INFO] [ACEENGINE] AceStream engine process(es) terminated on application exit.

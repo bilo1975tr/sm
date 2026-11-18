@@ -19,7 +19,7 @@ namespace StreamMesh.Core.Media.Ace
         private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(6) };
         private static readonly ConcurrentDictionary<string, string> _channelHashCache = new();
 
-        public static async Task<string> ResolveChannelIdToInfohashAsync(string channelId)
+        public static async Task<string> ResolveChannelIdToInfohashAsync(string channelId, int httpPort = AceProcessManager.BaseHttpPort)
         {
             if (string.IsNullOrWhiteSpace(channelId)) return "";
             if (_channelHashCache.TryGetValue(channelId, out string? cached) && !string.IsNullOrEmpty(cached))
@@ -28,9 +28,10 @@ namespace StreamMesh.Core.Media.Ace
             }
             try
             {
-                await AceProcessManager.StartEngineIfNotRunningAsync().ConfigureAwait(false);
+                if (httpPort == AceProcessManager.BaseHttpPort)
+                    await AceProcessManager.StartEngineIfNotRunningAsync().ConfigureAwait(false);
                 using var cts = new CancellationTokenSource(5000);
-                string query = $"{AceProcessManager.AceStreamBaseUrl}/server/api?method=get_content_ids&channel_id={channelId}";
+                string query = $"{AceProcessManager.GetBaseUrlForPort(httpPort)}/server/api?method=get_content_ids&channel_id={channelId}";
                 string json = await HttpClient.GetStringAsync(query, cts.Token).ConfigureAwait(false);
                 if (!string.IsNullOrWhiteSpace(json) && json.StartsWith("{"))
                 {
@@ -195,16 +196,19 @@ namespace StreamMesh.Core.Media.Ace
             return 0;
         }
 
-        public static async Task StopAllStreamsAsync()
+        public static async Task StopAllStreamsOnPortAsync(int httpPort)
         {
             try
             {
-                using var cts = new CancellationTokenSource(1500);
-                var t1 = HttpClient.GetAsync($"{AceProcessManager.AceStreamBaseUrl}/webui/api/service?method=stop_all", cts.Token);
-                var t2 = HttpClient.GetAsync($"{AceProcessManager.AceStreamBaseUrl}/server/api?method=stop_all", cts.Token);
+                string baseUrl = AceProcessManager.GetBaseUrlForPort(httpPort);
+                using var cts = new CancellationTokenSource(1200);
+                var t1 = HttpClient.GetAsync($"{baseUrl}/webui/api/service?method=stop_all", cts.Token);
+                var t2 = HttpClient.GetAsync($"{baseUrl}/server/api?method=stop_all", cts.Token);
                 await Task.WhenAll(t1, t2).ConfigureAwait(false);
             }
             catch { }
         }
+
+        public static Task StopAllStreamsAsync() => StopAllStreamsOnPortAsync(AceProcessManager.BaseHttpPort);
     }
 }
