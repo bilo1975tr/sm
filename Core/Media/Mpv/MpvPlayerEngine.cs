@@ -50,6 +50,7 @@ namespace StreamMesh.Core.Media.Mpv
         private int _volume = 100;
         private bool _isMuted;
         private bool _isPaused;
+        private bool _isBuffering;
         private MpvPlaybackStatus _status = MpvPlaybackStatus.Stopped;
 
         public MpvPlaybackStatus Status => _status;
@@ -61,11 +62,13 @@ namespace StreamMesh.Core.Media.Mpv
         public string AudioCodec => _audioCodec;
         public int Volume => _volume;
         public bool IsMuted => _isMuted;
+        public bool IsBuffering => _isBuffering;
         public bool IsInitialized => _handle != IntPtr.Zero && !_disposed;
 
         public event Action<MpvPlaybackStatus>? StatusChanged;
         public event Action<bool, string?>? OpenCompleted;
         public event Action? TracksChanged;
+        public event Action<bool>? BufferingChanged;
 
         public static bool IsLibraryAvailable() => MpvNative.IsLibraryAvailable();
 
@@ -114,7 +117,7 @@ namespace StreamMesh.Core.Media.Mpv
                         MpvNative.mpv_set_option_string(ctx, "hwdec", profile.HwDec);
                     }
 
-                    ApplyCommonOptions(ctx, cacheMs, userAgent);
+                    ApplyCommonOptions(ctx, cacheMs, userAgent, profile.IsHeadless);
 
                     int initRes = MpvNative.mpv_initialize(ctx);
                     if (initRes >= 0)
@@ -148,6 +151,7 @@ namespace StreamMesh.Core.Media.Mpv
             MpvNative.mpv_observe_property(_handle, 7, "video-params/h", MpvFormat.Int64);
             MpvNative.mpv_observe_property(_handle, 8, "video-codec", MpvFormat.String);
             MpvNative.mpv_observe_property(_handle, 9, "audio-codec-name", MpvFormat.String);
+            MpvNative.mpv_observe_property(_handle, 10, "paused-for-cache", MpvFormat.Flag);
 
             _eventThread = new Thread(EventLoop)
             {
@@ -157,7 +161,7 @@ namespace StreamMesh.Core.Media.Mpv
             _eventThread.Start();
         }
 
-        private static void ApplyCommonOptions(IntPtr ctx, int cacheMs, string userAgent)
+        private static void ApplyCommonOptions(IntPtr ctx, int cacheMs, string userAgent, bool headless)
         {
             MpvNative.mpv_set_option_string(ctx, "idle", "yes");
             MpvNative.mpv_set_option_string(ctx, "keep-open", "no");
@@ -168,15 +172,35 @@ namespace StreamMesh.Core.Media.Mpv
             MpvNative.mpv_set_option_string(ctx, "cursor-autohide", "no");
             MpvNative.mpv_set_option_string(ctx, "ytdl", "no");
 
-            // Broadcast-grade A/V sync & anti-microstutter buffering
+            // Broadcast-grade A/V sync & anti-stutter buffering (especially for live MPEG-TS / AceStream)
             MpvNative.mpv_set_option_string(ctx, "video-sync", "audio");
-            MpvNative.mpv_set_option_string(ctx, "audio-buffer", "0.25");
+            MpvNative.mpv_set_option_string(ctx, "audio-pitch-correction", "yes");
+            MpvNative.mpv_set_option_string(ctx, "audio-stream-silence", "yes");
+            MpvNative.mpv_set_option_string(ctx, "audio-buffer", "0.5");
             MpvNative.mpv_set_option_string(ctx, "cache", "yes");
-            double cacheSecs = Math.Clamp(cacheMs / 1000.0, 2.5, 15.0);
-            MpvNative.mpv_set_option_string(ctx, "cache-secs", cacheSecs.ToString("0.0", CultureInfo.InvariantCulture));
-            MpvNative.mpv_set_option_string(ctx, "demuxer-max-bytes", "64MiB");
-            MpvNative.mpv_set_option_string(ctx, "demuxer-max-back-bytes", "32MiB");
-            MpvNative.mpv_set_option_string(ctx, "demuxer-readahead-secs", "6");
+            MpvNative.mpv_set_option_string(ctx, "cache-pause", "yes");
+
+            if (headless)
+            {
+                MpvNative.mpv_set_option_string(ctx, "cache-secs", "2.0");
+                MpvNative.mpv_set_option_string(ctx, "cache-pause-initial", "no");
+                MpvNative.mpv_set_option_string(ctx, "cache-pause-wait", "0.5");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-max-bytes", "16MiB");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-max-back-bytes", "4MiB");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-readahead-secs", "2");
+            }
+            else
+            {
+                double cacheSecs = Math.Clamp(cacheMs / 1000.0, 2.5, 25.0);
+                MpvNative.mpv_set_option_string(ctx, "cache-secs", cacheSecs.ToString("0.0", CultureInfo.InvariantCulture));
+                MpvNative.mpv_set_option_string(ctx, "cache-pause-initial", "yes");
+                MpvNative.mpv_set_option_string(ctx, "cache-pause-wait", "3.0");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-max-bytes", "128MiB");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-max-back-bytes", "48MiB");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-readahead-secs", "15");
+                MpvNative.mpv_set_option_string(ctx, "demuxer-lavf-o", "fflags=+genpts+discardcorrupt");
+            }
+
             MpvNative.mpv_set_option_string(ctx, "network-timeout", "15");
             MpvNative.mpv_set_option_string(ctx, "tls-verify", "no");
             MpvNative.mpv_set_option_string(ctx, "hls-bitrate", "max");
@@ -223,6 +247,11 @@ namespace StreamMesh.Core.Media.Mpv
                                 : default;
                             _positionSeconds = 0;
                             _durationSeconds = 0;
+                            if (_isBuffering)
+                            {
+                                _isBuffering = false;
+                                BufferingChanged?.Invoke(false);
+                            }
                             if (endFile.Reason == MpvEndFileReason.Error)
                             {
                                 string errMsg = MpvNative.GetErrorString(endFile.Error);
@@ -320,6 +349,18 @@ namespace StreamMesh.Core.Media.Mpv
                         _audioCodec = strPtr != IntPtr.Zero ? (Marshal.PtrToStringUTF8(strPtr) ?? "") : "";
                     }
                     break;
+
+                case "paused-for-cache":
+                    if (prop.Format == MpvFormat.Flag && prop.Data != IntPtr.Zero)
+                    {
+                        bool buffering = Marshal.ReadInt32(prop.Data) != 0;
+                        if (_isBuffering != buffering)
+                        {
+                            _isBuffering = buffering;
+                            BufferingChanged?.Invoke(buffering);
+                        }
+                    }
+                    break;
             }
         }
 
@@ -340,16 +381,29 @@ namespace StreamMesh.Core.Media.Mpv
             StatusChanged?.Invoke(newStatus);
         }
 
-        public void ConfigureRuntimeOptions(bool hwAccel, int cacheMs, string userAgent, IReadOnlyList<string>? headerLines, bool isAceStream, bool isHls)
+        public void ConfigureRuntimeOptions(bool hwAccel, int cacheMs, string userAgent, IReadOnlyList<string>? headerLines, bool isAceStream, bool isHls, bool isLive = true)
         {
             if (_handle == IntPtr.Zero || _disposed) return;
             lock (_cmdLock)
             {
                 MpvNative.mpv_set_property_string(_handle, "hwdec", hwAccel ? "auto-safe" : "no");
 
-                int minCacheMs = isAceStream ? 5000 : (isHls ? 4000 : 3000);
-                double cacheSecs = Math.Clamp(Math.Max(cacheMs, minCacheMs) / 1000.0, 2.5, 15.0);
+                bool useLiveProfile = isAceStream || isLive || isHls;
+                int minCacheMs = isAceStream ? 8000 : (isHls ? 4500 : (isLive ? 3500 : 2500));
+                double cacheSecs = Math.Clamp(Math.Max(cacheMs, minCacheMs) / 1000.0, 2.5, 25.0);
+                string readaheadSecs = isAceStream ? "20" : (useLiveProfile ? "12" : "10");
+                string pauseWaitSecs = isAceStream ? "4.0" : (useLiveProfile ? "2.5" : "1.5");
+                string lavfOpts = useLiveProfile ? "fflags=+genpts+discardcorrupt" : "";
+
                 MpvNative.mpv_set_property_string(_handle, "cache-secs", cacheSecs.ToString("0.0", CultureInfo.InvariantCulture));
+                MpvNative.mpv_set_property_string(_handle, "demuxer-readahead-secs", readaheadSecs);
+                MpvNative.mpv_set_property_string(_handle, "cache-pause", "yes");
+                MpvNative.mpv_set_property_string(_handle, "cache-pause-initial", useLiveProfile ? "yes" : "no");
+                MpvNative.mpv_set_property_string(_handle, "cache-pause-wait", pauseWaitSecs);
+                MpvNative.mpv_set_property_string(_handle, "demuxer-lavf-o", lavfOpts);
+                MpvNative.mpv_set_property_string(_handle, "video-sync", "audio");
+                MpvNative.mpv_set_property_string(_handle, "audio-pitch-correction", "yes");
+                MpvNative.mpv_set_property_string(_handle, "audio-stream-silence", "yes");
                 MpvNative.mpv_set_property_string(_handle, "network-timeout", isAceStream ? "30" : "15");
 
                 if (!string.IsNullOrWhiteSpace(userAgent))
@@ -371,6 +425,7 @@ namespace StreamMesh.Core.Media.Mpv
                 _videoCodec = "";
                 _audioCodec = "";
                 _isPaused = false;
+                _isBuffering = false;
                 MpvNative.mpv_set_property_string(_handle, "pause", "no");
                 MpvNative.mpv_set_property_string(_handle, "aid", "auto");
                 int res = MpvNative.Command(_handle, "loadfile", url, "replace");
@@ -408,6 +463,7 @@ namespace StreamMesh.Core.Media.Mpv
             lock (_cmdLock)
             {
                 _isPaused = false;
+                _isBuffering = false;
                 _positionSeconds = 0;
                 _durationSeconds = 0;
                 MpvNative.Command(_handle, "stop");
@@ -473,7 +529,7 @@ namespace StreamMesh.Core.Media.Mpv
             lock (_cmdLock)
             {
                 string filter = enabled
-                    ? "lavfi=[acompressor=threshold=-20dB:ratio=3:attack=5:release=60:makeup=3dB]"
+                    ? "lavfi=[aresample=async=1000,acompressor=threshold=-20dB:ratio=3:attack=5:release=60:makeup=3dB]"
                     : "";
                 MpvNative.mpv_set_property_string(_handle, "af", filter);
             }

@@ -78,6 +78,7 @@ namespace StreamMesh.UI.Views
         private HlsSessionInfo? _activeProxySession;
         private CancellationTokenSource? _loadCts;
         private long _playbackSessionId;
+        private int _liveReconnectAttempts;
         private bool _wasPausedByMinimize;
         private bool _hasReceivedFirstFrame;
         private string? _lastMpvInitError;
@@ -461,7 +462,7 @@ namespace StreamMesh.UI.Views
         private (bool hwAccel, int cacheMs, string userAgent) ReadEngineSettings()
         {
             bool hwAccel = _db.GetSetting("FlyleafHwAccel", "true") == "true";
-            int cacheMs = Math.Clamp(int.TryParse(_db.GetSetting("FlyleafCache", "3500"), out int parsed) ? parsed : 3500, 2500, 15000);
+            int cacheMs = Math.Clamp(int.TryParse(_db.GetSetting("FlyleafCache", "3500"), out int parsed) ? parsed : 3500, 2500, 25000);
             string defaultUa = _db.GetSetting("FlyleafUserAgent", "");
             if (string.IsNullOrWhiteSpace(defaultUa))
                 defaultUa = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
@@ -482,6 +483,7 @@ namespace StreamMesh.UI.Views
             bool isLocalProxy = url.Contains("127.0.0.1:48931", StringComparison.OrdinalIgnoreCase) || url.Contains("localhost:48931", StringComparison.OrdinalIgnoreCase);
             bool isHls = url.Contains(".m3u8", StringComparison.OrdinalIgnoreCase) || isLocalProxy;
             bool isAceStream = channel.SourceType == "ACESTREAM" || url.Contains("session=ace_") || url.Contains(":6878/ace/");
+            bool isLive = !ViewModel.IsVod(channel);
 
             var headers = new List<string>();
             if (!string.IsNullOrWhiteSpace(channel.HttpReferer)) headers.Add($"Referer: {channel.HttpReferer}");
@@ -496,7 +498,7 @@ namespace StreamMesh.UI.Views
                 }
             }
 
-            engine.ConfigureRuntimeOptions(hwAccel, cacheMs, ua, headers, isAceStream, isHls);
+            engine.ConfigureRuntimeOptions(hwAccel, cacheMs, ua, headers, isAceStream, isHls, isLive);
         }
 
         private Task<bool> EnsureMpvReadyAsync(string? channelName, long sessionId, CancellationToken token)
@@ -600,6 +602,7 @@ namespace StreamMesh.UI.Views
                 };
                 engine.StatusChanged += Mpv_StatusChanged;
                 engine.TracksChanged += RefreshAudioTracks;
+                engine.BufferingChanged += Mpv_BufferingChanged;
 
                 _mpv = engine;
                 _lastMpvInitError = null;
@@ -622,6 +625,23 @@ namespace StreamMesh.UI.Views
             }
         }
 
+        private void Mpv_BufferingChanged(bool isBuffering)
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                if (_mpv == null || ViewModel.CurrentChannel == null || _userPaused || !_hasReceivedFirstFrame || OsdTitle == null) return;
+                if (isBuffering)
+                {
+                    OsdTitle.Text = $"{ViewModel.CurrentChannel.PrimaryName} (Tamponlanıyor...)";
+                    ShowOsdTemporary();
+                }
+                else if ((OsdTitle.Text ?? "").EndsWith("(Tamponlanıyor...)", StringComparison.Ordinal))
+                {
+                    OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
+                }
+            });
+        }
+
         private void Mpv_StatusChanged(MpvPlaybackStatus status)
         {
             Dispatcher.InvokeAsync(() =>
@@ -630,11 +650,17 @@ namespace StreamMesh.UI.Views
 
                 if (status == MpvPlaybackStatus.Playing)
                 {
+                    if (_hasReceivedFirstFrame)
+                    {
+                        _liveReconnectAttempts = 0;
+                        if (ViewModel.CurrentChannel != null && OsdTitle != null && (OsdTitle.Text ?? "").Contains("Yeniden bağlanıyor", StringComparison.Ordinal))
+                            OsdTitle.Text = ViewModel.CurrentChannel.PrimaryName;
+                    }
                     UpdatePlayPauseIcon(true);
                 }
                 else if (status == MpvPlaybackStatus.Paused)
                 {
-                    if (!_userPaused && (DateTime.UtcNow - _streamStartTime).TotalSeconds < 6)
+                    if (!_userPaused && !_mpv.IsBuffering && (DateTime.UtcNow - _streamStartTime).TotalSeconds < 6)
                     {
                         _mpv.Play();
                         UpdatePlayPauseIcon(true);
@@ -654,14 +680,15 @@ namespace StreamMesh.UI.Views
                     if (!_userPaused && ViewModel.CurrentChannel != null && !ViewModel.IsVod(ViewModel.CurrentChannel) && !string.IsNullOrEmpty(_currentPlayingUrl))
                     {
                         string reconnectUrl = _currentPlayingUrl;
+                        long activeSession = _playbackSessionId;
                         _ = Task.Run(async () =>
                         {
                             await Task.Delay(1200).ConfigureAwait(false);
-                            if (!_userPaused && _mpv != null && (_mpv.Status == MpvPlaybackStatus.Ended || _mpv.Status == MpvPlaybackStatus.Stopped))
+                            if (!_userPaused && activeSession == _playbackSessionId && _mpv != null && (_mpv.Status == MpvPlaybackStatus.Ended || _mpv.Status == MpvPlaybackStatus.Stopped))
                             {
                                 await Dispatcher.InvokeAsync(() =>
                                 {
-                                    if (!_userPaused && _mpv != null && (_mpv.Status == MpvPlaybackStatus.Ended || _mpv.Status == MpvPlaybackStatus.Stopped))
+                                    if (!_userPaused && activeSession == _playbackSessionId && _mpv != null && (_mpv.Status == MpvPlaybackStatus.Ended || _mpv.Status == MpvPlaybackStatus.Stopped))
                                         _mpv.Open(reconnectUrl);
                                 });
                             }
@@ -671,7 +698,27 @@ namespace StreamMesh.UI.Views
                 else if (status == MpvPlaybackStatus.Failed)
                 {
                     UpdatePlayPauseIcon(false);
-                    if (ViewModel.CurrentChannel != null)
+                    if (_hasReceivedFirstFrame && !_userPaused && ViewModel.CurrentChannel != null && !ViewModel.IsVod(ViewModel.CurrentChannel) && !string.IsNullOrEmpty(_currentPlayingUrl) && _liveReconnectAttempts < 2)
+                    {
+                        _liveReconnectAttempts++;
+                        string reconnectUrl = _currentPlayingUrl;
+                        long activeSession = _playbackSessionId;
+                        OsdTitle.Text = $"{ViewModel.CurrentChannel.PrimaryName} (Yeniden bağlanıyor... {_liveReconnectAttempts}/2)";
+                        ShowOsdTemporary();
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(1500).ConfigureAwait(false);
+                            if (!_userPaused && activeSession == _playbackSessionId && _mpv != null && _mpv.Status == MpvPlaybackStatus.Failed)
+                            {
+                                await Dispatcher.InvokeAsync(() =>
+                                {
+                                    if (!_userPaused && activeSession == _playbackSessionId && _mpv != null && _mpv.Status == MpvPlaybackStatus.Failed)
+                                        _mpv.Open(reconnectUrl);
+                                });
+                            }
+                        });
+                    }
+                    else if (ViewModel.CurrentChannel != null)
                     {
                         OsdTitle.Text = $"{ViewModel.CurrentChannel.PrimaryName} (Sinyal Yok / Bağlantı Koptu)";
                         ShowOsdTemporary();
@@ -803,6 +850,7 @@ namespace StreamMesh.UI.Views
             _activeProxySession = null;
             _streamStartTime = DateTime.UtcNow;
             _hasReceivedFirstFrame = false;
+            _liveReconnectAttempts = 0;
             ResetTimeshiftState();
 
             bool isAce = channel.SourceType == "ACESTREAM" ||
@@ -1058,6 +1106,8 @@ namespace StreamMesh.UI.Views
 
             if (_isRecording) StopRecording();
             _wasPausedByMinimize = false;
+            _liveReconnectAttempts = 0;
+            Interlocked.Increment(ref _playbackSessionId);
             _loadCts?.Cancel();
             _positionTimer?.Stop();
 
